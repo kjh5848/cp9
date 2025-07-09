@@ -1,0 +1,28 @@
+---
+alwaysApply: true
+---
+
+- **public 함수·클래스·컴포넌트** 상단에 JSDoc 삽입  
+- `@param`, `@returns` 필수  
+- 예제 코드 블록 포함  
+- 비동기 함수는 `@async` 태그 사용  
+- 한국어 설명 + 영어 타입 병기
+
+```ts
+/**
+ * 사용자의 장바구니 합계를 계산한다.
+ *
+ * @async
+ * @param items - 장바구니 항목 배열
+ * @returns 총액(number, VAT 포함)
+ * @example
+ * const total = await calcCartTotal(items);
+ */
+export async function calcCartTotal(items: CartItem[]): Promise<number> {
+  ...
+}
+```
+
+AI가 새 공개 API를 만들 때 “이 룰을 적용할까요?” 라고 제안한다.
+
+

@@ -1,0 +1,13 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+
+1. **테스트 먼저** : Given-When-Then 시나리오를 Jest/Vitest로 작성  
+2. 커버리지 80 % ↓ → 파이프라인 실패  
+3. 유닛 = Jest/Vitest, E2E = Playwright  
+4. `npm run test --watch` 스크립트 자동 권장  
+5. 실패 테스트 없으면 리팩터링 안내 메시지 출력
+
+> AI가 새 기능 코드를 요청받으면 **테스트 코드 → 구현 코드** 순서로 제시한다.

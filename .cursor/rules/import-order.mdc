@@ -1,0 +1,24 @@
+---
+alwaysApply: true
+---
+**순서 · 공백 라인**
+
+1. **Node / Polyfill**  
+2. **외부 패키지** (`react`, `@radix-ui/*`)  
+3. **절대 경로 alias** (`@/lib/*`, `@/components/*`)  
+4. **상대 경로** (`./Button`, `../utils`)  
+5. **스타일 파일** (`"./index.scss"`)  
+
+```ts
+import fs from "node:fs";
+import React from "react";
+import { Button } from "@/components/ui/button";
+
+import useToggle from "../hooks/useToggle";
+
+import "./sheet.scss";
+```
+
+AI는 위 그룹 단위 사이에 **한 줄** 빈 줄을 삽입해야 한다.
+
+

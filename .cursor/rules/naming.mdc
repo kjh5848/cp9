@@ -1,0 +1,9 @@
+- **폴더 / 파일** : `kebab-case` (`order-summary.tsx`)
+- **Env 변수** : `SCREAMING_SNAKE_CASE`
+- **DB 테이블** : `snake_case`, 복수형 (`order_items`)
+
+
+
+
+
+

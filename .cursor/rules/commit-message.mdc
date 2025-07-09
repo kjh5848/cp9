@@ -1,0 +1,22 @@
+---
+alwaysApply: true
+---
+**형식**
+
+```
+<type>(<scope>): <subject>
+
+<body>          # 선택
+<footer>        # 선택 (BREAKING CHANGE, Closes #123)
+```
+
+| type     | 용도              |
+| -------- | --------------- |
+| feat     | 새로운 기능          |
+| fix      | 버그 수정           |
+| chore    | 빌드, 의존성, 설정 변경  |
+| docs     | 문서 수정           |
+| refactor | 리팩터링 (기능 변화 없음) |
+
+예시
+`feat(ui): add ProductCard component`
