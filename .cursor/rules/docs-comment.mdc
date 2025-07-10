@@ -1,5 +1,5 @@
 ---
-alwaysApply: false
+alwaysApply: true
 ---
 - **public 함수·클래스·컴포넌트** 상단에 JSDoc 삽입  
 - `@param`, `@returns` 필수  

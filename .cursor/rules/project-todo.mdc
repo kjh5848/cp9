@@ -1,20 +1,22 @@
 ---
-description:
-globs:
 alwaysApply: true
 ---
+# 🛠️ Coupang Partners Auto-Blog SaaS
 
+> **목표** 키워드만 입력하면  
+> ① 쿠팡 상품 검색 → 딥링크 변환 → LLM 요약 → 워드프레스 초안 저장까지 **원-클릭**으로 완료되는 서비스를 구축한다.
+
+---
 
 ## 📦 프로젝트 스택 요약
 
 | 레이어 | 사용 기술 |
 |--------|-----------|
-| **Frontend** | Next.js 15 (App Router) · TypeScript · Tailwind CSS v4 · shadcn/ui |
-| **State/Data** | React Query · Zustand |
-| **Backend (서버리스)** | Supabase Edge Functions (TypeScript) |
-| **대안 백엔드** | Spring Boot 3 (java) **or** FastAPI (Python 3.12) |
-| **DB** | Supabase Postgres (RLS) |
-| **CI/CD** | GitHub Actions → Vercel(프런트) / Supabase CLI deploy(백) |
+| **Frontend** | **Next.js 15** (App Router) · **TypeScript** · **Tailwind CSS v4** · **shadcn/ui** |
+| **State/Data** | **TanStack Query** · **Zustand** |
+| **Edge Functions** | **Supabase** Edge Functions (TypeScript + Deno) |
+| **DB** | Supabase **Postgres** + Row Level Security |
+| **CI/CD** | **GitHub Actions** → Vercel(프런트) / `supabase functions deploy`(백) |
 | **테스트** | Jest/Vitest(Unit) · Playwright(E2E) |
 | **품질 도구** | ESLint · Prettier · Husky + lint-staged |
 
@@ -22,31 +24,37 @@ alwaysApply: true
 
 ## 🚀 구현 단계 체크리스트
 
-```md
 ### 1. 기본 환경 세팅
-- [ ] 코드 스타일 룰(Prettier/ESLint) 적용
-- [ ] Tailwind v4 + shadcn 초기 컴포넌트 설치
-- [ ] Supabase 프로젝트 생성 & `.env` 연결
-- [ ] CI 파이프라인 최초 실행 확인
+- [ ] **코드 스타일** : `eslint-config-next` + Prettier + Husky/lint-staged
+- [ ] **UI 초기화** : Tailwind v4 / shadcn `init` 후 Button·Card 추가
+- [ ] **Supabase 프로젝트** 생성 & `.env`(URL / ANON_KEY) 연결
+- [ ] **CI 파이프라인** 생성 → 프런트(build/test) · 백엔드(edge deploy) 동시 실행
 
 ### 2. 핵심 기능 MVP
-- [ ] 🔑 Auth: Supabase Email 링크 로그인
-- [ ] 🗂️ 카테고리 ⟶ 키워드 입력 UI (Client Component)
-- [ ] 🔍 쿠팡 파트너스 API 검색 Edge Function
-- [ ] 📝 LLM 요약 + “빠른 체크포인트” Server Action
-- [ ] 📤 WordPress 글쓰기 Route Handler
+- [ ] 🔑 **Auth** : Supabase Magic-Link 로그인
+- [ ] 🗂️ **키워드 입력 폼** (Client Component + Zustand)
+- [ ] 🔍 **상품 검색 Edge Function** : Coupang `/products/search` + 정렬
+- [ ] 🔗 **딥링크 Edge Function** : Coupang `/v1/deeplink` 일괄 변환
+- [ ] 🤖 **LLM 요약 Server Action** : OpenAI → “빠른 체크포인트” HTML
+- [ ] 📤 **WordPress Draft** : Route Handler → WP REST `/posts` 저장
 
 ### 3. 품질 · 테스트
-- [ ] Jest 유닛 테스트 커버리지 80 % 달성
-- [ ] Playwright E2E: “카테고리 입력 → 글 발행” 시나리오
-- [ ] Lighthouse 95 점 이상 확인
+- [ ] **Unit** : Vitest/Jest 커버리지 80 % 이상
+- [ ] **E2E** : Playwright “로그인 → 키워드 → 글 발행” 시나리오
+- [ ] **Lighthouse** 모바일 95 점 이상
 
 ### 4. 배포 · 모니터링
-- [ ] Vercel Production 배포
-- [ ] Supabase Edge deploy & pg-boss 큐 모니터링 대시보드
-- [ ] Slack 알림(Webhook) 연동
+- [ ] **Vercel Production** 배포 & Preview URL 자동 코멘트
+- [ ] **Supabase Edge** deploy + `pg-boss` 큐 대시보드
+- [ ] **Slack 알림** : 오류/배포 웹훅 통합
 
 ### 5. 리팩터링 · 확장
-- [ ] DDD 계층 분리(domain/application/infra)
-- [ ] A/B 프롬프트 버전 관리 테이블 추가
-- [ ] 자동 업데이트(PyInstaller + Tufup) CLI 빌드
+- [ ] **DDD 모듈화** : `domain / application / infra` 구조
+- [ ] **A/B 프롬프트 테이블** 추가(버전 관리)
+- [ ] **CLI 빌드** : PyInstaller + Tufup 자동 업데이트
+- [ ] **멀티 채널 발행** : 티스토리·브런치 API 연결
+
+---
+
+
+

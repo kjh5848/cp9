@@ -1,0 +1,20 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+When: The prompt contains any of the following keywords:
+  - Next.js
+  - React
+  - Tailwind
+  - YouTube
+  - Firebase
+  - Prisma
+  - 넥스트
+  - 리액트
+  - 테일윈드
+  - 유튜브
+  - 파이어베이스
+  - 프리즈마
+
+Do: Append the text "use context7" to the prompt.
