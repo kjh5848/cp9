@@ -86,6 +86,20 @@ CP9은 쿠팡 파트너스를 활용한 자동 블로그 컨텐츠 생성 SaaS�
 - [x] 로그인/로그아웃 기능
 - [x] TDD 방식 인증 테스트 추가
 
+#### 6. 의존성 오류 해결 및 품질 개선 (완료 ✅)
+- [x] class-variance-authority 모듈 오류 해결
+- [x] 누락된 의존성 설치 완료:
+  - class-variance-authority, clsx, tailwind-merge
+  - @tailwindcss/postcss (Tailwind CSS v4 지원)
+  - @supabase/supabase-js, @supabase/auth-ui-react
+- [x] ESLint 오류 수정:
+  - require() 스타일 import를 ES6 import로 변경
+  - any 타입을 구체적인 타입으로 변경
+  - 빈 인터페이스를 타입 별칭으로 변경
+- [x] 테스트 환경 개선 (setup.ts JSX 오류 수정)
+- [x] 개발 서버 테스트 완료 (메인 페이지, 로그인 페이지 정상 동작)
+- [x] UI 컴포넌트 모든 기능 정상 작동 확인
+
 ### 🔄 진행 예정
 
 #### 6. 핵심 기능 구현
@@ -241,6 +255,15 @@ frontend/
 - 유틸리티 함수 테스트
 - 페이지 렌더링 테스트
 
+### 실제 테스트 결과
+#### 개발 서버 테스트 (✅ 완료)
+- **메인 페이지**: 제목, 네비게이션, 기능 소개 정상 렌더링
+- **로그인 페이지**: 인증 폼, 로그인/회원가입 모드 전환 정상 동작
+- **UI 컴포넌트**: Button, Card, Input, Label 등 정상 작동
+- **폼 기능**: 이메일/비밀번호 입력, 검증 정상 동작
+- **페이지 네비게이션**: 메인 ↔ 로그인 페이지 이동 정상
+- **반응형 디자인**: 브라우저에서 정상 표시
+
 ## 🎨 디자인 시스템
 
 ### 색상 팔레트
@@ -258,12 +281,14 @@ frontend/
 
 ## 📈 로드맵
 
-### Phase 1: 기본 인프라 (현재 완료)
+### Phase 1: 기본 인프라 (✅ 완료)
 - [x] Next.js 15 프로젝트 설정
 - [x] Tailwind CSS v4 통합
 - [x] shadcn/ui 컴포넌트 시스템
 - [x] TDD 테스트 환경 설정
 - [x] Supabase 설정 및 인증 시스템
+- [x] 의존성 오류 해결 및 품질 개선
+- [x] 개발 서버 테스트 완료
 
 ### Phase 2: 핵심 기능 개발 (진행 예정)
 - [ ] 쿠팡 파트너스 API 연동
@@ -286,6 +311,38 @@ frontend/
 ## 📝 라이선스
 
 이 프로젝트는 MIT 라이선스 하에 배포됩니다.
+
+## 🔧 트러블슈팅
+
+### 해결된 문제점들
+
+#### 1. class-variance-authority 모듈 오류
+**문제**: `'class-variance-authority' 모듈 또는 해당 형식 선언을 찾을 수 없습니다.`
+**원인**: 의존성 패키지가 설치되지 않음
+**해결**: 
+```bash
+npm install class-variance-authority clsx tailwind-merge
+```
+
+#### 2. @tailwindcss/postcss 오류
+**문제**: `Cannot find module '@tailwindcss/postcss'`
+**원인**: Tailwind CSS v4에 필요한 postcss 플러그인 누락
+**해결**:
+```bash
+npm install @tailwindcss/postcss
+```
+
+#### 3. Supabase 환경 변수 오류
+**문제**: `Missing Supabase environment variables`
+**원인**: 환경 변수 설정 없음
+**해결**: 테스트를 위해 기본값 설정 또는 .env.local 파일 생성
+
+#### 4. ESLint 오류들
+**문제**: require() import, any 타입, 빈 인터페이스 오류
+**해결**: 
+- require() → ES6 import 변경
+- any → 구체적 타입으로 변경
+- 빈 인터페이스 → 타입 별칭으로 변경
 
 ## 📞 연락처
 
