@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import AuthForm from '../AuthForm';
+import { supabase } from '@/lib/supabase';
 
 // Supabase 모킹
 vi.mock('@/lib/supabase', () => ({
@@ -69,7 +70,7 @@ describe('AuthForm Component', () => {
     it('When form is submitted with valid data, Then should call appropriate auth method', async () => {
       // Given
       const mockSignIn = vi.fn().mockResolvedValue({ error: null });
-      vi.mocked(require('@/lib/supabase').supabase.auth.signInWithPassword).mockImplementation(mockSignIn);
+      vi.mocked(supabase.auth.signInWithPassword).mockImplementation(mockSignIn);
 
       render(<AuthForm />);
       const emailInput = screen.getByLabelText('이메일');
@@ -93,7 +94,7 @@ describe('AuthForm Component', () => {
     it('When Google sign in is clicked, Then should call OAuth method', async () => {
       // Given
       const mockSignInWithOAuth = vi.fn().mockResolvedValue({ error: null });
-      vi.mocked(require('@/lib/supabase').supabase.auth.signInWithOAuth).mockImplementation(mockSignInWithOAuth);
+      vi.mocked(supabase.auth.signInWithOAuth).mockImplementation(mockSignInWithOAuth);
 
       render(<AuthForm />);
       const googleButton = screen.getByRole('button', { name: '구글로 로그인' });

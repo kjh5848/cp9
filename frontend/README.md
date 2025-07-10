@@ -16,16 +16,21 @@ CP9은 쿠팡 파트너스를 활용한 자동 블로그 컨텐츠 생성 SaaS�
 - **shadcn/ui** (컴포넌트 시스템)
 - **ESLint 9**
 
+### Backend & Database
+- **Supabase** (인증, 데이터베이스)
+- **PostgreSQL** (Supabase 관리형 데이터베이스)
+- **Supabase Edge Functions** (서버리스 함수)
+
+### Authentication
+- **Supabase Auth** (인증 시스템)
+- **Google OAuth** (소셜 로그인)
+- **이메일/비밀번호** 로그인
+
 ### Testing
 - **Vitest** (유닛 테스트)
 - **@testing-library/react** (컴포넌트 테스트)
 - **jsdom** (브라우저 환경 시뮬레이션)
 - **TDD 방식** (Given-When-Then 구조)
-
-### Backend (예정)
-- **Supabase** (인증, 데이터베이스)
-- **Supabase Edge Functions** (서버리스 함수)
-- **PostgreSQL** (데이터베이스)
 
 ## 🏗️ 진행 상황
 
@@ -68,13 +73,20 @@ CP9은 쿠팡 파트너스를 활용한 자동 블로그 컨텐츠 생성 SaaS�
 - [x] 메인 페이지 테스트 (렌더링, 구조, 접근성)
 - [x] 커버리지 80% 이상 목표 설정
 
-### 🔄 진행 예정
+#### 5. Supabase 설정 및 인증 시스템 (완료 ✅)
+- [x] Supabase 클라이언트 라이브러리 설치 및 설정
+- [x] TypeScript 타입 정의 (users, keywords, blog_posts 테이블)
+- [x] 인증 시스템 구현:
+  - AuthForm 컴포넌트 (로그인/회원가입 통합)
+  - 이메일/비밀번호 로그인
+  - 구글 OAuth 로그인
+  - 인증 콜백 처리 페이지 (auth/callback)
+- [x] AuthContext를 통한 전역 인증 상태 관리
+- [x] 메인 페이지 인증 상태 반영 (조건부 UI)
+- [x] 로그인/로그아웃 기능
+- [x] TDD 방식 인증 테스트 추가
 
-#### 5. Supabase 인증 시스템
-- [ ] Supabase 프로젝트 설정
-- [ ] 카카오톡 OAuth 연동
-- [ ] 구글 OAuth 연동
-- [ ] 인증 플로우 구현
+### 🔄 진행 예정
 
 #### 6. 핵심 기능 구현
 - [ ] 키워드 입력 폼 백엔드 연동
@@ -112,11 +124,16 @@ CP9은 쿠팡 파트너스를 활용한 자동 블로그 컨텐츠 생성 SaaS�
 - Node.js 18.0.0 이상
 - npm 또는 yarn
 - Git
+- Supabase 프로젝트 (인증 및 데이터베이스)
 
 ### 설치 및 실행
 ```bash
 # 의존성 설치
 npm install
+
+# 환경 변수 설정
+cp .env.example .env.local
+# .env.local 파일에 Supabase 설정 추가
 
 # 개발 서버 실행
 npm run dev
@@ -133,33 +150,76 @@ npm run test:coverage
 npm run lint
 ```
 
+### 환경 변수 설정
+`.env.local` 파일에 다음 환경 변수를 설정하세요:
+```env
+# Supabase 설정
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# 쿠팡 파트너스 API (예정)
+COUPANG_ACCESS_KEY=your-coupang-access-key
+COUPANG_SECRET_KEY=your-coupang-secret-key
+COUPANG_PARTNER_ID=your-partner-id
+
+# OpenAI API (예정)
+OPENAI_API_KEY=your-openai-api-key
+```
+
 ## 📁 프로젝트 구조
 
 ```
 frontend/
 ├── src/
 │   ├── app/
-│   │   ├── layout.tsx      # 루트 레이아웃
-│   │   ├── page.tsx        # 홈페이지
-│   │   ├── globals.css     # 전역 스타일
-│   │   └── __tests__/      # 페이지 테스트
+│   │   ├── layout.tsx          # 루트 레이아웃 (AuthProvider 포함)
+│   │   ├── page.tsx            # 홈페이지 (인증 상태 반영)
+│   │   ├── login/
+│   │   │   └── page.tsx        # 로그인 페이지
+│   │   ├── auth/
+│   │   │   └── callback/
+│   │   │       └── page.tsx    # OAuth 콜백 페이지
+│   │   ├── globals.css         # 전역 스타일
+│   │   └── __tests__/          # 페이지 테스트
 │   ├── components/
-│   │   └── ui/             # shadcn/ui 컴포넌트
-│   │       ├── button.tsx  # Button 컴포넌트
-│   │       ├── card.tsx    # Card 컴포넌트
-│   │       ├── input.tsx   # Input 컴포넌트
-│   │       ├── label.tsx   # Label 컴포넌트
-│   │       └── __tests__/  # 컴포넌트 테스트
+│   │   ├── ui/                 # shadcn/ui 컴포넌트
+│   │   │   ├── button.tsx      # Button 컴포넌트
+│   │   │   ├── card.tsx        # Card 컴포넌트
+│   │   │   ├── input.tsx       # Input 컴포넌트
+│   │   │   ├── label.tsx       # Label 컴포넌트
+│   │   │   └── __tests__/      # 컴포넌트 테스트
+│   │   └── auth/
+│   │       ├── AuthForm.tsx    # 인증 폼 컴포넌트
+│   │       └── __tests__/      # 인증 컴포넌트 테스트
+│   ├── contexts/
+│   │   └── AuthContext.tsx     # 인증 상태 관리 컨텍스트
 │   ├── lib/
-│   │   ├── utils.ts        # 유틸리티 함수
-│   │   └── __tests__/      # 유틸리티 테스트
+│   │   ├── supabase.ts         # Supabase 클라이언트 설정
+│   │   ├── utils.ts            # 유틸리티 함수
+│   │   └── __tests__/          # 유틸리티 테스트
 │   └── test/
-│       └── setup.ts        # 테스트 환경 설정
-├── public/                 # 정적 파일
-├── vitest.config.ts        # Vitest 설정
+│       └── setup.ts            # 테스트 환경 설정
+├── public/                     # 정적 파일
+├── vitest.config.ts            # Vitest 설정
 ├── package.json
 └── README.md
 ```
+
+## 🔐 인증 시스템
+
+### 지원하는 인증 방식
+- **이메일/비밀번호** 로그인
+- **Google OAuth** 소셜 로그인
+- **회원가입** 기능
+- **자동 로그인 상태 관리**
+
+### 인증 플로우
+1. 사용자가 로그인 페이지 접근
+2. 이메일/비밀번호 또는 Google OAuth 선택
+3. 인증 성공 시 메인 페이지로 리디렉션
+4. 인증 상태는 AuthContext를 통해 전역 관리
+5. 로그인 상태에 따른 조건부 UI 렌더링
 
 ## 🧪 테스트 전략
 
@@ -174,6 +234,12 @@ frontend/
 - **함수 커버리지**: 80% 이상
 - **라인 커버리지**: 80% 이상
 - **브랜치 커버리지**: 80% 이상
+
+### 테스트 범위
+- UI 컴포넌트 테스트
+- 인증 시스템 테스트
+- 유틸리티 함수 테스트
+- 페이지 렌더링 테스트
 
 ## 🎨 디자인 시스템
 
@@ -197,18 +263,14 @@ frontend/
 - [x] Tailwind CSS v4 통합
 - [x] shadcn/ui 컴포넌트 시스템
 - [x] TDD 테스트 환경 설정
+- [x] Supabase 설정 및 인증 시스템
 
-### Phase 2: 백엔드 연동 (진행 예정)
-- [ ] Supabase 인증 시스템
-- [ ] 데이터베이스 설계
-- [ ] API 엔드포인트 구현
-
-### Phase 3: 핵심 기능 개발
+### Phase 2: 핵심 기능 개발 (진행 예정)
 - [ ] 쿠팡 파트너스 API 연동
 - [ ] LLM 컨텐츠 생성 엔진
 - [ ] 워드프레스 자동 발행
 
-### Phase 4: 고도화 및 확장
+### Phase 3: 고도화 및 확장
 - [ ] A/B 테스트 시스템
 - [ ] 분석 및 리포팅
 - [ ] 다중 플랫폼 지원
