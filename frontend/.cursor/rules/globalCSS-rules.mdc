@@ -1,0 +1,71 @@
+---
+alwaysApply: true
+---
+
+# Global CSS 규칙
+
+## globals.css 파일 관리
+
+### 구조
+1. **@import** 문 (가장 위에)
+2. **CSS 변수** (:root, 테마 변수)
+3. **기본 스타일** (body, html 등)
+4. **컴포넌트 클래스** (@apply 사용)
+5. **미디어 쿼리** (반응형 및 다크 모드)
+
+### 기본 스타일 정의
+```css
+/* 1. Imports */
+@import "tailwindcss";
+
+/* 2. CSS Variables */
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+/* 3. Base Styles */
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* 4. Component Classes */
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700;
+}
+
+/* 5. Media Queries */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+```
+
+## 클래스 명명 규칙
+- **btn-*** : 버튼 관련 스타일
+- **card-*** : 카드 컴포넌트 관련
+- **form-*** : 폼 요소 관련
+- **nav-*** : 네비게이션 관련
+- **layout-*** : 레이아웃 관련
+
+## @apply 사용 지침
+1. 재사용 가능한 컴포넌트 패턴만 사용
+2. 복잡한 스타일 조합을 단순화
+3. 일관된 디자인 시스템 유지
+4. 성능을 고려한 최적화
+
+## 다크 모드 지원
+- prefers-color-scheme 미디어 쿼리 사용
+- CSS 변수를 통한 색상 관리
+- 모든 컴포넌트 클래스에 다크 모드 대응
+
+## 금지사항
+1. 인라인 스타일 사용 금지
+2. !important 남용 금지
+3. 중복 클래스 정의 금지
+4. 임의의 z-index 값 사용 금지
+5. 벤더 프리픽스 직접 작성 금지

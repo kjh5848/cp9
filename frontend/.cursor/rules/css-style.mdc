@@ -1,0 +1,65 @@
+---
+alwaysApply: true
+---
+
+# 🎨 css-style 공통 규칙 (Next.js 15 + Tailwind v4 스택 기준)
+
+*Next.js 15 (App Router + React 19 + Turbopack) 환경에서 일관된 품질, 성능, 접근성을 보장하기 위한 CSS 작성 가이드*
+
+---
+
+## 1. 네이밍 & 구조
+- **BEM 패턴** 적용: `block__elem--mod`
+- **CSS Modules (`*.module.css`)** 사용해 컴포넌트 단위 분리
+- **클래스 셀렉터만 사용**, 태그·ID 셀렉터 금지
+- Tailwind JIT 클래스 (`tw-...`) 허용 — Stylelint에서 예외 처리
+
+---
+
+## 2. 코드 스타일 & 주석
+- **들여쓰기 2칸**, 속성당 한 줄씩 선언
+- **속성 정렬**: 알파벳순 또는 그룹(레이아웃 → 타이포 → 색상) 순
+- **주석 방식**: 중요 코드 영역에 `/* ... */` 단독 라인 주석
+
+---
+
+## 3. 접근성
+- **컬러 대비 최소 4.5 : 1** (WCAG 2.2 기준)
+- `:focus-visible` 사용해 키보드 포커스 시 시각적 표시 유지
+- `@media (prefers-reduced-motion)` 사용해 애니메이션 최소화 옵션 제공
+
+---
+
+## 4. 성능 최적화
+- Above-the-fold 영역은 **Critical CSS 인라인** 처리
+- **미사용 CSS 제거**: Tailwind JIT + `content` 설정
+- **Stylelint 캐시 활성화**(`cache: true`)하여 린팅 속도 향상
+
+---
+
+## 5. Stylelint 설정 예시
+
+```jsonc
+{
+  "extends": [
+    "stylelint-config-recommended",
+    "stylelint-config-tailwindcss"
+  ],
+  "rules": {
+    "selector-class-pattern": 
+      "^([a-z0-9]+(__[a-z0-9]+)?(--[a-z0-9]+)?|tw-[a-z0-9-]+)$",
+    "max-nesting-depth": 2,
+    "no-descending-specificity": true,
+    "color-hex-length": "short",
+    "declaration-block-single-line-max-declarations": 1,
+    "property-no-vendor-prefix": true
+  },
+  "overrides": [
+    {
+      "files": ["**/*.module.css"],
+      "rules": { "selector-class-pattern": null }
+    }
+  ],
+  "reportInvalidSelector": true,
+  "cache": true
+}

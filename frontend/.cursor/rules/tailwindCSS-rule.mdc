@@ -1,0 +1,35 @@
+---
+alwaysApply: true
+---
+
+# TailwindCSS 사용 규칙
+
+## 클래스 순서 우선순위
+**반드시 다음 순서로 클래스를 작성하세요:**
+
+1. **레이아웃** (Layout): flex, grid, block, inline, absolute, relative, fixed, sticky
+2. **박스 모델** (Box Model): m-*, p-*, border-*, rounded-*, gap-*, space-*
+3. **타이포그래피** (Typography): text-*, font-*, leading-*, tracking-*
+4. **데코레이션** (Decoration): bg-*, shadow-*, opacity-*, transform, transition-*, animation-*
+5. **상태** (State): hover:*, focus:*, active:*, disabled:*, dark:*, sm:*, md:*, lg:*, xl:*
+
+## 색상 팔레트
+- Primary: bg-blue-600, text-blue-600
+- Secondary: bg-gray-100, text-gray-900
+- Success: bg-green-600
+- Warning: bg-yellow-500
+- Error: bg-red-600
+
+## 반응형 디자인
+1. 기본 (모바일 우선)
+2. sm: 640px 이상
+3. md: 768px 이상
+4. lg: 1024px 이상
+5. xl: 1280px 이상
+
+## 금지사항
+1. 인라인 스타일 사용 금지
+2. 임의의 값 남용 금지 (예: w-[123px])
+3. !important 사용 금지
+4. 중복 클래스 사용 금지
+5. 잘못된 클래스 순서 사용 금지
