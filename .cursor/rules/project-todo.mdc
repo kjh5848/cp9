@@ -1,0 +1,52 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+
+
+## 📦 프로젝트 스택 요약
+
+| 레이어 | 사용 기술 |
+|--------|-----------|
+| **Frontend** | Next.js 15 (App Router) · TypeScript · Tailwind CSS v4 · shadcn/ui |
+| **State/Data** | React Query · Zustand |
+| **Backend (서버리스)** | Supabase Edge Functions (TypeScript) |
+| **대안 백엔드** | Spring Boot 3 (java) **or** FastAPI (Python 3.12) |
+| **DB** | Supabase Postgres (RLS) |
+| **CI/CD** | GitHub Actions → Vercel(프런트) / Supabase CLI deploy(백) |
+| **테스트** | Jest/Vitest(Unit) · Playwright(E2E) |
+| **품질 도구** | ESLint · Prettier · Husky + lint-staged |
+
+---
+
+## 🚀 구현 단계 체크리스트
+
+```md
+### 1. 기본 환경 세팅
+- [ ] 코드 스타일 룰(Prettier/ESLint) 적용
+- [ ] Tailwind v4 + shadcn 초기 컴포넌트 설치
+- [ ] Supabase 프로젝트 생성 & `.env` 연결
+- [ ] CI 파이프라인 최초 실행 확인
+
+### 2. 핵심 기능 MVP
+- [ ] 🔑 Auth: Supabase Email 링크 로그인
+- [ ] 🗂️ 카테고리 ⟶ 키워드 입력 UI (Client Component)
+- [ ] 🔍 쿠팡 파트너스 API 검색 Edge Function
+- [ ] 📝 LLM 요약 + “빠른 체크포인트” Server Action
+- [ ] 📤 WordPress 글쓰기 Route Handler
+
+### 3. 품질 · 테스트
+- [ ] Jest 유닛 테스트 커버리지 80 % 달성
+- [ ] Playwright E2E: “카테고리 입력 → 글 발행” 시나리오
+- [ ] Lighthouse 95 점 이상 확인
+
+### 4. 배포 · 모니터링
+- [ ] Vercel Production 배포
+- [ ] Supabase Edge deploy & pg-boss 큐 모니터링 대시보드
+- [ ] Slack 알림(Webhook) 연동
+
+### 5. 리팩터링 · 확장
+- [ ] DDD 계층 분리(domain/application/infra)
+- [ ] A/B 프롬프트 버전 관리 테이블 추가
+- [ ] 자동 업데이트(PyInstaller + Tufup) CLI 빌드
