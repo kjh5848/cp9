@@ -13,7 +13,14 @@ CP9은 쿠팡 파트너스를 활용한 자동 블로그 컨텐츠 생성 SaaS�
 - **React 19.0.0**
 - **TypeScript 5**
 - **Tailwind CSS v4**
+- **shadcn/ui** (컴포넌트 시스템)
 - **ESLint 9**
+
+### Testing
+- **Vitest** (유닛 테스트)
+- **@testing-library/react** (컴포넌트 테스트)
+- **jsdom** (브라우저 환경 시뮬레이션)
+- **TDD 방식** (Given-When-Then 구조)
 
 ### Backend (예정)
 - **Supabase** (인증, 데이터베이스)
@@ -37,31 +44,50 @@ CP9은 쿠팡 파트너스를 활용한 자동 블로그 컨텐츠 생성 SaaS�
 - [x] 다크 모드 지원
 - [x] 프로젝트 맞춤형 랜딩 페이지 구현
 
+#### 3. shadcn/ui 컴포넌트 시스템 (완료 ✅)
+- [x] shadcn/ui 의존성 설치 및 설정
+- [x] cn 유틸리티 함수 구현 (clsx + tailwind-merge)
+- [x] 기본 UI 컴포넌트 추가:
+  - Button (variant, size, disabled 등)
+  - Card (Header, Title, Description, Content, Footer)
+  - Input (type, placeholder, disabled 등)
+  - Label (htmlFor, 접근성 지원)
+- [x] 메인 페이지에 shadcn/ui 적용
+- [x] 키워드 입력 폼 구현
+
+#### 4. TDD 테스트 환경 설정 (완료 ✅)
+- [x] Vitest 설정 및 구성
+- [x] 테스트 환경 설정 (@testing-library/react, jsdom)
+- [x] Given-When-Then 시나리오 구조 적용
+- [x] 컴포넌트 단위 테스트 작성:
+  - Button 컴포넌트 (variant, size, 클릭 이벤트 등)
+  - Card 컴포넌트 (전체 구조 및 하위 컴포넌트)
+  - Input 컴포넌트 (type, value, disabled 등)
+  - Label 컴포넌트 (htmlFor, 접근성 등)
+  - cn 유틸리티 함수 (클래스 병합, 조건부 클래스)
+- [x] 메인 페이지 테스트 (렌더링, 구조, 접근성)
+- [x] 커버리지 80% 이상 목표 설정
+
 ### 🔄 진행 예정
 
-#### 3. shadcn/ui 컴포넌트 시스템
-- [ ] shadcn/ui 설치 및 설정
-- [ ] 기본 컴포넌트 (Button, Card, Input 등) 추가
-- [ ] 컴포넌트 스토리북 구성
-
-#### 4. Supabase 인증 시스템
+#### 5. Supabase 인증 시스템
 - [ ] Supabase 프로젝트 설정
 - [ ] 카카오톡 OAuth 연동
 - [ ] 구글 OAuth 연동
 - [ ] 인증 플로우 구현
 
-#### 5. 핵심 기능 구현
-- [ ] 키워드 입력 폼
+#### 6. 핵심 기능 구현
+- [ ] 키워드 입력 폼 백엔드 연동
 - [ ] 쿠팡 상품 검색 API 연동
 - [ ] 딥링크 변환 기능
 - [ ] LLM 컨텐츠 생성
 - [ ] 워드프레스 자동 발행
 
-#### 6. 테스트 및 품질 관리
-- [ ] Jest/Vitest 유닛 테스트
-- [ ] Playwright E2E 테스트
-- [ ] ESLint + Prettier 설정
-- [ ] Husky + lint-staged 설정
+#### 7. 추가 테스트 및 품질 관리
+- [ ] E2E 테스트 (Playwright)
+- [ ] 통합 테스트
+- [ ] 성능 테스트
+- [ ] 접근성 테스트
 
 ## 🎯 주요 기능
 
@@ -98,6 +124,11 @@ npm run dev
 # 빌드
 npm run build
 
+# 테스트 실행
+npm run test
+npm run test:watch
+npm run test:coverage
+
 # 린트 검사
 npm run lint
 ```
@@ -110,14 +141,39 @@ frontend/
 │   ├── app/
 │   │   ├── layout.tsx      # 루트 레이아웃
 │   │   ├── page.tsx        # 홈페이지
-│   │   └── globals.css     # 전역 스타일
-│   ├── components/         # 재사용 컴포넌트
-│   ├── lib/               # 유틸리티 함수
-│   └── types/             # TypeScript 타입 정의
-├── public/                # 정적 파일
+│   │   ├── globals.css     # 전역 스타일
+│   │   └── __tests__/      # 페이지 테스트
+│   ├── components/
+│   │   └── ui/             # shadcn/ui 컴포넌트
+│   │       ├── button.tsx  # Button 컴포넌트
+│   │       ├── card.tsx    # Card 컴포넌트
+│   │       ├── input.tsx   # Input 컴포넌트
+│   │       ├── label.tsx   # Label 컴포넌트
+│   │       └── __tests__/  # 컴포넌트 테스트
+│   ├── lib/
+│   │   ├── utils.ts        # 유틸리티 함수
+│   │   └── __tests__/      # 유틸리티 테스트
+│   └── test/
+│       └── setup.ts        # 테스트 환경 설정
+├── public/                 # 정적 파일
+├── vitest.config.ts        # Vitest 설정
 ├── package.json
 └── README.md
 ```
+
+## 🧪 테스트 전략
+
+### TDD 방식 적용
+- **Given-When-Then** 시나리오 구조
+- **유닛 테스트**: 컴포넌트 및 함수 단위
+- **통합 테스트**: 컴포넌트 간 상호작용
+- **E2E 테스트**: 사용자 플로우 검증
+
+### 테스트 커버리지 목표
+- **전체 커버리지**: 80% 이상
+- **함수 커버리지**: 80% 이상
+- **라인 커버리지**: 80% 이상
+- **브랜치 커버리지**: 80% 이상
 
 ## 🎨 디자인 시스템
 
@@ -129,29 +185,30 @@ frontend/
 - Error: Red
 
 ### 컴포넌트 스타일
-- `.btn-primary`: 기본 액션 버튼
-- `.btn-secondary`: 보조 액션 버튼
-- `.card`: 카드 컴포넌트
-- `.card-header`: 카드 헤더
-- `.card-title`: 카드 제목
-- `.card-description`: 카드 설명
-- `.card-content`: 카드 내용
-- `.card-footer`: 카드 푸터
+- shadcn/ui 기반 컴포넌트 시스템
+- Tailwind CSS v4 활용
+- 반응형 디자인 지원
+- 접근성 표준 준수
 
 ## 📈 로드맵
 
-### Phase 1: 기본 인프라 (현재)
+### Phase 1: 기본 인프라 (현재 완료)
 - [x] Next.js 15 프로젝트 설정
 - [x] Tailwind CSS v4 통합
-- [ ] shadcn/ui 컴포넌트 시스템
-- [ ] Supabase 인증 시스템
+- [x] shadcn/ui 컴포넌트 시스템
+- [x] TDD 테스트 환경 설정
 
-### Phase 2: 핵심 기능 개발
+### Phase 2: 백엔드 연동 (진행 예정)
+- [ ] Supabase 인증 시스템
+- [ ] 데이터베이스 설계
+- [ ] API 엔드포인트 구현
+
+### Phase 3: 핵심 기능 개발
 - [ ] 쿠팡 파트너스 API 연동
 - [ ] LLM 컨텐츠 생성 엔진
 - [ ] 워드프레스 자동 발행
 
-### Phase 3: 고도화 및 확장
+### Phase 4: 고도화 및 확장
 - [ ] A/B 테스트 시스템
 - [ ] 분석 및 리포팅
 - [ ] 다중 플랫폼 지원

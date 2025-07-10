@@ -1,10 +1,24 @@
+'use client';
+
 import Image from "next/image";
+import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export default function Home() {
+  const { user, loading, signOut } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Header */}
@@ -20,8 +34,25 @@ export default function Home() {
           <h1 className="text-lg font-bold text-gray-900">CP9</h1>
         </div>
         <nav className="flex items-center gap-4">
-          <Button variant="outline">로그인</Button>
-          <Button>시작하기</Button>
+          {user ? (
+            <>
+              <span className="text-sm text-gray-600">
+                {user.email}
+              </span>
+              <Button variant="outline" onClick={signOut}>
+                로그아웃
+              </Button>
+            </>
+          ) : (
+            <>
+              <Link href="/login">
+                <Button variant="outline">로그인</Button>
+              </Link>
+              <Link href="/login">
+                <Button>시작하기</Button>
+              </Link>
+            </>
+          )}
         </nav>
       </header>
 
@@ -36,36 +67,64 @@ export default function Home() {
           </p>
           
           {/* Keyword Input Form */}
-          <Card className="max-w-md mx-auto mb-8">
-            <CardHeader>
-              <CardTitle className="text-lg">키워드 입력</CardTitle>
-              <CardDescription>
-                검색할 키워드를 입력하세요
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="keyword">키워드</Label>
-                <Input
-                  id="keyword"
-                  placeholder="예: 무선 이어폰"
-                  className="w-full"
-                />
-              </div>
-              <Button className="w-full">
-                자동 블로그 글 생성
-              </Button>
-            </CardContent>
-          </Card>
+          {user ? (
+            <Card className="max-w-md mx-auto mb-8">
+              <CardHeader>
+                <CardTitle className="text-lg">키워드 입력</CardTitle>
+                <CardDescription>
+                  검색할 키워드를 입력하세요
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="keyword">키워드</Label>
+                  <Input
+                    id="keyword"
+                    placeholder="예: 무선 이어폰"
+                    className="w-full"
+                  />
+                </div>
+                <Button className="w-full">
+                  자동 블로그 글 생성
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="max-w-md mx-auto mb-8">
+              <CardHeader>
+                <CardTitle className="text-lg">로그인이 필요합니다</CardTitle>
+                <CardDescription>
+                  CP9를 사용하려면 먼저 로그인해주세요
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link href="/login">
+                  <Button className="w-full">
+                    로그인하고 시작하기
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Button size="lg">
-              무료로 시작하기
-            </Button>
-            <Button variant="outline" size="lg">
-              데모 보기
-            </Button>
+            {user ? (
+              <Button size="lg">
+                내 블로그 글 보기
+              </Button>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button size="lg">
+                    무료로 시작하기
+                  </Button>
+                </Link>
+                <Button variant="outline" size="lg">
+                  데모 보기
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Feature Cards */}
