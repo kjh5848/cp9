@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import ProductInput from '@/components/product/ProductInput';
 
 export default function Home() {
   const { user, loading, signOut } = useAuth();
@@ -162,6 +163,7 @@ export default function Home() {
               </CardHeader>
             </Card>
           </div>
+          <ProductInput />
         </div>
       </main>
 
