@@ -1,9 +1,10 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useSearchStore, ProductHistory } from '@/store/searchStore';
-import { fetchCoupangBestCategory } from '@/lib/coupang-best-category';
 
 /**
  * 상품 입력/검색 UI (링크 직접 입력, 키워드 검색 방식 토글)
@@ -12,7 +13,7 @@ export default function ProductInput() {
   // zustand store 연동
   const { results, setResults, selected, setSelected, history, addHistory, clear } = useSearchStore();
   // 입력 방식: 'link' | 'keyword' | 'category'
-  const [mode, setMode] = useState<'link' | 'keyword' | 'category'>('keyword');
+  const [mode, setMode] = useState<'link' | 'keyword' | 'category'>('category');
   // 링크 입력값 (최대 20개, ,로 구분)
   const [links, setLinks] = useState('');
   // 키워드 입력값
@@ -23,7 +24,7 @@ export default function ProductInput() {
   const [deeplinkResult, setDeeplinkResult] = useState<any[]>([]);
   // 로딩 상태
   const [loading, setLoading] = useState(false);
-  // 결과 뷰 타입: grid | list (갤러리 제거)
+  // 결과 뷰 타입: grid | list
   const [viewType, setViewType] = useState<'grid' | 'list'>(() => {
     if (typeof window !== 'undefined') {
       return (localStorage.getItem('viewType') as 'grid' | 'list') || 'grid';
@@ -44,7 +45,7 @@ export default function ProductInput() {
   const [showHistory, setShowHistory] = useState(false);
   const [historyDetail, setHistoryDetail] = useState<ProductHistory|null>(null);
   // 카테고리, 이미지 사이즈, limit 상태 추가
-  const [categoryId, setCategoryId] = useState('');
+  const [categoryId, setCategoryId] = useState('1002'); // 기본값 '남성패션'
   const [imageWidth, setImageWidth] = useState(512);
   const [imageHeight, setImageHeight] = useState(512);
   const [imageRatio, setImageRatio] = useState('1:1');
@@ -66,7 +67,7 @@ export default function ProductInput() {
   ];
 
   // 로켓배송 필터 적용
-  const filteredResults = rocketOnly ? deeplinkResult.filter(item => item.rocketShipping) : deeplinkResult;
+  const filteredResults = rocketOnly ? deeplinkResult.filter(item => item.isRocket || item.rocketShipping) : deeplinkResult;
 
   // 카테고리 검색 결과 필터링
   const filteredCategoryResults = mode === 'category'
@@ -174,12 +175,6 @@ export default function ProductInput() {
     setStep('search');
   };
 
-  // 뷰 타입별 클래스 (갤러리 제거, 그리드: 모바일 2열, PC 3열)
-  const getResultListClass = () => {
-    if (viewType === 'grid') return 'grid grid-cols-2 md:grid-cols-3 gap-4';
-    return 'flex flex-col gap-2';
-  };
-
   // 전체선택
   const allIds = filteredResults.map(item => item.productId || item.url);
   const allChecked = allIds.length > 0 && allIds.every(id => selected.includes(id));
@@ -187,11 +182,9 @@ export default function ProductInput() {
     setSelected(allChecked ? [] : allIds);
   };
 
-  // 카드 고정 높이, 영역 분리, 구분선 스타일
-  const cardClass = 'border rounded shadow flex flex-col justify-between p-2 min-h-40 text-left relative cursor-pointer transition-colors';
-  const cardSelected = 'bg-blue-50 border-blue-400';
-  const divider = <div className="border-t my-2" />;
-
+  const cardClass = 'border rounded-lg bg-card text-card-foreground shadow-sm flex flex-col p-4 text-left relative cursor-pointer transition-colors min-h-[220px]';
+  const cardSelected = 'bg-blue-50 border-blue-400 ring-2 ring-blue-300';
+  
   // 날짜/시간 포맷
   const formatDate = (iso: string) => {
     if (!iso) return '---';
@@ -234,8 +227,8 @@ export default function ProductInput() {
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto flex flex-col md:flex-row gap-4">
-      <Card className="p-6 mx-auto mt-8 flex-1">
+    <div className="flex w-full flex-col gap-6 md:flex-row">
+      <Card className="w-full flex-1 p-6">
         {/* 기존 탭 UI: 갤러리 제거 */}
         <div className="flex gap-2 mb-4">
           <Button variant={mode === 'link' ? 'default' : 'outline'} onClick={() => handleModeChange('link')}>링크 직접 입력</Button>
@@ -245,10 +238,10 @@ export default function ProductInput() {
         {/* 카테고리 검색 모드에서만 입력폼 노출 */}
         {mode === 'category' && (
           <>
-            <div className="flex flex-col gap-2 mb-2">
-              <div className="flex gap-4 items-center">
-                <label className="text-sm font-medium w-20">카테고리</label>
-                <select value={categoryId} onChange={e => setCategoryId(e.target.value)} className="border rounded px-2 py-1 w-48">
+            <div className="mb-2 flex flex-col gap-2">
+              <div className="flex items-center gap-4">
+                <label className="w-20 text-sm font-medium">카테고리</label>
+                <select value={categoryId} onChange={e => setCategoryId(e.target.value)} className="w-48 rounded border px-2 py-1">
                   <option value="">카테고리 선택</option>
                   <option value="1001">여성패션</option>
                   <option value="1002">남성패션</option>
@@ -271,18 +264,18 @@ export default function ProductInput() {
                   <option value="1030">유아동패션</option>
                 </select>
               </div>
-              <div className="flex gap-4 items-center">
-                <label className="text-sm font-medium w-20">이미지</label>
+              <div className="flex items-center gap-4">
+                <label className="w-20 text-sm font-medium">이미지</label>
                 <span className="text-xs">가로</span>
-                <select value={imageWidth} onChange={e => setImageWidth(Number(e.target.value))} className="border rounded px-2 py-1 w-20">
+                <select value={imageWidth} onChange={e => setImageWidth(Number(e.target.value))} className="w-20 rounded border px-2 py-1">
                   {imageSizeOptions.map(size => <option key={size} value={size}>{size}</option>)}
                 </select>
                 <span className="text-xs">세로</span>
-                <select value={imageHeight} onChange={e => setImageHeight(Number(e.target.value))} className="border rounded px-2 py-1 w-20">
+                <select value={imageHeight} onChange={e => setImageHeight(Number(e.target.value))} className="w-20 rounded border px-2 py-1">
                   {imageSizeOptions.map(size => <option key={size} value={size}>{size}</option>)}
                 </select>
                 <span className="text-xs">비율</span>
-                <select value={imageRatio} onChange={e => setImageRatio(e.target.value)} className="border rounded px-2 py-1 w-20">
+                <select value={imageRatio} onChange={e => setImageRatio(e.target.value)} className="w-20 rounded border px-2 py-1">
                   <option value="1:1">1:1</option>
                   <option value="4:3">4:3</option>
                   <option value="3:4">3:4</option>
@@ -290,23 +283,23 @@ export default function ProductInput() {
                   <option value="9:16">9:16</option>
                 </select>
               </div>
-              <div className="flex gap-4 items-center">
-                <label className="text-sm font-medium w-20">개수</label>
-                <input type="number" min={1} max={100} placeholder="limit" value={bestLimit} onChange={e => setBestLimit(Number(e.target.value))} className="border rounded px-2 py-1 w-24" />
+              <div className="flex items-center gap-4">
+                <label className="w-20 text-sm font-medium">개수</label>
+                <input type="number" min={1} max={100} placeholder="limit" value={bestLimit} onChange={e => setBestLimit(Number(e.target.value))} className="w-24 rounded border px-2 py-1" />
                 <span className="text-xs text-gray-500">최대 100개까지 가능</span>
               </div>
-              <div className="flex gap-4 items-center">
-                <label className="text-sm font-medium w-20">가격</label>
-                <input type="number" min={0} value={priceMin} onChange={e => setPriceMin(Number(e.target.value))} className="border rounded px-2 py-1 w-24" />
+              <div className="flex items-center gap-4">
+                <label className="w-20 text-sm font-medium">가격</label>
+                <input type="number" min={0} value={priceMin} onChange={e => setPriceMin(Number(e.target.value))} className="w-24 rounded border px-2 py-1" />
                 <span className="mx-1">~</span>
-                <input type="number" min={0} value={priceMax} onChange={e => setPriceMax(Number(e.target.value))} className="border rounded px-2 py-1 w-24" />
+                <input type="number" min={0} value={priceMax} onChange={e => setPriceMax(Number(e.target.value))} className="w-24 rounded border px-2 py-1" />
                 <div className="flex gap-1">
                   {pricePresets.map(preset => (
                     <Button key={preset.label} size="sm" variant="outline" onClick={() => { setPriceMin(preset.min); setPriceMax(preset.max); }}>{preset.label}</Button>
                   ))}
                 </div>
               </div>
-              <Button className="w-full mt-2 transition-transform active:scale-95" onClick={handleCategorySearch} disabled={loading}>카테고리 상품 검색</Button>
+              <Button className="mt-2 w-full transition-transform active:scale-95" onClick={handleCategorySearch} disabled={loading}>카테고리 상품 검색</Button>
             </div>
           </>
         )}
@@ -333,7 +326,7 @@ export default function ProductInput() {
           </div>
         ) : mode === 'keyword' ? (
           <div>
-            <div className="flex gap-2 mb-2">
+            <div className="mb-2 flex gap-2">
               <Input
                 placeholder="검색할 키워드 입력"
                 value={keyword}
@@ -355,54 +348,50 @@ export default function ProductInput() {
           </div>
         ) : null}
         <div className="mt-6">
-          <div className="flex gap-2 mb-2">
-            <Button size="sm" variant={viewType === 'grid' ? 'default' : 'outline'} onClick={() => setViewType('grid')}>그리드</Button>
-            <Button size="sm" variant={viewType === 'list' ? 'default' : 'outline'} onClick={() => setViewType('list')}>리스트</Button>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-bold">딥링크/상품 결과</h3>
+            <div className="flex gap-2">
+              <Button size="sm" variant={viewType === 'grid' ? 'default' : 'outline'} onClick={() => setViewType('grid')}>그리드</Button>
+              <Button size="sm" variant={viewType === 'list' ? 'default' : 'outline'} onClick={() => setViewType('list')}>리스트</Button>
+            </div>
           </div>
-          <h3 className="font-bold mb-2">딥링크/상품 결과</h3>
           {loading ? (
-            <div>로딩 중...</div>
+            <div className="flex h-48 w-full items-center justify-center">로딩 중...</div>
           ) : (
-            <ul className={getResultListClass() + ' h-full'}>
+            <ul className={`${viewType === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4' : 'flex flex-col gap-2'} h-full w-full`}>
               {(mode === 'category' ? filteredCategoryResults : filteredResults).map((item, i) => (
                 <li
                   key={i}
-                  className={cardClass + (selected.includes(item.productId || item.url) ? ' ' + cardSelected : '')}
+                  className={`${cardClass} ${selected.includes(item.productId || item.url) ? cardSelected : ''}`}
                   onClick={() => handleSelect(item.productId || item.url)}
                 >
-                  <div className="flex flex-col gap-2 flex-1">
-                    <div className="flex items-center gap-2">
-                      {item.image && (
-                        <img src={item.image} alt={item.title} className="w-40 h-40 object-cover rounded" />
-                      )}
-                      <span className="font-bold flex-1 line-clamp-2">{item.title || item.productName}</span>
-                      {item.isRocket && (
-                        <span className="text-xs bg-blue-100 text-blue-700 font-semibold px-2 py-1 rounded">로켓</span>
-                      )}
-                      {item.isFreeShipping && (
-                        <span className="text-xs bg-green-100 text-green-700 font-semibold px-2 py-1 rounded">무료배송</span>
-                      )}
-                    </div>
-                    {divider}
-                    <div>가격: <span className="font-semibold">{Number(item.price ?? item.productPrice).toLocaleString()}원</span></div>
+                  {(item.isRocket || item.rocketShipping) && (
+                    <span className="absolute right-2 top-2 rounded bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-700">로켓</span>
+                  )}
+                  <div className="mb-2 flex flex-1 flex-col gap-2">
+                    <span className="pr-10 font-bold line-clamp-2">{item.title || item.productName}</span>
+                    <div className="border-t"></div>
+                    <div className="text-sm text-gray-500">가격: <span className="font-semibold text-gray-800">{Number(item.price ?? item.productPrice).toLocaleString()}원</span></div>
+                    <div className="border-t"></div>
                     {item.categoryName && <div className="text-xs text-gray-500">카테고리: {item.categoryName}</div>}
-                    {divider}
-                    <div className="truncate overflow-hidden whitespace-nowrap max-w-full">링크: <a href={item.url || item.productUrl || item.originalUrl} className="text-blue-600 underline" target="_blank" rel="noopener noreferrer"><span className="truncate inline-block align-bottom max-w-[180px]">{item.url || item.productUrl || item.originalUrl}</span></a></div>
-                    {divider}
+                    <div className="border-t"></div>
+                    <div className="truncate text-xs text-blue-600">링크: <a href={item.url || item.productUrl || item.originalUrl} className="hover:underline" target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>{item.url || item.productUrl || item.originalUrl}</a></div>
                   </div>
                   {editIndex === i ? (
-                    <div className="flex gap-2 mt-2">
+                    <div className="mt-auto flex gap-2">
                       <Input
                         value={editLink}
                         onChange={e => setEditLink(e.target.value)}
-                        onKeyDown={e => handleEnter(e, () => handleEditLink(i, editLink))}
+                        onClick={e => e.stopPropagation()}
+                        onKeyDown={e => { e.stopPropagation(); if(e.key === 'Enter') handleEditLink(i, editLink); }}
                         autoFocus
+                        className="h-8"
                       />
-                      <Button size="sm" onClick={() => handleEditLink(i, editLink)}>저장</Button>
-                      <Button size="sm" variant="outline" onClick={() => setEditIndex(null)}>취소</Button>
+                      <Button size="sm" onClick={(e) => { e.stopPropagation(); handleEditLink(i, editLink); }}>저장</Button>
+                      <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setEditIndex(null); }}>취소</Button>
                     </div>
                   ) : (
-                    <Button size="sm" className="mt-1" onClick={e => { e.stopPropagation(); setEditIndex(i); setEditLink(item.url || item.originalUrl); }}>수정</Button>
+                    <Button size="sm" className="mt-auto w-full" onClick={e => { e.stopPropagation(); setEditIndex(i); setEditLink(item.url || item.originalUrl); }}>수정</Button>
                   )}
                 </li>
               ))}
@@ -414,16 +403,15 @@ export default function ProductInput() {
         </div>
       </Card>
       {/* PC: 사이드 이력, 모바일: 버튼+모달 */}
-      <div className="hidden md:block w-80 mt-8">
-        <Card className="p-4">
-          <h4 className="font-bold mb-2">검색 이력</h4>
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-xs font-medium">검색 이력</span>
-            <Button size="sm" variant="outline" className="text-xs px-2 py-1" onClick={handleClearHistory}>이력 지우기</Button>
+      <div className="hidden md:block md:w-80 lg:w-96">
+        <Card className="sticky top-24 p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <h4 className="font-bold">검색 이력</h4>
+            <Button size="sm" variant="outline" className="px-2 py-1 text-xs" onClick={handleClearHistory}>이력 지우기</Button>
           </div>
-          <ul className="text-xs space-y-1">
+          <ul className="max-h-[60vh] space-y-1 overflow-y-auto text-xs">
             {history.map((h, idx) => (
-              <li key={idx} className="truncate border-b pb-1 cursor-pointer hover:bg-gray-100" onClick={() => setHistoryDetail(h)}>
+              <li key={idx} className="truncate cursor-pointer border-b pb-1 hover:bg-gray-100" onClick={() => setHistoryDetail(h)}>
                 <span className="font-semibold">{h.keyword}</span> <span className="text-gray-500">{formatDate(h.date)}</span>
               </li>
             ))}
@@ -433,12 +421,12 @@ export default function ProductInput() {
       <div className="block md:hidden mt-4">
         <Button onClick={() => setShowHistory(true)} className="w-full">검색 이력 보기</Button>
         {showHistory && (
-          <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
-            <div className="bg-white rounded-lg p-4 w-11/12 max-w-md mx-auto">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="mx-auto w-11/12 max-w-md rounded-lg bg-white p-4">
               <h4 className="font-bold mb-2">검색 이력</h4>
-              <ul className="text-xs space-y-1 max-h-60 overflow-y-auto">
+              <ul className="max-h-60 space-y-1 overflow-y-auto text-xs">
                 {history.map((h, idx) => (
-                  <li key={idx} className="truncate border-b pb-1 cursor-pointer hover:bg-gray-100" onClick={() => { setHistoryDetail(h); setShowHistory(false); }}>
+                  <li key={idx} className="truncate cursor-pointer border-b pb-1 hover:bg-gray-100" onClick={() => { setHistoryDetail(h); setShowHistory(false); }}>
                     <span className="font-semibold">{h.keyword}</span> <span className="text-gray-500">{formatDate(h.date)}</span>
                   </li>
                 ))}
@@ -451,18 +439,18 @@ export default function ProductInput() {
       </div>
       {/* 상세 모달 */}
       {historyDetail && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-lg p-6 w-11/12 max-w-2xl mx-auto relative">
-            <button className="absolute top-2 right-2 text-xl" onClick={() => setHistoryDetail(null)}>&times;</button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="relative mx-auto w-11/12 max-w-2xl rounded-lg bg-white p-6">
+            <button className="absolute right-2 top-2 text-xl" onClick={() => setHistoryDetail(null)}>&times;</button>
             <h4 className="font-bold mb-2">검색 상세: <span className="text-blue-700">{historyDetail.keyword}</span> <span className="text-gray-500">{formatDate(historyDetail.date)}</span></h4>
-            <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto max-h-[60vh]">
+            <ul className="grid max-h-[60vh] grid-cols-1 gap-4 overflow-y-auto md:grid-cols-2">
               {Array.isArray(historyDetail.results) && historyDetail.results.map((item, i) => (
-                <li key={i} className="border rounded p-2 flex flex-col gap-2">
-                  {item.image && <img src={item.image} alt={item.title} className="w-32 h-32 object-cover rounded mx-auto" />}
+                <li key={i} className="flex flex-col gap-2 rounded border p-2">
+                  {item.image && <img src={item.image} alt={item.title} className="mx-auto h-32 w-32 rounded object-cover" />}
                   <div className="font-bold line-clamp-2">{item.title}</div>
                   <div>가격: {item.price?.toLocaleString()}원</div>
-                  <div className="truncate overflow-hidden whitespace-nowrap max-w-full">링크: <a href={item.url} className="text-blue-600 underline" target="_blank" rel="noopener noreferrer"><span className="truncate inline-block align-bottom max-w-[180px]">{item.url}</span></a></div>
-                  {item.rocketShipping && <span className="text-xs bg-blue-100 text-blue-700 font-semibold px-2 py-1 rounded">로켓</span>}
+                  <div className="truncate overflow-hidden whitespace-nowrap max-w-full">링크: <a href={item.url} className="text-blue-600 underline" target="_blank" rel="noopener noreferrer"><span className="inline-block max-w-[180px] align-bottom truncate">{item.url}</span></a></div>
+                  {item.rocketShipping && <span className="rounded bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-700">로켓</span>}
                 </li>
               ))}
             </ul>

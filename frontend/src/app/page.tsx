@@ -22,40 +22,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200">
-        <div className="flex items-center gap-2">
-          <Image
-            src="/next.svg"
-            alt="CP9 Logo"
-            width={40}
-            height={40}
-            className="dark:invert"
-          />
-          <h1 className="text-lg font-bold text-gray-900">CP9</h1>
-        </div>
-        <nav className="flex items-center gap-4">
-          {user ? (
-            <>
-              <span className="text-sm text-gray-600">
-                {user.email}
-              </span>
-              <Button variant="outline" onClick={signOut}>
-                로그아웃
-              </Button>
-            </>
-          ) : (
-            <>
-              <Link href="/login">
-                <Button variant="outline">로그인</Button>
-              </Link>
-              <Link href="/login">
-                <Button>시작하기</Button>
-              </Link>
-            </>
-          )}
-        </nav>
-      </header>
+      
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-stretch px-2 py-6">
@@ -64,17 +31,16 @@ export default function Home() {
             쿠팡 파트너스 자동 블로그 SaaS
           </h2>
           <p className="text-xl text-gray-600 mb-8">
-            키워드만 입력하면 쿠팡 상품 검색부터 워드프레스 초안까지 원-클릭으로 완성
+            키워드만 입력하면 쿠팡 상품 검색부터 워드프레스 초안까지 원-클릭으로
+            완성
           </p>
-          
+
           {/* Keyword Input Form */}
           {user ? (
             <Card className="max-w-md mx-auto mb-8">
               <CardHeader>
                 <CardTitle className="text-lg">키워드 입력</CardTitle>
-                <CardDescription>
-                  검색할 키워드를 입력하세요
-                </CardDescription>
+                <CardDescription>검색할 키워드를 입력하세요</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -85,9 +51,7 @@ export default function Home() {
                     className="w-full"
                   />
                 </div>
-                <Button className="w-full">
-                  자동 블로그 글 생성
-                </Button>
+                <Button className="w-full">자동 블로그 글 생성</Button>
               </CardContent>
             </Card>
           ) : (
@@ -100,9 +64,7 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 <Link href="/login">
-                  <Button className="w-full">
-                    로그인하고 시작하기
-                  </Button>
+                  <Button className="w-full">로그인하고 시작하기</Button>
                 </Link>
               </CardContent>
             </Card>
@@ -111,15 +73,11 @@ export default function Home() {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             {user ? (
-              <Button size="lg">
-                내 블로그 글 보기
-              </Button>
+              <Button size="lg">내 블로그 글 보기</Button>
             ) : (
               <>
                 <Link href="/login">
-                  <Button size="lg">
-                    무료로 시작하기
-                  </Button>
+                  <Button size="lg">무료로 시작하기</Button>
                 </Link>
                 <Button variant="outline" size="lg">
                   데모 보기
@@ -140,7 +98,7 @@ export default function Home() {
                 </CardDescription>
               </CardHeader>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -151,7 +109,7 @@ export default function Home() {
                 </CardDescription>
               </CardHeader>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -163,7 +121,6 @@ export default function Home() {
               </CardHeader>
             </Card>
           </div>
-          <ProductInput />
         </section>
       </main>
 
