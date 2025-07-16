@@ -58,8 +58,8 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col items-center justify-center px-6 py-12">
-        <div className="max-w-4xl mx-auto text-center">
+      <main className="flex-1 flex flex-col items-stretch px-2 py-6">
+        <section className="w-full max-w-4xl mx-auto">
           <h2 className="text-4xl font-bold text-gray-900 mb-6">
             쿠팡 파트너스 자동 블로그 SaaS
           </h2>
@@ -164,7 +164,7 @@ export default function Home() {
             </Card>
           </div>
           <ProductInput />
-        </div>
+        </section>
       </main>
 
       {/* Footer */}

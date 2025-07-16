@@ -15,7 +15,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #ededed;
-    --foreground: #0a0a0a;
+    --foreground: #171717;
   }
 }
 
@@ -28,10 +28,12 @@ body {
 /* 코드 스타일 가이드에 맞는 기본 스타일 */
 .btn-primary {
   @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  color: #171717;
 }
 
 .btn-secondary {
   @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-gray-100 text-gray-900 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  color: #171717;
 }
 
 .card {

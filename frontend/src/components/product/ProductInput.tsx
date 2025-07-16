@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useSearchStore, ProductHistory } from '@/store/searchStore';
+import { fetchCoupangBestCategory } from '@/lib/coupang-best-category';
 
 /**
  * 상품 입력/검색 UI (링크 직접 입력, 키워드 검색 방식 토글)
@@ -10,8 +11,8 @@ import { useSearchStore, ProductHistory } from '@/store/searchStore';
 export default function ProductInput() {
   // zustand store 연동
   const { results, setResults, selected, setSelected, history, addHistory, clear } = useSearchStore();
-  // 입력 방식: 'link' | 'keyword'
-  const [mode, setMode] = useState<'link' | 'keyword'>('keyword');
+  // 입력 방식: 'link' | 'keyword' | 'category'
+  const [mode, setMode] = useState<'link' | 'keyword' | 'category'>('keyword');
   // 링크 입력값 (최대 20개, ,로 구분)
   const [links, setLinks] = useState('');
   // 키워드 입력값
@@ -22,8 +23,19 @@ export default function ProductInput() {
   const [deeplinkResult, setDeeplinkResult] = useState<any[]>([]);
   // 로딩 상태
   const [loading, setLoading] = useState(false);
-  // 결과 뷰 타입: gallery | grid | list
-  const [viewType, setViewType] = useState<'gallery' | 'grid' | 'list'>('gallery');
+  // 결과 뷰 타입: grid | list (갤러리 제거)
+  const [viewType, setViewType] = useState<'grid' | 'list'>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('viewType') as 'grid' | 'list') || 'grid';
+    }
+    return 'grid';
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('viewType', viewType);
+    }
+  }, [viewType]);
   // 링크 수정용 임시 상태
   const [editIndex, setEditIndex] = useState<number|null>(null);
   const [editLink, setEditLink] = useState('');
@@ -31,6 +43,37 @@ export default function ProductInput() {
   const [step, setStep] = useState<'search' | 'deeplink'>('search');
   const [showHistory, setShowHistory] = useState(false);
   const [historyDetail, setHistoryDetail] = useState<ProductHistory|null>(null);
+  // 카테고리, 이미지 사이즈, limit 상태 추가
+  const [categoryId, setCategoryId] = useState('');
+  const [imageWidth, setImageWidth] = useState(512);
+  const [imageHeight, setImageHeight] = useState(512);
+  const [imageRatio, setImageRatio] = useState('1:1');
+  const [bestLimit, setBestLimit] = useState(20);
+  // 가격 필터 상태
+  const [priceMin, setPriceMin] = useState(0);
+  const [priceMax, setPriceMax] = useState(500000);
+
+  // 이미지 사이즈 셀렉트 옵션
+  const imageSizeOptions = [256, 512, 768, 1024];
+
+  // 가격 프리셋
+  const pricePresets = [
+    { label: '0~10만', min: 0, max: 100000 },
+    { label: '0~20만', min: 0, max: 200000 },
+    { label: '0~30만', min: 0, max: 300000 },
+    { label: '0~40만', min: 0, max: 400000 },
+    { label: '0~50만', min: 0, max: 500000 },
+  ];
+
+  // 로켓배송 필터 적용
+  const filteredResults = rocketOnly ? deeplinkResult.filter(item => item.rocketShipping) : deeplinkResult;
+
+  // 카테고리 검색 결과 필터링
+  const filteredCategoryResults = mode === 'category'
+    ? deeplinkResult.filter(item =>
+        (item.productPrice ?? 0) >= priceMin && (item.productPrice ?? 0) <= priceMax
+      )
+    : filteredResults;
 
   // 검색 결과 zustand에 저장/복원
   useEffect(() => {
@@ -43,6 +86,11 @@ export default function ProductInput() {
   // 엔터로 검색되는 공통 훅
   const handleEnter = (e: React.KeyboardEvent<HTMLInputElement>, action: () => void) => {
     if (e.key === 'Enter') action();
+  };
+
+  // addHistory 호출 전 공백 검색 방지
+  const safeAddHistory = (keyword: string, items: any[]) => {
+    if (keyword.trim()) addHistory(keyword, items);
   };
 
   // 링크 → 딥링크 변환 요청 (mock)
@@ -63,7 +111,7 @@ export default function ProductInput() {
       setDeeplinkResult(items);
       setLoading(false);
       setStep('deeplink');
-      addHistory(links, items);
+      safeAddHistory(links, items);
     }, 500);
   };
 
@@ -80,7 +128,7 @@ export default function ProductInput() {
       const data = await res.json();
       setDeeplinkResult(Array.isArray(data) ? data.slice(0, itemCount) : []);
       setStep('deeplink');
-      addHistory(keyword, Array.isArray(data) ? data.slice(0, itemCount) : []);
+      safeAddHistory(keyword, Array.isArray(data) ? data.slice(0, itemCount) : []);
     } finally {
       setLoading(false);
     }
@@ -118,24 +166,19 @@ export default function ProductInput() {
   };
 
   // 입력 방식 변경 시 상태 초기화
-  const handleModeChange = (newMode: 'link' | 'keyword') => {
+  const handleModeChange = (newMode: 'link' | 'keyword' | 'category') => {
     setMode(newMode);
     setEditIndex(null);
     setEditLink('');
-    setDeeplinkResult([]);
     setSelected([]);
     setStep('search');
   };
 
-  // 뷰 타입별 클래스
+  // 뷰 타입별 클래스 (갤러리 제거, 그리드: 모바일 2열, PC 3열)
   const getResultListClass = () => {
-    if (viewType === 'gallery') return 'grid grid-cols-2 md:grid-cols-3 gap-4';
-    if (viewType === 'grid') return 'grid grid-cols-1 md:grid-cols-2 gap-2';
+    if (viewType === 'grid') return 'grid grid-cols-2 md:grid-cols-3 gap-4';
     return 'flex flex-col gap-2';
   };
-
-  // 로켓배송 필터 적용
-  const filteredResults = rocketOnly ? deeplinkResult.filter(item => item.rocketShipping) : deeplinkResult;
 
   // 전체선택
   const allIds = filteredResults.map(item => item.productId || item.url);
@@ -145,7 +188,7 @@ export default function ProductInput() {
   };
 
   // 카드 고정 높이, 영역 분리, 구분선 스타일
-  const cardClass = 'border rounded shadow flex flex-col justify-between p-2 h-[320px] min-h-[320px] max-h-[320px] text-left relative cursor-pointer transition-colors';
+  const cardClass = 'border rounded shadow flex flex-col justify-between p-2 min-h-40 text-left relative cursor-pointer transition-colors';
   const cardSelected = 'bg-blue-50 border-blue-400';
   const divider = <div className="border-t my-2" />;
 
@@ -160,13 +203,113 @@ export default function ProductInput() {
   // 반응형: PC(>=md) 사이드, 모바일 버튼+모달
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
+  // 이력 지우기 버튼 핸들러: 이력, 결과, 선택 모두 초기화
+  const handleClearHistory = () => {
+    clear();
+    setResults([]);
+    setDeeplinkResult([]);
+    setSelected([]);
+  };
+
+  // 카테고리 상품 검색 핸들러 (API Route로 요청)
+  const handleCategorySearch = async () => {
+    if (!categoryId) return;
+    setLoading(true);
+    try {
+      const imageSize = `${imageWidth}x${imageHeight}`;
+      const res = await fetch('/api/products/bestcategories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ categoryId, limit: bestLimit, imageSize }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const products = await res.json();
+      setDeeplinkResult(products);
+      setStep('deeplink');
+    } catch (e) {
+      alert('카테고리 상품 검색 실패: ' + (e instanceof Error ? e.message : ''));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="flex flex-col md:flex-row gap-4">
+    <div className="w-full max-w-3xl mx-auto flex flex-col md:flex-row gap-4">
       <Card className="p-6 mx-auto mt-8 flex-1">
+        {/* 기존 탭 UI: 갤러리 제거 */}
         <div className="flex gap-2 mb-4">
           <Button variant={mode === 'link' ? 'default' : 'outline'} onClick={() => handleModeChange('link')}>링크 직접 입력</Button>
           <Button variant={mode === 'keyword' ? 'default' : 'outline'} onClick={() => handleModeChange('keyword')}>키워드 검색</Button>
+          <Button variant={mode === 'category' ? 'default' : 'outline'} onClick={() => handleModeChange('category')}>카테고리 검색</Button>
         </div>
+        {/* 카테고리 검색 모드에서만 입력폼 노출 */}
+        {mode === 'category' && (
+          <>
+            <div className="flex flex-col gap-2 mb-2">
+              <div className="flex gap-4 items-center">
+                <label className="text-sm font-medium w-20">카테고리</label>
+                <select value={categoryId} onChange={e => setCategoryId(e.target.value)} className="border rounded px-2 py-1 w-48">
+                  <option value="">카테고리 선택</option>
+                  <option value="1001">여성패션</option>
+                  <option value="1002">남성패션</option>
+                  <option value="1010">뷰티</option>
+                  <option value="1011">출산/유아동</option>
+                  <option value="1012">식품</option>
+                  <option value="1013">주방용품</option>
+                  <option value="1014">생활용품</option>
+                  <option value="1015">홈인테리어</option>
+                  <option value="1016">가전디지털</option>
+                  <option value="1017">스포츠/레저</option>
+                  <option value="1018">자동차용품</option>
+                  <option value="1019">도서/음반/DVD</option>
+                  <option value="1020">완구/취미</option>
+                  <option value="1021">문구/오피스</option>
+                  <option value="1024">헬스/건강식품</option>
+                  <option value="1025">국내여행</option>
+                  <option value="1026">해외여행</option>
+                  <option value="1029">반려동물용품</option>
+                  <option value="1030">유아동패션</option>
+                </select>
+              </div>
+              <div className="flex gap-4 items-center">
+                <label className="text-sm font-medium w-20">이미지</label>
+                <span className="text-xs">가로</span>
+                <select value={imageWidth} onChange={e => setImageWidth(Number(e.target.value))} className="border rounded px-2 py-1 w-20">
+                  {imageSizeOptions.map(size => <option key={size} value={size}>{size}</option>)}
+                </select>
+                <span className="text-xs">세로</span>
+                <select value={imageHeight} onChange={e => setImageHeight(Number(e.target.value))} className="border rounded px-2 py-1 w-20">
+                  {imageSizeOptions.map(size => <option key={size} value={size}>{size}</option>)}
+                </select>
+                <span className="text-xs">비율</span>
+                <select value={imageRatio} onChange={e => setImageRatio(e.target.value)} className="border rounded px-2 py-1 w-20">
+                  <option value="1:1">1:1</option>
+                  <option value="4:3">4:3</option>
+                  <option value="3:4">3:4</option>
+                  <option value="16:9">16:9</option>
+                  <option value="9:16">9:16</option>
+                </select>
+              </div>
+              <div className="flex gap-4 items-center">
+                <label className="text-sm font-medium w-20">개수</label>
+                <input type="number" min={1} max={100} placeholder="limit" value={bestLimit} onChange={e => setBestLimit(Number(e.target.value))} className="border rounded px-2 py-1 w-24" />
+                <span className="text-xs text-gray-500">최대 100개까지 가능</span>
+              </div>
+              <div className="flex gap-4 items-center">
+                <label className="text-sm font-medium w-20">가격</label>
+                <input type="number" min={0} value={priceMin} onChange={e => setPriceMin(Number(e.target.value))} className="border rounded px-2 py-1 w-24" />
+                <span className="mx-1">~</span>
+                <input type="number" min={0} value={priceMax} onChange={e => setPriceMax(Number(e.target.value))} className="border rounded px-2 py-1 w-24" />
+                <div className="flex gap-1">
+                  {pricePresets.map(preset => (
+                    <Button key={preset.label} size="sm" variant="outline" onClick={() => { setPriceMin(preset.min); setPriceMax(preset.max); }}>{preset.label}</Button>
+                  ))}
+                </div>
+              </div>
+              <Button className="w-full mt-2 transition-transform active:scale-95" onClick={handleCategorySearch} disabled={loading}>카테고리 상품 검색</Button>
+            </div>
+          </>
+        )}
         <div className="mb-2 flex items-center gap-4">
           <label className="flex items-center gap-1 text-sm">
             <input type="checkbox" checked={rocketOnly} onChange={e => setRocketOnly(e.target.checked)} />
@@ -188,7 +331,7 @@ export default function ProductInput() {
             />
             <Button className="mt-2 w-full" onClick={handleLinkSubmit} disabled={loading}>딥링크 변환 단계로</Button>
           </div>
-        ) : (
+        ) : mode === 'keyword' ? (
           <div>
             <div className="flex gap-2 mb-2">
               <Input
@@ -210,10 +353,9 @@ export default function ProductInput() {
             </div>
             <Button className="w-full" onClick={handleKeywordSearch} disabled={loading}>상품 검색</Button>
           </div>
-        )}
+        ) : null}
         <div className="mt-6">
           <div className="flex gap-2 mb-2">
-            <Button size="sm" variant={viewType === 'gallery' ? 'default' : 'outline'} onClick={() => setViewType('gallery')}>갤러리</Button>
             <Button size="sm" variant={viewType === 'grid' ? 'default' : 'outline'} onClick={() => setViewType('grid')}>그리드</Button>
             <Button size="sm" variant={viewType === 'list' ? 'default' : 'outline'} onClick={() => setViewType('list')}>리스트</Button>
           </div>
@@ -221,8 +363,8 @@ export default function ProductInput() {
           {loading ? (
             <div>로딩 중...</div>
           ) : (
-            <ul className={(viewType === 'gallery' ? 'grid grid-cols-2 md:grid-cols-3 gap-4 items-stretch' : viewType === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 gap-2 items-stretch' : 'flex flex-col gap-2') + ' h-full'}>
-              {filteredResults.map((item, i) => (
+            <ul className={getResultListClass() + ' h-full'}>
+              {(mode === 'category' ? filteredCategoryResults : filteredResults).map((item, i) => (
                 <li
                   key={i}
                   className={cardClass + (selected.includes(item.productId || item.url) ? ' ' + cardSelected : '')}
@@ -233,15 +375,19 @@ export default function ProductInput() {
                       {item.image && (
                         <img src={item.image} alt={item.title} className="w-40 h-40 object-cover rounded" />
                       )}
-                      <span className="font-bold flex-1 line-clamp-2">{item.title}</span>
-                      {item.rocketShipping && (
+                      <span className="font-bold flex-1 line-clamp-2">{item.title || item.productName}</span>
+                      {item.isRocket && (
                         <span className="text-xs bg-blue-100 text-blue-700 font-semibold px-2 py-1 rounded">로켓</span>
+                      )}
+                      {item.isFreeShipping && (
+                        <span className="text-xs bg-green-100 text-green-700 font-semibold px-2 py-1 rounded">무료배송</span>
                       )}
                     </div>
                     {divider}
-                    <div>가격: <span className="font-semibold">{item.price?.toLocaleString()}원</span></div>
+                    <div>가격: <span className="font-semibold">{Number(item.price ?? item.productPrice).toLocaleString()}원</span></div>
+                    {item.categoryName && <div className="text-xs text-gray-500">카테고리: {item.categoryName}</div>}
                     {divider}
-                    <div className="truncate overflow-hidden whitespace-nowrap max-w-full">링크: <a href={item.url || item.originalUrl} className="text-blue-600 underline" target="_blank" rel="noopener noreferrer"><span className="truncate inline-block align-bottom max-w-[180px]">{item.url || item.originalUrl}</span></a></div>
+                    <div className="truncate overflow-hidden whitespace-nowrap max-w-full">링크: <a href={item.url || item.productUrl || item.originalUrl} className="text-blue-600 underline" target="_blank" rel="noopener noreferrer"><span className="truncate inline-block align-bottom max-w-[180px]">{item.url || item.productUrl || item.originalUrl}</span></a></div>
                     {divider}
                   </div>
                   {editIndex === i ? (
@@ -271,6 +417,10 @@ export default function ProductInput() {
       <div className="hidden md:block w-80 mt-8">
         <Card className="p-4">
           <h4 className="font-bold mb-2">검색 이력</h4>
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-xs font-medium">검색 이력</span>
+            <Button size="sm" variant="outline" className="text-xs px-2 py-1" onClick={handleClearHistory}>이력 지우기</Button>
+          </div>
           <ul className="text-xs space-y-1">
             {history.map((h, idx) => (
               <li key={idx} className="truncate border-b pb-1 cursor-pointer hover:bg-gray-100" onClick={() => setHistoryDetail(h)}>
@@ -293,6 +443,7 @@ export default function ProductInput() {
                   </li>
                 ))}
               </ul>
+              <Button className="mt-2 w-full" variant="outline" onClick={handleClearHistory}>이력 지우기</Button>
               <Button className="mt-4 w-full" onClick={() => setShowHistory(false)}>닫기</Button>
             </div>
           </div>
@@ -304,7 +455,7 @@ export default function ProductInput() {
           <div className="bg-white rounded-lg p-6 w-11/12 max-w-2xl mx-auto relative">
             <button className="absolute top-2 right-2 text-xl" onClick={() => setHistoryDetail(null)}>&times;</button>
             <h4 className="font-bold mb-2">검색 상세: <span className="text-blue-700">{historyDetail.keyword}</span> <span className="text-gray-500">{formatDate(historyDetail.date)}</span></h4>
-            <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto max-h-[60vh]">
               {Array.isArray(historyDetail.results) && historyDetail.results.map((item, i) => (
                 <li key={i} className="border rounded p-2 flex flex-col gap-2">
                   {item.image && <img src={item.image} alt={item.title} className="w-32 h-32 object-cover rounded mx-auto" />}
