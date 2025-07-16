@@ -21,7 +21,7 @@ alwaysApply: true
 /* 2. CSS Variables */
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #1d1d1d;
 }
 
 /* 3. Base Styles */

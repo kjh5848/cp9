@@ -46,9 +46,9 @@ export default function AuthForm() {
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
+        provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/callback`,
         },
       });
       if (error) throw error;
