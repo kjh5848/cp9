@@ -14,5 +14,7 @@ alwaysApply: true
 - 불변 값엔 `const`, 변경 가능 값엔 `let`
 - `console.log` 금지, 대신 `logger` 유틸 호출
 
+함수
+- 함수는 훅으로 만들어서 정리한다.
 
 > AI가 새 파일을 만들거나 수정할 때 위 포맷을 무조건 준수한다.
