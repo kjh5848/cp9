@@ -11,13 +11,19 @@ export type ProductItem = {
   deepLink?: string;
 };
 
+export type ProductHistory = {
+  keyword: string;
+  date: string; // ISO
+  results: ProductItem[];
+};
+
 interface SearchStore {
   results: ProductItem[];
   setResults: (items: ProductItem[]) => void;
-  selected: string[]; // productId or url
+  selected: string[];
   setSelected: (ids: string[]) => void;
-  history: ProductItem[][];
-  addHistory: (items: ProductItem[]) => void;
+  history: ProductHistory[];
+  addHistory: (keyword: string, items: ProductItem[]) => void;
   clear: () => void;
 }
 
@@ -29,7 +35,7 @@ export const useSearchStore = create<SearchStore>()(
       selected: [],
       setSelected: (ids) => set({ selected: ids }),
       history: [],
-      addHistory: (items) => set({ history: [...get().history, items] }),
+      addHistory: (keyword, items) => set({ history: [...get().history, { keyword, date: new Date().toISOString(), results: items }] }),
       clear: () => set({ results: [], selected: [] }),
     }),
     { name: 'search-store' }

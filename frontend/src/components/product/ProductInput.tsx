@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { useSearchStore } from '@/store/searchStore';
+import { useSearchStore, ProductHistory } from '@/store/searchStore';
 
 /**
  * 상품 입력/검색 UI (링크 직접 입력, 키워드 검색 방식 토글)
@@ -11,7 +11,7 @@ export default function ProductInput() {
   // zustand store 연동
   const { results, setResults, selected, setSelected, history, addHistory, clear } = useSearchStore();
   // 입력 방식: 'link' | 'keyword'
-  const [mode, setMode] = useState<'link' | 'keyword'>('link');
+  const [mode, setMode] = useState<'link' | 'keyword'>('keyword');
   // 링크 입력값 (최대 20개, ,로 구분)
   const [links, setLinks] = useState('');
   // 키워드 입력값
@@ -29,6 +29,8 @@ export default function ProductInput() {
   const [editLink, setEditLink] = useState('');
   const [rocketOnly, setRocketOnly] = useState(false);
   const [step, setStep] = useState<'search' | 'deeplink'>('search');
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyDetail, setHistoryDetail] = useState<ProductHistory|null>(null);
 
   // 검색 결과 zustand에 저장/복원
   useEffect(() => {
@@ -48,10 +50,20 @@ export default function ProductInput() {
     setLoading(true);
     // TODO: 실제 딥링크 변환 API 연동
     const urls = links.split(',').map((v) => v.trim()).filter(Boolean).slice(0, 20);
+    const items = urls.map((url) => ({
+      title: url,
+      image: '',
+      price: 0,
+      url,
+      productId: url,
+      deepLink: url + '?deeplink=1',
+      rocketShipping: false,
+    }));
     setTimeout(() => {
-      setDeeplinkResult(urls.map((url, i) => ({ originalUrl: url, deepLink: url + '?deeplink=1', productId: url })));
+      setDeeplinkResult(items);
       setLoading(false);
       setStep('deeplink');
+      addHistory(links, items);
     }, 500);
   };
 
@@ -68,6 +80,7 @@ export default function ProductInput() {
       const data = await res.json();
       setDeeplinkResult(Array.isArray(data) ? data.slice(0, itemCount) : []);
       setStep('deeplink');
+      addHistory(keyword, Array.isArray(data) ? data.slice(0, itemCount) : []);
     } finally {
       setLoading(false);
     }
@@ -83,11 +96,10 @@ export default function ProductInput() {
           : item
       ));
       setLoading(false);
-      addHistory(deeplinkResult);
     }, 500);
   };
 
-  // 상품 선택 토글
+  // 상품 선택 토글(색상 변경)
   const handleSelect = (id: string) => {
     setSelected(selected.includes(id) ? selected.filter(x => x !== id) : [...selected, id]);
   };
@@ -133,131 +145,179 @@ export default function ProductInput() {
   };
 
   // 카드 고정 높이, 영역 분리, 구분선 스타일
-  const cardClass = 'border rounded shadow flex flex-col justify-between p-2 h-[320px] min-h-[320px] max-h-[600px] text-left relative';
+  const cardClass = 'border rounded shadow flex flex-col justify-between p-2 h-[320px] min-h-[320px] max-h-[320px] text-left relative cursor-pointer transition-colors';
+  const cardSelected = 'bg-blue-50 border-blue-400';
   const divider = <div className="border-t my-2" />;
 
+  // 날짜/시간 포맷
+  const formatDate = (iso: string) => {
+    if (!iso) return '---';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '---';
+    return `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+  };
+
+  // 반응형: PC(>=md) 사이드, 모바일 버튼+모달
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
   return (
-    <Card className="p-6 mx-auto mt-8">
-      <div className="flex gap-2 mb-4">
-        <Button variant={mode === 'link' ? 'default' : 'outline'} onClick={() => handleModeChange('link')}>링크 직접 입력</Button>
-        <Button variant={mode === 'keyword' ? 'default' : 'outline'} onClick={() => handleModeChange('keyword')}>키워드 검색</Button>
-      </div>
-      <div className="mb-2 flex items-center gap-4">
-        <label className="flex items-center gap-1 text-sm">
-          <input type="checkbox" checked={rocketOnly} onChange={e => setRocketOnly(e.target.checked)} />
-          로켓배송만 보기
-        </label>
-        <label className="flex items-center gap-1 text-sm">
-          <input type="checkbox" checked={allChecked} onChange={handleSelectAll} />
-          전체선택
-        </label>
-      </div>
-      {mode === 'link' ? (
-        <div>
-          <Input
-            placeholder="쿠팡 상품 링크를 ,로 구분해 입력 (최대 20개)"
-            value={links}
-            onChange={e => setLinks(e.target.value)}
-            onKeyDown={e => handleEnter(e, handleLinkSubmit)}
-            disabled={loading}
-          />
-          <Button className="mt-2 w-full" onClick={handleLinkSubmit} disabled={loading}>딥링크 변환 단계로</Button>
-          <div className="flex gap-2 mt-2">
+    <div className="flex flex-col md:flex-row gap-4">
+      <Card className="p-6 mx-auto mt-8 flex-1">
+        <div className="flex gap-2 mb-4">
+          <Button variant={mode === 'link' ? 'default' : 'outline'} onClick={() => handleModeChange('link')}>링크 직접 입력</Button>
+          <Button variant={mode === 'keyword' ? 'default' : 'outline'} onClick={() => handleModeChange('keyword')}>키워드 검색</Button>
+        </div>
+        <div className="mb-2 flex items-center gap-4">
+          <label className="flex items-center gap-1 text-sm">
+            <input type="checkbox" checked={rocketOnly} onChange={e => setRocketOnly(e.target.checked)} />
+            로켓배송만 보기
+          </label>
+          <label className="flex items-center gap-1 text-sm">
+            <input type="checkbox" checked={allChecked} onChange={handleSelectAll} />
+            전체선택
+          </label>
+        </div>
+        {mode === 'link' ? (
+          <div>
             <Input
-              placeholder="링크 추가"
-              value={editLink}
-              onChange={e => setEditLink(e.target.value)}
-              onKeyDown={e => handleEnter(e, handleAddLink)}
+              placeholder="쿠팡 상품 링크를 ,로 구분해 입력 (최대 20개)"
+              value={links}
+              onChange={e => setLinks(e.target.value)}
+              onKeyDown={e => handleEnter(e, handleLinkSubmit)}
               disabled={loading}
             />
-            <Button onClick={handleAddLink} disabled={loading}>추가</Button>
+            <Button className="mt-2 w-full" onClick={handleLinkSubmit} disabled={loading}>딥링크 변환 단계로</Button>
           </div>
-        </div>
-      ) : (
-        <div>
-          <div className="flex gap-2 mb-2">
-            <Input
-              placeholder="검색할 키워드 입력"
-              value={keyword}
-              onChange={e => setKeyword(e.target.value)}
-              onKeyDown={e => handleEnter(e, handleKeywordSearch)}
-              disabled={loading}
-            />
-            <Input
-              type="number"
-              min={1}
-              max={20}
-              value={itemCount}
-              onChange={e => setItemCount(Number(e.target.value))}
-              className="w-20"
-              disabled={loading}
-            />
-          </div>
-          <Button className="w-full" onClick={handleKeywordSearch} disabled={loading}>상품 검색</Button>
-        </div>
-      )}
-      <div className="mt-6">
-        <div className="flex gap-2 mb-2">
-          <Button size="sm" variant={viewType === 'gallery' ? 'default' : 'outline'} onClick={() => setViewType('gallery')}>갤러리</Button>
-          <Button size="sm" variant={viewType === 'grid' ? 'default' : 'outline'} onClick={() => setViewType('grid')}>그리드</Button>
-          <Button size="sm" variant={viewType === 'list' ? 'default' : 'outline'} onClick={() => setViewType('list')}>리스트</Button>
-        </div>
-        <h3 className="font-bold mb-2">딥링크/상품 결과</h3>
-        {loading ? (
-          <div>로딩 중...</div>
         ) : (
-          <ul className={(viewType === 'gallery' ? 'grid grid-cols-2 md:grid-cols-3 gap-4 items-stretch' : viewType === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 gap-2 items-stretch' : 'flex flex-col gap-2') + ' h-full'}>
-            {filteredResults.map((item, i) => (
-              <li key={i} className={cardClass + ' flex flex-col justify-between h-full'}>
-                <div className="flex flex-col gap-2 flex-1">
-                  <label className="flex items-center gap-2 cursor-pointer select-none">
-                    <input type="checkbox" checked={selected.includes(item.productId || item.url)} onChange={() => handleSelect(item.productId || item.url)} />
-                    {item.image && (
-                      <img src={item.image} alt={item.title} className="w-40 h-40 object-cover rounded" />
-                    )}
-                    {item.rocketShipping && (
-                      <span className="text-xs bg-blue-100 text-blue-700 font-semibold px-2 py-1 rounded">로켓</span>
-                    )}
-                  </label>
-                  {divider}
-                    <span className="font-bold flex-1 line-clamp-2">{item.title}</span>
-                  {divider}
-                  <div>가격: <span className="font-semibold">{item.price?.toLocaleString()}원</span></div>
-                  {divider}
-                  <div className="truncate overflow-hidden whitespace-nowrap max-w-full">링크: <a href={item.url || item.originalUrl} className="text-blue-600 underline" target="_blank" rel="noopener noreferrer"><span className="truncate inline-block align-bottom max-w-[180px]">{item.url || item.originalUrl}</span></a></div>
-                  {divider}
-                </div>
-                {editIndex === i ? (
-                  <div className="flex gap-2 mt-2">
-                    <Input
-                      value={editLink}
-                      onChange={e => setEditLink(e.target.value)}
-                      onKeyDown={e => handleEnter(e, () => handleEditLink(i, editLink))}
-                      autoFocus
-                    />
-                    <Button size="sm" onClick={() => handleEditLink(i, editLink)}>저장</Button>
-                    <Button size="sm" variant="outline" onClick={() => setEditIndex(null)}>취소</Button>
+          <div>
+            <div className="flex gap-2 mb-2">
+              <Input
+                placeholder="검색할 키워드 입력"
+                value={keyword}
+                onChange={e => setKeyword(e.target.value)}
+                onKeyDown={e => handleEnter(e, handleKeywordSearch)}
+                disabled={loading}
+              />
+              <Input
+                type="number"
+                min={1}
+                max={20}
+                value={itemCount}
+                onChange={e => setItemCount(Number(e.target.value))}
+                className="w-20"
+                disabled={loading}
+              />
+            </div>
+            <Button className="w-full" onClick={handleKeywordSearch} disabled={loading}>상품 검색</Button>
+          </div>
+        )}
+        <div className="mt-6">
+          <div className="flex gap-2 mb-2">
+            <Button size="sm" variant={viewType === 'gallery' ? 'default' : 'outline'} onClick={() => setViewType('gallery')}>갤러리</Button>
+            <Button size="sm" variant={viewType === 'grid' ? 'default' : 'outline'} onClick={() => setViewType('grid')}>그리드</Button>
+            <Button size="sm" variant={viewType === 'list' ? 'default' : 'outline'} onClick={() => setViewType('list')}>리스트</Button>
+          </div>
+          <h3 className="font-bold mb-2">딥링크/상품 결과</h3>
+          {loading ? (
+            <div>로딩 중...</div>
+          ) : (
+            <ul className={(viewType === 'gallery' ? 'grid grid-cols-2 md:grid-cols-3 gap-4 items-stretch' : viewType === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 gap-2 items-stretch' : 'flex flex-col gap-2') + ' h-full'}>
+              {filteredResults.map((item, i) => (
+                <li
+                  key={i}
+                  className={cardClass + (selected.includes(item.productId || item.url) ? ' ' + cardSelected : '')}
+                  onClick={() => handleSelect(item.productId || item.url)}
+                >
+                  <div className="flex flex-col gap-2 flex-1">
+                    <div className="flex items-center gap-2">
+                      {item.image && (
+                        <img src={item.image} alt={item.title} className="w-40 h-40 object-cover rounded" />
+                      )}
+                      <span className="font-bold flex-1 line-clamp-2">{item.title}</span>
+                      {item.rocketShipping && (
+                        <span className="text-xs bg-blue-100 text-blue-700 font-semibold px-2 py-1 rounded">로켓</span>
+                      )}
+                    </div>
+                    {divider}
+                    <div>가격: <span className="font-semibold">{item.price?.toLocaleString()}원</span></div>
+                    {divider}
+                    <div className="truncate overflow-hidden whitespace-nowrap max-w-full">링크: <a href={item.url || item.originalUrl} className="text-blue-600 underline" target="_blank" rel="noopener noreferrer"><span className="truncate inline-block align-bottom max-w-[180px]">{item.url || item.originalUrl}</span></a></div>
+                    {divider}
                   </div>
-                ) : (
-                  <Button size="sm" className="mt-1" onClick={() => { setEditIndex(i); setEditLink(item.url || item.originalUrl); }}>수정</Button>
-                )}
+                  {editIndex === i ? (
+                    <div className="flex gap-2 mt-2">
+                      <Input
+                        value={editLink}
+                        onChange={e => setEditLink(e.target.value)}
+                        onKeyDown={e => handleEnter(e, () => handleEditLink(i, editLink))}
+                        autoFocus
+                      />
+                      <Button size="sm" onClick={() => handleEditLink(i, editLink)}>저장</Button>
+                      <Button size="sm" variant="outline" onClick={() => setEditIndex(null)}>취소</Button>
+                    </div>
+                  ) : (
+                    <Button size="sm" className="mt-1" onClick={e => { e.stopPropagation(); setEditIndex(i); setEditLink(item.url || item.originalUrl); }}>수정</Button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+          {step === 'deeplink' && filteredResults.length > 0 && (
+            <Button className="mt-4 w-full" onClick={handleDeeplinkConvert} disabled={loading || selected.length === 0}>선택 상품 딥링크 변환</Button>
+          )}
+        </div>
+      </Card>
+      {/* PC: 사이드 이력, 모바일: 버튼+모달 */}
+      <div className="hidden md:block w-80 mt-8">
+        <Card className="p-4">
+          <h4 className="font-bold mb-2">검색 이력</h4>
+          <ul className="text-xs space-y-1">
+            {history.map((h, idx) => (
+              <li key={idx} className="truncate border-b pb-1 cursor-pointer hover:bg-gray-100" onClick={() => setHistoryDetail(h)}>
+                <span className="font-semibold">{h.keyword}</span> <span className="text-gray-500">{formatDate(h.date)}</span>
               </li>
             ))}
           </ul>
-        )}
-        {step === 'deeplink' && filteredResults.length > 0 && (
-          <Button className="mt-4 w-full" onClick={handleDeeplinkConvert} disabled={loading || selected.length === 0}>선택 상품 딥링크 변환</Button>
+        </Card>
+      </div>
+      <div className="block md:hidden mt-4">
+        <Button onClick={() => setShowHistory(true)} className="w-full">검색 이력 보기</Button>
+        {showHistory && (
+          <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+            <div className="bg-white rounded-lg p-4 w-11/12 max-w-md mx-auto">
+              <h4 className="font-bold mb-2">검색 이력</h4>
+              <ul className="text-xs space-y-1 max-h-60 overflow-y-auto">
+                {history.map((h, idx) => (
+                  <li key={idx} className="truncate border-b pb-1 cursor-pointer hover:bg-gray-100" onClick={() => { setHistoryDetail(h); setShowHistory(false); }}>
+                    <span className="font-semibold">{h.keyword}</span> <span className="text-gray-500">{formatDate(h.date)}</span>
+                  </li>
+                ))}
+              </ul>
+              <Button className="mt-4 w-full" onClick={() => setShowHistory(false)}>닫기</Button>
+            </div>
+          </div>
         )}
       </div>
-      {/* 검색 이력 */}
-      <div className="mt-8">
-        <h4 className="font-bold mb-2">검색 이력</h4>
-        <ul className="text-xs space-y-1">
-          {history.map((h, idx) => (
-            <li key={idx} className="truncate border-b pb-1">{h.map(x => x.title).join(', ')}</li>
-          ))}
-        </ul>
-      </div>
-    </Card>
+      {/* 상세 모달 */}
+      {historyDetail && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 w-11/12 max-w-2xl mx-auto relative">
+            <button className="absolute top-2 right-2 text-xl" onClick={() => setHistoryDetail(null)}>&times;</button>
+            <h4 className="font-bold mb-2">검색 상세: <span className="text-blue-700">{historyDetail.keyword}</span> <span className="text-gray-500">{formatDate(historyDetail.date)}</span></h4>
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {Array.isArray(historyDetail.results) && historyDetail.results.map((item, i) => (
+                <li key={i} className="border rounded p-2 flex flex-col gap-2">
+                  {item.image && <img src={item.image} alt={item.title} className="w-32 h-32 object-cover rounded mx-auto" />}
+                  <div className="font-bold line-clamp-2">{item.title}</div>
+                  <div>가격: {item.price?.toLocaleString()}원</div>
+                  <div className="truncate overflow-hidden whitespace-nowrap max-w-full">링크: <a href={item.url} className="text-blue-600 underline" target="_blank" rel="noopener noreferrer"><span className="truncate inline-block align-bottom max-w-[180px]">{item.url}</span></a></div>
+                  {item.rocketShipping && <span className="text-xs bg-blue-100 text-blue-700 font-semibold px-2 py-1 rounded">로켓</span>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+    </div>
   );
 } 
