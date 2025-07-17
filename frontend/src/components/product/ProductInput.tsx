@@ -228,79 +228,134 @@ export default function ProductInput() {
 
   return (
     <div className="flex w-full flex-col gap-6 md:flex-row">
-      <Card className="w-full flex-1 p-6">
+      <Card className="w-full flex-1 p-6 hover:bg-white hover:bg-opacity-90 hover:shadow-md transition-colors bg-white text-[#171717]">
         {/* 기존 탭 UI: 갤러리 제거 */}
         <div className="flex gap-2 mb-4">
-          <Button variant={mode === 'link' ? 'default' : 'outline'} onClick={() => handleModeChange('link')}>링크 직접 입력</Button>
-          <Button variant={mode === 'keyword' ? 'default' : 'outline'} onClick={() => handleModeChange('keyword')}>키워드 검색</Button>
-          <Button variant={mode === 'category' ? 'default' : 'outline'} onClick={() => handleModeChange('category')}>카테고리 검색</Button>
+          <Button variant={mode === 'link' ? 'default' : 'outline'} onClick={() => handleModeChange('link')} className="bg-[#ededed] text-[#171717] hover:bg-white hover:bg-opacity-90 transition-colors">링크 직접 입력</Button>
+          <Button variant={mode === 'keyword' ? 'default' : 'outline'} onClick={() => handleModeChange('keyword')} className="bg-[#ededed] text-[#171717] hover:bg-white hover:bg-opacity-90 transition-colors">키워드 검색</Button>
+          <Button variant={mode === 'category' ? 'default' : 'outline'} onClick={() => handleModeChange('category')} className="bg-[#ededed] text-[#171717] hover:bg-white hover:bg-opacity-90 transition-colors">카테고리 검색</Button>
         </div>
         {/* 카테고리 검색 모드에서만 입력폼 노출 */}
         {mode === 'category' && (
           <>
-            <div className="mb-2 flex flex-col gap-2">
-              <div className="flex items-center gap-4">
-                <label className="w-20 text-sm font-medium">카테고리</label>
-                <select value={categoryId} onChange={e => setCategoryId(e.target.value)} className="w-48 rounded border px-2 py-1">
-                  <option value="">카테고리 선택</option>
-                  <option value="1001">여성패션</option>
-                  <option value="1002">남성패션</option>
-                  <option value="1010">뷰티</option>
-                  <option value="1011">출산/유아동</option>
-                  <option value="1012">식품</option>
-                  <option value="1013">주방용품</option>
-                  <option value="1014">생활용품</option>
-                  <option value="1015">홈인테리어</option>
-                  <option value="1016">가전디지털</option>
-                  <option value="1017">스포츠/레저</option>
-                  <option value="1018">자동차용품</option>
-                  <option value="1019">도서/음반/DVD</option>
-                  <option value="1020">완구/취미</option>
-                  <option value="1021">문구/오피스</option>
-                  <option value="1024">헬스/건강식품</option>
-                  <option value="1025">국내여행</option>
-                  <option value="1026">해외여행</option>
-                  <option value="1029">반려동물용품</option>
-                  <option value="1030">유아동패션</option>
-                </select>
-              </div>
-              <div className="flex items-center gap-4">
-                <label className="w-20 text-sm font-medium">이미지</label>
-                <span className="text-xs">가로</span>
-                <select value={imageWidth} onChange={e => setImageWidth(Number(e.target.value))} className="w-20 rounded border px-2 py-1">
-                  {imageSizeOptions.map(size => <option key={size} value={size}>{size}</option>)}
-                </select>
-                <span className="text-xs">세로</span>
-                <select value={imageHeight} onChange={e => setImageHeight(Number(e.target.value))} className="w-20 rounded border px-2 py-1">
-                  {imageSizeOptions.map(size => <option key={size} value={size}>{size}</option>)}
-                </select>
-                <span className="text-xs">비율</span>
-                <select value={imageRatio} onChange={e => setImageRatio(e.target.value)} className="w-20 rounded border px-2 py-1">
-                  <option value="1:1">1:1</option>
-                  <option value="4:3">4:3</option>
-                  <option value="3:4">3:4</option>
-                  <option value="16:9">16:9</option>
-                  <option value="9:16">9:16</option>
-                </select>
-              </div>
-              <div className="flex items-center gap-4">
-                <label className="w-20 text-sm font-medium">개수</label>
-                <input type="number" min={1} max={100} placeholder="limit" value={bestLimit} onChange={e => setBestLimit(Number(e.target.value))} className="w-24 rounded border px-2 py-1" />
-                <span className="text-xs text-gray-500">최대 100개까지 가능</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <label className="w-20 text-sm font-medium">가격</label>
-                <input type="number" min={0} value={priceMin} onChange={e => setPriceMin(Number(e.target.value))} className="w-24 rounded border px-2 py-1" />
-                <span className="mx-1">~</span>
-                <input type="number" min={0} value={priceMax} onChange={e => setPriceMax(Number(e.target.value))} className="w-24 rounded border px-2 py-1" />
-                <div className="flex gap-1">
-                  {pricePresets.map(preset => (
-                    <Button key={preset.label} size="sm" variant="outline" onClick={() => { setPriceMin(preset.min); setPriceMax(preset.max); }}>{preset.label}</Button>
-                  ))}
-                </div>
-              </div>
-              <Button className="mt-2 w-full transition-transform active:scale-95" onClick={handleCategorySearch} disabled={loading}>카테고리 상품 검색</Button>
+            <div className="flex items-center gap-4 border-b pb-3 mb-3">
+              <label className="w-20 text-sm font-medium">카테고리</label>
+              <select
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                className="w-48 rounded border px-2 py-1"
+              >
+                <option value="">카테고리 선택</option>
+                <option value="1001">여성패션</option>
+                <option value="1002">남성패션</option>
+                <option value="1010">뷰티</option>
+                <option value="1011">출산/유아동</option>
+                <option value="1012">식품</option>
+                <option value="1013">주방용품</option>
+                <option value="1014">생활용품</option>
+                <option value="1015">홈인테리어</option>
+                <option value="1016">가전디지털</option>
+                <option value="1017">스포츠/레저</option>
+                <option value="1018">자동차용품</option>
+                <option value="1019">도서/음반/DVD</option>
+                <option value="1020">완구/취미</option>
+                <option value="1021">문구/오피스</option>
+                <option value="1024">헬스/건강식품</option>
+                <option value="1025">국내여행</option>
+                <option value="1026">해외여행</option>
+                <option value="1029">반려동물용품</option>
+                <option value="1030">유아동패션</option>
+              </select>
             </div>
+            <div className="flex items-center gap-4 border-b pb-3 mb-3">
+              <label className="w-20 text-sm font-medium">이미지</label>
+              <span className="text-xs">가로</span>
+              <select
+                value={imageWidth}
+                onChange={(e) => setImageWidth(Number(e.target.value))}
+                className="w-20 rounded border px-2 py-1"
+              >
+                {imageSizeOptions.map((size) => (
+                  <option key={size} value={size}>
+                    {size}
+                  </option>
+                ))}
+              </select>
+              <span className="text-xs">세로</span>
+              <select
+                value={imageHeight}
+                onChange={(e) => setImageHeight(Number(e.target.value))}
+                className="w-20 rounded border px-2 py-1"
+              >
+                {imageSizeOptions.map((size) => (
+                  <option key={size} value={size}>
+                    {size}
+                  </option>
+                ))}
+              </select>
+              <span className="text-xs">비율</span>
+              <select
+                value={imageRatio}
+                onChange={(e) => setImageRatio(e.target.value)}
+                className="w-20 rounded border px-2 py-1"
+              >
+                <option value="1:1">1:1</option>
+                <option value="4:3">4:3</option>
+                <option value="3:4">3:4</option>
+                <option value="16:9">16:9</option>
+                <option value="9:16">9:16</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-4 border-b pb-3 mb-3">
+              <label className="w-20 text-sm font-medium">개수</label>
+              <input
+                type="number"
+                min={1}
+                max={100}
+                placeholder="limit"
+                value={bestLimit}
+                onChange={(e) => setBestLimit(Number(e.target.value))}
+                className="w-24 rounded border px-2 py-1"
+              />
+              <span className="text-xs text-gray-500">
+                최대 100개까지 가능
+              </span>
+            </div>
+            <div className="flex items-center gap-4">
+              <label className="w-20 text-sm font-medium">가격</label>
+              <input
+                type="number"
+                min={0}
+                value={priceMin}
+                onChange={(e) => setPriceMin(Number(e.target.value))}
+                className="w-24 rounded border px-2 py-1"
+              />
+              <span className="mx-1">~</span>
+              <input
+                type="number"
+                min={0}
+                value={priceMax}
+                onChange={(e) => setPriceMax(Number(e.target.value))}
+                className="w-24 rounded border px-2 py-1"
+              />
+            </div>
+            <div className="flex flex-wrap gap-1 mt-2 mb-3">
+              {pricePresets.map((preset) => (
+                <Button
+                  key={preset.label}
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setPriceMin(preset.min);
+                    setPriceMax(preset.max);
+                  }}
+                  className="whitespace-nowrap"
+                >
+                  {preset.label}
+                </Button>
+              ))}
+            </div>
+            <Button className="mt-2 w-full transition-transform active:scale-95 bg-[#ededed] text-[#171717] hover:bg-white hover:bg-opacity-90 transition-colors" onClick={handleCategorySearch} disabled={loading}>카테고리 상품 검색</Button>
           </>
         )}
         <div className="mb-2 flex items-center gap-4">
@@ -377,6 +432,7 @@ export default function ProductInput() {
                     <div className="border-t"></div>
                     <div className="truncate text-xs text-blue-600">링크: <a href={item.url || item.productUrl || item.originalUrl} className="hover:underline" target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>{item.url || item.productUrl || item.originalUrl}</a></div>
                   </div>
+                  
                   {editIndex === i ? (
                     <div className="mt-auto flex gap-2">
                       <Input
@@ -404,7 +460,7 @@ export default function ProductInput() {
       </Card>
       {/* PC: 사이드 이력, 모바일: 버튼+모달 */}
       <div className="hidden md:block md:w-80 lg:w-96">
-        <Card className="sticky top-24 p-4">
+        <Card className="sticky top-24 p-4 hover:bg-white hover:bg-opacity-90 hover:shadow-md transition-colors bg-white text-[#171717]">
           <div className="mb-2 flex items-center justify-between">
             <h4 className="font-bold">검색 이력</h4>
             <Button size="sm" variant="outline" className="px-2 py-1 text-xs" onClick={handleClearHistory}>이력 지우기</Button>

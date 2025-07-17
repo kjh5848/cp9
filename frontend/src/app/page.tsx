@@ -37,7 +37,7 @@ export default function Home() {
 
           {/* Keyword Input Form */}
           {user ? (
-            <Card className="max-w-md mx-auto mb-8">
+            <Card className="max-w-md mx-auto mb-8 hover:bg-white hover:bg-opacity-90 hover:shadow-md transition-colors bg-white text-[#171717]">
               <CardHeader>
                 <CardTitle className="text-lg">키워드 입력</CardTitle>
                 <CardDescription>검색할 키워드를 입력하세요</CardDescription>
@@ -51,11 +51,11 @@ export default function Home() {
                     className="w-full"
                   />
                 </div>
-                <Button className="w-full">자동 블로그 글 생성</Button>
+                <Button className="w-full bg-[#ededed] text-[#171717] hover:bg-white hover:bg-opacity-90 transition-colors">자동 블로그 글 생성</Button>
               </CardContent>
             </Card>
           ) : (
-            <Card className="max-w-md mx-auto mb-8">
+            <Card className="max-w-md mx-auto mb-8 hover:bg-white hover:bg-opacity-90 hover:shadow-md transition-colors bg-white text-[#171717]">
               <CardHeader>
                 <CardTitle className="text-lg">로그인이 필요합니다</CardTitle>
                 <CardDescription>
@@ -64,7 +64,7 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 <Link href="/login">
-                  <Button className="w-full">로그인하고 시작하기</Button>
+                  <Button className="w-full bg-[#ededed] text-[#171717] hover:bg-white hover:bg-opacity-90 transition-colors">로그인하고 시작하기</Button>
                 </Link>
               </CardContent>
             </Card>
@@ -73,22 +73,20 @@ export default function Home() {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             {user ? (
-              <Button size="lg">내 블로그 글 보기</Button>
+              <Button size="lg" className="bg-[#ededed] text-[#171717] hover:bg-white hover:bg-opacity-90 transition-colors">내 블로그 글 보기</Button>
             ) : (
               <>
                 <Link href="/login">
-                  <Button size="lg">무료로 시작하기</Button>
+                  <Button size="lg" className="bg-[#ededed] text-[#171717] hover:bg-white hover:bg-opacity-90 transition-colors">무료로 시작하기</Button>
                 </Link>
-                <Button variant="outline" size="lg">
-                  데모 보기
-                </Button>
+                <Button variant="outline" size="lg" className="bg-[#ededed] text-[#171717] hover:bg-white hover:bg-opacity-90 transition-colors">데모 보기</Button>
               </>
             )}
           </div>
 
           {/* Feature Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card>
+            <Card className="hover:bg-white hover:bg-opacity-90 hover:shadow-md transition-colors bg-white text-[#171717]">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   🔍 스마트 상품 검색
@@ -99,7 +97,7 @@ export default function Home() {
               </CardHeader>
             </Card>
 
-            <Card>
+            <Card className="hover:bg-white hover:bg-opacity-90 hover:shadow-md transition-colors bg-white text-[#171717]">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   🤖 AI 컨텐츠 생성
@@ -110,7 +108,7 @@ export default function Home() {
               </CardHeader>
             </Card>
 
-            <Card>
+            <Card className="hover:bg-white hover:bg-opacity-90 hover:shadow-md transition-colors bg-white text-[#171717]">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   📝 자동 발행

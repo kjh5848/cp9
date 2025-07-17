@@ -9,8 +9,6 @@ alwaysApply: true
 ---
 
 ## 1. 네이밍 & 구조
-- **BEM 패턴** 적용: `block__elem--mod`
-- **CSS Modules (`*.module.css`)** 사용해 컴포넌트 단위 분리
 - **클래스 셀렉터만 사용**, 태그·ID 셀렉터 금지
 - Tailwind JIT 클래스 (`tw-...`) 허용 — Stylelint에서 예외 처리
 
