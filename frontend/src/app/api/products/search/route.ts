@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     // 필요한 필드만 추출 (rocketShipping 등)
     const result = products.map((item: any) => ({
       title: item.productName,
-      image: item.productImage,
+      image: item.productImage || item.image,
       price: item.productPrice,
       url: item.productUrl,
       productId: item.productId,

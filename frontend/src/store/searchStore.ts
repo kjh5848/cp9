@@ -33,6 +33,8 @@ interface SearchStore {
   addPricePreset: (preset: PricePreset) => void;
   updatePricePreset: (index: number, preset: PricePreset) => void;
   removePricePreset: (index: number) => void;
+  sortOrder: 'asc' | 'desc' | null;
+  setSortOrder: (order: 'asc' | 'desc' | null) => void;
 }
 
 export const useSearchStore = create<SearchStore>()(
@@ -61,6 +63,8 @@ export const useSearchStore = create<SearchStore>()(
       removePricePreset: (index) => set((state) => ({
         pricePresets: state.pricePresets.filter((_, i) => i !== index),
       })),
+      sortOrder: null,
+      setSortOrder: (order) => set({ sortOrder: order }),
     }),
     { name: 'search-store' }
   )

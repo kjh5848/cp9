@@ -11,6 +11,8 @@ interface ProductResultViewProps {
   setViewType: (value: 'grid' | 'list') => void;
   filteredResults: ProductItem[];
   handleDeeplinkConvert: () => void;
+  sortOrder: 'asc' | 'desc' | null;
+  setSortOrder: (order: 'asc' | 'desc' | null) => void;
 }
 
 const cardClass =
@@ -23,6 +25,8 @@ export default function ProductResultView({
   setViewType,
   filteredResults,
   handleDeeplinkConvert,
+  sortOrder,
+  setSortOrder,
 }: ProductResultViewProps) {
   const { selected, setSelected } = useSearchStore();
   const [editIndex, setEditIndex] = useState<number | null>(null);

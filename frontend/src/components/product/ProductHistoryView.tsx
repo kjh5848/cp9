@@ -118,33 +118,39 @@ export default function ProductHistoryView() {
             <ul className="grid max-h-[60vh] grid-cols-1 gap-4 overflow-y-auto md:grid-cols-2">
               {Array.isArray(historyDetail.results) &&
                 historyDetail.results.map((item, i) => (
-                  <li
-                    key={i}
-                    className="flex flex-col gap-2 rounded border p-2"
-                  >
-                    {item.image && (
+                  <li key={i} className="flex flex-col gap-2 rounded border p-2">
+                    {/* 이미지 */}
+                    {(item.productImage || item.image) && (
                       <img
-                        src={item.image}
-                        alt={item.title}
+                        src={item.productImage || item.image}
+                        alt={item.productName || item.title}
                         className="mx-auto h-32 w-32 rounded object-cover"
                       />
                     )}
-                    <div className="font-bold line-clamp-2">{item.title}</div>
-                    <div>가격: {item.price?.toLocaleString()}원</div>
+                    {/* 상품명 */}
+                    <div className="font-bold line-clamp-2">
+                      {item.title || item.productName}
+                    </div>
+                    {/* 가격 */}
+                    <div>
+                      가격: {(item.price ?? item.productPrice)?.toLocaleString()}원
+                    </div>
+                    {/* 링크 */}
                     <div className="truncate overflow-hidden whitespace-nowrap max-w-full">
-                      링크:{" "}
+                      링크: {" "}
                       <a
-                        href={item.url}
+                        href={item.url || item.productUrl || item.originalUrl}
                         className="text-blue-600 underline"
                         target="_blank"
                         rel="noopener noreferrer"
                       >
                         <span className="inline-block max-w-[180px] align-bottom truncate">
-                          {item.url}
+                          {item.url || item.productUrl || item.originalUrl}
                         </span>
                       </a>
                     </div>
-                    {item.rocketShipping && (
+                    {/* 로켓배송 */}
+                    {(item.rocketShipping || item.isRocket) && (
                       <span className="rounded bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-700">
                         로켓
                       </span>
