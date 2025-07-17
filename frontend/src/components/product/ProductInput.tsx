@@ -45,7 +45,7 @@ export default function ProductInput() {
   const [imageRatio, setImageRatio] = useState("1:1");
   const [bestLimit, setBestLimit] = useState(20);
   const [priceMin, setPriceMin] = useState(0);
-  const [priceMax, setPriceMax] = useState(500000);
+  const [priceMax, setPriceMax] = useState(5000000);
 
   const getFilteredResults = () => {
     let base = deeplinkResult;
@@ -87,6 +87,12 @@ export default function ProductInput() {
       const products = await res.json();
       setDeeplinkResult(products);
       setStep("deeplink");
+      // 카테고리 검색도 이력에 저장
+      if (Array.isArray(products) && products.length > 0) {
+        addHistory(products[0].categoryName || categoryId, products);
+      } else {
+        addHistory(categoryId, products);
+      }
     } catch (e) {
       alert(
         "카테고리 상품 검색 실패: " + (e instanceof Error ? e.message : "")
@@ -202,7 +208,7 @@ export default function ProductInput() {
           </Button>
         </div>
 
-        {mode === 'category' && (
+        {mode === "category" && (
           <ProductCategorySearchForm
             loading={loading}
             handleCategorySearch={handleCategorySearch}
@@ -223,7 +229,7 @@ export default function ProductInput() {
           />
         )}
 
-        {mode === 'keyword' && (
+        {mode === "keyword" && (
           <ProductKeywordSearchForm
             loading={loading}
             keyword={keyword}
@@ -235,7 +241,7 @@ export default function ProductInput() {
           />
         )}
 
-        {mode === 'link' && (
+        {mode === "link" && (
           <ProductLinkSearchForm
             loading={loading}
             links={links}
@@ -254,6 +260,7 @@ export default function ProductInput() {
             />
             로켓배송만 보기
           </label>
+
           <label className="flex items-center gap-1 text-sm">
             <input
               type="checkbox"
@@ -262,6 +269,19 @@ export default function ProductInput() {
             />
             전체선택
           </label>
+          <Button
+            size="sm"
+            variant="outline"
+            className="ml-2"
+            onClick={() => {
+              setPriceMin(0);
+              setPriceMax(500000);
+              setRocketOnly(false);
+              // 필요시 기타 필터도 초기화
+            }}
+          >
+            필터 초기화
+          </Button>
         </div>
 
         <ProductResultView
