@@ -24,18 +24,13 @@ export default function ProductInput() {
   const [itemCount, setItemCount] = useState(5);
   const [deeplinkResult, setDeeplinkResult] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [viewType, setViewType] = useState<"grid" | "list">(() => {
-    if (typeof window !== "undefined") {
-      return (localStorage.getItem("viewType") as "grid" | "list") || "grid";
-    }
-    return "grid";
-  });
+  const [viewType, setViewType] = useState<"grid" | "list">("grid");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      localStorage.setItem("viewType", viewType);
+      setViewType((localStorage.getItem("viewType") as "grid" | "list") || "grid");
     }
-  }, [viewType]);
+  }, []);
 
   const [rocketOnly, setRocketOnly] = useState(false);
   const [step, setStep] = useState<"search" | "deeplink">("search");
@@ -61,14 +56,26 @@ export default function ProductInput() {
   // 가격 정렬 상태 추가
   const [priceSort, setPriceSort] = useState<'none' | 'asc' | 'desc'>('none');
 
+  // sortOrder로 변환하는 계산된 값 추가
+  const sortOrder: 'asc' | 'desc' | null = priceSort === 'none' ? null : priceSort as 'asc' | 'desc';
+  const setSortOrder = (order: 'asc' | 'desc' | null) => {
+    setPriceSort(order === null ? 'none' : order);
+  };
+
   // 모드별로 입력/결과 상태를 분리한 상태를 실제 검색/입력/결과 핸들러와 렌더링에 모두 반영한다.
   let currentResults: any[] = [];
   if (mode === 'link') currentResults = linkResults;
   else if (mode === 'keyword') currentResults = keywordResults;
   else if (mode === 'category') currentResults = categoryResults;
 
-  // getFilteredResults에서 currentResults를 사용
-  const getFilteredResults = () => {
+  // getFilteredResults에서 currentResults를 사용하고 항상 배열을 반환하도록 보장
+  const getFilteredResults = (): any[] => {
+    // 타입 안전성 보장: currentResults가 배열이 아니면 빈 배열 반환
+    if (!Array.isArray(currentResults)) {
+      console.warn('currentResults is not an array:', currentResults);
+      return [];
+    }
+
     let base = currentResults;
     if (rocketOnly) {
       base = base.filter((item) => item.isRocket || item.rocketShipping);
@@ -103,26 +110,26 @@ export default function ProductInput() {
   // 링크 검색 핸들러
   const handleLinkSubmit = async () => {
     setLoading(true);
-    const urls = linkInput
-      .split(',')
-      .map((v) => v.trim())
-      .filter(Boolean)
-      .slice(0, 20);
-    const items = urls.map((url) => ({
-      title: url,
-      image: '',
-      price: 0,
-      url,
-      productId: url,
-      deepLink: url + '?deeplink=1',
-      rocketShipping: false,
-    }));
-    setTimeout(() => {
-      setLinkResults(items);
-      setLoading(false);
+    try {
+      const urls = linkInput
+        .split(',')
+        .map((v) => v.trim())
+        .filter(Boolean)
+        .slice(0, 20);
+      const res = await fetch('/api/products/deeplink', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ urls }),
+      });
+      const items = await res.json();
+      setLinkResults(Array.isArray(items) ? items : []);
       setStep('deeplink');
-      safeAddHistory(linkInput, items);
-    }, 500);
+      safeAddHistory(linkInput, Array.isArray(items) ? items : []);
+    } catch (e) {
+      alert('딥링크 변환 실패: ' + (e instanceof Error ? e.message : ''));
+    } finally {
+      setLoading(false);
+    }
   };
 
   // 키워드 검색 핸들러
@@ -157,12 +164,12 @@ export default function ProductInput() {
       });
       if (!res.ok) throw new Error(await res.text());
       const products = await res.json();
-      setCategoryResults(products);
+      setCategoryResults(Array.isArray(products) ? products : []);
       setStep('deeplink');
       if (Array.isArray(products) && products.length > 0) {
         addHistory(products[0].categoryName || categoryId, products);
       } else {
-        addHistory(categoryId, products);
+        addHistory(categoryId, Array.isArray(products) ? products : []);
       }
     } catch (e) {
       alert('카테고리 상품 검색 실패: ' + (e instanceof Error ? e.message : ''));
@@ -325,9 +332,9 @@ export default function ProductInput() {
           viewType={viewType}
           setViewType={setViewType}
           filteredResults={filteredResults}
-          priceSort={priceSort}
-          setPriceSort={setPriceSort}
           handleDeeplinkConvert={handleDeeplinkConvert}
+          sortOrder={sortOrder}
+          setSortOrder={setSortOrder}
         />
       </Card>
 

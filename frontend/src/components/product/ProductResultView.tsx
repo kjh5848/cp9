@@ -19,6 +19,31 @@ const cardClass =
   "border rounded-lg bg-card text-card-foreground shadow-sm flex flex-col p-4 text-left relative cursor-pointer transition-colors min-h-[220px]";
 const cardSelected = "bg-blue-50 border-blue-400 ring-2 ring-blue-300";
 
+/**
+ * 상품 검색 결과를 그리드 또는 리스트 형태로 표시하는 컴포넌트
+ *
+ * @param loading - 로딩 상태를 나타내는 boolean 값
+ * @param viewType - 뷰 타입 ('grid' | 'list')
+ * @param setViewType - 뷰 타입을 변경하는 함수
+ * @param filteredResults - 필터링된 상품 결과 배열
+ * @param handleDeeplinkConvert - 딥링크 변환 핸들러 함수
+ * @param sortOrder - 정렬 순서 ('asc' | 'desc' | null)
+ * @param setSortOrder - 정렬 순서를 설정하는 함수
+ * @returns JSX.Element
+ *
+ * @example
+ * ```tsx
+ * <ProductResultView
+ *   loading={false}
+ *   viewType="grid"
+ *   setViewType={setViewType}
+ *   filteredResults={products}
+ *   handleDeeplinkConvert={handleConvert}
+ *   sortOrder="asc"
+ *   setSortOrder={setSortOrder}
+ * />
+ * ```
+ */
 export default function ProductResultView({
   loading,
   viewType,
@@ -54,7 +79,7 @@ export default function ProductResultView({
         <h3 className="font-bold">
           딥링크/상품 결과{" "}
           <span className="text-sm text-gray-500 font-normal">
-            ({filteredResults.length})
+            ({Array.isArray(filteredResults) ? filteredResults.length : 0})
           </span>
         </h3>
         <div className="flex gap-2">
@@ -85,7 +110,7 @@ export default function ProductResultView({
               : "flex flex-col gap-2"
             } h-full w-full`}
         >
-          {filteredResults.map((item, i) => (
+          {Array.isArray(filteredResults) && filteredResults.map((item, i) => (
             <li
               key={i}
               className={`${cardClass} ${
@@ -192,7 +217,7 @@ export default function ProductResultView({
           ))}
         </ul>
       )}
-      {filteredResults.length > 0 && (
+      {Array.isArray(filteredResults) && filteredResults.length > 0 && (
         <Button
           className="mt-4 w-full"
           onClick={handleDeeplinkConvert}
