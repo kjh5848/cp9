@@ -404,7 +404,7 @@ export default function ProductInput() {
         ) : null}
         <div className="mt-6">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="font-bold">딥링크/상품 결과</h3>
+            <h3 className="font-bold">딥링크/상품 결과 <span className="text-sm text-gray-500 font-normal">({(mode === 'category' ? filteredCategoryResults : filteredResults).length})</span></h3>
             <div className="flex gap-2">
               <Button size="sm" variant={viewType === 'grid' ? 'default' : 'outline'} onClick={() => setViewType('grid')}>그리드</Button>
               <Button size="sm" variant={viewType === 'list' ? 'default' : 'outline'} onClick={() => setViewType('list')}>리스트</Button>
