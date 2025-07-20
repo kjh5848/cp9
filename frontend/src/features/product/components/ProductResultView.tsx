@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from '@/shared/ui/button';
+import { Input } from '@/shared/ui/input';
 import { ProductItem, useSearchStore } from '@/store/searchStore';
 
 interface ProductResultViewProps {
@@ -201,31 +201,31 @@ export default function ProductResultView({
                   </Button>
                 </div>
               ) : (
-                <Button
-                  size="sm"
-                  className="mt-auto w-full"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setEditIndex(i);
-                    setEditLink(item.url || item.originalUrl);
-                  }}
-                >
-                  수정
-                </Button>
+                <div className="mt-auto flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditIndex(i);
+                      setEditLink(item.url || item.productUrl || item.originalUrl || "");
+                    }}
+                  >
+                    수정
+                  </Button>
+                </div>
               )}
             </li>
           ))}
         </ul>
       )}
       {Array.isArray(filteredResults) && filteredResults.length > 0 && (
-        <Button
-          className="mt-4 w-full"
-          onClick={handleDeeplinkConvert}
-          disabled={loading || selected.length === 0}
-        >
-          선택 상품 딥링크 변환
-        </Button>
+        <div className="mt-4 flex justify-center">
+          <Button onClick={handleDeeplinkConvert} disabled={loading}>
+            선택된 상품 딥링크 변환
+          </Button>
+        </div>
       )}
     </div>
   );
-}
+} 

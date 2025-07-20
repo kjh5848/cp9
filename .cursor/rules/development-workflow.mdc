@@ -1,0 +1,330 @@
+---
+description: "Follow this guide when working on CP9 development. It outlines setup, testing structure, workflow steps, linting, error handling, logging, and release checklists to ensure stable, maintainable feature development."
+globs:
+alwaysApply: false
+---
+
+# CP9 Development Workflow & Testing Guide
+
+## 🚀 Development Setup
+
+### Required Tools
+- **Node.js**: 18.x or later  
+- **npm** or **yarn**  
+- **Git**  
+- **VS Code** (recommended)
+
+### Project Commands
+```bash
+# Install dependencies
+npm install
+
+# Run dev server
+npm run dev
+
+# Build project
+npm run build
+
+# Run tests
+npm run test
+````
+
+## 🧪 Testing Strategy
+
+### Directory Structure
+
+```
+src/
+├── __tests__/           # Unit tests
+│   ├── components/      # Component tests
+│   ├── hooks/           # Hook tests
+│   ├── utils/           # Utility tests
+│   └── api/             # API tests
+├── features/
+│   └── product/
+│       ├── __tests__/   # Domain tests
+│       └── components/
+└── shared/
+    └── ui/
+        └── __tests__/   # Shared UI tests
+```
+
+### Test Writing Rules
+
+#### 1. Component Test Example
+
+```ts
+// src/features/product/components/__tests__/ProductCard.test.tsx
+import { render, screen } from '@testing-library/react';
+import { ProductCard } from '../ProductCard';
+
+describe('ProductCard', () => {
+  const mockProduct = {
+    productName: 'Test Product',
+    productPrice: 10000,
+    productImage: 'test-image.jpg',
+    productUrl: 'https://test.com',
+    isRocket: true,
+    isFreeShipping: false,
+    categoryName: 'Test Category'
+  };
+
+  it('renders product info correctly', () => {
+    render(<ProductCard product={mockProduct} />);
+    expect(screen.getByText('Test Product')).toBeInTheDocument();
+    expect(screen.getByText('10,000원')).toBeInTheDocument();
+    expect(screen.getByText('Test Category')).toBeInTheDocument();
+  });
+
+  it('shows rocket badge', () => {
+    render(<ProductCard product={mockProduct} />);
+    expect(screen.getByText('로켓')).toBeInTheDocument();
+  });
+});
+```
+
+#### 2. Hook Test Example
+
+```ts
+// src/features/product/hooks/__tests__/useProductFilter.test.ts
+import { renderHook, act } from '@testing-library/react';
+import { useProductFilter } from '../useProductFilter';
+
+describe('useProductFilter', () => {
+  it('initializes correctly', () => {
+    const { result } = renderHook(() => useProductFilter());
+    expect(result.current.category).toBe('카테고리 선택');
+    expect(result.current.limit).toBe(20);
+    expect(result.current.priceRange).toEqual({ min: 0, max: 5000000 });
+  });
+
+  it('updates category', () => {
+    const { result } = renderHook(() => useProductFilter());
+    act(() => result.current.setCategory('남성패션'));
+    expect(result.current.category).toBe('남성패션');
+  });
+});
+```
+
+#### 3. API Test Example
+
+```ts
+// src/infrastructure/api/__tests__/coupang.test.ts
+import { fetchCoupangBestCategory } from '../coupang-best-category';
+
+process.env.COUPANG_ACCESS_KEY = 'test-access-key';
+process.env.COUPANG_SECRET_KEY = 'test-secret-key';
+
+describe('Coupang API', () => {
+  it('fetches best category products', async () => {
+    const products = await fetchCoupangBestCategory({ categoryId: '1001', limit: 5 });
+    expect(Array.isArray(products)).toBe(true);
+    expect(products.length).toBeLessThanOrEqual(5);
+  });
+});
+```
+
+## 🔄 Development Workflow
+
+### 1. New Feature Development
+
+#### Step-by-step Process
+
+1. **Plan & Design**
+
+   * Define feature requirements, APIs, UI/UX
+
+2. **Define Types**
+
+```ts
+// src/features/new-feature/types/index.ts
+export interface NewFeatureData {
+  id: string;
+  name: string;
+}
+```
+
+3. **Implement API Client**
+
+```ts
+// src/infrastructure/api/new-feature.ts
+export async function fetchNewFeatureData(): Promise<NewFeatureData[]> {
+  // API logic
+}
+```
+
+4. **Implement Component**
+
+```tsx
+// src/features/new-feature/components/NewFeatureComponent.tsx
+export function NewFeatureComponent() {
+  // Component logic
+}
+```
+
+5. **Write Tests**
+
+```ts
+// src/features/new-feature/__tests__/NewFeatureComponent.test.tsx
+describe('NewFeatureComponent', () => {
+  // Tests
+});
+```
+
+### 2. Bug Fix Workflow
+
+#### Debugging Steps
+
+1. Reproduce with minimal steps
+2. Check browser/server logs
+3. Run unit tests
+4. Fix and validate
+
+#### E2E with Playwright
+
+```ts
+// e2e/new-feature.spec.ts
+import { test, expect } from '@playwright/test';
+
+test('New feature works correctly', async ({ page }) => {
+  await page.goto('/new-feature');
+  await page.click('[data-testid="new-feature-button"]');
+  await expect(page.locator('[data-testid="result"]')).toBeVisible();
+});
+```
+
+## 📝 Code Quality
+
+### 1. Linting Rules
+
+```json
+// .eslintrc.json
+{
+  "extends": [
+    "next/core-web-vitals",
+    "@typescript-eslint/recommended"
+  ],
+  "rules": {
+    "@typescript-eslint/no-unused-vars": "error",
+    "@typescript-eslint/no-explicit-any": "warn",
+    "prefer-const": "error"
+  }
+}
+```
+
+### 2. Type Safety
+
+* Do not use `any`
+* Always define explicit types
+* Prefer `interface` over `type` when extending
+
+### 3. Performance Optimization
+
+```tsx
+export const ProductCard = React.memo(({ product }: ProductCardProps) => {
+  // ...
+});
+
+const memoizedValue = useMemo(() => expensiveCalculation(data), [data]);
+const memoizedCallback = useCallback(() => handleClick(id), [id]);
+```
+
+## 🚨 Error Handling & Logging
+
+### 1. Error Boundary
+
+```tsx
+// src/shared/components/ErrorBoundary.tsx
+export class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(): State {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error('Caught by boundary:', error, info);
+  }
+
+  render() {
+    return this.state.hasError
+      ? <div>An error occurred. Please refresh.</div>
+      : this.props.children;
+  }
+}
+```
+
+### 2. Logging Utility
+
+```ts
+// src/shared/lib/logger.ts
+export const logger = {
+  info: (msg: string, data?: any) => console.log(`[INFO] ${msg}`, data),
+  error: (msg: string, err?: Error) => console.error(`[ERROR] ${msg}`, err),
+  warn: (msg: string, data?: any) => console.warn(`[WARN] ${msg}`, data),
+};
+```
+
+## 📋 Development Checklist
+
+### For New Features
+
+* [ ] Requirement analysis complete
+* [ ] Types defined
+* [ ] API client implemented
+* [ ] Component created
+* [ ] Unit tests written
+* [ ] E2E tests written
+* [ ] Documentation updated
+* [ ] Code reviewed
+
+### For Bug Fixes
+
+* [ ] Reproduction steps documented
+* [ ] Root cause identified
+* [ ] Fix validated with tests
+* [ ] Regression tested
+* [ ] Docs updated if needed
+
+### Before Deploy
+
+* [ ] All tests pass
+* [ ] No lint errors
+* [ ] No type errors
+* [ ] Performance checks complete
+* [ ] Security reviewed
+
+## 🔧 Developer Tools Setup
+
+### Recommended VS Code Extensions
+
+* **ESLint** – Linting
+* **Prettier** – Formatting
+* **TypeScript Importer** – Auto imports
+* **Auto Rename Tag** – Rename paired tags
+* **Bracket Pair Colorizer** – Colorized brackets
+
+### Git Hooks
+
+```json
+// package.json
+{
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "pre-push": "npm run test"
+    }
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  }
+}
+```
+
+Following this workflow will help maintain stability, scalability, and quality in your project.

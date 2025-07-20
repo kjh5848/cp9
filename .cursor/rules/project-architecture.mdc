@@ -1,0 +1,181 @@
+---
+description: "Follow this guide when building or organizing features in the CP9 project. It outlines folder structure, architecture principles, naming conventions, and migration practices to maintain scalable and maintainable code."
+globs:
+alwaysApply: false
+---
+
+# CP9 Project Architecture Guide
+
+## 🏗️ Architecture Pattern
+
+This project adopts **Next.js App Router + Feature-Based Architecture**:
+
+- **Feature-First**: Each domain is isolated under `features/`
+- **Shared Modules**: Reusable modules are organized under `shared/`
+- **Infrastructure Layer**: External integrations are isolated in `infrastructure/`
+- **Clean Separation**: Improves maintainability and scalability
+
+## 📁 Folder Structure
+
+### 1. `features/` – Domain-Specific Features
+Each domain has its own folder and follows this structure:
+
+```
+
+features/
+├── auth/
+│   ├── components/
+│   ├── hooks/
+│   ├── types/
+│   └── utils/
+├── product/
+│   ├── components/
+│   ├── hooks/
+│   ├── types/
+│   └── utils/
+└── search/
+├── components/
+├── hooks/
+├── types/
+└── utils/
+
+```
+
+### 2. `shared/` – Shared Modules
+
+```
+
+shared/
+├── ui/                # Reusable UI components
+├── lib/               # Shared logic/utils
+├── hooks/             # Common hooks
+├── types/             # Global types
+└── styles/            # Global styles
+
+```
+
+### 3. `infrastructure/` – External Services
+
+```
+
+infrastructure/
+├── api/               # API clients
+├── auth/              # Auth services
+└── utils/             # External service utilities
+
+```
+
+### 4. `app/` – Next.js App Router Structure
+
+```
+
+app/
+├── api/               # API routes
+├── auth/              # Auth pages
+├── login/             # Login page
+├── product/           # Product pages
+├── layout.tsx         # Root layout
+├── page.tsx           # Home page
+└── globals.css        # Global styles
+
+````
+
+## 🔧 Key Principles
+
+### 1. Domain Separation
+- Each feature is domain-isolated
+- Minimize cross-domain dependencies
+- Clear boundaries between concerns
+
+### 2. Reusability
+- Shared logic and components go to `shared/`
+- UI components → `shared/ui/`
+- Utility functions → `shared/lib/`
+
+### 3. Scalability
+- Add new features under `features/`
+- Add new domains without touching existing code
+- Plugin-friendly architecture
+
+### 4. Type Safety
+- Use TypeScript for all type definitions
+- Define types per domain in `types/`
+- Global types live in `shared/types/`
+
+### 5. Testability
+- Write isolated tests per layer
+- Organize tests under `__tests__/`
+- Maintain domain-specific test structure
+
+## 📝 Coding Conventions
+
+### Naming Rules
+- **Components**: PascalCase (e.g., `ProductCard.tsx`)
+- **Functions & Variables**: camelCase (e.g., `useProductFilter.ts`)
+- **Folders**: kebab-case (e.g., `product-search/`)
+
+### Import Path Rules
+```ts
+// Intra-domain import
+import { ProductCard } from './components/ProductCard';
+
+// Cross-domain import
+import { AuthButton } from '@/features/auth/components/AuthButton';
+
+// Shared module import
+import { Button } from '@/shared/ui/button';
+import { formatPrice } from '@/shared/lib/utils';
+
+// Infrastructure import
+import { supabase } from '@/infrastructure/api/supabase';
+````
+
+## 🚀 How to Add a New Feature
+
+### 1. Create a New Domain
+
+```bash
+mkdir -p src/features/new-feature/{components,hooks,types,utils}
+```
+
+### 2. Add Shared Component
+
+```bash
+touch src/shared/ui/NewComponent.tsx
+```
+
+### 3. Add External API Client
+
+```bash
+touch src/infrastructure/api/new-service.ts
+```
+
+## 🔄 Migration Guide
+
+Steps to restructure existing files:
+
+```bash
+# 1. Move lib files to infrastructure/shared
+mv src/lib/coupang.ts src/infrastructure/api/
+mv src/lib/supabase.ts src/infrastructure/api/
+mv src/lib/utils.ts src/shared/lib/
+
+# 2. Move components to features/shared
+mv src/components/auth/* src/features/auth/components/
+mv src/components/product/* src/features/product/components/
+mv src/components/ui/* src/shared/ui/
+
+# 3. Move hooks to features
+mv src/hooks/useProductFilter.ts src/features/product/hooks/
+```
+
+## 📋 Checklist for New Features
+
+* [ ] Follows domain folder structure
+* [ ] Types are defined
+* [ ] Imports are correct
+* [ ] Tests are written
+* [ ] Shared code reused if applicable
+* [ ] Documentation updated
+
+By following this architecture, you ensure clean, scalable, and maintainable code across the entire CP9 project.

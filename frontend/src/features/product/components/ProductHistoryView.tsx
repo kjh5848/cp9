@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Button } from '@/shared/ui/button';
+import { Card } from '@/shared/ui/card';
 import { ProductHistory, useSearchStore } from '@/store/searchStore';
 
 const formatDate = (iso: string) => {
@@ -31,7 +31,7 @@ export default function ProductHistoryView() {
   return (
     <>
       {/* PC: 사이드 이력, 모바일: 버튼+모달 */}
-      <div className="hidden md:block md:w-80 lg:w-96">
+      {/* <div className="hidden md:block md:w-80 lg:w-96">
         <Card className="sticky top-24 p-4 hover:bg-white hover:bg-opacity-90 hover:shadow-md transition-colors bg-white text-[#171717]">
           <div className="mb-2 flex items-center justify-between">
             <h4 className="font-bold">검색 이력</h4>
@@ -57,8 +57,8 @@ export default function ProductHistoryView() {
             ))}
           </ul>
         </Card>
-      </div>
-      <div className="block md:hidden mt-4">
+      </div> */}
+      {/* <div className="block md:hidden mt-4">
         <Button onClick={() => setShowHistory(true)} className="w-full">
           검색 이력 보기
         </Button>
@@ -97,7 +97,7 @@ export default function ProductHistoryView() {
             </div>
           </div>
         )}
-      </div>
+      </div> */}
       {/* 상세 모달 */}
       {historyDetail && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -163,4 +163,4 @@ export default function ProductHistoryView() {
       )}
     </>
   );
-}
+} 

@@ -1,4 +1,4 @@
-import ProductInput from '@/components/product/ProductInput';
+import ProductInput from '@/features/product/components/ProductInput';
 
 export default function ProductPage() {
   return (

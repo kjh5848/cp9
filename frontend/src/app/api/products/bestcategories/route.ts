@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchCoupangBestCategory } from '@/lib/coupang-best-category';
+import { fetchCoupangBestCategory } from '@/infrastructure/api/coupang-best-category';
 
 /**
  * 쿠팡 베스트 카테고리 상품 검색 API 라우트
@@ -16,7 +16,8 @@ export async function POST(req: NextRequest) {
     }
     const products = await fetchCoupangBestCategory({ categoryId, limit, imageSize });
     return NextResponse.json(products);
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message || '서버 오류' }, { status: 500 });
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : '서버 오류';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 } 

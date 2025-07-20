@@ -1,8 +1,13 @@
-import { generateCoupangSignature } from './coupang-hmac';
+import { generateCoupangSignature } from '../utils/coupang-hmac';
 
-const COUPANG_ACCESS_KEY = process.env.COUPANG_ACCESS_KEY!;
-const COUPANG_SECRET_KEY = process.env.COUPANG_SECRET_KEY!;
+const COUPANG_ACCESS_KEY = process.env.COUPANG_ACCESS_KEY;
+const COUPANG_SECRET_KEY = process.env.COUPANG_SECRET_KEY;
 const COUPANG_API_HOST = 'https://api-gateway.coupang.com';
+
+// 환경 변수 검증
+if (!COUPANG_ACCESS_KEY || !COUPANG_SECRET_KEY) {
+  throw new Error('쿠팡 API 키가 설정되지 않았습니다. .env.local 파일에 COUPANG_ACCESS_KEY와 COUPANG_SECRET_KEY를 설정해주세요.');
+}
 
 /**
  * 쿠팡 베스트 카테고리 상품 API
@@ -40,7 +45,7 @@ export async function fetchCoupangBestCategory(params: CoupangBestCategoryParams
   let path = `/v2/providers/affiliate_open_api/apis/openapi/products/bestcategories/${categoryId}?limit=${limit}`;
   if (imageSize) path += `&imageSize=${encodeURIComponent(imageSize)}`;
   const url = COUPANG_API_HOST + path;
-  const authorization = generateCoupangSignature(method, path, COUPANG_SECRET_KEY, COUPANG_ACCESS_KEY);
+  const authorization = generateCoupangSignature(method, path, COUPANG_SECRET_KEY!, COUPANG_ACCESS_KEY!);
   const headers = {
     'Authorization': authorization,
     'X-EXTENDED-TIMEOUT': '60000',

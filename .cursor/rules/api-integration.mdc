@@ -1,0 +1,240 @@
+---
+description: "Use this guide when integrating external APIs such as Coupang Partners, Supabase, or Google OAuth. It defines environment variable setup, error handling, HMAC signature generation, and API patterns to ensure secure and maintainable integration."
+globs:
+alwaysApply: false
+---
+
+# CP9 API Integration & Environment Variable Guide
+
+## 🔑 Environment Variable Setup
+
+### Required Environment Variables
+
+Define the following variables in your `.env.local` file at the root of the project:
+
+```bash
+# Coupang Partners API keys
+COUPANG_ACCESS_KEY=your_access_key_here
+COUPANG_SECRET_KEY=your_secret_key_here
+
+# Supabase settings
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url_here
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+
+# Google OAuth
+GOOGLE_CLIENT_ID=your_google_client_id_here
+GOOGLE_CLIENT_SECRET=your_google_client_secret_here
+````
+
+### Variable Validation
+
+All API clients must validate required environment variables:
+
+```ts
+const COUPANG_ACCESS_KEY = process.env.COUPANG_ACCESS_KEY;
+const COUPANG_SECRET_KEY = process.env.COUPANG_SECRET_KEY;
+
+if (!COUPANG_ACCESS_KEY || !COUPANG_SECRET_KEY) {
+  throw new Error("Coupang API keys are missing. Check .env.local.");
+}
+```
+
+## 🔌 API Integration Patterns
+
+### 1. Coupang Partners API
+
+#### Best Category Product Search
+
+```ts
+// Endpoint: /api/products/bestcategories
+// Method: POST
+// Input: { categoryId: string, limit?: number, imageSize?: string }
+// Output: CoupangBestCategoryProduct[]
+
+interface CoupangBestCategoryProduct {
+  categoryName: string;
+  isRocket: boolean;
+  isFreeShipping: boolean;
+  productId: number;
+  productImage: string;
+  productName: string;
+  productPrice: number;
+  productUrl: string;
+}
+```
+
+#### Keyword Product Search
+
+```ts
+// Endpoint: /api/products/search
+// Method: POST
+// Input: { keyword: string, limit?: number }
+// Output: Product[]
+```
+
+#### Deep Link Conversion
+
+```ts
+// Endpoint: /api/products/deeplink
+// Method: POST
+// Input: { urls: string[] }
+// Output: { originalUrl: string, deepLink: string }[]
+```
+
+### 2. Supabase Integration
+
+#### Supabase Client Setup
+
+```ts
+// src/infrastructure/api/supabase.ts
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error("Supabase environment variables are missing.");
+}
+
+export const supabase = createClient(supabaseUrl, supabaseKey);
+```
+
+#### Database Schema
+
+```ts
+export type Database = {
+  public: {
+    Tables: {
+      users: {
+        Row: { id: string; email: string; created_at: string; updated_at: string };
+        Insert: { id?: string; email: string; created_at?: string; updated_at?: string };
+        Update: { id?: string; email?: string; created_at?: string; updated_at?: string };
+      };
+      keywords: {
+        Row: { id: string; user_id: string; keyword: string; created_at: string };
+        Insert: { id?: string; user_id: string; keyword: string; created_at?: string };
+        Update: { id?: string; user_id?: string; keyword?: string; created_at?: string };
+      };
+      blog_posts: {
+        Row: {
+          id: string;
+          user_id: string;
+          title: string;
+          content: string;
+          status: 'draft' | 'published';
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          title: string;
+          content: string;
+          status?: 'draft' | 'published';
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          title?: string;
+          content?: string;
+          status?: 'draft' | 'published';
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+    };
+  };
+};
+```
+
+### 3. HMAC Signature Generation
+
+```ts
+// src/infrastructure/utils/coupang-hmac.ts
+import crypto from 'crypto';
+
+export function generateCoupangSignature(
+  method: string,
+  path: string,
+  secretKey: string,
+  accessKey: string
+): string {
+  const timestamp = Date.now().toString();
+  const message = `${method} ${path}\n${timestamp}\n${accessKey}`;
+  const signature = crypto
+    .createHmac('sha256', secretKey)
+    .update(message)
+    .digest('hex');
+
+  return `CEA algorithm=HmacSHA256, access-key=${accessKey}, signed-date=${timestamp}, signature=${signature}`;
+}
+```
+
+## 🚨 Error Handling Patterns
+
+### API Error Handling
+
+```ts
+try {
+  const products = await fetchCoupangBestCategory({ categoryId, limit, imageSize });
+  return NextResponse.json(products);
+} catch (e: unknown) {
+  const errorMessage = e instanceof Error ? e.message : 'Server error';
+  return NextResponse.json({ error: errorMessage }, { status: 500 });
+}
+```
+
+### Env Variable Error
+
+```ts
+if (!process.env.REQUIRED_ENV_VAR) {
+  throw new Error('Missing required env var: REQUIRED_ENV_VAR');
+}
+```
+
+## 📋 API Integration Checklist
+
+When adding a new API, ensure the following:
+
+* [ ] Required environment variables are defined and validated
+* [ ] TypeScript types are created
+* [ ] Proper error handling is implemented
+* [ ] HMAC signature generation if needed (Coupang)
+* [ ] API response is validated
+* [ ] Logs and monitoring are in place
+* [ ] Tests are written for the integration
+
+## 🔧 Developer Setup
+
+### 1. Get Coupang Partner API Keys
+
+1. Sign up at [https://partners.coupang.com](https://partners.coupang.com)
+2. Issue Access Key & Secret Key from the dashboard
+3. Add to `.env.local`
+
+### 2. Supabase Project Setup
+
+1. Create project at [https://supabase.com](https://supabase.com)
+2. Copy project URL and anon key
+3. Add to `.env.local`
+
+### 3. Google OAuth Setup
+
+1. Create OAuth client in Google Cloud Console
+2. Redirect URI: `https://your-project.supabase.co/auth/v1/callback`
+3. Add client ID and secret to `.env.local`
+
+## 🧪 Testing Environment
+
+Use dummy values during development:
+
+```bash
+COUPANG_ACCESS_KEY=test_access_key
+COUPANG_SECRET_KEY=test_secret_key
+NEXT_PUBLIC_SUPABASE_URL=https://demo.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=demo-key
+```
+
+> These values won’t work with real API calls. Replace with actual credentials for production.

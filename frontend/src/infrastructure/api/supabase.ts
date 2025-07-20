@@ -1,13 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
-// 테스트를 위한 임시 기본값 설정
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://demo.supabase.co';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'demo-key';
+// Supabase 환경 변수
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-// 임시로 환경 변수 체크 비활성화 (테스트용)
-// if (!supabaseUrl || !supabaseKey) {
-//   throw new Error('Missing Supabase environment variables');
-// }
+// 환경 변수 검증
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('Supabase 환경 변수가 설정되지 않았습니다. .env.local 파일을 확인해주세요.');
+}
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 

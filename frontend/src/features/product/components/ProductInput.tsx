@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Button } from '@/shared/ui/button';
+import { Card } from '@/shared/ui/card';
 import { useSearchStore } from '@/store/searchStore';
-import { useProductFilter } from '@/hooks/useProductFilter';
+import { useProductFilter } from '@/features/product/hooks/useProductFilter';
 import ProductCategorySearchForm from './ProductCategorySearchForm';
 import ProductKeywordSearchForm from './ProductKeywordSearchForm';
 import ProductLinkSearchForm from './ProductLinkSearchForm';

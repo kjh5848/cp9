@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/shared/ui/button';
 import { PricePreset, useSearchStore } from '@/store/searchStore';
 
 interface ProductCategorySearchFormProps {
@@ -204,9 +204,9 @@ export default function ProductCategorySearchForm({
           <Button
             size="sm"
             onClick={() => {
-              if (newMax > newMin) {
+              if (newMin >= 0 && newMax > newMin) {
                 addPricePreset({
-                  label: `${newMin.toLocaleString()}~${newMax.toLocaleString()}`,
+                  label: `${newMin.toLocaleString()}~${newMax.toLocaleString()}원`,
                   min: newMin,
                   max: newMax,
                 });
@@ -216,19 +216,13 @@ export default function ProductCategorySearchForm({
               }
             }}
           >
-            저장
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => setShowPresetForm(false)}
-          >
-            취소
+            추가
           </Button>
         </div>
       )}
+
       <Button
-        className="mt-2 w-full transition-transform active:scale-95 bg-[#ededed] text-[#171717] hover:bg-white hover:bg-opacity-90 transition-colors"
+        className="mt-4 w-full"
         onClick={handleCategorySearch}
         disabled={loading}
       >
@@ -236,4 +230,4 @@ export default function ProductCategorySearchForm({
       </Button>
     </>
   );
-}
+} 

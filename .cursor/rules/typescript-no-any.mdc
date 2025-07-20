@@ -1,0 +1,66 @@
+---
+description: "Disallow usage of TypeScript 'any' type to enforce safer and more specific typing. Use 'unknown' or domain-specific types instead, especially in catch blocks, function parameters, and variable declarations."
+globs: *.ts,*.tsx
+---
+
+# TypeScript 'any' Type Restriction Rule
+
+Avoid using the `any` type in TypeScript to maintain type safety across the codebase.
+
+## 🔒 Rules
+
+1. **No `any` allowed** – Always prefer specific types over `any`.
+2. **Catch blocks** – Use `unknown` instead of `any`.
+3. **Explicit typing** – Prefer detailed, strongly-typed structures.
+
+## ✅ Recommended Alternatives
+
+### Catch Blocks
+```ts
+// ❌ Not allowed
+} catch (e: any) {
+  console.error(e.message);
+}
+
+// ✅ Correct
+} catch (e: unknown) {
+  if (e instanceof Error) {
+    console.error(e.message);
+  } else {
+    console.error("An unknown error occurred.");
+  }
+}
+````
+
+### Function Parameters
+
+```ts
+// ❌ Not allowed
+function processData(data: any) { ... }
+
+// ✅ Better: unknown
+function processData(data: unknown) { ... }
+
+// ✅ Best: specific type
+function processData(data: UserData) { ... }
+```
+
+### Variable Declarations
+
+```ts
+// ❌ Not allowed
+const result: any = getData();
+
+// ✅ Better: unknown
+const result: unknown = getData();
+
+// ✅ Best: precise type
+const result: ApiResponse = getData();
+```
+
+## 🚨 Exceptions
+
+* Allowed only when required for compatibility with external libraries
+* Temporarily permitted during migration or prototyping (must be annotated with TODO)
+
+

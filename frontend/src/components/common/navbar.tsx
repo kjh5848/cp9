@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/shared/ui/button';
+import { useAuth } from '@/features/auth/contexts/AuthContext';
 
 export default function Navbar() {
   const { user, signOut } = useAuth();
