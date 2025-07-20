@@ -34,18 +34,19 @@ export interface CoupangProductResponse {
 /**
  * 쿠팡 딥링크 원본 응답 타입
  */
-export interface CoupangRawDeepLink extends CoupangRawProduct {
-  originalUrl?: string;
-  deeplinkUrl?: string;
-  deepLink?: string;
-  isRocketShipping?: boolean;
+export interface CoupangRawDeepLink {
+  originalUrl: string;
+  shortenUrl: string;
+  landingUrl: string;
 }
 
 /**
  * 딥링크 변환 응답 타입
  */
-export interface DeepLinkResponse extends CoupangProductResponse {
-  deepLinkUrl: string;
+export interface DeepLinkResponse {
+  originalUrl: string;
+  shortenUrl: string;
+  landingUrl: string;
 }
 
 /**

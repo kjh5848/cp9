@@ -1,6 +1,5 @@
 ---
-description: "Disallow usage of TypeScript 'any' type to enforce safer and more specific typing. Use 'unknown' or domain-specific types instead, especially in catch blocks, function parameters, and variable declarations."
-alwaysApply: false
+alwaysApply: true
 ---
 # TypeScript 'any' Type Restriction Rule
 

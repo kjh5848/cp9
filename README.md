@@ -130,7 +130,16 @@ interface CoupangProductResponse {
 3. **딥링크 변환 API**
    - `POST /api/products/deeplink`
    - 입력: `{ urls: string[] }`
-   - 출력: `DeepLinkResponse[]` (CoupangProductResponse + deepLinkUrl)
+   - 출력: `DeepLinkResponse[]`
+   ```json
+   [
+     {
+       "originalUrl": "https://www.coupang.com/vp/products/4589310169?itemId=5639449741",
+       "shortenUrl": "https://link.coupang.com/a/cFWt0G",
+       "landingUrl": "https://link.coupang.com/re/AFFSDP?lptag=AF7133746&pageKey=4589310169&itemId=5639449741&traceid=..."
+     }
+   ]
+   ```
 
 ---
 
@@ -199,6 +208,7 @@ G --> H[워드프레스 초안 저장]
 - [x] **API 일관성 개선** - 모든 API가 동일한 응답 형식 사용
 - [x] **타입 안전성 강화** - `any` 타입 제거, 명시적 타입 정의
 - [x] **Infrastructure 정리** - 외부 API 클라이언트 구조화
+- [x] **딥링크 API 수정** - 쿠팡 API 실제 응답 구조에 맞게 수정
 - [ ] 워드프레스 초안 저장 기능
 - [ ] E2E/유닛 테스트, 배포 자동화
 
@@ -250,10 +260,23 @@ G --> H[워드프레스 초안 저장]
 새로운 API를 추가할 때 다음 사항을 확인하세요:
 
 1. **타입 정의**: `src/shared/types/api.ts`에 요청/응답 타입 정의
-2. **응답 형식**: `CoupangProductResponse` 인터페이스 준수
+2. **응답 형식**: `CoupangProductResponse` 인터페이스 준수 (딥링크 API 제외)
 3. **오류 처리**: 일관된 오류 처리 패턴 적용
 4. **환경 변수**: 필수 환경 변수 검증
 5. **문서화**: JSDoc 주석 작성
+
+#### 딥링크 API 특별 처리
+
+딥링크 API는 상품 정보를 포함하지 않고 딥링크 URL만 반환하므로 별도 처리:
+
+```typescript
+// 딥링크 API 응답 처리
+const deeplinkResults: DeepLinkResponse[] = deeplinkList.map(normalizeDeepLinkResponse);
+```
+
+#### 일반 상품 API 응답 처리
+
+상품 정보를 포함하는 API는 표준 형식 사용:
 
 ```typescript
 // 예시: 새로운 API 라우트

@@ -26,8 +26,9 @@ export function normalizeCoupangProduct(product: CoupangRawProduct): CoupangProd
  */
 export function normalizeDeepLinkResponse(item: CoupangRawDeepLink): DeepLinkResponse {
   return {
-    ...normalizeCoupangProduct(item),
-    deepLinkUrl: item.deeplinkUrl || item.deepLink || '',
+    originalUrl: item.originalUrl || '',
+    shortenUrl: item.shortenUrl || '',
+    landingUrl: item.landingUrl || '',
   };
 }
 

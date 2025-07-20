@@ -20,7 +20,6 @@ export default function ProductInput() {
 
   const [mode, setMode] = useState<"link" | "keyword" | "category">("category");
   const [links, setLinks] = useState("");
-  const [keyword, setKeyword] = useState("");
   const [itemCount, setItemCount] = useState(5);
   const [deeplinkResult, setDeeplinkResult] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -33,7 +32,6 @@ export default function ProductInput() {
   }, []);
 
   const [rocketOnly, setRocketOnly] = useState(false);
-  const [step, setStep] = useState<"search" | "deeplink">("search");
   const [imageWidth, setImageWidth] = useState(512);
   const [imageHeight, setImageHeight] = useState(512);
   const [imageRatio, setImageRatio] = useState("1:1");
@@ -41,8 +39,7 @@ export default function ProductInput() {
   const [priceMin, setPriceMin] = useState(0);
   const [priceMax, setPriceMax] = useState(5000000);
 
-  // 링크 입력/결과
-  const [linkInput, setLinkInput] = useState('');
+  // 링크 결과
   const [linkResults, setLinkResults] = useState<any[]>([]);
 
   // 키워드 입력/결과
@@ -111,7 +108,7 @@ export default function ProductInput() {
   const handleLinkSubmit = async () => {
     setLoading(true);
     try {
-      const urls = linkInput
+      const urls = links
         .split(',')
         .map((v) => v.trim())
         .filter(Boolean)
@@ -123,8 +120,7 @@ export default function ProductInput() {
       });
       const items = await res.json();
       setLinkResults(Array.isArray(items) ? items : []);
-      setStep('deeplink');
-      safeAddHistory(linkInput, Array.isArray(items) ? items : []);
+      safeAddHistory(links, Array.isArray(items) ? items : []);
     } catch (e) {
       alert('딥링크 변환 실패: ' + (e instanceof Error ? e.message : ''));
     } finally {
@@ -144,7 +140,6 @@ export default function ProductInput() {
       });
       const data = await res.json();
       setKeywordResults(Array.isArray(data) ? data.slice(0, itemCount) : []);
-      setStep('deeplink');
       safeAddHistory(keywordInput, Array.isArray(data) ? data.slice(0, itemCount) : []);
     } finally {
       setLoading(false);
@@ -165,7 +160,6 @@ export default function ProductInput() {
       if (!res.ok) throw new Error(await res.text());
       const products = await res.json();
       setCategoryResults(Array.isArray(products) ? products : []);
-      setStep('deeplink');
       if (Array.isArray(products) && products.length > 0) {
         addHistory(products[0].categoryName || categoryId, products);
       } else {
@@ -209,7 +203,6 @@ export default function ProductInput() {
   const handleModeChange = (newMode: "link" | "keyword" | "category") => {
     setMode(newMode);
     setSelected([]);
-    setStep("search");
   };
 
   // 렌더링 시 currentResults만 사용
