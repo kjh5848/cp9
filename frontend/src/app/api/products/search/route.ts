@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { searchCoupangProducts } from '@/lib/coupang';
+import { searchCoupangProducts } from '@/infrastructure/api/coupang';
+import { CoupangProductResponse, ProductSearchRequest, CoupangRawProduct } from '@/shared/types/api';
+import { normalizeCoupangProduct } from '@/shared/lib/api-utils';
 
 /**
  * 쿠팡 파트너스 상품 검색 API 라우트
@@ -10,22 +12,20 @@ import { searchCoupangProducts } from '@/lib/coupang';
  */
 export async function POST(req: NextRequest) {
   try {
-    const { keyword, limit = 10 } = await req.json();
+    const { keyword, limit = 10 }: ProductSearchRequest = await req.json();
+    
     if (!keyword) {
       return NextResponse.json({ error: '키워드를 입력하세요.' }, { status: 400 });
     }
+    
     const products = await searchCoupangProducts(keyword, limit);
-    // 필요한 필드만 추출 (rocketShipping 등)
-    const result = products.map((item: any) => ({
-      title: item.productName,
-      image: item.productImage || item.image,
-      price: item.productPrice,
-      url: item.productUrl,
-      productId: item.productId,
-      rocketShipping: item.rocketShipping || false,
-    }));
+    
+    // 일관된 응답 형식으로 변환
+    const result: CoupangProductResponse[] = (products as CoupangRawProduct[]).map(normalizeCoupangProduct);
+    
     return NextResponse.json(result);
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message || '서버 오류' }, { status: 500 });
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : '서버 오류';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 } 

@@ -1,16 +1,13 @@
-import AuthForm from '@/components/auth/AuthForm';
+import AuthForm from '@/features/auth/components/AuthForm';
 
 export default function LoginPage() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            CP9에 오신 것을 환영합니다
-          </h1>
-          <p className="text-gray-600">
-            쿠팡 파트너스 자동 블로그 SaaS
-          </p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            로그인
+          </h2>
         </div>
         <AuthForm />
       </div>

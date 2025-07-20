@@ -11,24 +11,19 @@ interface ProductResultViewProps {
   setViewType: (value: 'grid' | 'list') => void;
   filteredResults: ProductItem[];
   handleDeeplinkConvert: () => void;
-  sortOrder: 'asc' | 'desc' | null;
-  setSortOrder: (order: 'asc' | 'desc' | null) => void;
 }
 
 const cardClass =
-  "border rounded-lg bg-card text-card-foreground shadow-sm flex flex-col p-4 text-left relative cursor-pointer transition-colors min-h-[220px]";
-const cardSelected = "bg-blue-50 border-blue-400 ring-2 ring-blue-300";
+  "relative flex flex-col rounded-lg border p-4 hover:bg-gray-50 cursor-pointer transition-colors";
+const cardSelected = "border-blue-500 bg-blue-50";
 
 /**
- * 상품 검색 결과를 그리드 또는 리스트 형태로 표시하는 컴포넌트
- *
- * @param loading - 로딩 상태를 나타내는 boolean 값
- * @param viewType - 뷰 타입 ('grid' | 'list')
- * @param setViewType - 뷰 타입을 변경하는 함수
- * @param filteredResults - 필터링된 상품 결과 배열
- * @param handleDeeplinkConvert - 딥링크 변환 핸들러 함수
- * @param sortOrder - 정렬 순서 ('asc' | 'desc' | null)
- * @param setSortOrder - 정렬 순서를 설정하는 함수
+ * 상품 검색 결과를 표시하는 컴포넌트
+ * @param loading - 로딩 상태
+ * @param viewType - 뷰 타입 (grid | list)
+ * @param setViewType - 뷰 타입 설정 함수
+ * @param filteredResults - 필터링된 상품 결과
+ * @param handleDeeplinkConvert - 딥링크 변환 핸들러
  * @returns JSX.Element
  *
  * @example
@@ -39,8 +34,6 @@ const cardSelected = "bg-blue-50 border-blue-400 ring-2 ring-blue-300";
  *   setViewType={setViewType}
  *   filteredResults={products}
  *   handleDeeplinkConvert={handleConvert}
- *   sortOrder="asc"
- *   setSortOrder={setSortOrder}
  * />
  * ```
  */
@@ -50,8 +43,6 @@ export default function ProductResultView({
   setViewType,
   filteredResults,
   handleDeeplinkConvert,
-  sortOrder,
-  setSortOrder,
 }: ProductResultViewProps) {
   const { selected, setSelected } = useSearchStore();
   const [editIndex, setEditIndex] = useState<number | null>(null);
@@ -65,7 +56,7 @@ export default function ProductResultView({
     );
   };
 
-  const handleEditLink = (idx: number, link: string) => {
+  const handleEditLink = () => {
     // This logic needs to be lifted up to the parent component
     // to modify the actual deeplinkResult state.
     // For now, we'll just close the edit mode.
@@ -114,13 +105,13 @@ export default function ProductResultView({
             <li
               key={i}
               className={`${cardClass} ${
-                selected.includes(item.productId || item.url)
+                selected.includes(item.productId.toString())
                   ? cardSelected
                   : ""
                 }`}
-              onClick={() => handleSelect(item.productId || item.url)}
+              onClick={() => handleSelect(item.productId.toString())}
             >
-              {(item.isRocket || item.rocketShipping) && (
+              {item.isRocket && (
                 <span className="absolute right-2 top-2 rounded bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-700">
                   로켓
                 </span>
@@ -128,22 +119,19 @@ export default function ProductResultView({
               {item.productImage && (
                 <img
                   src={item.productImage}
-                  alt={item.productName || item.title}
+                  alt={item.productName}
                   className="mx-auto mb-2 h-32 w-32 object-cover rounded"
                 />
               )}
               <div className="mb-2 flex flex-1 flex-col gap-2">
                 <span className="pr-10 font-bold line-clamp-2">
-                  {item.title || item.productName}
+                  {item.productName}
                 </span>
                 <div className="border-t"></div>
                 <div className="text-sm text-gray-500">
                   가격:{" "}
                   <span className="font-semibold text-gray-800">
-                    {Number(
-                      item.price ?? item.productPrice
-                    ).toLocaleString()}
-                    원
+                    {item.productPrice.toLocaleString()}원
                   </span>
                 </div>
                 <div className="border-t"></div>
@@ -156,13 +144,13 @@ export default function ProductResultView({
                 <div className="truncate text-xs text-blue-600">
                   링크:{" "}
                   <a
-                    href={item.url || item.productUrl || item.originalUrl}
+                    href={item.productUrl}
                     className="hover:underline"
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    {item.url || item.productUrl || item.originalUrl}
+                    {item.productUrl}
                   </a>
                 </div>
               </div>
@@ -175,7 +163,7 @@ export default function ProductResultView({
                     onClick={(e) => e.stopPropagation()}
                     onKeyDown={(e) => {
                       e.stopPropagation();
-                      if (e.key === "Enter") handleEditLink(i, editLink);
+                      if (e.key === "Enter") handleEditLink();
                     }}
                     autoFocus
                     className="h-8"
@@ -184,7 +172,7 @@ export default function ProductResultView({
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleEditLink(i, editLink);
+                      handleEditLink();
                     }}
                   >
                     저장
@@ -208,7 +196,7 @@ export default function ProductResultView({
                     onClick={(e) => {
                       e.stopPropagation();
                       setEditIndex(i);
-                      setEditLink(item.url || item.productUrl || item.originalUrl || "");
+                      setEditLink(item.productUrl || "");
                     }}
                   >
                     수정

@@ -1,13 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { CoupangProductResponse } from '@/shared/types/api';
 
-export type ProductItem = {
-  title: string;
-  image: string;
-  price: number;
-  url: string;
-  productId: string;
-  rocketShipping?: boolean;
+export type ProductItem = CoupangProductResponse & {
   deepLink?: string;
 };
 
@@ -39,7 +34,7 @@ interface SearchStore {
 
 export const useSearchStore = create<SearchStore>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       results: [],
       setResults: (items) => set({ results: items }),
       selected: [],

@@ -333,8 +333,6 @@ export default function ProductInput() {
           setViewType={setViewType}
           filteredResults={filteredResults}
           handleDeeplinkConvert={handleDeeplinkConvert}
-          sortOrder={sortOrder}
-          setSortOrder={setSortOrder}
         />
       </Card>
 

@@ -1,19 +1,28 @@
-import { NextResponse } from 'next/server';
-import { generateCoupangSignature } from '@/lib/coupang-hmac';
+import { NextRequest, NextResponse } from 'next/server';
+import { generateCoupangSignature } from '@/infrastructure/utils/coupang-hmac';
+import { DeepLinkResponse, DeepLinkRequest, CoupangDeepLinkApiResponse } from '@/shared/types/api';
+import { normalizeDeepLinkResponse } from '@/shared/lib/api-utils';
 
-export async function POST(request: Request) {
+/**
+ * 쿠팡 파트너스 딥링크 변환 API 라우트
+ * @param req - NextRequest (POST, { urls: string[] })
+ * @returns 딥링크 변환 결과
+ * @example
+ * fetch('/api/products/deeplink', { method: 'POST', body: JSON.stringify({ urls: ['https://...'] }) })
+ */
+export async function POST(req: NextRequest) {
   try {
-    const { urls } = await request.json();
+    const { urls }: DeepLinkRequest = await req.json();
 
     if (!urls || !Array.isArray(urls) || urls.length === 0) {
-      return NextResponse.json({ error: 'URLs are required and must be an array.' }, { status: 400 });
+      return NextResponse.json({ error: 'URLs 배열이 필요합니다.' }, { status: 400 });
     }
 
     const ACCESS_KEY = process.env.COUPANG_ACCESS_KEY;
     const SECRET_KEY = process.env.COUPANG_SECRET_KEY;
 
     if (!ACCESS_KEY || !SECRET_KEY) {
-      return NextResponse.json({ error: 'Coupang API keys are not configured.' }, { status: 500 });
+      return NextResponse.json({ error: '쿠팡 API 키가 설정되지 않았습니다.' }, { status: 500 });
     }
 
     const method = 'POST';
@@ -35,26 +44,19 @@ export async function POST(request: Request) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Coupang API error:', errorText);
-      return NextResponse.json({ error: `Coupang API error: ${response.statusText} - ${errorText}` }, { status: response.status });
+      console.error('쿠팡 API 오류:', errorText);
+      return NextResponse.json({ error: `쿠팡 API 오류: ${response.statusText} - ${errorText}` }, { status: response.status });
     }
 
-    const data = await response.json();
+    const data: CoupangDeepLinkApiResponse = await response.json();
 
-    // Coupang API 응답에서 필요한 정보만 추출하여 반환
-    const deeplinkResults = data.data.deeplinkList.map((item: any) => ({
-      title: item.productName || item.originalUrl, // 상품 이름이 없으면 원본 URL 사용
-      image: item.productImage, // 상품 이미지 URL
-      price: item.productPrice, // 상품 가격
-      url: item.originalUrl, // 원본 URL
-      productId: item.productId, // 상품 ID
-      deepLink: item.deeplinkUrl, // 변환된 딥링크 URL
-      rocketShipping: item.isRocketShipping, // 로켓배송 여부
-    }));
+    // 일관된 응답 형식으로 변환
+    const deeplinkResults: DeepLinkResponse[] = data.data.deeplinkList.map(normalizeDeepLinkResponse);
 
     return NextResponse.json(deeplinkResults);
-  } catch (error) {
-    console.error('Deep link conversion failed:', error);
-    return NextResponse.json({ error: 'Failed to convert deep links.' }, { status: 500 });
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : '딥링크 변환 실패';
+    console.error('딥링크 변환 실패:', errorMessage);
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
