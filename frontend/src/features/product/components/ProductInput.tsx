@@ -326,6 +326,7 @@ export default function ProductInput() {
           setViewType={setViewType}
           filteredResults={filteredResults}
           handleDeeplinkConvert={handleDeeplinkConvert}
+          mode={mode === "link" ? "deeplink" : "product"}
         />
       </Card>
 
