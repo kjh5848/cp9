@@ -33,11 +33,21 @@ export interface SignUpFormData {
 export type AuthState = 'loading' | 'authenticated' | 'unauthenticated';
 
 /**
+ * Supabase 인증 에러 타입
+ */
+export interface SupabaseAuthError {
+  message: string;
+  status?: number;
+  name?: string;
+}
+
+/**
  * 인증 에러 타입
  */
 export interface AuthError {
   message: string;
   code?: string;
+  type: 'validation' | 'network' | 'auth' | 'unknown';
 }
 
 /**

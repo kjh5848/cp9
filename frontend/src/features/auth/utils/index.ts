@@ -1,3 +1,4 @@
+import { User } from '@supabase/supabase-js';
 import { AuthError } from '../types';
 
 /**
@@ -42,7 +43,7 @@ export const validatePasswordConfirm = (password: string, confirmPassword: strin
  * @param error - Supabase 에러 객체
  * @returns 한국어 에러 메시지
  */
-export const formatAuthError = (error: any): string => {
+export const formatAuthError = (error: unknown): string => {
   const errorMessages: Record<string, string> = {
     'Invalid login credentials': '잘못된 이메일 또는 비밀번호입니다.',
     'Email not confirmed': '이메일 인증이 필요합니다. 이메일을 확인해주세요.',
@@ -53,8 +54,9 @@ export const formatAuthError = (error: any): string => {
     'Email rate limit exceeded': '이메일 전송 한도를 초과했습니다. 잠시 후 다시 시도해주세요.',
   };
 
-  if (error?.message) {
-    return errorMessages[error.message] || error.message;
+  if (error && typeof error === 'object' && 'message' in error) {
+    const errorMessage = String(error.message);
+    return errorMessages[errorMessage] || errorMessage;
   }
 
   return '알 수 없는 오류가 발생했습니다.';
@@ -75,7 +77,7 @@ export const getDisplayName = (email: string): string => {
  * @param loading - 로딩 상태
  * @returns 인증 상태
  */
-export const getAuthState = (user: any, loading: boolean): 'loading' | 'authenticated' | 'unauthenticated' => {
+export const getAuthState = (user: User | null, loading: boolean): 'loading' | 'authenticated' | 'unauthenticated' => {
   if (loading) return 'loading';
   return user ? 'authenticated' : 'unauthenticated';
 };
