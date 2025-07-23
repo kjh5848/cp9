@@ -28,11 +28,11 @@ export default function ProductLinkSearchForm({
         disabled={loading}
       />
       <Button
-        className="mt-2 w-full"
+        className="mt-2 w-full bg-[#ededed] text-[#171717] hover:bg-white hover:bg-opacity-90 transition-colors"
         onClick={handleLinkSubmit}
         disabled={loading}
       >
-        딥링크 변환 단계로
+        딥링크 변환
       </Button>
     </div>
   );

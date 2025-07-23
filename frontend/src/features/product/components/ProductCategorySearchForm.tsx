@@ -3,18 +3,16 @@
 import { useState } from 'react';
 import { Button } from '@/shared/ui/button';
 import { PricePreset, useSearchStore } from '@/store/searchStore';
+import { formatNumber, parseNumber } from '../utils';
+import { ImageSizeOption } from '../types';
 
 interface ProductCategorySearchFormProps {
   loading: boolean;
   handleCategorySearch: () => void;
   categoryId: string;
   setCategoryId: (value: string) => void;
-  imageWidth: number;
-  setImageWidth: (value: number) => void;
-  imageHeight: number;
-  setImageHeight: (value: number) => void;
-  imageRatio: string;
-  setImageRatio: (value: string) => void;
+  imageSize: number;
+  setImageSize: (value: number) => void;
   bestLimit: number;
   setBestLimit: (value: number) => void;
   priceMin: number;
@@ -23,19 +21,15 @@ interface ProductCategorySearchFormProps {
   setPriceMax: (value: number) => void;
 }
 
-const imageSizeOptions = [256, 512, 768, 1024];
+const imageSizeOptions: ImageSizeOption[] = [256, 512, 768, 1024];
 
 export default function ProductCategorySearchForm({
   loading,
   handleCategorySearch,
   categoryId,
   setCategoryId,
-  imageWidth,
-  setImageWidth,
-  imageHeight,
-  setImageHeight,
-  imageRatio,
-  setImageRatio,
+  imageSize,
+  setImageSize,
   bestLimit,
   setBestLimit,
   priceMin,
@@ -47,6 +41,53 @@ export default function ProductCategorySearchForm({
   const [showPresetForm, setShowPresetForm] = useState(false);
   const [newMin, setNewMin] = useState(0);
   const [newMax, setNewMax] = useState(0);
+
+  // 표시용 포맷된 가격 상태
+  const [priceMinDisplay, setPriceMinDisplay] = useState(priceMin.toLocaleString());
+  const [priceMaxDisplay, setPriceMaxDisplay] = useState(priceMax.toLocaleString());
+  const [newMinDisplay, setNewMinDisplay] = useState('0');
+  const [newMaxDisplay, setNewMaxDisplay] = useState('0');
+
+  // 가격 최소값 변경 핸들러
+  const handlePriceMinChange = (value: string) => {
+    const formatted = formatNumber(value);
+    setPriceMinDisplay(formatted);
+    setPriceMin(parseNumber(value));
+  };
+
+  // 가격 최대값 변경 핸들러
+  const handlePriceMaxChange = (value: string) => {
+    const formatted = formatNumber(value);
+    setPriceMaxDisplay(formatted);
+    setPriceMax(parseNumber(value));
+  };
+
+  // 프리셋 새 최소값 변경 핸들러
+  const handleNewMinChange = (value: string) => {
+    const formatted = formatNumber(value);
+    setNewMinDisplay(formatted);
+    setNewMin(parseNumber(value));
+  };
+
+  // 프리셋 새 최대값 변경 핸들러
+  const handleNewMaxChange = (value: string) => {
+    const formatted = formatNumber(value);
+    setNewMaxDisplay(formatted);
+    setNewMax(parseNumber(value));
+  };
+
+  const resetPrice = () => {
+    setPriceMin(0);
+    setPriceMax(5000000);
+    setPriceMinDisplay('0');
+    setPriceMaxDisplay('5,000,000');
+  };
+
+  // priceMin, priceMax가 외부에서 변경될 때 display 업데이트
+  useState(() => {
+    setPriceMinDisplay(priceMin.toLocaleString());
+    setPriceMaxDisplay(priceMax.toLocaleString());
+  });
 
   return (
     <>
@@ -80,11 +121,11 @@ export default function ProductCategorySearchForm({
         </select>
       </div>
       <div className="flex items-center gap-4 border-b pb-3 mb-3">
-        <label className="w-20 text-sm font-medium">이미지</label>
-        <span className="text-xs">가로</span>
+        <label className="w-20 text-sm font-medium">이미지 크기</label>
+        <span className="text-xs">크기</span>
         <select
-          value={imageWidth}
-          onChange={(e) => setImageWidth(Number(e.target.value))}
+          value={imageSize}
+          onChange={(e) => setImageSize(Number(e.target.value))}
           className="w-20 rounded border px-2 py-1"
         >
           {imageSizeOptions.map((size) => (
@@ -93,30 +134,7 @@ export default function ProductCategorySearchForm({
             </option>
           ))}
         </select>
-        <span className="text-xs">세로</span>
-        <select
-          value={imageHeight}
-          onChange={(e) => setImageHeight(Number(e.target.value))}
-          className="w-20 rounded border px-2 py-1"
-        >
-          {imageSizeOptions.map((size) => (
-            <option key={size} value={size}>
-              {size}
-            </option>
-          ))}
-        </select>
-        <span className="text-xs">비율</span>
-        <select
-          value={imageRatio}
-          onChange={(e) => setImageRatio(e.target.value)}
-          className="w-20 rounded border px-2 py-1"
-        >
-          <option value="1:1">1:1</option>
-          <option value="4:3">4:3</option>
-          <option value="3:4">3:4</option>
-          <option value="16:9">16:9</option>
-          <option value="9:16">9:16</option>
-        </select>
+        <span className="text-xs text-gray-500">px (1:1 비율 고정)</span>
       </div>
       <div className="flex items-center gap-4 border-b pb-3 mb-3">
         <label className="w-20 text-sm font-medium">개수</label>
@@ -134,22 +152,31 @@ export default function ProductCategorySearchForm({
       <div className="flex items-center gap-4">
         <label className="w-20 text-sm font-medium">가격</label>
         <input
-          type="number"
-          min={0}
-          value={priceMin}
-          onChange={(e) => setPriceMin(Number(e.target.value))}
+          type="text"
+          value={priceMinDisplay}
+          onChange={(e) => handlePriceMinChange(e.target.value)}
           className="w-24 rounded border px-2 py-1"
+          placeholder="0"
         />
         <span className="mx-1">~</span>
         <input
-          type="number"
-          min={0}
-          value={priceMax}
-          onChange={(e) => setPriceMax(Number(e.target.value))}
+          type="text"
+          value={priceMaxDisplay}
+          onChange={(e) => handlePriceMaxChange(e.target.value)}
           className="w-24 rounded border px-2 py-1"
+          placeholder="5,000,000"
         />
+        <span className="text-xs text-gray-500">원</span>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={resetPrice}
+          className="ml-2 text-xs px-2 py-1 h-8"
+        >
+          초기화
+        </Button>
       </div>
-      {/* 프리셋 리스트 + 추가 버튼 */}
+      {/* 프리셋 리스트 + 추가 버튼 (더 작게) */}
       <div className="flex flex-wrap gap-1 my-2 items-center">
         {pricePresets.map((preset, idx) => (
           <div key={preset.label} className="flex items-center gap-1">
@@ -159,8 +186,10 @@ export default function ProductCategorySearchForm({
               onClick={() => {
                 setPriceMin(preset.min);
                 setPriceMax(preset.max);
+                setPriceMinDisplay(preset.min.toLocaleString());
+                setPriceMaxDisplay(preset.max.toLocaleString());
               }}
-              className="whitespace-nowrap"
+              className="whitespace-nowrap text-xs px-2 py-1 h-7"
             >
               {preset.label}
             </Button>
@@ -168,6 +197,7 @@ export default function ProductCategorySearchForm({
               size="sm"
               variant="ghost"
               onClick={() => removePricePreset(idx)}
+              className="text-xs px-1 py-1 h-7 w-7"
             >
               ❌
             </Button>
@@ -177,6 +207,7 @@ export default function ProductCategorySearchForm({
           size="sm"
           variant="secondary"
           onClick={() => setShowPresetForm((v) => !v)}
+          className="text-xs px-2 py-1 h-7"
         >
           프리셋 추가
         </Button>
@@ -187,20 +218,21 @@ export default function ProductCategorySearchForm({
         <div className="flex gap-2 my-2 items-center">
           <label className="w-20 text-sm font-medium">가격 프리셋</label>
           <input
-            type="number"
+            type="text"
             placeholder="최소"
-            value={newMin}
-            onChange={(e) => setNewMin(Number(e.target.value))}
-            className="border px-2 py-1 rounded w-30"
+            value={newMinDisplay}
+            onChange={(e) => handleNewMinChange(e.target.value)}
+            className="border px-2 py-1 rounded w-24 text-sm"
           />
           <span className="text-xs">~</span>
           <input
-            type="number"
+            type="text"
             placeholder="최대"
-            value={newMax}
-            onChange={(e) => setNewMax(Number(e.target.value))}
-            className="border px-2 py-1 rounded w-30"
+            value={newMaxDisplay}
+            onChange={(e) => handleNewMaxChange(e.target.value)}
+            className="border px-2 py-1 rounded w-24 text-sm"
           />
+          <span className="text-xs text-gray-500">원</span>
           <Button
             size="sm"
             onClick={() => {
@@ -212,9 +244,12 @@ export default function ProductCategorySearchForm({
                 });
                 setNewMin(0);
                 setNewMax(0);
+                setNewMinDisplay('0');
+                setNewMaxDisplay('0');
                 setShowPresetForm(false);
               }
             }}
+            className="text-xs px-2 py-1 h-8"
           >
             추가
           </Button>
@@ -222,7 +257,7 @@ export default function ProductCategorySearchForm({
       )}
 
       <Button
-        className="mt-4 w-full"
+        className="mt-4 w-full bg-[#ededed] text-[#171717] hover:bg-white hover:bg-opacity-90 transition-colors"
         onClick={handleCategorySearch}
         disabled={loading}
       >

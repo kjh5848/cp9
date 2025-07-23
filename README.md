@@ -64,6 +64,7 @@ frontend/src/
 │   ├── api/               # API 클라이언트
 │   │   ├── coupang.ts     # 쿠팡 상품 검색 API
 │   │   ├── coupang-best-category.ts # 쿠팡 베스트 카테고리 API
+
 │   │   └── supabase.ts    # Supabase 클라이언트
 │   ├── utils/             # 외부 서비스 유틸리티
 │   │   └── coupang-hmac.ts # 쿠팡 HMAC 서명 생성

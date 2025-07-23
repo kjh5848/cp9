@@ -1,18 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { CoupangProductResponse } from '@/shared/types/api';
-
-export type ProductItem = CoupangProductResponse & {
-  deepLink?: string;
-};
-
-export type ProductHistory = {
-  keyword: string;
-  date: string; // ISO
-  results: ProductItem[];
-};
-
-export type PricePreset = { label: string; min: number; max: number };
+import { ProductItem, ProductHistory, PricePreset, SortOption } from '@/features/product/types';
 
 interface SearchStore {
   results: ProductItem[];
@@ -40,14 +28,21 @@ export const useSearchStore = create<SearchStore>()(
       selected: [],
       setSelected: (ids) => set({ selected: ids }),
       history: [],
-      addHistory: (keyword, items) => set((state) => ({ history: [...state.history, { keyword, date: new Date().toISOString(), results: items }] })),
+      addHistory: (keyword, items) => set((state) => ({ 
+        history: [...state.history, { 
+          id: crypto.randomUUID(),
+          keyword, 
+          date: new Date().toISOString(), 
+          results: items,
+          searchType: 'keyword' as const
+        }] 
+      })),
       clear: () => set({ results: [], selected: [] }),
       pricePresets: [
-        { label: "0~10만", min: 0, max: 100000 },
-        { label: "0~20만", min: 0, max: 200000 },
-        { label: "0~30만", min: 0, max: 300000 },
-        { label: "0~40만", min: 0, max: 400000 },
-        { label: "0~50만", min: 0, max: 500000 },
+        { label: "0~5만원", min: 0, max: 50000 },
+        { label: "5~10만원", min: 50000, max: 100000 },
+        { label: "10~20만원", min: 100000, max: 200000 },
+        { label: "20~50만원", min: 200000, max: 500000 },
       ],
       setPricePresets: (presets) => set({ pricePresets: presets }),
       clearHistory: () => set({ history: [] }),
@@ -63,4 +58,7 @@ export const useSearchStore = create<SearchStore>()(
     }),
     { name: 'search-store' }
   )
-); 
+);
+
+// Re-export types for backward compatibility
+export type { ProductItem, ProductHistory, PricePreset } from '@/features/product/types'; 
