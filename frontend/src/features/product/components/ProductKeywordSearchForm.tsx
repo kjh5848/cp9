@@ -43,7 +43,7 @@ export default function ProductKeywordSearchForm({
         />
       </div>
       <Button
-        className="w-full"
+        className="w-full bg-[#ededed] text-[#171717] hover:bg-white hover:bg-opacity-90 transition-colors"
         onClick={handleKeywordSearch}
         disabled={loading}
       >

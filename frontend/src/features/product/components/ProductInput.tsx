@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { Button } from '@/shared/ui/button';
 import { Card } from '@/shared/ui/card';
 import { useSearchStore } from '@/store/searchStore';
@@ -32,10 +33,8 @@ export default function ProductInput() {
   }, []);
 
   const [rocketOnly, setRocketOnly] = useState(false);
-  const [imageWidth, setImageWidth] = useState(512);
-  const [imageHeight, setImageHeight] = useState(512);
-  const [imageRatio, setImageRatio] = useState("1:1");
-  const [bestLimit, setBestLimit] = useState(20);
+  const [imageSizeValue, setImageSizeValue] = useState(512);
+  const [bestLimit, setBestLimit] = useState(100);
   const [priceMin, setPriceMin] = useState(0);
   const [priceMax, setPriceMax] = useState(5000000);
 
@@ -50,8 +49,24 @@ export default function ProductInput() {
   const [categoryId, setCategoryId] = useState('1002');
   const [categoryResults, setCategoryResults] = useState<any[]>([]);
 
-  // 가격 정렬 상태 추가
+  // 가격 정렬 상태 추가 (localStorage 연동)
   const [priceSort, setPriceSort] = useState<'none' | 'asc' | 'desc'>('none');
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedPriceSort = localStorage.getItem("priceSort") as 'none' | 'asc' | 'desc';
+      if (savedPriceSort) {
+        setPriceSort(savedPriceSort);
+      }
+    }
+  }, []);
+
+  const handlePriceSortChange = (newSort: 'none' | 'asc' | 'desc') => {
+    setPriceSort(newSort);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("priceSort", newSort);
+    }
+  };
 
   // sortOrder로 변환하는 계산된 값 추가
   const sortOrder: 'asc' | 'desc' | null = priceSort === 'none' ? null : priceSort as 'asc' | 'desc';
@@ -106,6 +121,12 @@ export default function ProductInput() {
 
   // 링크 검색 핸들러
   const handleLinkSubmit = async () => {
+    // 입력 검증
+    if (!links.trim()) {
+      toast.error('최소 1개 이상의 링크를 입력해주세요');
+      return;
+    }
+
     setLoading(true);
     try {
       const urls = links
@@ -113,6 +134,13 @@ export default function ProductInput() {
         .map((v) => v.trim())
         .filter(Boolean)
         .slice(0, 20);
+      
+      if (urls.length === 0) {
+        toast.error('유효한 링크를 입력해주세요');
+        setLoading(false);
+        return;
+      }
+
       const res = await fetch('/api/products/deeplink', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -121,8 +149,12 @@ export default function ProductInput() {
       const items = await res.json();
       setLinkResults(Array.isArray(items) ? items : []);
       safeAddHistory(links, Array.isArray(items) ? items : []);
+      
+      if (Array.isArray(items) && items.length > 0) {
+        toast.success(`${items.length}개의 딥링크가 생성되었습니다`);
+      }
     } catch (e) {
-      alert('딥링크 변환 실패: ' + (e instanceof Error ? e.message : ''));
+      toast.error('딥링크 변환 실패: ' + (e instanceof Error ? e.message : ''));
     } finally {
       setLoading(false);
     }
@@ -130,6 +162,12 @@ export default function ProductInput() {
 
   // 키워드 검색 핸들러
   const handleKeywordSearch = async () => {
+    // 입력 검증
+    if (!keywordInput.trim()) {
+      toast.error('검색할 키워드를 입력해주세요');
+      return;
+    }
+
     setLoading(true);
     setKeywordResults([]);
     try {
@@ -139,8 +177,17 @@ export default function ProductInput() {
         body: JSON.stringify({ keyword: keywordInput }),
       });
       const data = await res.json();
-      setKeywordResults(Array.isArray(data) ? data.slice(0, itemCount) : []);
-      safeAddHistory(keywordInput, Array.isArray(data) ? data.slice(0, itemCount) : []);
+      const results = Array.isArray(data) ? data.slice(0, itemCount) : [];
+      setKeywordResults(results);
+      safeAddHistory(keywordInput, results);
+      
+      if (results.length > 0) {
+        toast.success(`${results.length}개의 상품을 찾았습니다`);
+      } else {
+        toast.error('검색 결과가 없습니다');
+      }
+    } catch (e) {
+      toast.error('키워드 검색 실패: ' + (e instanceof Error ? e.message : ''));
     } finally {
       setLoading(false);
     }
@@ -148,25 +195,34 @@ export default function ProductInput() {
 
   // 카테고리 검색 핸들러
   const handleCategorySearch = async () => {
-    if (!categoryId) return;
+    // 입력 검증
+    if (!categoryId || !categoryId.trim()) {
+      toast.error('카테고리 ID를 입력해주세요');
+      return;
+    }
+
     setLoading(true);
-    try {
-      const imageSize = `${imageWidth}x${imageHeight}`;
-      const res = await fetch('/api/products/bestcategories', {
+          try {
+        const imageSize = `${imageSizeValue}x${imageSizeValue}`;
+        const res = await fetch('/api/products/bestcategories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ categoryId, limit: bestLimit, imageSize }),
       });
       if (!res.ok) throw new Error(await res.text());
       const products = await res.json();
-      setCategoryResults(Array.isArray(products) ? products : []);
-      if (Array.isArray(products) && products.length > 0) {
-        addHistory(products[0].categoryName || categoryId, products);
-      } else {
-        addHistory(categoryId, Array.isArray(products) ? products : []);
-      }
+      const results = Array.isArray(products) ? products : [];
+      setCategoryResults(results);
+      
+              if (results.length > 0) {
+          addHistory(products[0].categoryName || categoryId, products);
+          toast.success(`${results.length}개의 베스트 상품을 찾았습니다`);
+        } else {
+          addHistory(categoryId, results);
+          toast.error('해당 카테고리에서 상품을 찾을 수 없습니다');
+        }
     } catch (e) {
-      alert('카테고리 상품 검색 실패: ' + (e instanceof Error ? e.message : ''));
+      toast.error('카테고리 상품 검색 실패: ' + (e instanceof Error ? e.message : ''));
     } finally {
       setLoading(false);
     }
@@ -216,7 +272,7 @@ export default function ProductInput() {
             onClick={() => handleModeChange("link")}
             className="bg-[#ededed] text-[#171717] hover:bg-white hover:bg-opacity-90 transition-colors"
           >
-            링크 직접 입력
+            딥링크
           </Button>
           <Button
             variant={mode === "keyword" ? "default" : "outline"}
@@ -240,12 +296,8 @@ export default function ProductInput() {
             handleCategorySearch={handleCategorySearch}
             categoryId={categoryId}
             setCategoryId={setCategoryId}
-            imageWidth={imageWidth}
-            setImageWidth={setImageWidth}
-            imageHeight={imageHeight}
-            setImageHeight={setImageHeight}
-            imageRatio={imageRatio}
-            setImageRatio={setImageRatio}
+            imageSize={imageSizeValue}
+            setImageSize={setImageSizeValue}
             bestLimit={bestLimit}
             setBestLimit={setBestLimit}
             priceMin={priceMin}
@@ -313,7 +365,7 @@ export default function ProductInput() {
         {/* 가격 필터 UI 근처에 정렬 드롭다운 추가 */}
         <div className="flex items-center gap-2">
           <label className="text-sm">가격 정렬</label>
-          <select value={priceSort} onChange={e => setPriceSort(e.target.value as any)} className="border rounded px-2 py-1 text-sm">
+          <select value={priceSort} onChange={e => handlePriceSortChange(e.target.value as any)} className="border rounded px-2 py-1 text-sm">
             <option value="none">기본</option>
             <option value="desc">높은순</option>
             <option value="asc">낮은순</option>

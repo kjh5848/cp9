@@ -7,7 +7,6 @@ import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
-import ProductInput from '@/features/product/components/ProductInput';
 
 export default function Home() {
   const { user, loading, signOut } = useAuth();
