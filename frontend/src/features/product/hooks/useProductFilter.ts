@@ -4,33 +4,24 @@ export function useProductFilter({
   deeplinkResult,
   rocketOnly,
   mode,
-  priceMin,
-  priceMax,
   selected,
   setSelected,
 }: {
   deeplinkResult: any[];
   rocketOnly: boolean;
   mode: string;
-  priceMin: number;
-  priceMax: number;
   selected: string[];
   setSelected: (ids: string[]) => void;
 }) {
-  // 필터링된 결과
+  // 필터링된 결과 (로켓배송 필터만 적용)
   const filteredResults = useMemo(() => {
     let base = deeplinkResult;
     if (rocketOnly) {
       base = base.filter((item) => item.isRocket || item.rocketShipping);
     }
-    if (mode === 'category') {
-      base = base.filter((item) => {
-        const price = item.productPrice ?? item.price ?? 0;
-        return price >= priceMin && price <= priceMax;
-      });
-    }
+    // 가격 필터링은 ProductCategorySearchForm에서 처리
     return base;
-  }, [deeplinkResult, rocketOnly, mode, priceMin, priceMax]);
+  }, [deeplinkResult, rocketOnly]);
 
   // 전체선택
   const allIds = useMemo(() => filteredResults.map((item: any) => item.productId || item.url), [filteredResults]);
