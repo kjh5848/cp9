@@ -1,63 +1,30 @@
 'use client';
 
-import { useState } from 'react';
-import { supabase } from '@/infrastructure/api/supabase';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
+import { useAuthForm } from '../hooks';
 
+/**
+ * 인증 폼 컴포넌트 (로그인/회원가입)
+ * 
+ * @returns JSX.Element
+ * 
+ * @example
+ * ```tsx
+ * <AuthForm />
+ * ```
+ */
 export default function AuthForm() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [message, setMessage] = useState('');
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setMessage('');
-
-    try {
-      if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-        });
-        if (error) throw error;
-        setMessage('회원가입 성공! 이메일을 확인해주세요.');
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) throw error;
-        setMessage('로그인 성공!');
-      }
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : '오류가 발생했습니다.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    setIsLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/callback`,
-        },
-      });
-      if (error) throw error;
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : '구글 로그인 오류가 발생했습니다.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    authState: { isLoading, isSignUp, message },
+    toggleAuthMode,
+    handleGoogleSignIn,
+  } = useAuthForm();
 
   return (
     <Card className="mx-auto max-w-sm">
@@ -80,24 +47,55 @@ export default function AuthForm() {
               id="email"
               type="email"
               placeholder="example@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+              {...register('email', {
+                required: '이메일을 입력해주세요.',
+                pattern: {
+                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                  message: '유효한 이메일 형식이 아닙니다.',
+                },
+              })}
+              aria-invalid={errors.email ? 'true' : 'false'}
             />
+            {errors.email && (
+              <p className="text-sm text-red-600">{errors.email.message}</p>
+            )}
           </div>
+          
           <div className="space-y-2">
             <Label htmlFor="password">비밀번호</Label>
             <Input
               id="password"
               type="password"
               placeholder="비밀번호를 입력하세요"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+              {...register('password', {
+                required: '비밀번호를 입력해주세요.',
+                minLength: {
+                  value: 6,
+                  message: '비밀번호는 최소 6자 이상이어야 합니다.',
+                },
+                pattern: {
+                  value: /(?=.*[a-zA-Z])/,
+                  message: '비밀번호는 최소 1개의 영문자를 포함해야 합니다.',
+                },
+              })}
+              aria-invalid={errors.password ? 'true' : 'false'}
             />
+            {errors.password && (
+              <p className="text-sm text-red-600">{errors.password.message}</p>
+            )}
           </div>
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? '처리 중...' : isSignUp ? '회원가입' : '로그인'}
+          
+          <Button 
+            type="submit" 
+            className="w-full" 
+            disabled={isLoading || isSubmitting}
+          >
+            {isLoading || isSubmitting 
+              ? '처리 중...' 
+              : isSignUp 
+                ? '회원가입' 
+                : '로그인'
+            }
           </Button>
         </form>
         
@@ -117,14 +115,17 @@ export default function AuthForm() {
           <Button
             variant="link"
             className="ml-1 p-0 h-auto"
-            onClick={() => setIsSignUp(!isSignUp)}
+            onClick={toggleAuthMode}
+            disabled={isLoading}
           >
             {isSignUp ? '로그인' : '회원가입'}
           </Button>
         </div>
 
         {message && (
-          <div className="mt-4 text-center text-sm text-blue-600">
+          <div className={`mt-4 text-center text-sm ${
+            message.includes('성공') ? 'text-green-600' : 'text-red-600'
+          }`}>
             {message}
           </div>
         )}
