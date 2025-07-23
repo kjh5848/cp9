@@ -1,29 +1,36 @@
-import { ProductItem, ProductFilterOptions, SortOption } from '../types';
+import { ProductItem, ProductFilterOptions, SortOption, CategoryOption, ImageSizeOption } from '../types';
 
 /**
- * 숫자를 천 단위 쉼표가 포함된 문자열로 포맷
- * @param value - 포맷할 숫자 또는 문자열
- * @returns 쉼표가 포함된 형태의 문자열
+ * 숫자 포맷팅 함수
+ * 
+ * @param value - 포맷팅할 숫자 문자열
+ * @returns 콤마가 포함된 포맷된 문자열
+ * @example
+ * formatNumber("1234567") // "1,234,567"
  */
-export const formatNumber = (value: string | number): string => {
-  const stringValue = typeof value === 'number' ? value.toString() : value;
+export function formatNumber(value: string): string {
   // 숫자가 아닌 문자 제거
-  const numericValue = stringValue.replace(/[^0-9]/g, '');
-  // 빈 문자열이면 '0' 반환
-  if (numericValue === '') return '0';
-  // 천 단위 쉼표 추가
-  return parseInt(numericValue).toLocaleString();
-};
+  const numericValue = value.replace(/[^\d]/g, '');
+  
+  if (numericValue === '') return '';
+  
+  // 숫자를 콤마로 구분하여 포맷팅
+  return parseInt(numericValue, 10).toLocaleString();
+}
 
 /**
- * 포맷된 문자열을 숫자로 변환
- * @param value - 변환할 문자열
- * @returns 숫자 값
+ * 포맷된 숫자 문자열을 숫자로 변환
+ * 
+ * @param value - 포맷된 숫자 문자열
+ * @returns 변환된 숫자
+ * @example
+ * parseNumber("1,234,567") // 1234567
  */
-export const parseNumber = (value: string): number => {
-  const numericValue = value.replace(/[^0-9]/g, '');
-  return numericValue === '' ? 0 : parseInt(numericValue);
-};
+export function parseNumber(value: string): number {
+  // 콤마 제거 후 숫자로 변환
+  const numericValue = value.replace(/[^\d]/g, '');
+  return numericValue === '' ? 0 : parseInt(numericValue, 10);
+}
 
 /**
  * 가격을 원화 형태로 포맷
@@ -190,4 +197,45 @@ export const sanitizeKeyword = (keyword: string): string => {
  */
 export const isValidCategoryId = (categoryId: string): boolean => {
   return /^\d{4}$/.test(categoryId);
+}; 
+
+/**
+ * 쿠팡 카테고리 옵션 목록
+ */
+export const COUPANG_CATEGORIES: CategoryOption[] = [
+  { value: '', label: '카테고리 선택' },
+  { value: '1001', label: '여성패션' },
+  { value: '1002', label: '남성패션' },
+  { value: '1010', label: '뷰티' },
+  { value: '1011', label: '출산/유아동' },
+  { value: '1012', label: '식품' },
+  { value: '1013', label: '주방용품' },
+  { value: '1014', label: '생활용품' },
+  { value: '1015', label: '홈인테리어' },
+  { value: '1016', label: '가전디지털' },
+  { value: '1017', label: '스포츠/레저' },
+  { value: '1018', label: '자동차용품' },
+  { value: '1019', label: '도서/음반/DVD' },
+  { value: '1020', label: '완구/취미' },
+  { value: '1021', label: '문구/오피스' },
+  { value: '1024', label: '헬스/건강식품' },
+  { value: '1025', label: '국내여행' },
+  { value: '1026', label: '해외여행' },
+  { value: '1029', label: '반려동물용품' },
+  { value: '1030', label: '유아동패션' },
+];
+
+/**
+ * 이미지 크기 옵션 목록
+ */
+export const IMAGE_SIZE_OPTIONS: ImageSizeOption[] = [256, 512, 768, 1024];
+
+/**
+ * 기본 검색 옵션
+ */
+export const DEFAULT_SEARCH_OPTIONS = {
+  categoryId: '',
+  imageSize: 512 as ImageSizeOption,
+  bestLimit: 20,
+  priceRange: [0, 5_000_000] as [number, number],
 }; 

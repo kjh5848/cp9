@@ -123,4 +123,43 @@ export interface ApiResponse<T> {
   data?: T;
   error?: string;
   message?: string;
+}
+
+/**
+ * 검색 옵션 타입 (그룹화된 상태)
+ */
+export interface SearchOptions {
+  categoryId: string;
+  imageSize: number;
+  bestLimit: number;
+  priceRange: [number, number];
+}
+
+/**
+ * 가격 범위 타입
+ */
+export type PriceRange = [number, number];
+
+/**
+ * 표시용 가격 범위 타입
+ */
+export interface DisplayPriceRange {
+  min: string;
+  max: string;
+}
+
+/**
+ * 폼 상태 타입
+ */
+export interface FormState {
+  loading: boolean;
+  showPresetForm: boolean;
+}
+
+/**
+ * 카테고리 옵션 타입
+ */
+export interface CategoryOption {
+  value: string;
+  label: string;
 } 

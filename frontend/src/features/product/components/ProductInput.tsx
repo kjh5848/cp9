@@ -33,10 +33,6 @@ export default function ProductInput() {
   }, []);
 
   const [rocketOnly, setRocketOnly] = useState(false);
-  const [imageSizeValue, setImageSizeValue] = useState(512);
-  const [bestLimit, setBestLimit] = useState(100);
-  const [priceMin, setPriceMin] = useState(0);
-  const [priceMax, setPriceMax] = useState(5000000);
 
   // 링크 결과
   const [linkResults, setLinkResults] = useState<any[]>([]);
@@ -45,8 +41,7 @@ export default function ProductInput() {
   const [keywordInput, setKeywordInput] = useState('');
   const [keywordResults, setKeywordResults] = useState<any[]>([]);
 
-  // 카테고리 입력/결과
-  const [categoryId, setCategoryId] = useState('1002');
+  // 카테고리 결과
   const [categoryResults, setCategoryResults] = useState<any[]>([]);
 
   // 가격 정렬 상태 추가 (localStorage 연동)
@@ -92,12 +87,8 @@ export default function ProductInput() {
     if (rocketOnly) {
       base = base.filter((item) => item.isRocket || item.rocketShipping);
     }
-    if (mode === "category") {
-      base = base.filter((item) => {
-        const price = item.productPrice ?? item.price ?? 0;
-        return price >= priceMin && price <= priceMax;
-      });
-    }
+    // 카테고리 모드에서는 가격 필터링을 ProductCategorySearchForm에서 처리
+    // 여기서는 로켓배송 필터만 적용
     // 가격 정렬
     if (priceSort === 'asc') {
       base = [...base].sort((a, b) => (a.productPrice ?? a.price ?? 0) - (b.productPrice ?? b.price ?? 0));
@@ -113,8 +104,6 @@ export default function ProductInput() {
     deeplinkResult,
     rocketOnly,
     mode,
-    priceMin,
-    priceMax,
     selected,
     setSelected,
   });
@@ -194,33 +183,42 @@ export default function ProductInput() {
   };
 
   // 카테고리 검색 핸들러
-  const handleCategorySearch = async () => {
+  const handleCategorySearch = async (options: {
+    categoryId: string;
+    imageSize: number;
+    bestLimit: number;
+    priceRange: [number, number];
+  }) => {
     // 입력 검증
-    if (!categoryId || !categoryId.trim()) {
-      toast.error('카테고리 ID를 입력해주세요');
+    if (!options.categoryId || !options.categoryId.trim()) {
+      toast.error('카테고리를 선택해주세요');
       return;
     }
 
     setLoading(true);
-          try {
-        const imageSize = `${imageSizeValue}x${imageSizeValue}`;
-        const res = await fetch('/api/products/bestcategories', {
+    try {
+      const imageSize = `${options.imageSize}x${options.imageSize}`;
+      const res = await fetch('/api/products/bestcategories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ categoryId, limit: bestLimit, imageSize }),
+        body: JSON.stringify({ 
+          categoryId: options.categoryId, 
+          limit: options.bestLimit, 
+          imageSize 
+        }),
       });
       if (!res.ok) throw new Error(await res.text());
       const products = await res.json();
       const results = Array.isArray(products) ? products : [];
       setCategoryResults(results);
       
-              if (results.length > 0) {
-          addHistory(products[0].categoryName || categoryId, products);
-          toast.success(`${results.length}개의 베스트 상품을 찾았습니다`);
-        } else {
-          addHistory(categoryId, results);
-          toast.error('해당 카테고리에서 상품을 찾을 수 없습니다');
-        }
+      if (results.length > 0) {
+        addHistory(products[0].categoryName || options.categoryId, products);
+        toast.success(`${results.length}개의 베스트 상품을 찾았습니다`);
+      } else {
+        addHistory(options.categoryId, results);
+        toast.error('해당 카테고리에서 상품을 찾을 수 없습니다');
+      }
     } catch (e) {
       toast.error('카테고리 상품 검색 실패: ' + (e instanceof Error ? e.message : ''));
     } finally {
@@ -293,17 +291,7 @@ export default function ProductInput() {
         {mode === "category" && (
           <ProductCategorySearchForm
             loading={loading}
-            handleCategorySearch={handleCategorySearch}
-            categoryId={categoryId}
-            setCategoryId={setCategoryId}
-            imageSize={imageSizeValue}
-            setImageSize={setImageSizeValue}
-            bestLimit={bestLimit}
-            setBestLimit={setBestLimit}
-            priceMin={priceMin}
-            setPriceMin={setPriceMin}
-            priceMax={priceMax}
-            setPriceMax={setPriceMax}
+            onSearch={handleCategorySearch}
           />
         )}
 
@@ -352,10 +340,8 @@ export default function ProductInput() {
             variant="outline"
             className="ml-2"
             onClick={() => {
-              setPriceMin(0);
-              setPriceMax(500000);
               setRocketOnly(false);
-              // 필요시 기타 필터도 초기화
+              // 가격 필터는 ProductCategorySearchForm에서 관리
             }}
           >
             필터 초기화
