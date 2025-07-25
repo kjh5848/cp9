@@ -383,6 +383,11 @@ D --> E[WordPress Publisher]
 - **MemorySaver**: SEO Agent 대화 히스토리 요약
 - **Cross-thread KV**: 중복 게시 방지
 
+### 배포 방식
+- **GitHub 연동**: 자동 배포 (권장)
+- **Supabase CLI**: 로컬 개발용
+- **Edge Functions**: `backend/supabase/functions/` 폴더 자동 감지
+
 ## 참고/확장 예정
 
 - 쿠팡 오픈API 공식문서: https://developers.coupang.com/
