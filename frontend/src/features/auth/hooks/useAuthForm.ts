@@ -157,7 +157,7 @@ export function useAuthForm(): UseAuthFormReturn {
       e.preventDefault();
       handleFormSubmit(handleAuthSubmit)(e);
     },
-    formState: { errors, isSubmitting },
+    formState,
     reset,
     
     // 인증 상태 관련
