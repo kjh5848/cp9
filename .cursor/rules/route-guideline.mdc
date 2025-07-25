@@ -1,0 +1,174 @@
+---
+description: "Follow this rule when adding or updating API routes under the Next.js App Router (app/api). It defines folder structure, request/response types, error handling, environment variable validation, and documentation best practices."
+globs: src/app/api/**
+alwaysApply: false
+---
+
+# API Route Guideline
+
+This folder contains API routes for the Next.js App Router.
+
+## 📁 Folder Structure
+
+```
+
+api/
+├── products/
+│   ├── search/           # Product search API
+│   ├── bestcategories/   # Best category products API
+│   └── deeplink/         # Deep link conversion API
+└── README.md             # This guide
+
+````
+
+## 🔌 API Endpoints Overview
+
+### 1. Product Search API
+- **Path**: `/api/products/search`
+- **Method**: `POST`
+- **Request**:
+  ```json
+  {
+    "keyword": "laptop",
+    "limit": 10
+  }
+````
+
+* **Response**:
+
+  ```json
+  [
+    {
+      "productName": "Name",
+      "productImage": "ImageURL",
+      "productPrice": 100000,
+      "productUrl": "URL",
+      "productId": 12345,
+      "isRocket": true,
+      "isFreeShipping": false,
+      "categoryName": "Category"
+    }
+  ]
+  ```
+
+### 2. Best Category Products API
+
+* **Path**: `/api/products/bestcategories`
+* **Method**: `POST`
+* **Same format as product search**
+
+### 3. Deep Link Conversion API
+
+* **Path**: `/api/products/deeplink`
+* **Method**: `POST`
+* **Request**:
+
+  ```json
+  {
+    "urls": ["https://www.coupang.com/vp/products/..."]
+  }
+  ```
+* **Response**:
+
+  ```json
+  [
+    {
+      "productName": "Name",
+      "productImage": "ImageURL",
+      "productPrice": 100000,
+      "productUrl": "Original URL",
+      "productId": 12345,
+      "isRocket": true,
+      "isFreeShipping": false,
+      "categoryName": "Category",
+      "deepLinkUrl": "Converted DeepLink URL"
+    }
+  ]
+  ```
+
+## 🏗️ Architecture Principles
+
+* Consistent response format (`CoupangProductResponse`)
+* Strict type safety using TypeScript
+* Robust error handling with proper status codes
+* Validation of all required environment variables
+
+## 🔧 API Development Guide
+
+### Add a New API
+
+1. **Create a folder**
+
+   ```bash
+   mkdir -p src/app/api/new-feature
+   ```
+
+2. **Create route.ts**
+
+   ```ts
+   import { NextRequest, NextResponse } from 'next/server';
+   import { normalizeCoupangProduct } from '@/shared/lib/api-utils';
+   import { CoupangProductResponse } from '@/shared/types/api';
+
+   export async function POST(req: NextRequest) {
+     try {
+       // API logic
+       const result: CoupangProductResponse[] = data.map(normalizeCoupangProduct);
+       return NextResponse.json(result);
+     } catch (e: unknown) {
+       const errorMessage = e instanceof Error ? e.message : 'Server error';
+       return NextResponse.json({ error: errorMessage }, { status: 500 });
+     }
+   }
+   ```
+
+3. **Add request/response types**
+
+   ```ts
+   // src/shared/types/api.ts
+   export interface NewFeatureRequest {
+     // define fields
+   }
+   ```
+
+### Write Tests
+
+```ts
+// src/app/api/__tests__/new-feature.test.ts
+import { POST } from '../new-feature/route';
+
+describe('New Feature API', () => {
+  it('returns valid product response', async () => {
+    const request = new Request('http://localhost:3000/api/new-feature', {
+      method: 'POST',
+      body: JSON.stringify({ /* test data */ }),
+    });
+
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(data).toHaveProperty('productName');
+    expect(data).toHaveProperty('productPrice');
+  });
+});
+```
+
+## ✅ API Checklist
+
+* [ ] Uses consistent response shape
+* [ ] Includes TypeScript type definitions
+* [ ] Implements proper error handling
+* [ ] Validates environment variables
+* [ ] Includes JSDoc or inline comments
+* [ ] Includes tests
+* [ ] Updates this README
+
+## 🚨 Best Practices
+
+* Never expose sensitive data to the client
+* Add caching and optimization as needed
+* Log important actions or failures
+* Validate incoming request data
+* Keep API docs and contracts up to date
+
+```

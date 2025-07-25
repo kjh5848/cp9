@@ -72,8 +72,8 @@ frontend/src/
 │   └── README.md          # Infrastructure 가이드
 │
 ├── store/                 # 상태 관리
-│   └── searchStore.ts     # 검색 상태 관리 (Zustand)
-└── types/                 # 전역 타입 정의
+    └── searchStore.ts     # 검색 상태 관리 (Zustand)
+
 ```
 
 ### 아키텍처 패턴
@@ -210,6 +210,8 @@ G --> H[워드프레스 초안 저장]
 - [x] **타입 안전성 강화** - `any` 타입 제거, 명시적 타입 정의
 - [x] **Infrastructure 정리** - 외부 API 클라이언트 구조화
 - [x] **딥링크 API 수정** - 쿠팡 API 실제 응답 구조에 맞게 수정
+- [x] **LangGraph 통합 준비** - 프로젝트 상태 분석 및 아키텍처 설계
+- [ ] **LangGraph 기반 자동화 시스템** - 딥링크 → 쿠팡 → Perplexity → SEO → WordPress
 - [ ] 워드프레스 초안 저장 기능
 - [ ] E2E/유닛 테스트, 배포 자동화
 
@@ -331,8 +333,32 @@ npm run test
 
 ---
 
+## 🚀 LangGraph 기반 자동화 시스템 (진행 중)
+
+### 전체 플로우
+```mermaid
+graph TD
+A[딥링크 수집] --> B[Cache Gateway]
+B --> C[Scrape Graph]
+C --> D[SEO Writer Agent]
+D --> E[WordPress Publisher]
+```
+
+### 핵심 노드 및 기능
+- **Deep-link 수집**: `extractIds` - productId 배열 추출
+- **Cache Gateway**: Redis Hit/Miss 처리, Queue enqueue
+- **Scrape Graph**: `staticCrawler` → `dynCrawler` → `fallbackLLM`
+- **SEO Writer Agent**: ReAct 패턴, 메모리 요약 관리
+- **WordPress Publisher**: 중복 게시 방지, cross-thread KV
+
+### LangGraph 메모리 전략
+- **RedisSaver**: Scrape Graph 체크포인트 저장
+- **MemorySaver**: SEO Agent 대화 히스토리 요약
+- **Cross-thread KV**: 중복 게시 방지
+
 ## 참고/확장 예정
 
 - 쿠팡 오픈API 공식문서: https://developers.coupang.com/
+- LangGraph JS 공식문서: https://langchain-ai.github.io/langgraph/
 - 카테고리별 상품 랭킹, 다양한 필터, 멀티채널 발행, A/B 프롬프트, CLI 등 확장 가능
 - **향후 계획**: 워드프레스 연동, 블로그 자동 발행, 성능 최적화, 모니터링 시스템 

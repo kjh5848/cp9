@@ -1,6 +1,3 @@
----
-alwaysApply: true
----
 # 🛠️ Coupang Partners Auto-Blog SaaS
 
 > **목표** 키워드만 입력하면  
@@ -16,6 +13,7 @@ alwaysApply: true
 | **State/Data** | **TanStack Query** · **Zustand** |
 | **Edge Functions** | **Supabase** Edge Functions (TypeScript + Deno) |
 | **DB** | Supabase **Postgres** + Row Level Security |
+| **AI/Workflow** | **LangGraph JS** · **Perplexity API** · **OpenAI API** |
 | **CI/CD** | **GitHub Actions** → Vercel(프런트) / `supabase functions deploy`(백) |
 | **테스트** | Jest/Vitest(Unit) · Playwright(E2E) |
 | **품질 도구** | ESLint · Prettier · Husky + lint-staged |
@@ -25,36 +23,49 @@ alwaysApply: true
 ## 🚀 구현 단계 체크리스트
 
 ### 1. 기본 환경 세팅
-- [ ] **코드 스타일** : `eslint-config-next` + Prettier + Husky/lint-staged
-- [ ] **UI 초기화** : Tailwind v4 / shadcn `init` 후 Button·Card 추가
-- [ ] **Supabase 프로젝트** 생성 & `.env`(URL / ANON_KEY) 연결
+- [x] **코드 스타일** : `eslint-config-next` + Prettier + Husky/lint-staged
+- [x] **UI 초기화** : Tailwind v4 / shadcn `init` 후 Button·Card 추가
+- [x] **Supabase 프로젝트** 생성 & `.env`(URL / ANON_KEY) 연결
 - [ ] **CI 파이프라인** 생성 → 프런트(build/test) · 백엔드(edge deploy) 동시 실행
 
 ### 2. 핵심 기능 MVP
-- [ ] 🔑 **Auth** : Supabase Magic-Link 로그인
-- [ ] 🗂️ **키워드 입력 폼** (Client Component + Zustand)
-- [ ] 🔍 **상품 검색 Edge Function** : Coupang `/products/search` + 정렬
-- [ ] 🔗 **딥링크 Edge Function** : Coupang `/v1/deeplink` 일괄 변환
-- [ ] 🤖 **LLM 요약 Server Action** : OpenAI → “빠른 체크포인트” HTML
+- [x] 🔑 **Auth** : Supabase Magic-Link 로그인
+- [x] 🗂️ **키워드 입력 폼** (Client Component + Zustand)
+- [x] 🔍 **상품 검색 Edge Function** : Coupang `/products/search` + 정렬
+- [x] 🔗 **딥링크 Edge Function** : Coupang `/v1/deeplink` 일괄 변환
+- [x] 🤖 **LLM 요약 Server Action** : OpenAI → "빠른 체크포인트" HTML
 - [ ] 📤 **WordPress Draft** : Route Handler → WP REST `/posts` 저장
 
-### 3. 품질 · 테스트
+### 3. LangGraph 기반 자동화 시스템
+- [x] **프로젝트 상태 분석** : 기존 구조와 LangGraph 통합 가능성 검토
+- [ ] **LangGraph 아키텍처 설계** : 딥링크 → 쿠팡 → Perplexity → SEO → WordPress 플로우 설계
+- [ ] **Infrastructure 레이어 확장** : Perplexity MCP, Redis, WordPress API 클라이언트 추가
+- [ ] **Edge Functions 구현** : Cache Gateway와 Queue Worker 구현
+- [ ] **LangGraph 노드 구현** : Scrape Graph와 SEO Agent 노드들 구현
+- [ ] **WordPress 연동 구현** : WordPress REST API 클라이언트와 중복 게시 방지 로직
+- [ ] **프론트엔드 통합** : 기존 CP9 UI에 LangGraph 기반 자동화 플로우 통합
+- [ ] **테스트 및 최적화** : 전체 플로우 E2E 테스트, 성능 최적화, 오류 처리 개선
+
+### 4. 품질 · 테스트
 - [ ] **Unit** : Vitest/Jest 커버리지 80 % 이상
-- [ ] **E2E** : Playwright “로그인 → 키워드 → 글 발행” 시나리오
+- [ ] **E2E** : Playwright "로그인 → 키워드 → 글 발행" 시나리오
 - [ ] **Lighthouse** 모바일 95 점 이상
 
-### 4. 배포 · 모니터링
+### 5. 배포 · 모니터링
 - [ ] **Vercel Production** 배포 & Preview URL 자동 코멘트
 - [ ] **Supabase Edge** deploy + `pg-boss` 큐 대시보드
 - [ ] **Slack 알림** : 오류/배포 웹훅 통합
 
-### 5. 리팩터링 · 확장
+### 6. 리팩터링 · 확장
 - [ ] **DDD 모듈화** : `domain / application / infra` 구조
 - [ ] **A/B 프롬프트 테이블** 추가(버전 관리)
 - [ ] **CLI 빌드** : PyInstaller + Tufup 자동 업데이트
 - [ ] **멀티 채널 발행** : 티스토리·브런치 API 연결
 
 ---
+
+
+
 
 
 
