@@ -307,12 +307,39 @@ export async function POST(req: NextRequest) {
 
 ```bash
 # .env.local
-COUPANG_ACCESS_KEY=your_coupang_access_key
-COUPANG_SECRET_KEY=your_coupang_secret_key
+
+# Supabase 설정
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
+# 쿠팡 파트너스 API
+COUPANG_ACCESS_KEY=your_coupang_access_key
+COUPANG_SECRET_KEY=your_coupang_secret_key
+
+# OpenAI API
 OPENAI_API_KEY=your_openai_api_key
+
+# Perplexity API
+PERPLEXITY_API_KEY=your_perplexity_api_key
+
+# WordPress 설정
+WORDPRESS_API_URL=https://your-wordpress-site.com/wp-json
+WORDPRESS_USERNAME=your_wordpress_username
+WORDPRESS_PASSWORD=your_wordpress_application_password
+WORDPRESS_DEFAULT_STATUS=draft
+WORDPRESS_CATEGORIES=1,2,3
+WORDPRESS_TAGS=쿠팡,상품,리뷰
+
+# LangGraph 설정
+NEXT_PUBLIC_LANGGRAPH_API_URL=/api/langgraph
+LANGGRAPH_REDIS_URL=your_redis_url
+LANGGRAPH_QUEUE_NAME=langgraph-queue
+LANGGRAPH_MAX_CONCURRENCY=5
+
+# Redis 설정 (Supabase Edge Functions용)
+REDIS_URL=your_redis_url
+REDIS_PASSWORD=your_redis_password
 ```
 
 ### 설치 및 실행

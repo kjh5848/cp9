@@ -13,6 +13,9 @@
     "test:ui": "vitest --ui"
   },
   "dependencies": {
+    "@langchain/community": "^0.3.49",
+    "@langchain/langgraph": "^0.3.11",
+    "@langchain/openai": "^0.6.3",
     "@supabase/auth-ui-react": "^0.4.7",
     "@supabase/auth-ui-shared": "^0.1.8",
     "@supabase/supabase-js": "^2.50.4",
