@@ -7,7 +7,8 @@
 - **Next.js 15 + Zustand + shadcn/ui + Tailwind** 기반 프론트엔드
 - **Supabase Edge Functions** 기반 백엔드
 - **쿠팡 오픈API** 상품검색/딥링크/카테고리 연동
-- **OpenAI** 기반 LLM SEO 블로그 자동작성
+- **Perplexity API** 기반 LLM SEO 블로그 자동작성
+- **LangGraph JS** 기반 자동화 워크플로우
 - **검색 이력, 상태 영속화, 반응형 UI/UX**
 - **TypeScript 기반 타입 안전성 및 API 일관성**
 
@@ -27,6 +28,7 @@ frontend/src/
 │   ├── auth/              # 인증 페이지
 │   ├── login/             # 로그인 페이지
 │   ├── product/           # 상품 페이지
+│   ├── simple-test/       # LangGraph 노드 테스트 페이지
 │   ├── layout.tsx         # 루트 레이아웃
 │   ├── page.tsx           # 홈페이지
 │   └── globals.css        # 전역 스타일
@@ -45,11 +47,25 @@ frontend/src/
 │   │   ├── types/         # 상품 타입 정의
 │   │   └── utils/         # 상품 유틸리티
 │   │
-│   └── search/            # 검색 기능
-│       ├── components/    # 검색 관련 컴포넌트
-│       ├── hooks/         # 검색 관련 훅
-│       ├── types/         # 검색 타입 정의
-│       └── utils/         # 검색 유틸리티
+│   ├── search/            # 검색 기능
+│   │   ├── components/    # 검색 관련 컴포넌트
+│   │   ├── hooks/         # 검색 관련 훅
+│   │   ├── types/         # 검색 타입 정의
+│   │   └── utils/         # 검색 유틸리티
+│   │
+│   └── langgraph/         # LangGraph 자동화 시스템
+│       ├── types/         # LangGraph 타입 정의
+│       ├── nodes/         # LangGraph 노드들
+│       │   ├── extract-ids.ts
+│       │   ├── static-crawler.ts
+│       │   ├── dynamic-crawler.ts
+│       │   ├── fallback-llm.ts
+│       │   ├── seo-agent.ts
+│       │   └── wordpress-publisher.ts
+│       ├── graphs/        # LangGraph 그래프 정의
+│       │   └── main-graph.ts
+│       ├── memory/        # 메모리 관리 전략
+│       └── utils/         # LangGraph 유틸리티
 │
 ├── shared/                # 공통 모듈
 │   ├── ui/                # 재사용 가능한 UI 컴포넌트
@@ -64,8 +80,11 @@ frontend/src/
 │   ├── api/               # API 클라이언트
 │   │   ├── coupang.ts     # 쿠팡 상품 검색 API
 │   │   ├── coupang-best-category.ts # 쿠팡 베스트 카테고리 API
-
+│   │   ├── wordpress.ts   # WordPress REST API 클라이언트
+│   │   ├── langgraph.ts   # LangGraph API 클라이언트
 │   │   └── supabase.ts    # Supabase 클라이언트
+│   ├── queue/             # 큐 시스템
+│   │   └── worker.ts      # 큐 워커 클라이언트
 │   ├── utils/             # 외부 서비스 유틸리티
 │   │   └── coupang-hmac.ts # 쿠팡 HMAC 서명 생성
 │   ├── auth/              # 인증 서비스
@@ -74,13 +93,19 @@ frontend/src/
 ├── store/                 # 상태 관리
     └── searchStore.ts     # 검색 상태 관리 (Zustand)
 
+backend/supabase/functions/
+├── cache-gateway/         # 캐시 게이트웨이 Edge Function
+├── queue-worker/          # 큐 워커 Edge Function
+├── langgraph-api/         # LangGraph API Edge Function
+└── README.md              # Edge Functions 가이드
 ```
 
 ### 아키텍처 패턴
 
-**Next.js App Router + Feature-Based Architecture**를 채택했습니다:
+**Next.js App Router + Feature-Based Architecture + LangGraph Workflow**를 채택했습니다:
 
 - **Feature-First**: 도메인별 기능을 `features/` 폴더로 분리
+- **LangGraph Integration**: 자동화 워크플로우를 `features/langgraph/` 폴더로 관리
 - **Shared Modules**: 재사용 가능한 모듈을 `shared/` 폴더로 통합
 - **Infrastructure Layer**: 외부 서비스 연동을 `infrastructure/` 폴더로 분리
 - **API Consistency**: 모든 API가 일관된 응답 형식 사용
@@ -89,11 +114,12 @@ frontend/src/
 ### 주요 원칙
 
 1. **도메인 분리**: 각 기능은 독립적인 도메인으로 관리
-2. **재사용성**: 공통 모듈은 `shared/` 폴더에 배치
-3. **확장성**: 새로운 기능 추가 시 `features/` 폴더에 추가
-4. **타입 안전성**: TypeScript를 활용한 엄격한 타입 정의 (`any` 타입 제거)
-5. **API 일관성**: 모든 API가 동일한 응답 형식 사용
-6. **테스트 가능성**: 각 레이어별 독립적인 테스트 작성 가능
+2. **워크플로우 자동화**: LangGraph를 통한 복잡한 비즈니스 로직 자동화
+3. **재사용성**: 공통 모듈은 `shared/` 폴더에 배치
+4. **확장성**: 새로운 기능 추가 시 `features/` 폴더에 추가
+5. **타입 안전성**: TypeScript를 활용한 엄격한 타입 정의 (`any` 타입 제거)
+6. **API 일관성**: 모든 API가 동일한 응답 형식 사용
+7. **테스트 가능성**: 각 레이어별 독립적인 테스트 작성 가능
 
 ---
 
@@ -142,6 +168,17 @@ interface CoupangProductResponse {
    ]
    ```
 
+4. **LangGraph API** (Edge Function)
+   - `POST /api/langgraph/execute` - 그래프 실행
+   - `POST /api/langgraph/resume` - 체크포인트에서 재개
+   - `GET /api/langgraph/status/:threadId` - 실행 상태 조회
+
+5. **Cache Gateway API** (Edge Function)
+   - `POST /api/cache-gateway` - 캐시 확인 및 큐 작업 추가
+
+6. **Queue Worker API** (Edge Function)
+   - `POST /api/queue-worker` - 큐 작업 처리
+
 ---
 
 ## 전체 플로우
@@ -152,9 +189,12 @@ A[키워드/카테고리/링크 입력] --> B[상품 검색 API]
 B --> C[일관된 응답 형식으로 변환]
 C --> D[딥링크 변환 API]
 D --> E[딥링크 리스트 반환]
-E --> F[LLM SEO 블로그 생성 API]
-F --> G[SEO 최적화 블로그 글 반환]
-G --> H[워드프레스 초안 저장]
+E --> F[LangGraph 자동화 시스템]
+F --> G[Cache Gateway]
+G --> H[Scrape Graph]
+H --> I[SEO Writer Agent]
+I --> J[WordPress Publisher]
+J --> K[WordPress 초안 저장]
 ```
 
 ---
@@ -164,7 +204,9 @@ G --> H[워드프레스 초안 저장]
 - **키워드/카테고리/링크 기반 상품 검색**
   - 쿠팡 오픈API 상품검색, 카테고리별 베스트 상품, 직접 링크 입력 지원
 - **딥링크 일괄 변환**
-- **SEO 최적화 블로그 자동작성 (OpenAI)**
+- **LangGraph 기반 자동화 시스템**
+  - 딥링크 → 상품 정보 크롤링 → SEO 콘텐츠 생성 → WordPress 발행
+- **SEO 최적화 블로그 자동작성 (Perplexity API)**
 - **검색 이력/상태 영속화 (Zustand + localStorage)**
 - **카테고리/가격/로켓배송/무료배송/필터링**
   - 카테고리별 셀렉트, 이미지 사이즈/비율, limit, 가격대(프리셋/직접입력), 로켓/무료배송 뱃지, 실시간 필터링
@@ -190,7 +232,14 @@ G --> H[워드프레스 초안 저장]
 - **Supabase**: 데이터베이스, 인증, 실시간 기능
 - **Supabase Edge Functions**: 서버리스 함수
 - **쿠팡 오픈API**: 상품 검색, 딥링크 변환
-- **OpenAI API**: LLM 기반 블로그 자동 생성
+- **Perplexity API**: LLM 기반 블로그 자동 생성
+- **WordPress REST API**: 블로그 포스트 발행
+- **Redis**: 캐싱, 체크포인트, 큐 시스템
+
+### 자동화 시스템
+- **LangGraph JS**: 워크플로우 자동화 프레임워크
+- **Cheerio**: 정적 HTML 파싱
+- **Playwright**: 동적 웹 크롤링 (구현 예정)
 
 ### 개발 도구
 - **ESLint**: 코드 품질 관리
@@ -211,7 +260,11 @@ G --> H[워드프레스 초안 저장]
 - [x] **Infrastructure 정리** - 외부 API 클라이언트 구조화
 - [x] **딥링크 API 수정** - 쿠팡 API 실제 응답 구조에 맞게 수정
 - [x] **LangGraph 통합 준비** - 프로젝트 상태 분석 및 아키텍처 설계
-- [ ] **LangGraph 기반 자동화 시스템** - 딥링크 → 쿠팡 → Perplexity → SEO → WordPress
+- [x] **LangGraph 노드 구현** - extractIds, staticCrawler, dynamicCrawler, fallbackLLM, seoAgent, wordpressPublisher 노드 구현
+- [x] **LangGraph 노드 테스트** - 브라우저 기반 노드 테스트 완료
+- [ ] **메모리 관리 구현** - RedisSaver, MemorySaver, Cross-thread KV 구현
+- [ ] **프론트엔드 통합** - 기존 CP9 UI에 LangGraph 기반 자동화 플로우 통합
+- [ ] **E2E 테스트 및 최적화** - 전체 플로우 E2E 테스트, 성능 최적화, 오류 처리 개선
 - [ ] 워드프레스 초안 저장 기능
 - [ ] E2E/유닛 테스트, 배포 자동화
 
@@ -249,6 +302,15 @@ G --> H[워드프레스 초안 저장]
    # src/shared/types/api.ts에 타입 추가
    ```
 
+5. **LangGraph 노드 추가**
+   ```bash
+   # LangGraph 노드 추가
+   touch src/features/langgraph/nodes/new-node.ts
+   
+   # 그래프에 노드 통합
+   # src/features/langgraph/graphs/main-graph.ts 수정
+   ```
+
 ### 코딩 컨벤션
 
 - **파일명**: PascalCase (컴포넌트), camelCase (함수, 변수)
@@ -257,6 +319,7 @@ G --> H[워드프레스 초안 저장]
 - **API 응답**: `CoupangProductResponse` 인터페이스 준수
 - **타입 안전성**: `any` 타입 사용 금지, 명시적 타입 정의
 - **테스트**: 각 기능과 동일한 구조로 `__tests__/` 폴더에 배치
+- **LangGraph 노드**: `'use server'` 지시어 사용, 서버 사이드에서만 실행
 
 ### API 개발 가이드
 
@@ -317,9 +380,6 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 COUPANG_ACCESS_KEY=your_coupang_access_key
 COUPANG_SECRET_KEY=your_coupang_secret_key
 
-# OpenAI API
-OPENAI_API_KEY=your_openai_api_key
-
 # Perplexity API
 PERPLEXITY_API_KEY=your_perplexity_api_key
 
@@ -356,41 +416,144 @@ npm run build
 
 # 테스트 실행
 npm run test
+
+# LangGraph 노드 테스트
+# 브라우저에서 http://localhost:3000/simple-test 접속
 ```
 
 ---
 
-## 🚀 LangGraph 기반 자동화 시스템 (진행 중)
+## 🚀 LangGraph 기반 자동화 시스템
 
 ### 전체 플로우
 ```mermaid
 graph TD
-A[딥링크 수집] --> B[Cache Gateway]
-B --> C[Scrape Graph]
-C --> D[SEO Writer Agent]
-D --> E[WordPress Publisher]
+A[딥링크 입력] --> B[extractIds]
+B --> C{상품 ID 추출 성공?}
+C -->|Yes| D[staticCrawler]
+C -->|No| END
+D --> E{정적 크롤링 성공?}
+E -->|Yes| F[seoAgent]
+E -->|No| G[dynCrawler]
+G --> H{동적 크롤링 성공?}
+H -->|Yes| F
+H -->|No| I[fallbackLLM]
+I --> J{LLM 보강 성공?}
+J -->|Yes| F
+J -->|No| END
+F --> K{SEO 콘텐츠 생성 성공?}
+K -->|Yes| L[wordpressPublisher]
+K -->|No| END
+L --> M{포스트 발행 성공?}
+M -->|Yes| END
+M -->|No| END
 ```
 
 ### 핵심 노드 및 기능
-- **Deep-link 수집**: `extractIds` - productId 배열 추출
-- **Cache Gateway**: Redis Hit/Miss 처리, Queue enqueue
-- **Scrape Graph**: `staticCrawler` → `dynCrawler` → `fallbackLLM`
-- **SEO Writer Agent**: ReAct 패턴, 메모리 요약 관리
-- **WordPress Publisher**: 중복 게시 방지, cross-thread KV
 
-### LangGraph 메모리 전략
-- **RedisSaver**: Scrape Graph 체크포인트 저장
-- **MemorySaver**: SEO Agent 대화 히스토리 요약
-- **Cross-thread KV**: 중복 게시 방지
+#### 1. **extractIds 노드**
+- 쿠팡 URL에서 상품 ID 추출
+- 정규표현식을 사용한 패턴 매칭
+- 실패 시 프로세스 종료
+
+#### 2. **staticCrawler 노드**
+- Cheerio를 사용한 정적 HTML 파싱
+- 상품명, 가격, 이미지, 카테고리 등 기본 정보 추출
+- 성공 시 SEO Agent로 진행, 실패 시 동적 크롤링으로 폴백
+
+#### 3. **dynamicCrawler 노드**
+- Playwright를 사용한 동적 웹 크롤링 (구현 예정)
+- JavaScript 렌더링 후 상품 정보 추출
+- 성공 시 SEO Agent로 진행, 실패 시 LLM 보강으로 폴백
+
+#### 4. **fallbackLLM 노드**
+- Perplexity API를 사용한 상품 정보 보강
+- 크롤링 실패 시 대체 정보 생성
+- 상품 특징, 장점, 타겟 고객층 등 상세 정보 제공
+
+#### 5. **seoAgent 노드**
+- ReAct 패턴을 사용한 SEO 콘텐츠 생성
+- Think → Act → Observe → Reflect 순서로 진행
+- 제목, 본문, 키워드, 요약 자동 생성
+
+#### 6. **wordpressPublisher 노드**
+- WordPress REST API를 사용한 포스트 발행
+- 중복 게시 방지 (product_id 메타데이터, 제목 유사도)
+- 기존 포스트 업데이트 또는 새 포스트 생성
+
+### LangGraph 메모리 전략 (구현 예정)
+
+#### 1. **RedisSaver**
+- Scrape Graph 체크포인트 저장
+- 장시간 실행되는 크롤링 작업의 상태 보존
+- TTL 기반 자동 정리
+
+#### 2. **MemorySaver**
+- SEO Agent 대화 히스토리 요약
+- 컨텍스트 윈도우 오버플로우 방지
+- 토큰 제한 기반 메모리 관리
+
+#### 3. **Cross-thread KV**
+- 중복 게시 방지를 위한 크로스 스레드 저장소
+- Redis 기반 키-값 저장소
+- 상품 ID별 발행 이력 추적
 
 ### 배포 방식
-- **GitHub 연동**: 자동 배포 (권장)
-- **Supabase CLI**: 로컬 개발용
-- **Edge Functions**: `backend/supabase/functions/` 폴더 자동 감지
+
+#### 1. **GitHub 연동 (권장)**
+```bash
+# Supabase Dashboard → Settings → Git integration
+# GitHub 저장소 연결 후 브랜치 선택
+# backend/supabase/functions/ 폴더 변경사항 자동 감지
+git add .
+git commit -m "feat: LangGraph Edge Functions 업데이트"
+git push origin main
+```
+
+#### 2. **Supabase CLI (로컬 개발용)**
+```bash
+# Supabase CLI 설치
+npm install -g supabase
+
+# 로컬 개발 환경 설정
+supabase init
+supabase start
+
+# Edge Functions 배포
+supabase functions deploy cache-gateway
+supabase functions deploy queue-worker
+supabase functions deploy langgraph-api
+```
+
+### 테스트 방법
+
+#### 1. **개별 노드 테스트**
+```bash
+# 브라우저에서 테스트 페이지 접속
+http://localhost:3000/simple-test
+
+# 각 노드별 테스트 버튼 클릭
+# JSON 결과 확인
+```
+
+#### 2. **전체 플로우 테스트**
+```bash
+# LangGraph API 호출
+curl -X POST http://localhost:3000/api/langgraph/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input": {
+      "urls": ["https://www.coupang.com/vp/products/123456"],
+      "keyword": "테스트"
+    }
+  }'
+```
 
 ## 참고/확장 예정
 
 - 쿠팡 오픈API 공식문서: https://developers.coupang.com/
 - LangGraph JS 공식문서: https://langchain-ai.github.io/langgraph/
+- Perplexity API 문서: https://docs.perplexity.ai/
+- WordPress REST API 문서: https://developer.wordpress.org/rest-api/
 - 카테고리별 상품 랭킹, 다양한 필터, 멀티채널 발행, A/B 프롬프트, CLI 등 확장 가능
-- **향후 계획**: 워드프레스 연동, 블로그 자동 발행, 성능 최적화, 모니터링 시스템 
+- **향후 계획**: 메모리 관리 구현, 프론트엔드 통합, E2E 테스트, 성능 최적화, 모니터링 시스템 
