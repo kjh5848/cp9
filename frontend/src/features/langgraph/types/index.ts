@@ -32,7 +32,7 @@ export interface LangGraphState {
   wordpressPost: {
     postId?: string;
     postUrl?: string;
-    status: 'draft' | 'published' | 'failed';
+    status: 'draft' | 'publish' | 'failed';
     error?: string;
   };
   
@@ -51,26 +51,28 @@ export interface LangGraphState {
  */
 export interface ProductInfo {
   productId: string;
-  title: string;
-  price: number;
-  imageUrl: string;
+  productName: string;
+  productPrice: number;
+  productImage: string;
   productUrl: string;
-  category: string;
+  categoryName: string;
   isRocket: boolean;
   isFreeShipping: boolean;
   rating?: number;
   reviewCount?: number;
+  description?: string;
+  specifications?: Record<string, string>;
 }
 
 /**
  * 보강된 상품 정보 인터페이스
  */
 export interface EnrichedProductInfo extends ProductInfo {
-  description?: string;
-  features?: string[];
-  reviews?: ReviewInfo[];
-  relatedProducts?: string[];
-  seoKeywords?: string[];
+  enrichedFeatures?: string[];
+  enrichedBenefits?: string[];
+  enrichedTargetAudience?: string;
+  enrichedComparison?: string;
+  enrichedRecommendations?: string[];
 }
 
 /**
