@@ -9,11 +9,12 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 interface LangGraphRequest {
   action: 'execute' | 'resume' | 'execute-from-node' | 'checkpoint' | 'checkpoints' | 'status' | 'pause' | 'resume' | 'cancel' | 'seo_generation';
-  initialState?: any;
+  initialState?: unknown;
   threadId?: string;
   checkpointId?: string;
   node?: string;
-  config?: any;
+  config?: unknown;
+  state?: unknown;
   query?: string;
   products?: Array<{
     name: string;
@@ -28,7 +29,7 @@ interface LangGraphRequest {
 
 interface LangGraphResponse {
   success: boolean;
-  data?: any;
+  data?: unknown;
   error?: string;
   message: string;
 }
@@ -37,7 +38,9 @@ interface LangGraphResponse {
  * Redis 클라이언트 초기화
  */
 function getRedisClient() {
+  // @ts-ignore: Deno 환경 변수
   const redisUrl = Deno.env.get("REDIS_URL");
+  // @ts-ignore: Deno 환경 변수
   const redisPassword = Deno.env.get("REDIS_PASSWORD");
   
   if (!redisUrl) {
@@ -74,7 +77,7 @@ function generateCheckpointKey(threadId: string, node?: string): string {
 /**
  * 체크포인트 저장
  */
-async function saveCheckpoint(threadId: string, state: any, node?: string): Promise<string> {
+async function saveCheckpoint(threadId: string, state: unknown, node?: string): Promise<string> {
   const redis = getRedisClient();
   const checkpointId = `checkpoint_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const checkpointKey = generateCheckpointKey(threadId, node);
@@ -95,7 +98,7 @@ async function saveCheckpoint(threadId: string, state: any, node?: string): Prom
 /**
  * 체크포인트 조회
  */
-async function getCheckpoint(threadId: string, node?: string): Promise<any | null> {
+async function getCheckpoint(threadId: string, node?: string): Promise<unknown | null> {
   const redis = getRedisClient();
   const checkpointKey = generateCheckpointKey(threadId, node);
   
@@ -142,13 +145,22 @@ async function listCheckpoints(threadId: string): Promise<Array<{
   const pattern = `langgraph:checkpoint:${threadId}:*`;
   const keys = await redis.keys(pattern);
   
-  const checkpoints = [];
+  const checkpoints: Array<{
+    id: string;
+    timestamp: number;
+    node: string;
+    status: 'completed' | 'failed' | 'running';
+  }> = [];
   
   for (const key of keys) {
     const checkpointData = await redis.get(key);
     if (checkpointData) {
       try {
-        const parsed = JSON.parse(checkpointData);
+        const parsed = JSON.parse(checkpointData) as {
+          id: string;
+          timestamp: number;
+          node?: string;
+        };
         checkpoints.push({
           id: parsed.id,
           timestamp: parsed.timestamp,
@@ -167,12 +179,12 @@ async function listCheckpoints(threadId: string): Promise<Array<{
 /**
  * 그래프 상태 저장
  */
-async function saveGraphStatus(threadId: string, status: any): Promise<void> {
+async function saveGraphStatus(threadId: string, status: unknown): Promise<void> {
   const redis = getRedisClient();
   const statusKey = `langgraph:status:${threadId}`;
   
   const statusData = {
-    ...status,
+    ...(status as Record<string, unknown>),
     updatedAt: Date.now(),
   };
 
@@ -182,7 +194,7 @@ async function saveGraphStatus(threadId: string, status: any): Promise<void> {
 /**
  * 그래프 상태 조회
  */
-async function getGraphStatus(threadId: string): Promise<any | null> {
+async function getGraphStatus(threadId: string): Promise<unknown | null> {
   const redis = getRedisClient();
   const statusKey = `langgraph:status:${threadId}`;
   
@@ -202,7 +214,7 @@ async function getGraphStatus(threadId: string): Promise<any | null> {
 /**
  * LangGraph 실행
  */
-async function executeGraph(initialState: any, threadId: string, config: any): Promise<LangGraphResponse> {
+async function executeGraph(initialState: unknown, threadId: string, config: unknown): Promise<LangGraphResponse> {
   try {
     console.log(`LangGraph 실행 시작: threadId=${threadId}`);
     
@@ -231,7 +243,7 @@ async function executeGraph(initialState: any, threadId: string, config: any): P
     
     // 임시로 성공 응답 반환
     const finalState = {
-      ...initialState,
+      ...(initialState as Record<string, unknown>),
       metadata: {
         threadId,
         createdAt: Date.now(),
@@ -284,7 +296,7 @@ async function executeGraph(initialState: any, threadId: string, config: any): P
 /**
  * 체크포인트에서 복구
  */
-async function resumeFromCheckpoint(checkpointId: string, threadId: string, config: any): Promise<LangGraphResponse> {
+async function resumeFromCheckpoint(checkpointId: string, threadId: string, config: unknown): Promise<LangGraphResponse> {
   try {
     console.log(`체크포인트에서 복구: checkpointId=${checkpointId}, threadId=${threadId}`);
     
@@ -315,7 +327,7 @@ async function resumeFromCheckpoint(checkpointId: string, threadId: string, conf
       success: true,
       data: {
         state,
-        completedNodes: state.metadata?.completedNodes || [],
+        completedNodes: (state as { metadata?: { completedNodes?: string[] } })?.metadata?.completedNodes || [],
         checkpointId,
       },
       message: '체크포인트에서 복구 완료',
@@ -335,7 +347,7 @@ async function resumeFromCheckpoint(checkpointId: string, threadId: string, conf
 /**
  * 특정 노드부터 실행
  */
-async function executeFromNode(node: string, state: any, threadId: string, config: any): Promise<LangGraphResponse> {
+async function executeFromNode(node: string, state: unknown, threadId: string, config: unknown): Promise<LangGraphResponse> {
   try {
     console.log(`특정 노드부터 실행: node=${node}, threadId=${threadId}`);
     
@@ -389,6 +401,7 @@ async function generateSeoContent(query: string, products: Array<{
     console.log(`SEO 글 생성 시작: type=${seoType}, products=${products.length}개`);
     
     // OpenAI API 키 확인
+    // @ts-ignore: Deno 환경 변수
     const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
     if (!openaiApiKey) {
       throw new Error("OPENAI_API_KEY 환경 변수가 설정되지 않았습니다.");
@@ -512,7 +525,7 @@ ${productSummary}
  */
 async function handleLangGraphAPI(req: Request): Promise<Response> {
   try {
-    const { action, initialState, threadId, checkpointId, node, config }: LangGraphRequest = await req.json();
+    const { action, initialState, threadId, checkpointId, node, config, query, products, seo_type, state }: LangGraphRequest = await req.json();
 
     if (!action) {
       return new Response(
