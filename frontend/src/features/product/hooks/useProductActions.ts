@@ -120,7 +120,13 @@ export function useProductActions(
       });
 
       if (!response.ok) {
-        throw new Error('SEO 글 생성에 실패했습니다');
+        const errorText = await response.text();
+        console.error('SEO 글 생성 API 오류:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorText
+        });
+        throw new Error(`SEO 글 생성에 실패했습니다 (${response.status}: ${response.statusText})`);
       }
 
       const result = await response.json();

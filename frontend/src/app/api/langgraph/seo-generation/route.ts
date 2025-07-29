@@ -55,6 +55,7 @@ export async function POST(request: NextRequest) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          action: 'seo_generation',
           query: `다음 상품들을 분석하여 SEO 최적화된 ${type === 'product_review' ? '상품 리뷰' : type === 'comparison' ? '상품 비교' : '구매 가이드'} 글을 작성해주세요.`,
           products: products.map(product => ({
             name: product.name,
@@ -63,7 +64,6 @@ export async function POST(request: NextRequest) {
             url: product.url,
             image: product.image
           })),
-          type: 'seo_generation',
           seo_type: type
         }),
       }
