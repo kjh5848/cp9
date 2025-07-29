@@ -395,13 +395,15 @@ K -->|No| H
 - 키워드 검색, 카테고리 선택, 직접 링크 입력
 - 쿠팡 오픈API 연동 완료
 - 딥링크 변환 완료
+- Next.js Image 컴포넌트 최적화 완료
 
 #### 2단계: SEO 글 작성 버튼 → LangGraph API ✅
 - 선택된 상품에 대한 액션 선택 모달
 - "링크 복사" 또는 "SEO 글 작성" 옵션
 - LangGraph API 호출 구현
+- 아키텍처 리팩토링 완료 (컴포넌트, 훅, 유틸리티 분리)
 
-#### 3단계: LangGraph 워크플로우 (실제 API 연동)
+#### 3단계: LangGraph 워크플로우 (실제 API 연동) ✅
 - **extractIds 노드**: ✅ 구현 완료
 - **staticCrawler 노드**: ✅ 실제 쿠팡 API 연동 완료
 - **dynamicCrawler 노드**: 🔄 구현 예정 (Playwright)
@@ -409,16 +411,18 @@ K -->|No| H
 - **seoAgent 노드**: ✅ GPT 기반 SEO 글 생성 완료
 - **wordpressPublisher 노드**: ✅ 실제 WordPress API 연동 완료
 
-#### 4단계: 실제 크롤링 및 WordPress 연동 🔄
-- **실제 크롤링**: 🔄 구현 예정 (Cheerio, Playwright)
-- **WordPress 연동**: 🔄 구현 예정 (REST API)
+#### 4단계: SEO 글 생성 시스템 ✅
+- **API 구조 수정**: `action` 필드 추가, 변수 구조분해할당 수정
+- **Edge Function 배포**: Supabase Edge Function 재배포 완료
+- **오류 로깅 개선**: 상세한 오류 정보 제공
+- **환경 변수 설정**: Supabase Dashboard에서 환경 변수 설정 필요
 
 ### 🚧 진행 중인 작업
+- [ ] **환경 변수 설정** - Supabase Dashboard에서 OPENAI_API_KEY 설정
 - [ ] **dynamicCrawler 노드 구현** - Playwright를 사용한 동적 크롤링
 - [ ] **실제 크롤링 테스트** - Cheerio와 Playwright 통합 테스트
 - [ ] **WordPress 발행 테스트** - 실제 WordPress REST API 연동 테스트
 - [ ] **사용자 확인 단계** - 발행 전 최종 확인 UI 구현
-- [ ] **컴포넌트 리팩토링** - 아키텍처 가이드에 맞는 구조 개선
 
 ### 📋 향후 계획
 - [ ] **메모리 관리 구현** - RedisSaver, MemorySaver, Cross-thread KV 구현
@@ -426,6 +430,7 @@ K -->|No| H
 - [ ] **E2E 테스트 및 최적화** - 전체 플로우 E2E 테스트, 성능 최적화, 오류 처리 개선
 - [ ] **워드프레스 초안 저장 기능** - 사용자 확인 후 발행 기능
 - [ ] **E2E/유닛 테스트, 배포 자동화** - CI/CD 파이프라인 구축
+- [ ] **GitHub 푸시 보호 해결** - API 키 보안 문제 해결 및 푸시 완료
 
 ---
 
@@ -754,6 +759,103 @@ curl -X POST http://localhost:3000/api/langgraph/execute \
     }
   }'
 ```
+
+## 🔧 문제 해결 가이드
+
+### SEO 글 생성 오류 해결
+
+#### 1. **오류 로그 확인 방법**
+
+**브라우저 개발자 도구:**
+```javascript
+// F12 → Console 탭에서 확인
+console.error('SEO 글 생성 API 오류:', {
+  status: response.status,
+  statusText: response.statusText,
+  errorText
+});
+```
+
+**네트워크 탭:**
+- F12 → Network 탭
+- `/api/langgraph/seo-generation` 요청 확인
+- Response 내용 및 상태 코드 확인
+
+**서버 로그:**
+- Supabase Dashboard → Functions → Logs
+- `langgraph-api` 함수 로그 확인
+
+#### 2. **일반적인 오류 및 해결 방법**
+
+**오류: "SEO 글 생성에 실패했습니다"**
+- **원인**: API 호출 실패, 환경 변수 누락, Edge Function 오류
+- **해결**: 브라우저 개발자 도구에서 상세 오류 확인
+
+**오류: "OPENAI_API_KEY 환경 변수가 설정되지 않았습니다"**
+- **원인**: Supabase Dashboard에 환경 변수 미설정
+- **해결**: Supabase Dashboard → Settings → Environment Variables에서 설정
+
+**오류: "action이 필요합니다"**
+- **원인**: API 요청에 `action` 필드 누락
+- **해결**: API 호출 시 `action: 'seo_generation'` 추가
+
+#### 3. **환경 변수 설정**
+
+**Supabase Dashboard에서 설정:**
+1. Supabase Dashboard 접속
+2. 프로젝트 선택 → Settings → Environment Variables
+3. 다음 변수 추가:
+   ```
+   OPENAI_API_KEY=your_openai_api_key
+   PERPLEXITY_API_KEY=your_perplexity_api_key
+   WORDPRESS_API_KEY=your_wordpress_api_key
+   ```
+
+#### 4. **테스트 방법**
+
+**로컬 테스트:**
+```bash
+cd backend/supabase
+npx supabase functions serve --env-file ../../frontend/.env.local
+```
+
+**원격 테스트:**
+```bash
+curl -L -X POST 'https://bovtkqgdzihoclazkpcq.supabase.co/functions/v1/langgraph-api' \
+  -H 'Content-Type: application/json' \
+  --data '{"action":"seo_generation","query":"테스트","products":[{"name":"테스트 상품","price":10000,"category":"테스트","url":"https://test.com"}],"seo_type":"product_review"}'
+```
+
+### Next.js Image 최적화
+
+**쿠팡 이미지 도메인 설정:**
+```typescript
+// next.config.ts
+images: {
+  remotePatterns: [
+    {
+      protocol: 'https',
+      hostname: 'ads-partners.coupang.com',
+      port: '',
+      pathname: '/**',
+    },
+    {
+      protocol: 'https',
+      hostname: 'thumbnail*.coupangcdn.com',
+      port: '',
+      pathname: '/**',
+    },
+    {
+      protocol: 'https',
+      hostname: '*.coupangcdn.com',
+      port: '',
+      pathname: '/**',
+    },
+  ],
+},
+```
+
+---
 
 ## 참고/확장 예정
 
