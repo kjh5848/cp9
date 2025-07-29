@@ -1,9 +1,6 @@
-/**
- * Cache Gateway Edge Function
- * Redis 캐시 검사 및 큐 작업 등록
- */
-
+// @ts-ignore: Deno 모듈 import
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// @ts-ignore: Supabase 모듈 import
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 interface CacheGatewayRequest {
@@ -23,7 +20,9 @@ interface CacheGatewayResponse {
  * Redis 클라이언트 초기화
  */
 function getRedisClient() {
+  // @ts-ignore: Deno 환경 변수
   const redisUrl = Deno.env.get("REDIS_URL");
+  // @ts-ignore: Deno 환경 변수
   const redisPassword = Deno.env.get("REDIS_PASSWORD");
   
   if (!redisUrl) {
@@ -51,6 +50,7 @@ function getRedisClient() {
  * 큐에 작업 추가
  */
 async function addToQueue(productIds: string[], threadId: string): Promise<string> {
+  // @ts-ignore: Deno 환경 변수
   const queueName = Deno.env.get("LANGGRAPH_QUEUE_NAME") || "langgraph-queue";
   const redis = getRedisClient();
   

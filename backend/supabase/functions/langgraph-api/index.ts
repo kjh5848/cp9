@@ -3,16 +3,27 @@
  * LangGraph 실행 및 체크포인트 관리
  */
 
+// @ts-ignore: Deno 모듈 import
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// @ts-ignore: Supabase 모듈 import
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
 interface LangGraphRequest {
-  action: 'execute' | 'resume' | 'execute-from-node' | 'checkpoint' | 'checkpoints' | 'status' | 'pause' | 'resume' | 'cancel';
+  action: 'execute' | 'resume' | 'execute-from-node' | 'checkpoint' | 'checkpoints' | 'status' | 'pause' | 'resume' | 'cancel' | 'seo_generation';
   initialState?: any;
   threadId?: string;
   checkpointId?: string;
   node?: string;
   config?: any;
+  query?: string;
+  products?: Array<{
+    name: string;
+    price: number;
+    category: string;
+    url: string;
+    image?: string;
+  }>;
+  type?: string;
+  seo_type?: 'product_review' | 'comparison' | 'guide';
 }
 
 interface LangGraphResponse {
@@ -365,6 +376,138 @@ async function executeFromNode(node: string, state: any, threadId: string, confi
 }
 
 /**
+ * SEO 글 생성
+ */
+async function generateSeoContent(query: string, products: Array<{
+  name: string;
+  price: number;
+  category: string;
+  url: string;
+  image?: string;
+}>, seoType: 'product_review' | 'comparison' | 'guide'): Promise<LangGraphResponse> {
+  try {
+    console.log(`SEO 글 생성 시작: type=${seoType}, products=${products.length}개`);
+    
+    // OpenAI API 키 확인
+    const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
+    if (!openaiApiKey) {
+      throw new Error("OPENAI_API_KEY 환경 변수가 설정되지 않았습니다.");
+    }
+
+    // 상품 정보 요약
+    const productSummary = products.map((product, index) => 
+      `${index + 1}. ${product.name} (${product.price.toLocaleString()}원, ${product.category})`
+    ).join('\n');
+
+    // SEO 타입별 프롬프트 생성
+    const seoPrompts = {
+      product_review: `다음 상품들에 대한 상세한 리뷰와 구매 가이드를 작성해주세요. SEO 최적화를 고려하여 키워드를 자연스럽게 포함하고, 구매 결정에 도움이 되는 정보를 제공해주세요.
+
+상품 정보:
+${productSummary}
+
+요청: ${query}
+
+다음 형식으로 작성해주세요:
+1. 상품 개요 및 특징
+2. 각 상품별 상세 분석
+3. 장단점 비교
+4. 구매 추천 및 팁
+5. 결론`,
+      
+      comparison: `다음 상품들을 비교 분석하여 구매 가이드를 작성해주세요. 각 상품의 특징, 가격 대비 성능, 사용자 만족도 등을 종합적으로 분석해주세요.
+
+상품 정보:
+${productSummary}
+
+요청: ${query}
+
+다음 형식으로 작성해주세요:
+1. 비교 분석 개요
+2. 상품별 특징 분석
+3. 가격 대비 성능 비교
+4. 사용 시나리오별 추천
+5. 최종 구매 추천`,
+      
+      guide: `다음 상품들에 대한 구매 가이드를 작성해주세요. 초보자도 이해할 수 있도록 상세하고 실용적인 정보를 제공해주세요.
+
+상품 정보:
+${productSummary}
+
+요청: ${query}
+
+다음 형식으로 작성해주세요:
+1. 구매 가이드 개요
+2. 상품 선택 기준
+3. 구매 시 주의사항
+4. 사용법 및 관리법
+5. 구매 후 활용 팁`
+    };
+
+    const prompt = seoPrompts[seoType];
+
+    // OpenAI API 호출
+    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: '당신은 전문적인 상품 리뷰어이자 SEO 전문가입니다. 한국어로 자연스럽고 유용한 상품 분석 글을 작성해주세요.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        max_tokens: 2000,
+        temperature: 0.7,
+      }),
+    });
+
+    if (!openaiResponse.ok) {
+      const errorData = await openaiResponse.json();
+      throw new Error(`OpenAI API 오류: ${errorData.error?.message || '알 수 없는 오류'}`);
+    }
+
+    const openaiData = await openaiResponse.json();
+    const generatedContent = openaiData.choices[0]?.message?.content || '';
+
+    // SEO 최적화된 결과 생성
+    const seoResult = {
+      content: generatedContent,
+      metadata: {
+        type: seoType,
+        products: products,
+        generatedAt: new Date().toISOString(),
+        wordCount: generatedContent.length,
+        keywords: products.map(p => p.name).concat(products.map(p => p.category)).filter((v, i, a) => a.indexOf(v) === i)
+      }
+    };
+
+    return {
+      success: true,
+      data: seoResult,
+      message: 'SEO 글 생성 완료',
+    };
+
+  } catch (error) {
+    console.error('SEO 글 생성 오류:', error);
+    
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : '알 수 없는 오류',
+      message: 'SEO 글 생성 실패',
+    };
+  }
+}
+
+/**
  * LangGraph API 핸들러
  */
 async function handleLangGraphAPI(req: Request): Promise<Response> {
@@ -509,6 +652,19 @@ async function handleLangGraphAPI(req: Request): Promise<Response> {
           success: true,
           message: "그래프 취소 완료",
         };
+        break;
+
+      case 'seo_generation':
+        if (!query || !products || !seo_type) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              message: "query, products, seo_type이 필요합니다.",
+            }),
+            { status: 400, headers: { "Content-Type": "application/json" } }
+          );
+        }
+        response = await generateSeoContent(query, products, seo_type);
         break;
 
       default:
