@@ -13,7 +13,7 @@
 Supabase Edge Functions는 서버리스 함수로, Deno 런타임에서 실행됩니다. 이 프로젝트에서는 다음과 같은 용도로 사용됩니다:
 
 - **Cache Gateway**: Redis 캐시 검사 및 큐 작업 등록
-- **LangGraph API**: AI 워크플로우 처리 및 SEO 글 생성
+- **LangGraph API**: AI 워크플로우 처리
 - **Queue Worker**: 백그라운드 작업 처리
 
 ## ⚙️ 환경 설정
@@ -47,12 +47,12 @@ NEXT_PUBLIC_SUPABASE_URL=https://bovtkqgdzihoclazkpcq.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=opZhhO2BwQPJfzi/cFlKcCrAQPiGrcFWZQyrxy7pAZREhCGd3bASChSnHSL7/3EKhuNMrK+FprOQNkHaSO5gRg==
 
 # AI API 키
-OPENAI_API_KEY=your_openai_api_key_here
-PERPLEXITY_API_KEY=your_perplexity_api_key_here
+OPENAI_API_KEY=sk-proj-...
+PERPLEXITY_API_KEY=pplx-...
 
 # WordPress API 설정
-WORDPRESS_API_KEY=your_wordpress_api_key_here
-WORDPRESS_SITE_URL=https://your-wordpress-site.com
+WORDPRESS_API_KEY=nvtc ql72 T22s OkHX 5fe3 NqCZ
+WORDPRESS_SITE_URL=https://jupocket.com
 ```
 
 ## 🏠 로컬 개발
@@ -163,56 +163,21 @@ const response = await fetch('https://bovtkqgdzihoclazkpcq.supabase.co/functions
 const result = await response.json();
 ```
 
-### 2. LangGraph API 함수 (SEO 글 생성)
+### 2. LangGraph API 함수
 
 ```typescript
-// AI 워크플로우 처리 및 SEO 글 생성
+// AI 워크플로우 처리
 const response = await fetch('https://bovtkqgdzihoclazkpcq.supabase.co/functions/v1/langgraph-api', {
   method: 'POST',
   headers: {
+    'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
     'Content-Type': 'application/json',
   },
   body: JSON.stringify({
-    action: 'seo_generation',
-    query: '상품 리뷰 및 구매 가이드',
-    products: [
-      {
-        name: '상품명',
-        price: 10000,
-        category: '카테고리',
-        url: '상품URL'
-      }
-    ],
-    seo_type: 'product_review'
+    query: '상품 분석 요청',
+    productId: 'product123'
   })
 });
-
-const result = await response.json();
-```
-
-### 3. SEO 글 생성 API (프론트엔드)
-
-```typescript
-// 프론트엔드에서 SEO 글 생성
-const response = await fetch('/api/langgraph/seo-generation', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    products: [
-      {
-        name: '상품명',
-        price: 10000,
-        category: '카테고리',
-        url: '상품URL'
-      }
-    ],
-    type: 'product_review'
-  })
-});
-
-const result = await response.json();
 ```
 
 ## 🔧 문제 해결
@@ -245,20 +210,6 @@ npx supabase functions deploy hello --project-ref bovtkqgdzihoclazkpcq --no-veri
 npx supabase secrets list
 ```
 
-### 3. SEO 글 생성 문제
-
-**문제**: OpenAI API 키 누락
-```bash
-# OpenAI API 키 등록
-npx supabase secrets set OPENAI_API_KEY=sk-proj-... --project-ref bovtkqgdzihoclazkpcq
-```
-
-**문제**: 함수 인증 오류
-```bash
-# 인증 없이 재배포
-npx supabase functions deploy langgraph-api --project-ref bovtkqgdzihoclazkpcq --no-verify-jwt
-```
-
 ## 📚 추가 리소스
 
 - [Supabase Edge Functions 공식 문서](https://supabase.com/docs/guides/functions)
@@ -273,5 +224,4 @@ npx supabase functions deploy langgraph-api --project-ref bovtkqgdzihoclazkpcq -
 - [ ] Docker Desktop 실행 (로컬 테스트용)
 - [ ] 함수 배포
 - [ ] 원격 테스트 성공
-- [ ] 로컬 테스트 성공 (선택사항)
-- [ ] SEO 글 생성 기능 테스트 
+- [ ] 로컬 테스트 성공 (선택사항) 

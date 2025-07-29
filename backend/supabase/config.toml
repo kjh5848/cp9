@@ -36,10 +36,6 @@ max_client_conn = 100
 # Bind realtime via either IPv4 or IPv6. (default: IPv6)
 # ip_version = "IPv6"
 
-[realtime.pooler]
-# Port to use for the local connection pooler.
-port = 54327
-
 [studio]
 # Port to use for Supabase Studio.
 port = 54323
@@ -279,19 +275,4 @@ secret = ""
 redirect_uri = ""
 
 # Use pre-defined edge function definitions.
-[functions]
-# The maximum payload size for edge function requests in MB.
-max_request_size = "10MB"
-
-# Use pre-defined edge function definitions.
-[functions.cache-gateway]
-# The maximum payload size for edge function requests in MB.
-max_request_size = "10MB"
-
-[functions.queue-worker]
-# The maximum payload size for edge function requests in MB.
-max_request_size = "10MB"
-
-[functions.langgraph-api]
-# The maximum payload size for edge function requests in MB.
-max_request_size = "10MB" 
+[functions] 

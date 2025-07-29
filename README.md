@@ -183,18 +183,140 @@ interface CoupangProductResponse {
 
 ## 전체 플로우
 
+### 1. 사용자 입력 단계
 ```mermaid
 graph TD
-A[키워드/카테고리/링크 입력] --> B[상품 검색 API]
-B --> C[일관된 응답 형식으로 변환]
+A[사용자 입력] --> A1[키워드 검색]
+A --> A2[카테고리 선택]
+A --> A3[직접 링크 입력]
+A1 --> B[상품 검색 API]
+A2 --> B
+A3 --> B
+```
+
+### 2. 상품 정보 수집 단계
+```mermaid
+graph TD
+B[상품 검색 API] --> C[일관된 응답 형식으로 변환]
 C --> D[딥링크 변환 API]
 D --> E[딥링크 리스트 반환]
-E --> F[LangGraph 자동화 시스템]
-F --> G[Cache Gateway]
-G --> H[Scrape Graph]
-H --> I[SEO Writer Agent]
-I --> J[WordPress Publisher]
-J --> K[WordPress 초안 저장]
+E --> F[사용자 선택]
+F --> G[SEO 글 작성 버튼 클릭]
+```
+
+### 3. LangGraph 자동화 워크플로우
+```mermaid
+graph TD
+G[SEO 글 작성 버튼] --> H[LangGraph API 호출]
+H --> I[extractIds 노드]
+I --> J{상품 ID 추출 성공?}
+J -->|Yes| K[staticCrawler 노드]
+J -->|No| END1[프로세스 종료]
+K --> L{정적 크롤링 성공?}
+L -->|Yes| M[seoAgent 노드]
+L -->|No| N[dynamicCrawler 노드]
+N --> O{동적 크롤링 성공?}
+O -->|Yes| M
+O -->|No| P[fallbackLLM 노드]
+P --> Q{LLM 보강 성공?}
+Q -->|Yes| M
+Q -->|No| END2[프로세스 종료]
+M --> R{SEO 콘텐츠 생성 성공?}
+R -->|Yes| S[wordpressPublisher 노드]
+R -->|No| END3[프로세스 종료]
+S --> T{포스트 발행 성공?}
+T -->|Yes| U[WordPress 초안 저장]
+T -->|No| END4[프로세스 종료]
+```
+
+### 4. 상세 워크플로우 단계별 설명
+
+#### 4-1. **사용자 입력 → 상품 검색**
+- **입력 방식**: 키워드 검색, 카테고리 선택, 직접 링크 입력
+- **처리**: 쿠팡 오픈API를 통한 상품 검색
+- **출력**: `CoupangProductResponse[]` 형식의 상품 목록
+
+#### 4-2. **딥링크 변환**
+- **입력**: 상품 URL 목록
+- **처리**: 쿠팡 딥링크 API 호출
+- **출력**: `DeepLinkResponse[]` 형식의 딥링크 목록
+
+#### 4-3. **LangGraph 자동화 시스템 시작**
+- **트리거**: 사용자가 "SEO 글 작성" 버튼 클릭
+- **초기화**: 선택된 상품 정보로 LangGraph 상태 초기화
+
+#### 4-4. **extractIds 노드**
+- **목적**: 쿠팡 URL에서 상품 ID 추출
+- **방법**: 정규표현식 패턴 매칭
+- **성공 조건**: 상품 ID 추출 완료
+- **실패 시**: 프로세스 종료
+
+#### 4-5. **staticCrawler 노드**
+- **목적**: 정적 HTML에서 상품 정보 크롤링
+- **도구**: Cheerio (HTML 파싱)
+- **수집 정보**: 상품명, 가격, 이미지, 카테고리, 평점, 리뷰 수
+- **성공 시**: seoAgent 노드로 진행
+- **실패 시**: dynamicCrawler 노드로 폴백
+
+#### 4-6. **dynamicCrawler 노드** (구현 예정)
+- **목적**: JavaScript 렌더링 후 상품 정보 크롤링
+- **도구**: Playwright (동적 웹 크롤링)
+- **사용 시기**: staticCrawler 실패 시
+- **성공 시**: seoAgent 노드로 진행
+- **실패 시**: fallbackLLM 노드로 폴백
+
+#### 4-7. **fallbackLLM 노드**
+- **목적**: 크롤링 실패 시 AI로 상품 정보 보강
+- **도구**: Perplexity API
+- **생성 정보**: 상품 특징, 장점, 타겟 고객층, 경쟁사 정보
+- **성공 시**: seoAgent 노드로 진행
+- **실패 시**: 프로세스 종료
+
+#### 4-8. **seoAgent 노드**
+- **목적**: SEO 최적화된 블로그 콘텐츠 생성
+- **방법**: ReAct 패턴 (Think → Act → Observe → Reflect)
+- **생성 콘텐츠**: 제목, 본문, 키워드, 요약
+- **성공 시**: wordpressPublisher 노드로 진행
+- **실패 시**: 프로세스 종료
+
+#### 4-9. **wordpressPublisher 노드**
+- **목적**: WordPress에 포스트 발행
+- **도구**: WordPress REST API
+- **중복 방지**: product_id 메타데이터, 제목 유사도 체크
+- **발행 방식**: 초안으로 생성 (사용자 확인 후 발행)
+- **성공 시**: WordPress 초안 저장 완료
+- **실패 시**: 프로세스 종료
+
+### 5. 데이터 흐름
+
+```mermaid
+graph LR
+A[상품 정보] --> B[크롤링/보강]
+B --> C[SEO 콘텐츠]
+C --> D[WordPress 포스트]
+D --> E[사용자 확인]
+E --> F[최종 발행]
+```
+
+### 6. 오류 처리 및 폴백 전략
+
+```mermaid
+graph TD
+A[정적 크롤링] --> B{성공?}
+B -->|Yes| C[SEO 콘텐츠 생성]
+B -->|No| D[동적 크롤링]
+D --> E{성공?}
+E -->|Yes| C
+E -->|No| F[LLM 보강]
+F --> G{성공?}
+G -->|Yes| C
+G -->|No| H[프로세스 종료]
+C --> I{성공?}
+I -->|Yes| J[WordPress 발행]
+I -->|No| H
+J --> K{성공?}
+K -->|Yes| L[완료]
+K -->|No| H
 ```
 
 ---
@@ -251,6 +373,7 @@ J --> K[WordPress 초안 저장]
 
 ## 개발 단계
 
+### ✅ 완료된 기능
 - [x] 상품 검색 API 구현
 - [x] 딥링크 변환 API 구현
 - [x] SEO 블로그 자동생성 API 구현
@@ -262,11 +385,47 @@ J --> K[WordPress 초안 저장]
 - [x] **LangGraph 통합 준비** - 프로젝트 상태 분석 및 아키텍처 설계
 - [x] **LangGraph 노드 구현** - extractIds, staticCrawler, dynamicCrawler, fallbackLLM, seoAgent, wordpressPublisher 노드 구현
 - [x] **LangGraph 노드 테스트** - 브라우저 기반 노드 테스트 완료
+- [x] **SEO 글 작성 UI** - 선택된 상품에 대한 액션 선택 모달 구현
+- [x] **LangGraph Edge Function** - Supabase Edge Function으로 LangGraph API 배포
+- [x] **SEO 글 생성 기능** - GPT 기반 SEO 최적화 글 생성 및 새 탭 표시
+
+### 🔄 현재 구현 상태
+
+#### 1단계: 사용자 입력 → 상품 검색 ✅
+- 키워드 검색, 카테고리 선택, 직접 링크 입력
+- 쿠팡 오픈API 연동 완료
+- 딥링크 변환 완료
+
+#### 2단계: SEO 글 작성 버튼 → LangGraph API ✅
+- 선택된 상품에 대한 액션 선택 모달
+- "링크 복사" 또는 "SEO 글 작성" 옵션
+- LangGraph API 호출 구현
+
+#### 3단계: LangGraph 워크플로우 (실제 API 연동)
+- **extractIds 노드**: ✅ 구현 완료
+- **staticCrawler 노드**: ✅ 실제 쿠팡 API 연동 완료
+- **dynamicCrawler 노드**: 🔄 구현 예정 (Playwright)
+- **fallbackLLM 노드**: ✅ 실제 Perplexity API 연동 완료
+- **seoAgent 노드**: ✅ GPT 기반 SEO 글 생성 완료
+- **wordpressPublisher 노드**: ✅ 실제 WordPress API 연동 완료
+
+#### 4단계: 실제 크롤링 및 WordPress 연동 🔄
+- **실제 크롤링**: 🔄 구현 예정 (Cheerio, Playwright)
+- **WordPress 연동**: 🔄 구현 예정 (REST API)
+
+### 🚧 진행 중인 작업
+- [ ] **dynamicCrawler 노드 구현** - Playwright를 사용한 동적 크롤링
+- [ ] **실제 크롤링 테스트** - Cheerio와 Playwright 통합 테스트
+- [ ] **WordPress 발행 테스트** - 실제 WordPress REST API 연동 테스트
+- [ ] **사용자 확인 단계** - 발행 전 최종 확인 UI 구현
+- [ ] **컴포넌트 리팩토링** - 아키텍처 가이드에 맞는 구조 개선
+
+### 📋 향후 계획
 - [ ] **메모리 관리 구현** - RedisSaver, MemorySaver, Cross-thread KV 구현
 - [ ] **프론트엔드 통합** - 기존 CP9 UI에 LangGraph 기반 자동화 플로우 통합
 - [ ] **E2E 테스트 및 최적화** - 전체 플로우 E2E 테스트, 성능 최적화, 오류 처리 개선
-- [ ] 워드프레스 초안 저장 기능
-- [ ] E2E/유닛 테스트, 배포 자동화
+- [ ] **워드프레스 초안 저장 기능** - 사용자 확인 후 발행 기능
+- [ ] **E2E/유닛 테스트, 배포 자동화** - CI/CD 파이프라인 구축
 
 ---
 
@@ -425,61 +584,108 @@ npm run test
 
 ## 🚀 LangGraph 기반 자동화 시스템
 
-### 전체 플로우
+### 전체 워크플로우 개요
 ```mermaid
 graph TD
-A[딥링크 입력] --> B[extractIds]
-B --> C{상품 ID 추출 성공?}
-C -->|Yes| D[staticCrawler]
-C -->|No| END
-D --> E{정적 크롤링 성공?}
-E -->|Yes| F[seoAgent]
-E -->|No| G[dynCrawler]
-G --> H{동적 크롤링 성공?}
-H -->|Yes| F
-H -->|No| I[fallbackLLM]
-I --> J{LLM 보강 성공?}
-J -->|Yes| F
-J -->|No| END
-F --> K{SEO 콘텐츠 생성 성공?}
-K -->|Yes| L[wordpressPublisher]
-K -->|No| END
-L --> M{포스트 발행 성공?}
-M -->|Yes| END
-M -->|No| END
+A[사용자 선택] --> B[SEO 글 작성 버튼]
+B --> C[LangGraph API 호출]
+C --> D[extractIds 노드]
+D --> E[staticCrawler 노드]
+E --> F[seoAgent 노드]
+F --> G[wordpressPublisher 노드]
+G --> H[WordPress 초안 저장]
+```
+
+### 상세 노드별 워크플로우
+```mermaid
+graph TD
+A[사용자 선택] --> B[SEO 글 작성 버튼]
+B --> C[LangGraph API 호출]
+C --> D[extractIds 노드]
+D --> E{상품 ID 추출 성공?}
+E -->|Yes| F[staticCrawler 노드]
+E -->|No| END1[프로세스 종료]
+F --> G{정적 크롤링 성공?}
+G -->|Yes| H[seoAgent 노드]
+G -->|No| I[dynamicCrawler 노드]
+I --> J{동적 크롤링 성공?}
+J -->|Yes| H
+J -->|No| K[fallbackLLM 노드]
+K --> L{LLM 보강 성공?}
+L -->|Yes| H
+L -->|No| END2[프로세스 종료]
+H --> M{SEO 콘텐츠 생성 성공?}
+M -->|Yes| N[wordpressPublisher 노드]
+M -->|No| END3[프로세스 종료]
+N --> O{포스트 발행 성공?}
+O -->|Yes| P[WordPress 초안 저장]
+O -->|No| END4[프로세스 종료]
 ```
 
 ### 핵심 노드 및 기능
 
-#### 1. **extractIds 노드**
-- 쿠팡 URL에서 상품 ID 추출
-- 정규표현식을 사용한 패턴 매칭
-- 실패 시 프로세스 종료
+#### 1. **extractIds 노드** 🔍
+- **목적**: 쿠팡 URL에서 상품 ID 추출
+- **입력**: 상품 URL 배열
+- **처리**: 정규표현식 패턴 매칭 (`/products\/(\d+)/`)
+- **출력**: 상품 ID 배열
+- **성공 조건**: 모든 URL에서 상품 ID 추출 완료
+- **실패 시**: 프로세스 종료
 
-#### 2. **staticCrawler 노드**
-- Cheerio를 사용한 정적 HTML 파싱
-- 상품명, 가격, 이미지, 카테고리 등 기본 정보 추출
-- 성공 시 SEO Agent로 진행, 실패 시 동적 크롤링으로 폴백
+#### 2. **staticCrawler 노드** 📄
+- **목적**: 정적 HTML에서 상품 정보 크롤링
+- **입력**: 상품 ID 배열
+- **도구**: Cheerio (HTML 파싱)
+- **수집 정보**: 
+  - 상품명, 가격, 이미지 URL
+  - 카테고리, 평점, 리뷰 수
+  - 로켓배송, 무료배송 여부
+- **성공 시**: seoAgent 노드로 진행
+- **실패 시**: dynamicCrawler 노드로 폴백
 
-#### 3. **dynamicCrawler 노드**
-- Playwright를 사용한 동적 웹 크롤링 (구현 예정)
-- JavaScript 렌더링 후 상품 정보 추출
-- 성공 시 SEO Agent로 진행, 실패 시 LLM 보강으로 폴백
+#### 3. **dynamicCrawler 노드** 🌐 (구현 예정)
+- **목적**: JavaScript 렌더링 후 상품 정보 크롤링
+- **입력**: staticCrawler에서 실패한 상품 ID
+- **도구**: Playwright (동적 웹 크롤링)
+- **사용 시기**: staticCrawler 실패 시
+- **성공 시**: seoAgent 노드로 진행
+- **실패 시**: fallbackLLM 노드로 폴백
 
-#### 4. **fallbackLLM 노드**
-- Perplexity API를 사용한 상품 정보 보강
-- 크롤링 실패 시 대체 정보 생성
-- 상품 특징, 장점, 타겟 고객층 등 상세 정보 제공
+#### 4. **fallbackLLM 노드** 🤖
+- **목적**: 크롤링 실패 시 AI로 상품 정보 보강
+- **입력**: 크롤링 실패한 상품 정보
+- **도구**: Perplexity API
+- **생성 정보**:
+  - 상품 특징 및 장점
+  - 타겟 고객층 분석
+  - 경쟁사 정보 및 비교
+  - 구매 가이드 및 팁
+- **성공 시**: seoAgent 노드로 진행
+- **실패 시**: 프로세스 종료
 
-#### 5. **seoAgent 노드**
-- ReAct 패턴을 사용한 SEO 콘텐츠 생성
-- Think → Act → Observe → Reflect 순서로 진행
-- 제목, 본문, 키워드, 요약 자동 생성
+#### 5. **seoAgent 노드** ✍️
+- **목적**: SEO 최적화된 블로그 콘텐츠 생성
+- **입력**: 크롤링/보강된 상품 정보
+- **방법**: ReAct 패턴 (Think → Act → Observe → Reflect)
+- **생성 콘텐츠**:
+  - SEO 최적화된 제목
+  - 구조화된 본문 (헤더, 리스트, 링크)
+  - 관련 키워드 배열
+  - 요약 및 결론
+- **성공 시**: wordpressPublisher 노드로 진행
+- **실패 시**: 프로세스 종료
 
-#### 6. **wordpressPublisher 노드**
-- WordPress REST API를 사용한 포스트 발행
-- 중복 게시 방지 (product_id 메타데이터, 제목 유사도)
-- 기존 포스트 업데이트 또는 새 포스트 생성
+#### 6. **wordpressPublisher 노드** 📝
+- **목적**: WordPress에 포스트 발행
+- **입력**: SEO 콘텐츠 (제목, 본문, 키워드, 요약)
+- **도구**: WordPress REST API
+- **중복 방지**:
+  - product_id 메타데이터 체크
+  - 제목 유사도 분석
+  - 기존 포스트 업데이트 또는 새 포스트 생성
+- **발행 방식**: 초안으로 생성 (사용자 확인 후 발행)
+- **성공 시**: WordPress 초안 저장 완료
+- **실패 시**: 프로세스 종료
 
 ### LangGraph 메모리 전략 (구현 예정)
 
