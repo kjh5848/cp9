@@ -2,15 +2,16 @@
  * 상품 아이템 타입
  */
 export interface ProductItem {
-  productId: string;
+  productId: number;
   productName: string;
   productPrice: number;
-  productImage?: string;
-  productUrl?: string;
-  categoryName?: string;
+  productImage: string;
+  productUrl: string;
+  categoryName: string;
+  isRocket: boolean;
+  isFreeShipping: boolean;
+  // 추가 필드들 (선택적)
   categoryId?: string;
-  isRocket?: boolean;
-  rocketShipping?: boolean;
   rating?: number;
   reviewCount?: number;
   brandName?: string;

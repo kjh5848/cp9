@@ -56,10 +56,77 @@ export async function staticCrawlerNode(state: LangGraphState): Promise<Partial<
  */
 async function crawlProductInfo(productId: string): Promise<ProductInfo | null> {
   try {
+    // 쿠팡 API를 사용하여 상품 정보 조회
+    const productInfo = await fetchProductFromCoupangAPI(productId);
+    
+    if (!productInfo) {
+      // API 실패 시 웹 크롤링 시도
+      return await crawlProductFromWeb(productId);
+    }
+
+    return productInfo;
+  } catch (error) {
+    console.error(`[crawlProductInfo] 상품 ${productId} 크롤링 실패:`, error);
+    return null;
+  }
+}
+
+/**
+ * 쿠팡 API를 통해 상품 정보 조회
+ */
+async function fetchProductFromCoupangAPI(productId: string): Promise<ProductInfo | null> {
+  try {
+    // 쿠팡 상품 검색 API를 사용하여 상품 정보 조회
+    const response = await fetch('/api/products/search', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        keyword: productId,
+        limit: 1
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`API 요청 실패: ${response.status}`);
+    }
+
+    const products = await response.json();
+    
+    if (products && products.length > 0) {
+      const product = products[0];
+      return {
+        productId,
+        productName: product.productName,
+        productPrice: product.productPrice,
+        productImage: product.productImage,
+        productUrl: product.productUrl,
+        isRocket: product.isRocket,
+        isFreeShipping: product.isFreeShipping,
+        categoryName: product.categoryName,
+        rating: 0, // API에서 제공하지 않는 정보
+        reviewCount: 0, // API에서 제공하지 않는 정보
+        description: '', // API에서 제공하지 않는 정보
+        specifications: {} // API에서 제공하지 않는 정보
+      };
+    }
+
+    return null;
+  } catch (error) {
+    console.error(`[fetchProductFromCoupangAPI] API 조회 실패:`, error);
+    return null;
+  }
+}
+
+/**
+ * 웹 크롤링을 통해 상품 정보 조회 (폴백)
+ */
+async function crawlProductFromWeb(productId: string): Promise<ProductInfo | null> {
+  try {
     // 쿠팡 상품 페이지 URL 구성
     const url = `https://www.coupang.com/vp/products/${productId}`;
     
-    // 실제 환경에서는 쿠팡 API를 사용하거나 적절한 헤더를 설정해야 함
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
@@ -96,7 +163,7 @@ async function crawlProductInfo(productId: string): Promise<ProductInfo | null> 
 
     return productInfo;
   } catch (error) {
-    console.error(`[crawlProductInfo] 상품 ${productId} 크롤링 실패:`, error);
+    console.error(`[crawlProductFromWeb] 웹 크롤링 실패:`, error);
     return null;
   }
 }
