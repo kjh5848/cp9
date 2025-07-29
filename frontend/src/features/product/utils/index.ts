@@ -1,5 +1,13 @@
 import { ProductItem, ProductFilterOptions, SortOption, CategoryOption, ImageSizeOption } from '../types';
 
+export { 
+  isProductItem, 
+  isDeepLinkResponse, 
+  generateItemId, 
+  getSelectedItems, 
+  convertToSeoData 
+} from './product-helpers';
+
 /**
  * 숫자 포맷팅 함수
  * 
@@ -63,7 +71,7 @@ export const calculateDiscountRate = (originalPrice: number, currentPrice: numbe
 export const filterProducts = (products: ProductItem[], filters: ProductFilterOptions): ProductItem[] => {
   return products.filter((product) => {
     // 로켓배송 필터
-    if (filters.rocketOnly && !product.isRocket && !product.rocketShipping) {
+    if (filters.rocketOnly && !product.isRocket && !product.isFreeShipping) {
       return false;
     }
 
