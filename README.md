@@ -133,7 +133,7 @@ backend/supabase/functions/
 interface CoupangProductResponse {
   productName: string;
   productImage: string;
-  productPrice: number;
+  productPrice: number;                 
   productUrl: string;
   productId: number;
   isRocket: boolean;
@@ -367,7 +367,7 @@ K -->|No| H
 - **ESLint**: 코드 품질 관리
 - **Prettier**: 코드 포맷팅
 - **Vitest**: 단위 테스트
-- **Playwright**: E2E 테스트
+- **Playwright**: E2E 테스트q
 
 ---
 
@@ -418,7 +418,7 @@ K -->|No| H
 - **환경 변수 설정**: Supabase Dashboard에서 환경 변수 설정 필요
 
 ### 🚧 진행 중인 작업
-- [ ] **환경 변수 설정** - Supabase Dashboard에서 OPENAI_API_KEY 설정
+- [X] **환경 변수 설정** - Supabase Dashboard에서 OPENAI_API_KEY 설정
 - [ ] **dynamicCrawler 노드 구현** - Playwright를 사용한 동적 크롤링
 - [ ] **실제 크롤링 테스트** - Cheerio와 Playwright 통합 테스트
 - [ ] **WordPress 발행 테스트** - 실제 WordPress REST API 연동 테스트
