@@ -1,6 +1,7 @@
-'use server';
+// Server Actions 제거 - API Route에서 사용하기 위해
 
-import { LangGraphState, LangGraphNode, ProductInfo } from '../types';
+import { chromium, Browser, Page } from 'playwright';
+import { LangGraphState, ProductInfo } from '../types';
 
 /**
  * Playwright를 사용한 동적 크롤링 노드
@@ -10,20 +11,59 @@ import { LangGraphState, LangGraphNode, ProductInfo } from '../types';
  * @returns 업데이트된 상태 객체
  */
 export async function dynamicCrawlerNode(state: LangGraphState): Promise<Partial<LangGraphState>> {
+  let browser: Browser | null = null;
+  
   try {
     const { productIds } = state.input;
     const productInfo: ProductInfo[] = [];
 
     console.log(`[dynamicCrawler] ${productIds.length}개 상품 동적 크롤링 시작`);
 
+    // 브라우저 인스턴스 생성 (봇 차단 방지 강화)
+    browser = await chromium.launch({ 
+      headless: true, // 헤드리스 모드로 다시 변경 (서버 환경에서 안정성)
+      args: [
+        '--no-sandbox', 
+        '--disable-setuid-sandbox',
+        '--disable-http2',
+        '--disable-features=VizDisplayCompositor',
+        '--disable-web-security',
+        '--disable-features=TranslateUI',
+        '--disable-ipc-flooding-protection',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+        '--disable-blink-features=AutomationControlled',
+        '--disable-dev-shm-usage',
+        '--no-first-run',
+        '--no-default-browser-check',
+        '--disable-default-apps',
+        '--disable-extensions',
+        '--disable-plugins',
+        '--disable-images',
+        '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        '--disable-blink-features=AutomationControlled',
+        '--disable-web-security',
+        '--allow-running-insecure-content',
+        '--disable-features=VizDisplayCompositor'
+      ]
+    });
+    
+    console.log('[dynamicCrawler] 브라우저 인스턴스 생성 완료');
+
     for (const productId of productIds) {
       try {
-        const product = await crawlProductWithPlaywright(productId);
+        const product = await crawlProductWithPlaywright(browser, productId);
         if (product) {
           productInfo.push(product);
         }
       } catch (error) {
-        console.error(`[dynamicCrawler] 상품 ${productId} 동적 크롤링 실패:`, error);
+        console.error(`[dynamicCrawler] 상품 ${productId} 동적 크롤링 실패:`, {
+          productId,
+          error: error instanceof Error ? error.message : '알 수 없는 오류',
+          stack: error instanceof Error ? error.stack : undefined,
+          timestamp: new Date().toISOString()
+        });
         // 개별 상품 실패는 전체 프로세스를 중단하지 않음
       }
     }
@@ -45,118 +85,221 @@ export async function dynamicCrawlerNode(state: LangGraphState): Promise<Partial
   } catch (error) {
     console.error('[dynamicCrawler] 오류:', error);
     throw new Error(`동적 크롤링 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+  } finally {
+    // 브라우저 정리
+    if (browser) {
+      await browser.close();
+    }
   }
 }
 
 /**
  * Playwright를 사용하여 상품 정보를 크롤링하는 함수
  * 
+ * @param browser - Playwright 브라우저 인스턴스
  * @param productId - 상품 ID
  * @returns 상품 정보 또는 null
  */
-async function crawlProductWithPlaywright(productId: string): Promise<ProductInfo | null> {
+async function crawlProductWithPlaywright(browser: Browser, productId: string): Promise<ProductInfo | null> {
+  let page: Page | null = null;
+  
   try {
-    // 실제 환경에서는 Playwright 브라우저 인스턴스를 사용해야 함
-    // 여기서는 브라우저 자동화를 시뮬레이션
-    
     const url = `https://www.coupang.com/vp/products/${productId}`;
     console.log(`[crawlProductWithPlaywright] 상품 ${productId} 크롤링 시작: ${url}`);
     
-    // 브라우저 자동화 시뮬레이션 (실제 구현에서는 Playwright 사용)
-    const productInfo = await simulatePlaywrightCrawling(url, productId);
+    // 새 페이지 생성
+    page = await browser.newPage();
+    console.log(`[crawlProductWithPlaywright] 새 페이지 생성 완료`);
+    
+    // 사용자 에이전트 설정 (봇 차단 방지 강화)
+    await page.setExtraHTTPHeaders({
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+      'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Connection': 'keep-alive',
+      'Upgrade-Insecure-Requests': '1',
+      'Sec-Fetch-Dest': 'document',
+      'Sec-Fetch-Mode': 'navigate',
+      'Sec-Fetch-Site': 'none',
+      'Sec-Fetch-User': '?1',
+      'Cache-Control': 'max-age=0',
+      'Referer': 'https://www.coupang.com/',
+      'Origin': 'https://www.coupang.com',
+      'DNT': '1',
+      'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+      'Sec-Ch-Ua-Mobile': '?0',
+      'Sec-Ch-Ua-Platform': '"Windows"'
+    });
+    
+    // 봇 감지 방지를 위한 추가 설정
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, 'webdriver', {
+        get: () => undefined,
+      });
+    });
+    console.log(`[crawlProductWithPlaywright] HTTP 헤더 설정 완료`);
+    
+    // 페이지 로드 및 대기 (HTTP2 오류 방지)
+    console.log(`[crawlProductWithPlaywright] 페이지 로드 시작: ${url}`);
+    await page.goto(url, { 
+      waitUntil: 'networkidle',
+      timeout: 60000 
+    });
+    console.log(`[crawlProductWithPlaywright] 페이지 로드 완료`);
+    
+    // 추가 대기 (JavaScript 렌더링 완료)
+    console.log(`[crawlProductWithPlaywright] JavaScript 렌더링 대기 시작`);
+    await page.waitForTimeout(10000); // 대기 시간 증가
+    console.log(`[crawlProductWithPlaywright] JavaScript 렌더링 대기 완료`);
+    
+    // 페이지 제목 확인
+    const title = await page.title();
+    console.log(`[crawlProductWithPlaywright] 페이지 제목: ${title}`);
+    
+    // 페이지 URL 확인
+    const currentUrl = page.url();
+    console.log(`[crawlProductWithPlaywright] 현재 URL: ${currentUrl}`);
+    
+    // 페이지 내용 확인
+    const pageContent = await page.content();
+    console.log(`[crawlProductWithPlaywright] 페이지 내용 길이: ${pageContent.length} 문자`);
+    
+    // 페이지가 로드되었는지 확인
+    if (pageContent.length < 1000) {
+      console.log(`[crawlProductWithPlaywright] 페이지 내용이 너무 짧습니다. 봇 차단 가능성`);
+    }
+    
+    // 상품 정보 추출
+    console.log(`[crawlProductWithPlaywright] 상품 정보 추출 시작`);
+    const productInfo = await extractProductInfo(page, productId, url);
+    console.log(`[crawlProductWithPlaywright] 상품 정보 추출 완료:`, {
+      productId,
+      productName: productInfo.productName,
+      productPrice: productInfo.productPrice,
+      hasImage: !!productInfo.productImage,
+      timestamp: new Date().toISOString()
+    });
     
     return productInfo;
   } catch (error) {
-    console.error(`[crawlProductWithPlaywright] 상품 ${productId} 크롤링 실패:`, error);
+    const url = `https://www.coupang.com/vp/products/${productId}`;
+    console.error(`[crawlProductWithPlaywright] 상품 ${productId} 크롤링 실패:`, {
+      productId,
+      url,
+      error: error instanceof Error ? error.message : '알 수 없는 오류',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
     return null;
+  } finally {
+    // 페이지 정리
+    if (page) {
+      await page.close();
+    }
   }
 }
 
 /**
- * Playwright 크롤링 시뮬레이션 (실제 구현에서는 Playwright 사용)
+ * 페이지에서 상품 정보를 추출하는 함수
  * 
- * @param url - 상품 URL
+ * @param page - Playwright 페이지 객체
  * @param productId - 상품 ID
+ * @param url - 상품 URL
  * @returns 상품 정보
  */
-async function simulatePlaywrightCrawling(url: string, productId: string): Promise<ProductInfo> {
-  // 실제 구현에서는 다음과 같이 Playwright를 사용해야 함:
-  /*
-  const browser = await playwright.chromium.launch({ headless: true });
-  const page = await browser.newPage();
-  
-  // 사용자 에이전트 설정
-  await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
-  
-  // 페이지 로드
-  await page.goto(url, { waitUntil: 'networkidle' });
-  
-  // 상품 정보 추출
-  const productName = await page.$eval('h1.prod-buy-header__title', el => el.textContent);
-  const productPrice = await page.$eval('.total-price', el => el.textContent);
-  // ... 기타 정보 추출
-  
-  await browser.close();
-  */
-  
-  // 시뮬레이션을 위한 지연
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // 모의 상품 정보 반환
-  return {
-    productId,
-    productName: `동적 크롤링 상품 ${productId}`,
-    productPrice: Math.floor(Math.random() * 1000000) + 100000,
-    productImage: `https://example.com/images/${productId}.jpg`,
-    productUrl: url,
-    isRocket: Math.random() > 0.5,
-    isFreeShipping: Math.random() > 0.5,
-    categoryName: '가전디지털',
-    rating: Math.random() * 5,
-    reviewCount: Math.floor(Math.random() * 1000),
-    description: `동적 크롤링으로 수집된 상품 ${productId}의 상세 정보입니다.`,
-    specifications: {
-      '브랜드': '테스트 브랜드',
-      '모델': `MODEL-${productId}`,
-      '색상': '블랙',
-      '무게': '1.5kg'
-    }
-  };
+async function extractProductInfo(page: Page, productId: string, url: string): Promise<ProductInfo> {
+  try {
+    // 상품명 추출
+    const productName = await extractProductNameWithPlaywright(page);
+    
+    // 상품 가격 추출
+    const productPrice = await extractProductPriceWithPlaywright(page);
+    
+    // 상품 이미지 추출
+    const productImage = await extractProductImageWithPlaywright(page);
+    
+    // 로켓배송 여부 추출
+    const isRocket = await extractRocketDeliveryWithPlaywright(page);
+    
+    // 무료배송 여부 추출
+    const isFreeShipping = await extractFreeShippingWithPlaywright(page);
+    
+    // 카테고리명 추출
+    const categoryName = await extractCategoryNameWithPlaywright(page);
+    
+    // 평점 추출
+    const rating = await extractRatingWithPlaywright(page);
+    
+    // 리뷰 수 추출
+    const reviewCount = await extractReviewCountWithPlaywright(page);
+    
+    // 상품 설명 추출
+    const description = await extractDescriptionWithPlaywright(page);
+    
+    // 상품 스펙 추출
+    const specifications = await extractSpecificationsWithPlaywright(page);
+    
+    return {
+      productId,
+      productName,
+      productPrice,
+      productImage,
+      productUrl: url,
+      isRocket,
+      isFreeShipping,
+      categoryName,
+      rating,
+      reviewCount,
+      description,
+      specifications
+    };
+  } catch (error) {
+    console.error('[extractProductInfo] 오류:', {
+      productId,
+      url,
+      error: error instanceof Error ? error.message : '알 수 없는 오류',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+    // 기본값 반환
+    return {
+      productId,
+      productName: `상품 ${productId}`,
+      productPrice: 0,
+      productImage: '',
+      productUrl: url,
+      isRocket: false,
+      isFreeShipping: false,
+      categoryName: '카테고리 없음',
+      rating: 0,
+      reviewCount: 0,
+      description: '',
+      specifications: {}
+    };
+  }
 }
-
-/**
- * 실제 Playwright 크롤링 함수 (구현 예정)
- * 
- * @param url - 상품 URL
- * @param productId - 상품 ID
- * @returns 상품 정보
- */
-async function realPlaywrightCrawling(url: string, productId: string): Promise<ProductInfo> {
-  // TODO: 실제 Playwright 구현
-  // 1. 브라우저 인스턴스 생성
-  // 2. 페이지 로드 및 대기
-  // 3. 상품 정보 추출
-  // 4. 브라우저 정리
-  
-  throw new Error('실제 Playwright 구현이 필요합니다');
-}
-
-/**
- * 상품 정보 추출 함수들 (Playwright용)
- */
 
 /**
  * 상품명 추출 (Playwright)
+ * 
+ * @param page - Playwright 페이지 객체
+ * @returns 상품명
  */
-async function extractProductNameWithPlaywright(page: any): Promise<string> {
+async function extractProductNameWithPlaywright(page: Page): Promise<string> {
   try {
-    // 실제 쿠팡 페이지 구조에 맞게 수정 필요
+    // 쿠팡 페이지의 실제 셀렉터들
     const selectors = [
       'h1.prod-buy-header__title',
       '.prod-buy-header__title',
+      'h1[data-testid="product-title"]',
+      'h1.prod-title',
+      '.prod-title',
       'h1',
       '[data-testid="product-title"]'
     ];
+    
+    console.log(`[extractProductNameWithPlaywright] ${selectors.length}개 셀렉터로 상품명 추출 시도`);
     
     for (const selector of selectors) {
       try {
@@ -164,33 +307,54 @@ async function extractProductNameWithPlaywright(page: any): Promise<string> {
         if (element) {
           const text = await element.textContent();
           if (text && text.trim()) {
+            console.log(`[extractProductNameWithPlaywright] 성공: ${selector} = "${text.trim()}"`);
             return text.trim();
+          } else {
+            console.log(`[extractProductNameWithPlaywright] 셀렉터 ${selector}는 존재하지만 텍스트가 없음`);
           }
+        } else {
+          console.log(`[extractProductNameWithPlaywright] 셀렉터 ${selector}를 찾을 수 없음`);
         }
       } catch (error) {
-        // 다음 셀렉터 시도
+        console.log(`[extractProductNameWithPlaywright] 셀렉터 ${selector} 실패:`, {
+          selector,
+          error: error instanceof Error ? error.message : '알 수 없는 오류',
+          timestamp: new Date().toISOString()
+        });
         continue;
       }
     }
     
+    console.log(`[extractProductNameWithPlaywright] 모든 셀렉터 실패, 기본값 반환`);
     return '상품명 없음';
   } catch (error) {
-    console.error('[extractProductNameWithPlaywright] 오류:', error);
+    console.error('[extractProductNameWithPlaywright] 오류:', {
+      error: error instanceof Error ? error.message : '알 수 없는 오류',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
     return '상품명 없음';
   }
 }
 
 /**
  * 상품 가격 추출 (Playwright)
+ * 
+ * @param page - Playwright 페이지 객체
+ * @returns 상품 가격
  */
-async function extractProductPriceWithPlaywright(page: any): Promise<number> {
+async function extractProductPriceWithPlaywright(page: Page): Promise<number> {
   try {
     const selectors = [
       '.total-price',
       '.price',
       '.prod-price__total',
-      '[data-testid="product-price"]'
+      '[data-testid="product-price"]',
+      '.price-value',
+      '.current-price'
     ];
+    
+    console.log(`[extractProductPriceWithPlaywright] ${selectors.length}개 셀렉터로 가격 추출 시도`);
     
     for (const selector of selectors) {
       try {
@@ -198,35 +362,56 @@ async function extractProductPriceWithPlaywright(page: any): Promise<number> {
         if (element) {
           const text = await element.textContent();
           if (text) {
+            // 숫자만 추출 (쉼표, 원, ₩ 제거)
             const price = parseInt(text.replace(/[^\d]/g, ''));
             if (price > 0) {
+              console.log(`[extractProductPriceWithPlaywright] 성공: ${selector} = "${text}" → ${price}원`);
               return price;
+            } else {
+              console.log(`[extractProductPriceWithPlaywright] 셀렉터 ${selector} 텍스트: "${text}" → 유효하지 않은 가격`);
             }
+          } else {
+            console.log(`[extractProductPriceWithPlaywright] 셀렉터 ${selector} 텍스트가 없음`);
           }
+        } else {
+          console.log(`[extractProductPriceWithPlaywright] 셀렉터 ${selector}를 찾을 수 없음`);
         }
       } catch (error) {
+        console.log(`[extractProductPriceWithPlaywright] 셀렉터 ${selector} 실패:`, {
+          selector,
+          error: error instanceof Error ? error.message : '알 수 없는 오류',
+          timestamp: new Date().toISOString()
+        });
         continue;
       }
     }
     
+    console.log(`[extractProductPriceWithPlaywright] 모든 셀렉터 실패, 기본값 반환`);
     return 0;
   } catch (error) {
-    console.error('[extractProductPriceWithPlaywright] 오류:', error);
+    console.error('[extractProductPriceWithPlaywright] 오류:', error instanceof Error ? error.message : '알 수 없는 오류');
     return 0;
   }
 }
 
 /**
  * 상품 이미지 추출 (Playwright)
+ * 
+ * @param page - Playwright 페이지 객체
+ * @returns 상품 이미지 URL
  */
-async function extractProductImageWithPlaywright(page: any): Promise<string> {
+async function extractProductImageWithPlaywright(page: Page): Promise<string> {
   try {
     const selectors = [
       'img.prod-image__detail',
       '.prod-image img',
       '[data-testid="product-image"] img',
-      'img[alt*="상품"]'
+      'img[alt*="상품"]',
+      '.product-image img',
+      'img[src*="image.coupangcdn.com"]'
     ];
+    
+    console.log(`[extractProductImageWithPlaywright] ${selectors.length}개 셀렉터로 이미지 추출 시도`);
     
     for (const selector of selectors) {
       try {
@@ -234,31 +419,47 @@ async function extractProductImageWithPlaywright(page: any): Promise<string> {
         if (element) {
           const src = await element.getAttribute('src');
           if (src) {
+            console.log(`[extractProductImageWithPlaywright] 성공: ${selector} = "${src}"`);
             return src;
+          } else {
+            console.log(`[extractProductImageWithPlaywright] 셀렉터 ${selector}는 존재하지만 src가 없음`);
           }
+        } else {
+          console.log(`[extractProductImageWithPlaywright] 셀렉터 ${selector}를 찾을 수 없음`);
         }
       } catch (error) {
+        console.log(`[extractProductImageWithPlaywright] 셀렉터 ${selector} 실패:`, {
+          selector,
+          error: error instanceof Error ? error.message : '알 수 없는 오류',
+          timestamp: new Date().toISOString()
+        });
         continue;
       }
     }
     
+    console.log(`[extractProductImageWithPlaywright] 모든 셀렉터 실패, 기본값 반환`);
     return '';
   } catch (error) {
-    console.error('[extractProductImageWithPlaywright] 오류:', error);
+    console.error('[extractProductImageWithPlaywright] 오류:', error instanceof Error ? error.message : '알 수 없는 오류');
     return '';
   }
 }
 
 /**
  * 로켓배송 여부 추출 (Playwright)
+ * 
+ * @param page - Playwright 페이지 객체
+ * @returns 로켓배송 여부
  */
-async function extractRocketDeliveryWithPlaywright(page: any): Promise<boolean> {
+async function extractRocketDeliveryWithPlaywright(page: Page): Promise<boolean> {
   try {
     const selectors = [
       '.rocket-delivery',
       '.rocket',
       '[data-testid="rocket"]',
-      '.delivery-rocket'
+      '.delivery-rocket',
+      '.rocket-badge',
+      '[class*="rocket"]'
     ];
     
     for (const selector of selectors) {
@@ -268,27 +469,33 @@ async function extractRocketDeliveryWithPlaywright(page: any): Promise<boolean> 
           return true;
         }
       } catch (error) {
+        console.log(`[extractRocketDeliveryWithPlaywright] 셀렉터 ${selector} 실패:`, error instanceof Error ? error.message : '알 수 없는 오류');
         continue;
       }
     }
     
     return false;
   } catch (error) {
-    console.error('[extractRocketDeliveryWithPlaywright] 오류:', error);
+    console.error('[extractRocketDeliveryWithPlaywright] 오류:', error instanceof Error ? error.message : '알 수 없는 오류');
     return false;
   }
 }
 
 /**
  * 무료배송 여부 추출 (Playwright)
+ * 
+ * @param page - Playwright 페이지 객체
+ * @returns 무료배송 여부
  */
-async function extractFreeShippingWithPlaywright(page: any): Promise<boolean> {
+async function extractFreeShippingWithPlaywright(page: Page): Promise<boolean> {
   try {
     const selectors = [
       '.free-shipping',
       '.shipping-free',
       '[data-testid="free-shipping"]',
-      '.delivery-free'
+      '.delivery-free',
+      '.free-delivery',
+      '[class*="free"][class*="shipping"]'
     ];
     
     for (const selector of selectors) {
@@ -298,27 +505,33 @@ async function extractFreeShippingWithPlaywright(page: any): Promise<boolean> {
           return true;
         }
       } catch (error) {
+        console.log(`[extractFreeShippingWithPlaywright] 셀렉터 ${selector} 실패:`, error instanceof Error ? error.message : '알 수 없는 오류');
         continue;
       }
     }
     
     return false;
   } catch (error) {
-    console.error('[extractFreeShippingWithPlaywright] 오류:', error);
+    console.error('[extractFreeShippingWithPlaywright] 오류:', error instanceof Error ? error.message : '알 수 없는 오류');
     return false;
   }
 }
 
 /**
  * 카테고리명 추출 (Playwright)
+ * 
+ * @param page - Playwright 페이지 객체
+ * @returns 카테고리명
  */
-async function extractCategoryNameWithPlaywright(page: any): Promise<string> {
+async function extractCategoryNameWithPlaywright(page: Page): Promise<string> {
   try {
     const selectors = [
       '.breadcrumb',
       '.category',
       '.prod-category',
-      '[data-testid="category"]'
+      '[data-testid="category"]',
+      '.breadcrumb-item',
+      '.category-path'
     ];
     
     for (const selector of selectors) {
@@ -331,27 +544,33 @@ async function extractCategoryNameWithPlaywright(page: any): Promise<string> {
           }
         }
       } catch (error) {
+        console.log(`[extractCategoryNameWithPlaywright] 셀렉터 ${selector} 실패:`, error instanceof Error ? error.message : '알 수 없는 오류');
         continue;
       }
     }
     
     return '카테고리 없음';
   } catch (error) {
-    console.error('[extractCategoryNameWithPlaywright] 오류:', error);
+    console.error('[extractCategoryNameWithPlaywright] 오류:', error instanceof Error ? error.message : '알 수 없는 오류');
     return '카테고리 없음';
   }
 }
 
 /**
  * 평점 추출 (Playwright)
+ * 
+ * @param page - Playwright 페이지 객체
+ * @returns 평점
  */
-async function extractRatingWithPlaywright(page: any): Promise<number> {
+async function extractRatingWithPlaywright(page: Page): Promise<number> {
   try {
     const selectors = [
       '.rating',
       '.score',
       '.star-rating',
-      '[data-testid="rating"]'
+      '[data-testid="rating"]',
+      '.review-rating',
+      '.rating-score'
     ];
     
     for (const selector of selectors) {
@@ -367,27 +586,33 @@ async function extractRatingWithPlaywright(page: any): Promise<number> {
           }
         }
       } catch (error) {
+        console.log(`[extractRatingWithPlaywright] 셀렉터 ${selector} 실패:`, error instanceof Error ? error.message : '알 수 없는 오류');
         continue;
       }
     }
     
     return 0;
   } catch (error) {
-    console.error('[extractRatingWithPlaywright] 오류:', error);
+    console.error('[extractRatingWithPlaywright] 오류:', error instanceof Error ? error.message : '알 수 없는 오류');
     return 0;
   }
 }
 
 /**
  * 리뷰 수 추출 (Playwright)
+ * 
+ * @param page - Playwright 페이지 객체
+ * @returns 리뷰 수
  */
-async function extractReviewCountWithPlaywright(page: any): Promise<number> {
+async function extractReviewCountWithPlaywright(page: Page): Promise<number> {
   try {
     const selectors = [
       '.review-count',
       '.reviews',
       '.count',
-      '[data-testid="review-count"]'
+      '[data-testid="review-count"]',
+      '.review-number',
+      '.review-total'
     ];
     
     for (const selector of selectors) {
@@ -403,27 +628,33 @@ async function extractReviewCountWithPlaywright(page: any): Promise<number> {
           }
         }
       } catch (error) {
+        console.log(`[extractReviewCountWithPlaywright] 셀렉터 ${selector} 실패:`, error instanceof Error ? error.message : '알 수 없는 오류');
         continue;
       }
     }
     
     return 0;
   } catch (error) {
-    console.error('[extractReviewCountWithPlaywright] 오류:', error);
+    console.error('[extractReviewCountWithPlaywright] 오류:', error instanceof Error ? error.message : '알 수 없는 오류');
     return 0;
   }
 }
 
 /**
  * 상품 설명 추출 (Playwright)
+ * 
+ * @param page - Playwright 페이지 객체
+ * @returns 상품 설명
  */
-async function extractDescriptionWithPlaywright(page: any): Promise<string> {
+async function extractDescriptionWithPlaywright(page: Page): Promise<string> {
   try {
     const selectors = [
       '.description',
       '.prod-description',
       '.detail-description',
-      '[data-testid="description"]'
+      '[data-testid="description"]',
+      '.product-description',
+      '.prod-detail'
     ];
     
     for (const selector of selectors) {
@@ -436,28 +667,34 @@ async function extractDescriptionWithPlaywright(page: any): Promise<string> {
           }
         }
       } catch (error) {
+        console.log(`[extractDescriptionWithPlaywright] 셀렉터 ${selector} 실패:`, error instanceof Error ? error.message : '알 수 없는 오류');
         continue;
       }
     }
     
     return '';
   } catch (error) {
-    console.error('[extractDescriptionWithPlaywright] 오류:', error);
+    console.error('[extractDescriptionWithPlaywright] 오류:', error instanceof Error ? error.message : '알 수 없는 오류');
     return '';
   }
 }
 
 /**
  * 상품 스펙 추출 (Playwright)
+ * 
+ * @param page - Playwright 페이지 객체
+ * @returns 상품 스펙 객체
  */
-async function extractSpecificationsWithPlaywright(page: any): Promise<Record<string, string>> {
+async function extractSpecificationsWithPlaywright(page: Page): Promise<Record<string, string>> {
   const specs: Record<string, string> = {};
   
   try {
     const selectors = [
       '.specifications tr',
       '.specs tr',
-      '[data-testid="specifications"] tr'
+      '[data-testid="specifications"] tr',
+      '.product-specs tr',
+      '.spec-table tr'
     ];
     
     for (const selector of selectors) {
@@ -486,7 +723,7 @@ async function extractSpecificationsWithPlaywright(page: any): Promise<Record<st
       }
     }
   } catch (error) {
-    console.error('[extractSpecificationsWithPlaywright] 오류:', error);
+    console.error('[extractSpecificationsWithPlaywright] 오류:', error instanceof Error ? error.message : '알 수 없는 오류');
   }
   
   return specs;
@@ -498,7 +735,7 @@ async function extractSpecificationsWithPlaywright(page: any): Promise<Record<st
  * @param state - LangGraph 상태 객체
  * @returns 다음 노드 이름
  */
-export function dynamicCrawlerCondition(state: LangGraphState): string {
+export async function dynamicCrawlerCondition(state: LangGraphState): Promise<string> {
   const { productInfo } = state.scrapedData;
   
   // 상품 정보가 성공적으로 크롤링되었으면 다음 노드로 진행

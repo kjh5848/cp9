@@ -5,6 +5,7 @@
 
 import { LangGraphState, LangGraphNode, CheckpointSaver } from '@/features/langgraph/types';
 import { LangGraphConfig, defaultLangGraphConfig } from '@/features/langgraph/utils/graph-config';
+import { dynamicCrawlerNode } from '@/features/langgraph/nodes/dynamic-crawler';
 
 /**
  * LangGraph 실행 결과
@@ -350,6 +351,61 @@ export class LangGraphClient {
    */
   getConfig(): LangGraphConfig {
     return { ...this.config };
+  }
+
+  /**
+   * dynamicCrawler 노드를 실행하여 상품 정보를 크롤링한다.
+   * 
+   * @param state - LangGraph 상태 객체
+   * @returns 업데이트된 상태 객체
+   */
+  async executeDynamicCrawler(state: LangGraphState): Promise<Partial<LangGraphState>> {
+    try {
+      console.log('[LangGraphClient] dynamicCrawler 노드 실행 시작');
+      const result = await dynamicCrawlerNode(state);
+      console.log('[LangGraphClient] dynamicCrawler 노드 실행 완료');
+      return result;
+    } catch (error) {
+      console.error('[LangGraphClient] dynamicCrawler 노드 실행 실패:', error);
+      throw new Error(`LangGraph 클라이언트 오류: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+    }
+  }
+
+  /**
+   * 테스트용 초기 상태를 생성한다.
+   * 
+   * @param productIds - 상품 ID 배열
+   * @param keyword - 키워드
+   * @returns 초기 LangGraph 상태
+   */
+  createTestState(productIds: string[]): LangGraphState {
+    return {
+      input: {
+        urls: [],
+        productIds,
+        keyword: ''
+      },
+      scrapedData: { 
+        productInfo: [], 
+        enrichedData: [] 
+      },
+      seoContent: { 
+        title: '', 
+        content: '', 
+        keywords: [], 
+        summary: '' 
+      },
+      wordpressPost: { 
+        status: 'draft' 
+      },
+      metadata: {
+        threadId: `test-${Date.now()}`,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        currentNode: 'dynamicCrawler',
+        completedNodes: ['extractIds', 'staticCrawler']
+      }
+    };
   }
 }
 
