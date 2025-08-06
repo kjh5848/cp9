@@ -11,6 +11,35 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
+        // URL 해시에서 토큰 정보 확인 (OAuth 콜백의 경우)
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        
+        console.log('콜백 처리 시작');
+        console.log('URL:', window.location.href);
+        console.log('Hash params:', Object.fromEntries(hashParams));
+        console.log('Search params:', Object.fromEntries(searchParams));
+        
+        // OAuth 토큰이 있으면 Supabase 세션 설정
+        if (accessToken) {
+          const refreshToken = hashParams.get('refresh_token');
+          if (refreshToken) {
+            const { data, error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+            
+            if (error) {
+              console.error('세션 설정 오류:', error);
+              router.push('/login?error=session_failed');
+              return;
+            }
+            
+            console.log('세션 설정 성공:', data);
+          }
+        }
+        
+        // 세션 확인
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -20,12 +49,46 @@ export default function AuthCallback() {
         }
 
         if (data.session) {
-          // 로그인 성공 시 returnTo 파라미터 확인 후 리디렉션
-          const returnTo = searchParams.get('returnTo');
-          const redirectPath = returnTo || '/product'; // 기본값은 product 페이지
-          router.push(redirectPath);
+          console.log('세션 확인됨:', data.session.user.email);
+          
+          // returnTo 파라미터 확인 (여러 방법으로)
+          let returnTo = searchParams.get('returnTo');
+          console.log('URL returnTo:', returnTo);
+          
+          // OAuth state에서 returnTo 정보 확인
+          if (!returnTo) {
+            try {
+              const state = searchParams.get('state') || hashParams.get('state');
+              console.log('State 값:', state);
+              if (state) {
+                const stateData = JSON.parse(state);
+                returnTo = stateData.returnTo;
+                console.log('State에서 추출한 returnTo:', returnTo);
+              }
+            } catch (e) {
+              console.log('State 파싱 실패:', e);
+            }
+          }
+          
+          // localStorage에서 확인 (fallback)
+          if (!returnTo) {
+            returnTo = localStorage.getItem('auth_returnTo');
+            console.log('localStorage returnTo:', returnTo);
+            if (returnTo) {
+              localStorage.removeItem('auth_returnTo');
+            }
+          }
+          
+          const redirectPath = returnTo || '/product';
+          console.log('최종 리디렉트 경로:', redirectPath);
+          
+          // AuthContext가 세션 변경을 감지할 시간을 주기 위해 조금 더 긴 지연
+          setTimeout(() => {
+            console.log('리디렉트 실행:', redirectPath);
+            router.push(redirectPath);
+          }, 500);
         } else {
-          // 세션이 없으면 로그인 페이지로 리디렉션
+          console.log('세션 없음 - 로그인 페이지로 이동');
           router.push('/login');
         }
       } catch (error) {
