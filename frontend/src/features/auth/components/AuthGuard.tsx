@@ -26,11 +26,16 @@ export function AuthGuard({ children, redirectTo = '/login' }: AuthGuardProps) {
   const router = useRouter();
 
   useEffect(() => {
+    console.log('AuthGuard - 상태 체크:', { loading, isAuthenticated, path: window.location.pathname });
+    
     if (!loading && !isAuthenticated) {
       // 현재 페이지 경로를 저장하고 로그인 페이지로 리디렉트
       const currentPath = window.location.pathname;
       const redirectUrl = redirectTo + (currentPath !== '/' ? `?returnTo=${encodeURIComponent(currentPath)}` : '');
+      console.log('AuthGuard - 로그인 페이지로 리디렉트:', redirectUrl);
       router.push(redirectUrl);
+    } else if (!loading && isAuthenticated) {
+      console.log('AuthGuard - 인증됨, 페이지 접근 허용');
     }
   }, [isAuthenticated, loading, router, redirectTo]);
 
