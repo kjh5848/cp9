@@ -108,6 +108,11 @@ export function useProductActions(
       }).filter((item): item is NonNullable<typeof item> => item !== null);
 
       // LangGraph API 호출
+      console.log('SEO 생성 요청 시작:', {
+        productsCount: productsData.length,
+        products: productsData.map(p => ({ name: p.name, price: p.price }))
+      });
+
       const response = await fetch('/api/langgraph/seo-generation', {
         method: 'POST',
         headers: {
@@ -121,11 +126,15 @@ export function useProductActions(
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('SEO 글 생성 API 오류:', {
+        const errorDetails = {
           status: response.status,
           statusText: response.statusText,
           errorText
-        });
+        };
+        console.error('SEO 글 생성 API 오류:', errorDetails);
+        console.error('API 응답 상태:', response.status);
+        console.error('API 응답 메시지:', response.statusText);
+        console.error('API 에러 내용:', errorText);
         throw new Error(`SEO 글 생성에 실패했습니다 (${response.status}: ${response.statusText})`);
       }
 
@@ -178,9 +187,18 @@ export function useProductActions(
 
       toast.success('SEO 글이 새 탭에서 열렸습니다');
       setIsActionModalOpen(false);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('SEO 글 생성 오류:', error);
-      toast.error('SEO 글 생성에 실패했습니다');
+      
+      if (error instanceof Error) {
+        console.error('에러 메시지:', error.message);
+        console.error('에러 스택:', error.stack);
+        toast.error(`SEO 글 생성에 실패했습니다: ${error.message}`);
+      } else {
+        console.error('알 수 없는 에러 타입:', typeof error);
+        console.error('에러 내용:', JSON.stringify(error, null, 2));
+        toast.error('SEO 글 생성에 실패했습니다 (알 수 없는 오류)');
+      }
     } finally {
       setIsSeoLoading(false);
     }
