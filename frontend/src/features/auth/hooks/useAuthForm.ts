@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/infrastructure/api/supabase';
 import { LoginFormData } from '../types';
 import { validateEmail, validatePassword, formatAuthError } from '../utils';
@@ -43,6 +44,9 @@ interface UseAuthFormReturn {
  * ```
  */
 export function useAuthForm(): UseAuthFormReturn {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
   // 폼 상태 관리
   const {
     register,
@@ -119,6 +123,12 @@ export function useAuthForm(): UseAuthFormReturn {
           ...prev, 
           message: '로그인 성공!' 
         }));
+        // 로그인 성공 후 리디렉트
+        setTimeout(() => {
+          const returnTo = searchParams.get('returnTo');
+          const redirectPath = returnTo || '/product';
+          router.push(redirectPath);
+        }, 1000);
       }
     } catch (error) {
       const errorMessage = formatAuthError(error);
@@ -126,7 +136,7 @@ export function useAuthForm(): UseAuthFormReturn {
     } finally {
       setAuthState(prev => ({ ...prev, isLoading: false }));
     }
-  }, [authState.isSignUp]);
+  }, [authState.isSignUp, router, searchParams]);
 
   // 구글 OAuth 로그인
   const handleGoogleSignIn = useCallback(async () => {
@@ -136,7 +146,7 @@ export function useAuthForm(): UseAuthFormReturn {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/callback`,
+          redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
       if (error) throw error;

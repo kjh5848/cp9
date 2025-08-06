@@ -1,7 +1,8 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/infrastructure/api/supabase';
 
 interface AuthContextType {
@@ -15,6 +16,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -47,13 +49,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signOut = async () => {
+  // signOut을 useCallback으로 최적화
+  const signOut = useCallback(async () => {
     try {
       await supabase.auth.signOut();
+      // 로그아웃 후 홈페이지로 리디렉트
+      router.push('/');
     } catch (error) {
       console.error('로그아웃 오류:', error);
     }
-  };
+  }, [router]);
 
   const value = {
     user,
