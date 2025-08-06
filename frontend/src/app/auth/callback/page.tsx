@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/infrastructure/api/supabase';
 
 export default function AuthCallback() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     const handleAuthCallback = async () => {
@@ -19,8 +20,10 @@ export default function AuthCallback() {
         }
 
         if (data.session) {
-          // 로그인 성공 시 메인 페이지로 리디렉션
-          router.push('/');
+          // 로그인 성공 시 returnTo 파라미터 확인 후 리디렉션
+          const returnTo = searchParams.get('returnTo');
+          const redirectPath = returnTo || '/product'; // 기본값은 product 페이지
+          router.push(redirectPath);
         } else {
           // 세션이 없으면 로그인 페이지로 리디렉션
           router.push('/login');
@@ -32,7 +35,7 @@ export default function AuthCallback() {
     };
 
     handleAuthCallback();
-  }, [router]);
+  }, [router, searchParams]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { ProductItem, ProductHistory, PricePreset, SortOption } from '@/features/product/types';
+import { ProductItem, ProductHistory, PricePreset} from '@/features/product/types';
 
 interface SearchStore {
   results: ProductItem[];
