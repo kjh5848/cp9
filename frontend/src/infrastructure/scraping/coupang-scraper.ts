@@ -28,10 +28,19 @@ export class CoupangScraper {
    */
   async extractProductInfo(deepLink: string): Promise<{ productId: string; productUrl: string }> {
     try {
-      // 302 리디렉션 추적
+      // 이미 쿠팡 상품 URL인 경우 바로 처리
+      if (deepLink.includes('coupang.com')) {
+        const productIdMatch = deepLink.match(/\/vp\/products\/(\d+)/);
+        if (productIdMatch) {
+          const productId = productIdMatch[1];
+          return { productId, productUrl: deepLink };
+        }
+      }
+
+      // 딥링크인 경우 301/302 리디렉션 추적
       const response = await axios.get(deepLink, {
         maxRedirects: 0,
-        validateStatus: (status) => status === 302,
+        validateStatus: (status) => status === 301 || status === 302,
         timeout: this.config.timeout,
       });
 
