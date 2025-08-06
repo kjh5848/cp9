@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { supabase } from '@/infrastructure/api/supabase';
-import { LoginFormData, SignUpFormData } from '../types';
+import { LoginFormData } from '../types';
 import { validateEmail, validatePassword, formatAuthError } from '../utils';
 
 interface AuthFormState {
@@ -47,10 +47,8 @@ export function useAuthForm(): UseAuthFormReturn {
   const {
     register,
     handleSubmit: handleFormSubmit,
-    formState: { errors, isSubmitting },
+    formState,
     reset,
-    setValue,
-    watch,
   } = useForm<LoginFormData>({
     defaultValues: {
       email: '',
