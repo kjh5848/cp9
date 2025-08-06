@@ -143,20 +143,32 @@ export function useAuthForm(): UseAuthFormReturn {
     setAuthState(prev => ({ ...prev, isLoading: true, message: '' }));
 
     try {
+      // returnTo 파라미터를 여러 방법으로 전달
+      const returnTo = searchParams.get('returnTo');
+      console.log('Google OAuth 시작, returnTo:', returnTo);
+      
+      // localStorage에 저장 (fallback)
+      if (returnTo) {
+        localStorage.setItem('auth_returnTo', returnTo);
+      }
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `http://localhost:3000/auth/callback${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`,
+          queryParams: returnTo ? { returnTo } : undefined,
         },
       });
       if (error) throw error;
     } catch (error) {
       const errorMessage = formatAuthError(error);
       setAuthState(prev => ({ ...prev, message: errorMessage }));
+      // 에러 시 localStorage 정리
+      localStorage.removeItem('auth_returnTo');
     } finally {
       setAuthState(prev => ({ ...prev, isLoading: false }));
     }
-  }, []);
+  }, [searchParams]);
 
   return {
     // 폼 관련
