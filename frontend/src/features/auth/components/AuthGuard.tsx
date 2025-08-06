@@ -27,7 +27,10 @@ export function AuthGuard({ children, redirectTo = '/login' }: AuthGuardProps) {
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      router.push(redirectTo);
+      // 현재 페이지 경로를 저장하고 로그인 페이지로 리디렉트
+      const currentPath = window.location.pathname;
+      const redirectUrl = redirectTo + (currentPath !== '/' ? `?returnTo=${encodeURIComponent(currentPath)}` : '');
+      router.push(redirectUrl);
     }
   }, [isAuthenticated, loading, router, redirectTo]);
 
