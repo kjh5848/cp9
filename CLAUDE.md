@@ -1,199 +1,290 @@
-# 🔧 CP9 아키텍처 리팩토링 계획
+# CLAUDE.md
 
-## 📋 현재 상태 및 문제점
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-### 🚨 **주요 문제**
-- LangGraph 노드들이 프론트엔드에 위치 (보안 취약점)
-- API 키와 비즈니스 로직이 클라이언트에 노출
-- 중복된 워크플로우 구조 (ai-workflow vs frontend/langgraph)
-- 무거운 작업(크롤링, AI API)이 클라이언트에서 실행
+## 🏗️ Project Overview
 
-### 🎯 **목표**
-- 모든 비즈니스 로직을 백엔드로 이동
-- 보안성 강화 및 성능 최적화
-- 단일 워크플로우 구조로 통합
-- 실시간 상태 업데이트 구현
+CP9 is a **Coupang Partners Auto-Blog SaaS** that automates the entire process from product search to blog post publishing using AI workflow automation. The system performs product research, generates SEO-optimized content, and publishes WordPress drafts in one click.
 
----
+**Key Technologies:**
+- **Frontend**: Next.js 15, TypeScript, Tailwind CSS, Zustand, shadcn/ui
+- **Backend**: Supabase Edge Functions, LangGraph workflow automation  
+- **AI/ML**: Perplexity API, OpenAI GPT for content generation
+- **External APIs**: Coupang Open API, WordPress REST API
 
-## 🚀 Phase 1: 프론트엔드 노드들을 백엔드로 이동
+## 📋 Development Commands
 
-### 📌 **작업 내용**
-- [ ] 프론트엔드 노드 분석 및 백엔드 통합 계획 수립
-- [ ] ai-workflow Edge Function에 노드들 통합
-- [ ] 환경 변수 및 보안 설정 검증
-- [ ] 프론트엔드에서 불필요한 노드 코드 제거
-- [ ] API 호출 구조 단순화
-
-### 🔧 **기술적 변경사항**
+### Frontend (in `frontend/` directory)
 ```bash
-# 이동할 노드들
-frontend/src/features/langgraph/nodes/ → backend/supabase/functions/ai-workflow/nodes/
-├── extract-ids.ts
-├── ai-product-research.ts  
-├── seo-agent.ts
-└── wordpress-publisher.ts
+# Development
+npm run dev              # Start development server (localhost:3000)
+npm run build           # Build for production
+npm run start           # Start production server
+npm run lint            # Run ESLint
+npm run test            # Run Vitest tests
+npm run test:watch      # Run tests in watch mode  
+npm run test:coverage   # Run tests with coverage report
+npm run test:ui         # Run tests with UI interface
 ```
 
-### ✅ **완료 조건**
-- 모든 노드가 백엔드에서 실행
-- API 키가 서버에서만 관리됨
-- 프론트엔드에서 민감 정보 완전 제거
-- 기존 기능이 정상 동작
+### Backend (Supabase Edge Functions)
+```bash
+# Using Supabase CLI (install: npm install -g supabase)
+supabase init           # Initialize local development
+supabase start          # Start local Supabase services  
+supabase functions deploy ai-workflow     # Deploy specific function
+supabase functions deploy --no-verify-jwt # Deploy without JWT verification
 
----
-
-## 🔄 Phase 2: 통신 구조 개선 및 API 간소화
-
-### 📌 **작업 내용**
-- [ ] 단일 워크플로우 API 엔드포인트 구현
-- [ ] 프론트엔드 UI 컴포넌트 리팩토링
-- [ ] 상태 관리 구조 개선 (Zustand)
-- [ ] 에러 처리 및 로딩 상태 표준화
-- [ ] API 응답 캐싱 구현
-
-### 🔧 **API 구조 변경**
-```typescript
-// 기존: 복잡한 다중 API 호출
-// 신규: 단순화된 워크플로우 API
-POST /api/workflow/execute      // 워크플로우 시작
-GET  /api/workflow/status/:id   // 진행 상태 조회
-GET  /api/workflow/result/:id   // 결과 조회
+# Check function logs
+supabase functions logs ai-workflow
 ```
 
-### ✅ **완료 조건**
-- 통합된 워크플로우 API 동작
-- 프론트엔드 UI/UX 개선
-- 안정적인 에러 처리
-- 성능 최적화 완료
+### Testing Key Workflows
+```bash
+# Test AI workflow endpoints
+curl -X POST http://localhost:3000/api/workflow \
+  -H "Content-Type: application/json" \
+  -d '{"action":"execute","keyword":"무선 이어폰","config":{"maxProducts":3}}'
 
----
+# Test individual components at:
+# - http://localhost:3000/simple-test (LangGraph node testing)
+# - http://localhost:3000/test (integrated workflow testing)
+```
 
-## ⚡ Phase 3: 실시간 상태 업데이트 구현
+## 🏢 Architecture & Project Structure
 
-### 📌 **작업 내용**
-- [ ] Redis 기반 상태 저장소 구현
-- [ ] Server-Sent Events (SSE) 또는 폴링 구현
-- [ ] 워크플로우 진행 상황 실시간 표시
-- [ ] 사용자 알림 및 피드백 시스템
-- [ ] 오프라인 모드 지원
+This project follows a **hybrid monorepo architecture** with clear separation between frontend UI and backend workflow automation:
 
-### 🔧 **실시간 상태 인터페이스**
+### High-Level Architecture
+```
+┌─ Frontend (Next.js) ─────────────────────┐    ┌─ Backend (Supabase) ───────────┐
+│  • User Interface                        │    │  • Edge Functions               │
+│  • API Routing (/api/*)                  │◄──►│  • AI Workflow Automation       │
+│  • State Management (Zustand)            │    │  • External API Integration     │
+│  • Component Library (shadcn/ui)         │    │  • Database & Auth              │
+└──────────────────────────────────────────┘    └────────────────────────────────┘
+                    │                                           │
+                    ▼                                           ▼
+            ┌─ External APIs ─────────────────────────────────────────┐
+            │  • Coupang Open API (product search, deep links)        │
+            │  • Perplexity API (AI product research)                 │  
+            │  • OpenAI API (SEO content generation)                  │
+            │  • WordPress REST API (blog publishing)                 │
+            └─────────────────────────────────────────────────────────┘
+```
+
+### Key Architectural Patterns
+
+1. **Feature-Based Architecture**: Each domain lives in `frontend/src/features/[domain]/`
+2. **API Proxy Pattern**: Frontend `/api/*` routes proxy to Supabase Edge Functions
+3. **Workflow Automation**: LangGraph-based AI agents handle multi-step processes
+4. **Unified Response Format**: All APIs return consistent `CoupangProductResponse` interface
+
+### Core Workflow (AI-Powered Product → Blog Pipeline)
+```
+User Input (keyword/URLs) 
+  → coupangProductSearch (random selection)
+  → extractIds (URL parsing)  
+  → aiProductResearch (AI enhancement)
+  → seoAgent (GPT content generation)
+  → wordpressPublisher (draft creation)
+```
+
+## 📂 Critical Directory Structure
+
+### Frontend (`frontend/src/`)
+```
+features/                    # Domain-specific features (MAIN LOGIC)
+├── auth/                   # Authentication system
+├── product/                # Product search & management  
+├── workflow/               # AI workflow UI components
+│   ├── components/WorkflowProgress.tsx  # Real-time workflow UI
+│   └── hooks/useWorkflow.ts            # Workflow state management
+└── search/                 # Search functionality
+
+app/api/                    # Next.js API routes (PROXY LAYER)
+├── workflow/               # Main workflow API (proxies to Edge Functions)
+│   ├── route.ts           # Core workflow execution
+│   └── stream/route.ts    # Real-time status streaming
+├── products/              # Product-related APIs
+└── test/                  # Testing endpoints
+
+infrastructure/             # External service clients (INTEGRATION LAYER)
+├── api/                   # API clients (Coupang, WordPress, etc.)
+├── auth/                  # Authentication services
+└── scraping/              # Web scraping utilities
+
+shared/                    # Reusable components (COMMON LAYER)
+├── types/api.ts          # Unified API type definitions
+├── lib/api-utils.ts      # API response normalization
+└── ui/                   # shadcn/ui components
+```
+
+### Backend (`backend/supabase/functions/`)
+```
+ai-workflow/               # CORE AI AUTOMATION ENGINE
+├── index.ts              # Main workflow orchestrator
+└── [Implements all AI nodes: search → research → content → publish]
+
+cache-gateway/            # Caching and queue management
+queue-worker/            # Background task processing
+```
+
+## 🔧 Development Guidelines
+
+### Working with AI Workflows
+- **All AI business logic lives in `backend/supabase/functions/ai-workflow/`**
+- **Frontend only handles UI and proxies requests via `/api/workflow/`**  
+- Test individual workflow nodes at `/simple-test` before full integration
+- Use structured logging for debugging AI workflows
+
+### API Development Patterns
 ```typescript
-interface WorkflowStatus {
-  threadId: string;
-  status: 'pending' | 'running' | 'completed' | 'failed';
-  currentNode: string;
-  progress: number;      // 0-100
-  completedNodes: string[];
-  result?: any;
-  error?: string;
-  estimatedTimeLeft?: number;
+// All product APIs must return this normalized format:
+interface CoupangProductResponse {
+  productName: string;
+  productPrice: number;
+  productImage: string; 
+  productUrl: string;
+  productId: number;
+  isRocket: boolean;
+  isFreeShipping: boolean;
+  categoryName: string;
 }
+
+// Use the normalization utility:
+import { normalizeCoupangProduct } from '@/shared/lib/api-utils';
+const normalizedProducts = rawData.map(normalizeCoupangProduct);
 ```
 
-### ✅ **완료 조건**
-- 실시간 진행 상황 표시
-- 사용자 친화적 알림 시스템
-- 안정적인 상태 동기화
-- 오프라인 상황 대응
+### State Management with Zustand
+- Global state in `frontend/src/store/`
+- Feature-specific state in respective `features/[domain]/hooks/`
+- Persistent state automatically saved to localStorage
 
----
+### Component Architecture
+```typescript
+// Feature components follow this pattern:
+features/[domain]/
+├── components/           # UI components
+├── hooks/               # State management & API calls
+├── types/               # TypeScript interfaces  
+├── utils/               # Domain-specific utilities
+└── index.ts            # Public exports
+```
 
-## 📊 진행 상황 추적
+## 🌟 Key Features & Implementation Notes
 
-### 🔄 **현재 상태**
-- **Phase 1**: ✅ 완료 - 백엔드 통합 API 구현, 프론트 워크플로우 시스템 구현, 보안 위험 제거
-- **Phase 2**: ✅ 완료 - API 통합 및 간소화 작업, legacy API 리다이렉트 구현  
-- **Phase 3**: ✅ 완료 - 실시간 상태 업데이트 구현 (SSE, useWorkflow 훅, 실시간 UI)
+### 1. Real-time Workflow Progress
+- **Frontend**: `WorkflowProgress.tsx` + `useWorkflow.ts` hook
+- **Backend**: Server-Sent Events via `/api/workflow/stream/`  
+- **Implementation**: Polls workflow status every 2 seconds, displays progress
 
-### 📅 **예상 일정**
-- **Phase 1**: 2-3일 (백엔드 통합)
-- **Phase 2**: 3-4일 (API 및 UI 개선)  
-- **Phase 3**: 4-5일 (실시간 기능)
+### 2. AI Content Generation Pipeline
+- **coupangProductSearch**: Keyword → product discovery (with randomization)
+- **extractIds**: URL parsing for product IDs
+- **aiProductResearch**: Perplexity API for product enrichment  
+- **seoAgent**: GPT-4 for SEO blog content using CO-STAR prompts
+- **wordpressPublisher**: WordPress REST API for draft creation
 
-### 🎯 **성공 지표**
-- [x] 보안 취약점 0개 - 모든 비즈니스 로직이 백엔드로 이동
-- [x] API 응답 시간 < 3초 - 통합 워크플로우 API로 성능 최적화
-- [x] 실시간 업데이트 구현 - SSE 기반 실시간 상태 모니터링
-- [x] 시스템 안정성 향상 - 단일 워크플로우 구조로 복잡성 감소
+### 3. Hybrid Product Input Methods
+- **Keyword-based**: Search Coupang API → random selection → AI workflow
+- **URL-based**: Direct product URLs → extract IDs → AI workflow  
+- **Fallback**: Uses dummy data when external APIs fail
 
----
+## 🔐 Environment Variables
 
-## 🔧 개발 가이드라인
+### Required Frontend (.env.local)
+```bash
+# Supabase (Required)
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
-### 📋 **코딩 컨벤션**
-- TypeScript 엄격 모드 사용
-- 일관된 에러 처리 패턴
-- API 응답 정규화 준수
-- 보안 우선 개발
+# Optional: Additional API keys managed in Supabase Dashboard
+```
 
-### 🧪 **테스트 전략**
-- 단위 테스트: 각 노드별 기능 검증
-- 통합 테스트: API 엔드투엔드 테스트
-- 성능 테스트: 응답 시간 및 처리량
-- 보안 테스트: API 키 노출 검증
+### Backend (Supabase Edge Functions - Set in Dashboard)
+```bash
+# Coupang API
+COUPANG_ACCESS_KEY=your_coupang_access_key  
+COUPANG_SECRET_KEY=your_coupang_secret_key
 
-### 🚀 **배포 전략**
-- 점진적 배포 (Blue-Green)
-- 롤백 계획 수립
-- 모니터링 및 알람 설정
-- 사용자 피드백 수집
+# AI Services  
+PERPLEXITY_API_KEY=your_perplexity_api_key
+OPENAI_API_KEY=your_openai_api_key
 
----
+# WordPress Publishing
+WORDPRESS_URL=https://your-site.com
+WORDPRESS_USERNAME=your_wp_username
+WORDPRESS_PASSWORD=your_wp_app_password
+```
 
-## 📞 이슈 및 문의
+## 🧪 Testing Strategy
 
-### 🆘 **긴급 상황 대응**
-1. 즉시 롤백 실행
-2. 에러 로그 수집 및 분석
-3. 사용자 공지 및 대응
-4. 근본 원인 분석 및 수정
+### Unit Tests (Vitest)
+```bash
+npm run test                    # Run all tests
+npm run test:coverage          # With coverage report (80% threshold)
+npm run test:watch             # Watch mode for development
+```
 
-### 📝 **진행 상황 보고**
-- 매일 진행 상황 업데이트
-- 주요 마일스톤 달성 시 알림
-- 이슈 발생 시 즉시 보고
-- 완료 시 성과 리포트 작성
+### Integration Testing  
+- **Workflow Testing**: Use `/simple-test` page for individual AI nodes
+- **API Testing**: Use `/test` page for end-to-end workflow validation
+- **Manual Testing**: Each feature has dedicated test pages in `/app/[feature]-test/`
 
----
+### Test File Structure
+```
+src/
+├── components/ui/__tests__/       # UI component tests
+├── features/auth/__tests__/       # Feature-specific tests
+└── shared/lib/__tests__/          # Utility function tests
+```
 
-## 🎉 프로젝트 완료 요약
+## 🚀 Deployment & Configuration
 
-### ✅ **달성 사항**
-- **보안 강화**: 프론트엔드의 모든 민감 정보 제거, 백엔드로 완전 이동
-- **아키텍처 개선**: 단일 워크플로우 구조로 복잡성 대폭 감소
-- **실시간 기능**: SSE 기반 실시간 상태 업데이트로 UX 향상
-- **API 통합**: 기존 API와 호환성 유지하며 새로운 시스템으로 완전 통합
+### Frontend Deployment
+- **Platform**: Vercel (recommended) or any Next.js-compatible host
+- **Build Command**: `npm run build`
+- **Environment**: Set Supabase URLs in deployment environment
 
-### 🚀 **구현된 기능**
-1. **통합 워크플로우 API** (`/api/workflow`)
-   - 모든 워크플로우 요청을 단일 엔드포인트로 처리
-   - 백엔드 Edge Function과 안전한 통신
+### Backend Deployment (Supabase Edge Functions)
+- **Auto-deploy**: Connected via GitHub integration (recommended)
+- **Manual**: `supabase functions deploy ai-workflow`  
+- **Environment**: Set API keys in Supabase Dashboard → Settings → Environment Variables
 
-2. **실시간 상태 스트리밍** (`/api/workflow/stream`)
-   - Server-Sent Events (SSE) 기반
-   - 2초마다 자동 폴링으로 상태 업데이트
+### Next.js Configuration Notes
+- **Image Optimization**: Configured for Coupang CDN domains in `next.config.ts`
+- **Webpack Fallbacks**: Extensive Node.js polyfills for LangGraph compatibility
+- **TypeScript**: Strict mode enabled, path aliases configured (`@/`)
 
-3. **고도화된 워크플로우 훅** (`useWorkflow`)
-   - 실시간 상태 관리
-   - SSE 연결 자동 관리
-   - 에러 처리 및 복구
+## 🔧 Common Development Patterns
 
-4. **향상된 UI 컴포넌트** (`WorkflowProgress`)
-   - 실시간 진행률 표시
-   - 현재 실행 중인 노드 표시
-   - 완료된 단계 추적
-   - 실시간 모드 토글 기능
+### Adding New AI Workflow Nodes
+1. Implement node function in `backend/supabase/functions/ai-workflow/index.ts`
+2. Add to workflow execution chain in `executeAIWorkflow()`
+3. Update interfaces for request/response types
+4. Test individual node at `/simple-test`
 
-### 🎯 **최종 결과**
-- **보안**: 100% 백엔드 기반으로 API 키와 비즈니스 로직 완전 보호
-- **성능**: 단일 API 구조로 네트워크 요청 최적화
-- **UX**: 실시간 피드백으로 사용자 경험 대폭 향상
-- **유지보수**: 깔끔한 아키텍처로 향후 확장 및 유지보수 용이
+### Creating New Product APIs  
+1. Add route in `frontend/src/app/api/products/[new-endpoint]/route.ts`
+2. Implement with consistent error handling and response format
+3. Use `normalizeCoupangProduct()` for standardized output
+4. Add TypeScript interfaces in `shared/types/api.ts`
 
----
+### Integrating External Services
+1. Create client in `infrastructure/api/[service-name].ts`  
+2. Add environment variables and validation
+3. Implement with retry logic and fallback strategies
+4. Test integration thoroughly before production use
 
-*마지막 업데이트: 2025-01-27*
-*담당자: Claude Code Assistant*
-*상태: ✅ 프로젝트 완료*
+## ⚠️ Important Security & Performance Notes
+
+- **API Keys**: Never expose in frontend code - all managed in Supabase Edge Functions
+- **CORS**: Properly configured for cross-origin requests
+- **Rate Limiting**: Implement for external API calls to avoid quota limits
+- **Error Handling**: All external API calls have fallback mechanisms
+- **Image Optimization**: Next.js Image component configured for Coupang CDNs
+- **Bundle Size**: Webpack configured to exclude Node.js modules from client bundle
+
+This architecture ensures secure, scalable, and maintainable AI-powered workflow automation while keeping the frontend lightweight and responsive.

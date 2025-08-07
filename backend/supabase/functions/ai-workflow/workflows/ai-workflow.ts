@@ -18,9 +18,9 @@ import {
 
 import type {
   AIWorkflowRequest,
-  AIWorkflowResponse,
-  EnvironmentConfig
+  AIWorkflowResponse
 } from '../types/index.ts';
+import type { EnvironmentConfig } from '../lib/environment.ts';
 
 /**
  * Supabase 클라이언트 초기화
