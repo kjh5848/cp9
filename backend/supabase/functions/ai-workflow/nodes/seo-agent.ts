@@ -40,7 +40,7 @@ export async function executeSEOAgent(
   try {
     // 요청 데이터 준비 및 로깅
     const requestData = {
-      model: 'llama-3.1-sonar-huge-128k-online',
+      model: 'sonar-pro',
       messages: [
         {
           role: 'system',
@@ -53,12 +53,20 @@ export async function executeSEOAgent(
 3. 실제 사용 후기 스타일로 신뢰감 조성
 4. 구매 결정에 도움이 되는 구체적 정보 제공
 5. 워드프레스 마크다운 형식으로 구조화
+6. 상품명은 간결하게 표시하고, 핵심 정보만 포함
+7. 각 상품별로 명확한 장단점 분석
+8. 가격대비 성능, 배송 조건 등을 종합적으로 평가
 
 응답 형식:
 - 제목: SEO 최적화된 60자 이내 제목
 - 본문: 마크다운 형식의 구조화된 콘텐츠
 - 키워드: 관련 키워드 5개 이상
-- 요약: 155자 이내 메타 설명`
+- 요약: 155자 이내 메타 설명
+
+주의사항:
+- 상품명이 너무 길면 핵심 브랜드명과 제품명만 사용
+- 반복적인 정보는 제거하고 핵심만 포함
+- 실제 구매 결정에 도움이 되는 정보 위주로 작성`
         },
         {
           role: 'user',
@@ -68,13 +76,18 @@ export async function executeSEOAgent(
 
 **분석 대상 상품 목록**:
 ${enrichedData.map((product, index) => {
-            return `\n${index + 1}번 상품: ${product.productName}
+            // 상품명 간소화 (첫 50자만 사용)
+            const simplifiedName = product.productName.length > 50 
+              ? product.productName.substring(0, 50) + '...' 
+              : product.productName;
+            
+            return `\n${index + 1}번 상품: ${simplifiedName}
 - 판매가: ${product.productPrice.toLocaleString()}원
 - 고객평점: ${product.rating}/5.0점 (${product.reviewCount}개 리뷰)
 - 배송옵션: ${product.isRocket ? '🚀로켓배송' : '일반배송'} / ${product.isFreeShipping ? '무료배송' : '유료배송'}
-- 상품설명: ${product.description}
-- 주요특징: ${product.enrichedFeatures?.join(', ') || 'N/A'}
-- 추천대상: ${product.enrichedTargetAudience || '일반 사용자'}
+- 상품설명: ${product.description?.substring(0, 100) || 'N/A'}${product.description && product.description.length > 100 ? '...' : ''}
+- 주요특징: ${product.enrichedFeatures?.slice(0, 3).join(', ') || 'N/A'}
+- 추천대상: ${product.enrichedTargetAudience?.substring(0, 50) || '일반 사용자'}
 - 쿠팡링크: ${product.productUrl}`;
           }).join('\n')}
 
