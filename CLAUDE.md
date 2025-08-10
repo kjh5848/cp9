@@ -25,6 +25,9 @@ npm run test            # Run Vitest tests
 npm run test:watch      # Run tests in watch mode  
 npm run test:coverage   # Run tests with coverage report
 npm run test:ui         # Run tests with UI interface
+
+# Quick development start (from project root)
+cd frontend && npm run dev
 ```
 
 ### Backend (Supabase Edge Functions)
@@ -32,11 +35,17 @@ npm run test:ui         # Run tests with UI interface
 # Using Supabase CLI (install: npm install -g supabase)
 supabase init           # Initialize local development
 supabase start          # Start local Supabase services  
-supabase functions deploy ai-workflow     # Deploy specific function
-supabase functions deploy --no-verify-jwt # Deploy without JWT verification
+supabase stop           # Stop local Supabase services
+supabase status         # Check service status
+
+# Deploy functions
+supabase functions deploy item-research     # Deploy research function
+supabase functions deploy write            # Deploy SEO writing function
+supabase functions deploy --no-verify-jwt  # Deploy without JWT verification
 
 # Check function logs
-supabase functions logs ai-workflow
+supabase functions logs item-research --tail
+supabase functions logs write --tail
 ```
 
 ### Testing Key Workflows
@@ -46,9 +55,16 @@ curl -X POST http://localhost:3000/api/workflow \
   -H "Content-Type: application/json" \
   -d '{"action":"execute","keyword":"무선 이어폰","config":{"maxProducts":3}}'
 
-# Test individual components at:
+# Test research API
+curl -X POST http://localhost:3000/api/item-research \
+  -H "Content-Type: application/json" \
+  -d '{"itemName":"샘플 상품","itemId":"test_001"}'
+
+# Test pages for manual verification:
 # - http://localhost:3000/simple-test (LangGraph node testing)
 # - http://localhost:3000/test (integrated workflow testing)
+# - http://localhost:3000/research (research data management)
+# - http://localhost:3000/product (product search interface)
 ```
 
 ## 🏢 Architecture & Project Structure
@@ -99,7 +115,8 @@ features/                    # Domain-specific features (MAIN LOGIC)
 ├── auth/                   # Authentication system
 ├── product/                # Product search & management  
 ├── research/               # 🆕 Research data management
-│   ├── components/ResearchCard.tsx    # Research item display & editing
+│   ├── components/
+│   │   └── ResearchCard.tsx          # Research item display & quick editing
 │   └── hooks/useResearch.ts          # Research CRUD operations
 ├── workflow/               # AI workflow UI components
 │   ├── components/WorkflowProgress.tsx  # Real-time workflow UI
@@ -109,6 +126,8 @@ features/                    # Domain-specific features (MAIN LOGIC)
 app/api/                    # Next.js API routes (PROXY LAYER)
 ├── products/              # Product-related APIs (search, deeplink, etc.)
 ├── research/              # 🆕 Research data CRUD API
+│   ├── route.ts          # List and create research
+│   └── [id]/route.ts     # Get, update, delete by ID
 ├── write/                 # 🆕 SEO content generation API (proxy to Edge Function)
 ├── drafts/                # 🆕 Draft content retrieval API
 ├── workflow/              # Main workflow API (proxies to Edge Functions)
@@ -307,6 +326,26 @@ src/
 - **Webpack Fallbacks**: Extensive Node.js polyfills for LangGraph compatibility
 - **TypeScript**: Strict mode enabled, path aliases configured (`@/`)
 
+## 🎯 Critical Implementation Details
+
+### Authentication Flow
+- All authenticated requests require Supabase session
+- Auth state is managed via `AuthContext` and persisted in localStorage
+- Protected routes are wrapped with `AuthGuard` component
+- Supabase Edge Functions validate JWT tokens from frontend
+
+### Error Handling Pattern
+- All API routes return consistent error format: `{ error: string, details?: any }`
+- External API failures have fallback mechanisms
+- User-facing errors are displayed via toast notifications (react-hot-toast/sonner)
+
+### Data Flow for Product → Blog Pipeline
+1. **Product Search**: User inputs keyword → Coupang API → Normalize to `CoupangProductResponse`
+2. **Research Generation**: Selected products → `item-research` Edge Function → `ResearchPack` data
+3. **Review & Edit**: `/research` page displays all research → User can edit via detail page
+4. **SEO Content**: Research data → `write` Edge Function → GPT-4 generates blog content
+5. **Draft Storage**: Generated content → Stored in `drafts` table with metadata
+
 ## 🔧 Common Development Patterns
 
 ### Adding New Edge Functions
@@ -345,5 +384,25 @@ src/
 - **Error Handling**: All external API calls have fallback mechanisms
 - **Image Optimization**: Next.js Image component configured for Coupang CDNs
 - **Bundle Size**: Webpack configured to exclude Node.js modules from client bundle
+
+## 🔍 Debugging Tips
+
+### Common Issues & Solutions
+- **Supabase connection errors**: Check `supabase status` and ensure services are running
+- **CORS errors in Edge Functions**: Verify `_shared/cors.ts` is properly imported
+- **Type errors after API changes**: Update interfaces in `shared/types/` and restart dev server
+- **LangGraph import errors**: Check webpack fallbacks in `next.config.ts`
+
+### Useful Debug Commands
+```bash
+# Check Supabase logs for errors
+supabase db logs --tail
+
+# Test Edge Function locally
+supabase functions serve item-research --env-file .env.local
+
+# Clear Next.js cache
+rm -rf frontend/.next && npm run dev
+```
 
 This architecture ensures secure, scalable, and maintainable AI-powered workflow automation while keeping the frontend lightweight and responsive.
