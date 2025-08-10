@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getFunctionsSupabaseConfig } from '@/shared/lib/supabase-config';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const WRITE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/write`;
+const config = getFunctionsSupabaseConfig();
+const WRITE_FUNCTION_URL = `${config.url}/functions/v1/write`;
 
 // POST - SEO 글 생성 요청 (write Edge Function 프록시)
 export async function POST(request: NextRequest) {

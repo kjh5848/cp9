@@ -44,6 +44,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+
+        // 로그인 성공 시 아이템 생성 페이지로 리디렉션 (콜백 페이지가 아닌 경우만)
+        if (event === 'SIGNED_IN' && session && typeof window !== 'undefined') {
+          const currentPath = window.location.pathname;
+          
+          // 로그인 페이지에 있거나 홈페이지에 있다면 아이템 생성 페이지로 이동
+          if (currentPath === '/login' || currentPath === '/') {
+            console.log('로그인 성공 - 아이템 생성 페이지로 이동');
+            setTimeout(() => {
+              router.push('/product');
+            }, 500);
+          }
+        }
       }
     );
 

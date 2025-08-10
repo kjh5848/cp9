@@ -218,10 +218,11 @@ features/[domain]/
 ## 🌟 Key Features & Implementation Notes
 
 ### 1. Research Data Management System
-- **Frontend**: `/research` page with `ResearchCard.tsx` components
+- **Frontend**: `/research` page with `ResearchCard.tsx` components + `/research/[id]` detail pages
 - **Backend**: `research` table + `/api/research/` CRUD operations
 - **Features**: View, edit, and manage research data before SEO generation
 - **Flow**: Product Search → Research Review → SEO Generation
+- **Detail Page**: Full-page editor with tabs for features, pros, cons, keywords
 
 ### 2. SEO Content Generation Pipeline
 - **Research Creation**: `item-research` Edge Function → `ResearchPack`

@@ -145,17 +145,24 @@ export function useAuthForm(): UseAuthFormReturn {
     try {
       // returnTo 파라미터를 여러 방법으로 전달
       const returnTo = searchParams.get('returnTo');
-      console.log('Google OAuth 시작, returnTo:', returnTo);
+      console.log('Google OAuth 시작');
+      console.log('- returnTo:', returnTo);
+      console.log('- baseUrl:', typeof window !== 'undefined' ? window.location.origin : 'server-side');
       
       // localStorage에 저장 (fallback)
       if (returnTo) {
         localStorage.setItem('auth_returnTo', returnTo);
       }
       
+      // 동적 베이스 URL 처리 (포트 3000/3001/3002 등 자동 감지)
+      const baseUrl = typeof window !== 'undefined' 
+        ? window.location.origin 
+        : 'http://localhost:3000';
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `http://localhost:3000/auth/callback${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`,
+          redirectTo: `${baseUrl}/auth/callback${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`,
           queryParams: returnTo ? { returnTo } : undefined,
         },
       });

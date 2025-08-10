@@ -7,11 +7,24 @@ declare const Deno: {
 
 // @ts-ignore: Deno 모듈 import
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// @ts-ignore: Supabase client
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { corsHeaders } from '../_shared/cors.ts'
 
 interface ItemResearchRequest {
-  itemName: string
+  itemName: string;
+  projectId: string;
+  itemId: string;
+  productData?: {
+    productName: string;
+    productPrice: number;
+    productImage: string;
+    productUrl: string;
+    categoryName: string;
+    isRocket: boolean;
+    isFreeShipping: boolean;
+  };
 }
 
 interface ItemResearchResponse {
@@ -48,21 +61,23 @@ async function researchItemWithPerplexity(itemName: string): Promise<ItemResearc
         messages: [
           {
             role: 'system',
-            content: '당신은 상품 분석 전문가입니다. 주어진 상품명에 대해 최신 시장 정보를 바탕으로 상세한 분석을 제공하세요. 응답은 반드시 JSON 형식으로만 제공해주세요.'
+            content: '당신은 상품 분석 전문가입니다. 주어진 상품명에 대해 최신 시장 정보를 바탕으로 상세한 분석을 제공하세요. 응답은 반드시 JSON 형식으로만 제공해주세요. 한글 상품명을 정확히 인식하고 처리해주세요.'
           },
           {
             role: 'user',
-            content: `"${itemName}"에 대해 다음 정보를 JSON 형식으로 분석해주세요:
-            {
-              "overview": "상품 개요 (2-3문장)",
-              "features": ["주요 기능 1", "주요 기능 2", "주요 기능 3"],
-              "benefits": ["장점 1", "장점 2", "장점 3"],
-              "targetAudience": "타겟 고객층",
-              "marketAnalysis": "시장 분석 (트렌드, 경쟁 상황)",
-              "recommendations": ["구매 추천 이유 1", "구매 추천 이유 2"],
-              "priceRange": "일반적인 가격대",
-              "popularBrands": ["인기 브랜드 1", "인기 브랜드 2", "인기 브랜드 3"]
-            }`
+            content: `상품명: "${itemName}"
+
+위 상품에 대해 다음 정보를 JSON 형식으로 분석해주세요:
+{
+  "overview": "상품 개요 (2-3문장)",
+  "features": ["주요 기능 1", "주요 기능 2", "주요 기능 3"],
+  "benefits": ["장점 1", "장점 2", "장점 3"],
+  "targetAudience": "타겟 고객층",
+  "marketAnalysis": "시장 분석 (트렌드, 경쟁 상황)",
+  "recommendations": ["구매 추천 이유 1", "구매 추천 이유 2"],
+  "priceRange": "일반적인 가격대",
+  "popularBrands": ["인기 브랜드 1", "인기 브랜드 2", "인기 브랜드 3"]
+}`
           }
         ],
         max_tokens: 2000,
@@ -133,16 +148,26 @@ serve(async (req) => {
   }
 
   try {
-    // UTF-8 디코딩을 명시적으로 처리
-    const requestText = await req.text()
-    console.log('Raw request text:', requestText)
+    // Supabase 클라이언트 초기화
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     
-    const requestData = JSON.parse(requestText)
-    const { itemName }: ItemResearchRequest = requestData
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false }
+    });
+
+    // UTF-8 디코딩 처리 개선
+    const requestBuffer = await req.arrayBuffer();
+    const decoder = new TextDecoder('utf-8');
+    const requestText = decoder.decode(requestBuffer);
+    console.log('Decoded request text:', requestText);
     
-    if (!itemName) {
+    const requestData = JSON.parse(requestText);
+    const { itemName, projectId, itemId, productData }: ItemResearchRequest = requestData;
+    
+    if (!itemName || !projectId || !itemId) {
       return new Response(
-        JSON.stringify({ error: 'itemName is required' }),
+        JSON.stringify({ error: 'itemName, projectId, and itemId are required' }),
         { 
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' }
@@ -150,27 +175,62 @@ serve(async (req) => {
       )
     }
 
-    // 한글 문자열 정상성 확인
-    console.log('Item name received:', itemName)
-    console.log('Item name length:', itemName.length)
-    console.log('Item name bytes:', new TextEncoder().encode(itemName))
+    console.log('Research request:', { itemName, projectId, itemId })
     
     const researchData = await researchItemWithPerplexity(itemName)
-    
+
+    // ResearchPack 형태로 데이터 구성
+    const researchPack = {
+      itemId,
+      title: productData?.productName || itemName,
+      priceKRW: productData?.productPrice || null,
+      isRocket: productData?.isRocket || null,
+      features: researchData.features,
+      pros: researchData.benefits,
+      cons: ['AI 분석으로 단점 파악 중...'], // 기본값
+      keywords: researchData.popularBrands,
+      metaTitle: `${itemName} 리뷰 및 구매 가이드`,
+      metaDescription: researchData.overview,
+      slug: itemName.toLowerCase().replace(/\s+/g, '-')
+    };
+
+    // research 테이블에 저장
+    const { error: dbError } = await supabase
+      .from('research')
+      .upsert({
+        project_id: projectId,
+        item_id: itemId,
+        pack: researchPack,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'project_id,item_id' });
+
+    if (dbError) {
+      console.error('Database error:', dbError);
+      return new Response(
+        JSON.stringify({ error: 'Database save failed', details: dbError.message }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' }
+        }
+      );
+    }
+
     const response: ItemResearchResponse = {
       itemName,
       researchData,
       success: true
     }
 
-    // UTF-8로 명시적으로 인코딩
-    const responseJson = JSON.stringify(response)
-    console.log('Response JSON length:', responseJson.length)
+    console.log('Research completed and saved for:', itemName);
 
     return new Response(
-      responseJson,
+      JSON.stringify(response, null, 2),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' }
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json; charset=utf-8',
+          'Cache-Control': 'no-cache'
+        }
       }
     )
     

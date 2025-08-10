@@ -1,6 +1,6 @@
 'use client';
 
-import { useWorkflowOrchestrator } from '@/shared/hooks';
+import { useWorkflowOrchestrator } from './useWorkflowOrchestrator';
 import { ProductItem } from '@/features/product/types';
 
 /**

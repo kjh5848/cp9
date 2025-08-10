@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { ResearchItem, ResearchPack } from '@/shared/types/research';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Button } from '@/shared/ui/button';
@@ -15,7 +16,8 @@ import {
   Truck,
   Star,
   AlertTriangle,
-  Tag
+  Tag,
+  ExternalLink
 } from 'lucide-react';
 
 interface ResearchCardProps {
@@ -26,6 +28,7 @@ interface ResearchCardProps {
 }
 
 export function ResearchCard({ research, onUpdate, onGenerateSEO, hasDraft }: ResearchCardProps) {
+  const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [editPack, setEditPack] = useState<ResearchPack>(research.pack);
 
@@ -174,9 +177,17 @@ export function ResearchCard({ research, onUpdate, onGenerateSEO, hasDraft }: Re
           {hasDraft && <Badge variant="secondary">초안 생성됨</Badge>}
         </div>
         <div className="flex gap-2">
+          <Button 
+            size="sm" 
+            variant="outline" 
+            onClick={() => router.push(`/research/${research.itemId}`)}
+          >
+            <ExternalLink className="w-4 h-4 mr-1" />
+            상세보기
+          </Button>
           <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>
             <Edit className="w-4 h-4 mr-1" />
-            수정
+            빠른 수정
           </Button>
           <Button 
             size="sm" 

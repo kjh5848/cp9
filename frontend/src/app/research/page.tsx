@@ -1,42 +1,54 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useResearch } from '@/features/research/hooks/useResearch';
 import { ResearchCard } from '@/features/research/components/ResearchCard';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Loader2, Search, FileText, RefreshCw } from 'lucide-react';
-import { toast } from 'react-hot-toast';
 
 export default function ResearchPage() {
   const [projectId, setProjectId] = useState('');
   const [drafts, setDrafts] = useState<Set<string>>(new Set());
   const { research, loading, error, fetchResearch, updateResearch, generateSEO, refreshResearch } = useResearch();
+  const searchParams = useSearchParams();
 
   // 초안 존재 여부 확인
-  const fetchDrafts = async (projectId: string) => {
+  const fetchDrafts = useCallback(async (projectId: string) => {
     try {
       const response = await fetch(`/api/drafts?projectId=${projectId}`);
       const result = await response.json();
       
       if (result.success) {
-        const draftItemIds = result.data.map((draft: any) => draft.itemId);
+        const draftItemIds = result.data.map((draft: { itemId: string }) => draft.itemId);
         setDrafts(new Set(draftItemIds));
       }
     } catch (err) {
       console.error('Failed to fetch drafts:', err);
     }
-  };
+  }, []);
+
+  // 프로젝트 ID로 검색 (내부 함수)
+  const handleSearchWithProjectId = useCallback(async (projectIdToSearch: string) => {
+    if (!projectIdToSearch.trim()) return;
+    
+    await fetchResearch(projectIdToSearch.trim());
+    await fetchDrafts(projectIdToSearch.trim());
+  }, [fetchResearch, fetchDrafts]);
+
+  // URL 파라미터에서 프로젝트 ID 자동 로드
+  useEffect(() => {
+    const urlProjectId = searchParams.get('projectId');
+    if (urlProjectId && urlProjectId !== projectId) {
+      setProjectId(urlProjectId);
+      handleSearchWithProjectId(urlProjectId);
+    }
+  }, [searchParams, projectId, handleSearchWithProjectId]);
 
   const handleSearch = async () => {
-    if (!projectId.trim()) {
-      toast.error('프로젝트 ID를 입력해주세요');
-      return;
-    }
-    
-    await fetchResearch(projectId.trim());
-    await fetchDrafts(projectId.trim());
+    await handleSearchWithProjectId(projectId);
   };
 
   const handleRefresh = async () => {

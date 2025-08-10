@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getDBSupabaseConfig } from '@/shared/lib/supabase-config';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+const config = getDBSupabaseConfig();
+const supabase = createClient(config.url, config.serviceRoleKey, {
   auth: { persistSession: false }
 });
 
