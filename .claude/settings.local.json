@@ -17,7 +17,8 @@
       "Bash(supabase db reset:*)",
       "Bash(mv:*)",
       "Bash(wsl:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(git gc:*)"
     ],
     "deny": []
   }
