@@ -10,7 +10,10 @@
       "mcp__sequential-thinking__sequentialthinking",
       "Bash(git add:*)",
       "Bash(git push:*)",
-      "Bash(supabase functions deploy:*)"
+      "Bash(supabase functions deploy:*)",
+      "Bash(mkdir:*)",
+      "Bash(supabase status:*)",
+      "Bash(npm install:*)"
     ],
     "deny": []
   }

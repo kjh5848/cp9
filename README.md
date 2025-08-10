@@ -24,10 +24,14 @@ frontend/src/
 │   │   │   ├── search/    # 상품 검색 API
 │   │   │   ├── deeplink/  # 딥링크 변환 API
 │   │   │   └── bestcategories/ # 베스트 카테고리 API
-│   │   └── README.md      # API 가이드
+│   │   ├── research/      # 리서치 데이터 CRUD API
+│   │   ├── write/         # SEO 글 생성 API (Edge Function 프록시)
+│   │   ├── drafts/        # 초안 데이터 조회 API
+│   │   └── workflow/      # AI 워크플로우 API
 │   ├── auth/              # 인증 페이지
 │   ├── login/             # 로그인 페이지
-│   ├── product/           # 상품 페이지
+│   ├── product/           # 상품 검색 페이지
+│   ├── research/          # 🆕 리서치 관리 페이지
 │   ├── simple-test/       # LangGraph 노드 테스트 페이지
 │   ├── layout.tsx         # 루트 레이아웃
 │   ├── page.tsx           # 홈페이지
@@ -35,45 +39,49 @@ frontend/src/
 │
 ├── features/              # 도메인별 기능
 │   ├── auth/              # 인증 기능
-│   │   ├── components/    # 인증 관련 컴포넌트
-│   │   ├── contexts/      # 인증 컨텍스트
-│   │   ├── hooks/         # 인증 관련 훅
+│   │   ├── components/    # AuthForm, AuthGuard 등
+│   │   ├── contexts/      # AuthContext
+│   │   ├── hooks/         # useAuthForm 등
 │   │   ├── types/         # 인증 타입 정의
 │   │   └── utils/         # 인증 유틸리티
 │   │
-│   ├── product/           # 상품 기능
-│   │   ├── components/    # 상품 관련 컴포넌트
-│   │   ├── hooks/         # 상품 관련 훅
+│   ├── product/           # 상품 검색 기능
+│   │   ├── components/    # ProductInput, ProductResultView, ActionModal 등
+│   │   ├── hooks/         # useProductAPI, useProductActions 등
 │   │   ├── types/         # 상품 타입 정의
-│   │   └── utils/         # 상품 유틸리티
+│   │   └── utils/         # product-helpers.ts 등
+│   │
+│   ├── research/          # 🆕 리서치 관리 기능
+│   │   ├── components/    # ResearchCard
+│   │   └── hooks/         # useResearch
+│   │
+│   ├── workflow/          # AI 워크플로우 기능
+│   │   ├── components/    # WorkflowProgress
+│   │   └── hooks/         # useWorkflow, useWorkflowAPI 등
 │   │
 │   ├── search/            # 검색 기능
-│   │   ├── components/    # 검색 관련 컴포넌트
-│   │   ├── hooks/         # 검색 관련 훅
-│   │   ├── types/         # 검색 타입 정의
-│   │   └── utils/         # 검색 유틸리티
+│   │   └── hooks/         # useSearchHistory 등
 │   │
-│   └── langgraph/         # LangGraph 자동화 시스템
-│       ├── types/         # LangGraph 타입 정의
-│       ├── nodes/         # LangGraph 노드들
-│       │   ├── extract-ids.ts
-│       │   ├── static-crawler.ts
-│       │   ├── dynamic-crawler.ts
-│       │   ├── fallback-llm.ts
-│       │   ├── seo-agent.ts
-│       │   └── wordpress-publisher.ts
-│       ├── graphs/        # LangGraph 그래프 정의
-│       │   └── main-graph.ts
-│       ├── memory/        # 메모리 관리 전략
-│       └── utils/         # LangGraph 유틸리티
+│   └── enrichment/        # 데이터 보강 기능
+│       ├── types/         # 보강 관련 타입
+│       └── utils/         # 보강 유틸리티
 │
 ├── shared/                # 공통 모듈
-│   ├── ui/                # 재사용 가능한 UI 컴포넌트
+│   ├── ui/                # shadcn/ui 기반 재사용 컴포넌트
+│   │   ├── button.tsx, card.tsx, input.tsx
+│   │   ├── badge.tsx, separator.tsx
+│   │   └── ...
 │   ├── lib/               # 공통 라이브러리
-│   │   └── api-utils.ts   # API 응답 정규화 유틸리티
+│   │   ├── api-utils.ts   # API 응답 정규화 유틸리티
+│   │   ├── utils.ts       # cn() 등 유틸리티
+│   │   └── logger.ts      # 로깅 유틸리티
 │   ├── hooks/             # 공통 훅
+│   │   ├── useClipboard.ts, useLoading.ts, useModal.ts
+│   │   └── ...
 │   ├── types/             # 공통 타입 정의
-│   │   └── api.ts         # API 타입 정의
+│   │   ├── api.ts         # CoupangProductResponse 등
+│   │   ├── research.ts    # 🆕 ResearchPack, DraftItem 등
+│   │   └── common.ts      # 공통 타입
 │   └── styles/            # 공통 스타일
 │
 ├── infrastructure/        # 외부 서비스 연동
@@ -82,22 +90,46 @@ frontend/src/
 │   │   ├── coupang-best-category.ts # 쿠팡 베스트 카테고리 API
 │   │   ├── wordpress.ts   # WordPress REST API 클라이언트
 │   │   ├── langgraph.ts   # LangGraph API 클라이언트
-│   │   └── supabase.ts    # Supabase 클라이언트
+│   │   ├── supabase.ts    # Supabase 클라이언트
+│   │   └── perplexity.ts  # Perplexity API 클라이언트
+│   ├── scraping/          # 웹 스크래핑
+│   │   ├── coupang-scraper.ts
+│   │   └── scrapfly-scraper.ts
+│   ├── cache/             # 캐시 시스템
+│   │   └── redis.ts
 │   ├── queue/             # 큐 시스템
-│   │   └── worker.ts      # 큐 워커 클라이언트
-│   ├── utils/             # 외부 서비스 유틸리티
-│   │   └── coupang-hmac.ts # 쿠팡 HMAC 서명 생성
-│   ├── auth/              # 인증 서비스
-│   └── README.md          # Infrastructure 가이드
+│   │   └── worker.ts
+│   └── utils/             # 외부 서비스 유틸리티
+│       └── coupang-hmac.ts # 쿠팡 HMAC 서명 생성
 │
-├── store/                 # 상태 관리
-    └── searchStore.ts     # 검색 상태 관리 (Zustand)
+├── store/                 # Zustand 상태 관리
+│   └── searchStore.ts     # 검색 상태 관리
+│
+└── components/            # Legacy 컴포넌트 (features/ 로 이관 예정)
+    ├── auth/              # AuthForm 테스트 등
+    ├── common/            # navbar.tsx
+    └── ui/                # 기존 UI 컴포넌트 (shared/ui/ 와 중복)
 
-backend/supabase/functions/
-├── cache-gateway/         # 캐시 게이트웨이 Edge Function
-├── queue-worker/          # 큐 워커 Edge Function
-├── langgraph-api/         # LangGraph API Edge Function
-└── README.md              # Edge Functions 가이드
+backend/
+├── docs/                  # 백엔드 문서
+│   ├── 01.md ~ 04.md     # 레이어별 구현 가이드
+│   ├── supabase-edge-functions.md
+│   └── write-test-examples.md
+│
+├── supabase/
+│   ├── functions/         # Edge Functions
+│   │   ├── _shared/       # 공통 유틸리티
+│   │   │   ├── cors.ts, coupang.ts, response.ts, type.ts
+│   │   ├── item-research/ # 아이템 리서치 함수
+│   │   ├── write/         # 🆕 SEO 글 생성 함수 (5장)
+│   │   ├── cache-gateway/ # 캐시 게이트웨이
+│   │   ├── queue-worker/  # 큐 워커
+│   │   └── langgraph-api/ # LangGraph API
+│   │
+│   └── migrations/        # 데이터베이스 마이그레이션
+│       └── 20250110_create_drafts_table.sql # 🆕 drafts 테이블
+│
+└── package.json           # 백엔드 의존성
 ```
 
 ### 아키텍처 패턴
@@ -388,6 +420,9 @@ K -->|No| H
 - [x] **SEO 글 작성 UI** - 선택된 상품에 대한 액션 선택 모달 구현
 - [x] **LangGraph Edge Function** - Supabase Edge Function으로 LangGraph API 배포
 - [x] **SEO 글 생성 기능** - GPT 기반 SEO 최적화 글 생성 및 새 탭 표시
+- [x] **🔍 리서치 데이터 시스템** - 백엔드 아이템 리서치 및 작성 레이어 구현
+- [x] **📝 작성 레이어 (5장)** - ResearchPack → GPT SEO 콘텐츠 생성
+- [x] **🎯 리서치 관리 UI** - 프론트엔드 리서치 데이터 확인/편집/SEO 글 생성 인터페이스
 
 ### 🔄 현재 구현 상태
 
@@ -417,20 +452,37 @@ K -->|No| H
 - **오류 로깅 개선**: 상세한 오류 정보 제공
 - **환경 변수 설정**: Supabase Dashboard에서 환경 변수 설정 필요
 
-### 🚧 진행 중인 작업
+### 🚧 현재 상태 및 진행도
+
+#### **백엔드 시스템** (5/7 단계 완료)
+- ✅ **1-2단계**: 상품 검색 → 아이템 리서치 완료
+- ✅ **3단계**: ResearchPack 저장 (`research` 테이블)
+- ✅ **4단계**: GPT 기반 SEO 콘텐츠 생성 (`write` Edge Function)
+- ✅ **5단계**: 초안 저장 (`drafts` 테이블)
+- 🔄 **6단계**: 검수 레이어 (approve/re-research/rewrite) - **진행 예정**
+- 🔄 **7단계**: 발행 레이어 (WordPress 자동 발행) - **진행 예정**
+
+#### **프론트엔드 시스템** (4/5 단계 완료)
+- ✅ **상품 검색 UI**: 키워드/카테고리/URL 기반 검색
+- ✅ **리서치 관리 UI**: `/research` 페이지에서 데이터 확인/편집
+- ✅ **SEO 글 생성**: 개별/일괄 SEO 글 생성 요청
+- ✅ **상태 추적**: 초안 생성 여부 실시간 확인
+- 🔄 **초안 검수 UI**: 생성된 초안 확인/수정/발행 - **진행 예정**
+
+### 🔄 진행 중인 작업
 - [X] **환경 변수 설정** - Supabase Dashboard에서 OPENAI_API_KEY 설정
-- [ ] **dynamicCrawler 노드 구현** - Playwright를 사용한 동적 크롤링
-- [ ] **실제 크롤링 테스트** - Cheerio와 Playwright 통합 테스트
-- [ ] **WordPress 발행 테스트** - 실제 WordPress REST API 연동 테스트
-- [ ] **사용자 확인 단계** - 발행 전 최종 확인 UI 구현
+- [X] **리서치 관리 시스템 구현** - 프론트엔드 리서치 데이터 CRUD 완료
+- [ ] **6장: 검수 레이어 구현** - approve/re-research/rewrite 분기
+- [ ] **7장: 발행 레이어 구현** - WordPress 자동 발행 시스템
+- [ ] **초안 검수 UI 구현** - 생성된 초안 확인/수정/발행 페이지
 
 ### 📋 향후 계획
-- [ ] **메모리 관리 구현** - RedisSaver, MemorySaver, Cross-thread KV 구현
-- [ ] **프론트엔드 통합** - 기존 CP9 UI에 LangGraph 기반 자동화 플로우 통합
-- [ ] **E2E 테스트 및 최적화** - 전체 플로우 E2E 테스트, 성능 최적화, 오류 처리 개선
-- [ ] **워드프레스 초안 저장 기능** - 사용자 확인 후 발행 기능
-- [ ] **E2E/유닛 테스트, 배포 자동화** - CI/CD 파이프라인 구축
-- [ ] **GitHub 푸시 보호 해결** - API 키 보안 문제 해결 및 푸시 완료
+- [ ] **검수 워크플로우 구현** - 사용자 승인/거부/재작업 플로우
+- [ ] **WordPress 발행 자동화** - 승인된 초안 자동 발행
+- [ ] **대시보드 구현** - 전체 프로젝트/아이템 현황 대시보드
+- [ ] **E2E 테스트 구현** - 전체 플로우 E2E 테스트
+- [ ] **성능 최적화** - 대량 처리 최적화, 캐싱 전략
+- [ ] **배포 자동화** - CI/CD 파이프라인 구축
 
 ---
 

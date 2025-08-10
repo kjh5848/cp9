@@ -21,6 +21,9 @@ export default function Navbar() {
         <Link href="/product">
           <Button variant="outline">아이템 생성</Button>
         </Link>
+        <Link href="/research">
+          <Button variant="outline">리서치 관리</Button>
+        </Link>
         {user ? (
           <>
             <span className="text-sm text-gray-600">{user.email}</span>
