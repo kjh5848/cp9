@@ -1,5 +1,4 @@
 {
-  "model": "claude-opus-4-1-20250805",
   "permissions": {
     "allow": [
       "Bash(npx:*)",
@@ -20,8 +19,10 @@
       "Bash(wsl:*)",
       "Bash(taskkill:*)",
       "Bash(git gc:*)",
-      "Bash(git clone:*)"
+      "Bash(git clone:*)",
+      "Bash(git commit:*)"
     ],
     "deny": []
-  }
+  },
+  "model": "claude-opus-4-1-20250805"
 }

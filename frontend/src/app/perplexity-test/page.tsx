@@ -85,7 +85,7 @@ export default function PerplexityTestPage() {
   };
 
   return (
-    <div className=\"min-h-screen bg-gray-50 p-8\">
+    <div className="min-h-screen bg-gray-50 p-8">
       <div className=\"max-w-6xl mx-auto\">
         <h1 className=\"text-3xl font-bold text-gray-900 mb-8\">
           🤖 Perplexity API 테스트 도구

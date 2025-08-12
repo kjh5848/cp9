@@ -12,7 +12,7 @@ import { Label } from "@/shared/ui/label";
 import { WorkflowProgress } from "@/features/workflow";
 
 export default function Home() {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading } = useAuth();
   const { 
     workflowStatus, 
     executeWorkflow, 

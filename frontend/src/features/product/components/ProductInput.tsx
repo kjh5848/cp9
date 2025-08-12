@@ -11,6 +11,7 @@ import ProductKeywordSearchForm from './ProductKeywordSearchForm';
 import ProductLinkSearchForm from './ProductLinkSearchForm';
 import ProductResultView from './ProductResultView';
 import ProductHistoryView from './ProductHistoryView';
+import { DeepLinkResponse, ProductItem } from '../types';
 
 export default function ProductInput() {
   const {
@@ -22,7 +23,7 @@ export default function ProductInput() {
   const [mode, setMode] = useState<"link" | "keyword" | "category">("category");
   const [links, setLinks] = useState("");
   const [itemCount, setItemCount] = useState(5);
-  const [deeplinkResult, setDeeplinkResult] = useState<any[]>([]);
+  const [deeplinkResult, setDeeplinkResult] = useState<DeepLinkResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [viewType, setViewType] = useState<"grid" | "list">("grid");
 
@@ -63,20 +64,20 @@ export default function ProductInput() {
     }
   };
 
-  // sortOrder로 변환하는 계산된 값 추가
-  const sortOrder: 'asc' | 'desc' | null = priceSort === 'none' ? null : priceSort as 'asc' | 'desc';
-  const setSortOrder = (order: 'asc' | 'desc' | null) => {
-    setPriceSort(order === null ? 'none' : order);
-  };
+  // sortOrder로 변환하는 계산된 값 추가 (현재 미사용)
+  // const sortOrder: 'asc' | 'desc' | null = priceSort === 'none' ? null : priceSort as 'asc' | 'desc';
+  // const setSortOrder = (order: 'asc' | 'desc' | null) => {
+  //   setPriceSort(order === null ? 'none' : order);
+  // };
 
   // 모드별로 입력/결과 상태를 분리한 상태를 실제 검색/입력/결과 핸들러와 렌더링에 모두 반영한다.
-  let currentResults: any[] = [];
+  let currentResults: (ProductItem | DeepLinkResponse)[] = [];
   if (mode === 'link') currentResults = linkResults;
   else if (mode === 'keyword') currentResults = keywordResults;
   else if (mode === 'category') currentResults = categoryResults;
 
   // getFilteredResults에서 currentResults를 사용하고 항상 배열을 반환하도록 보장
-  const getFilteredResults = (): any[] => {
+  const getFilteredResults = (): (ProductItem | DeepLinkResponse)[] => {
     // 타입 안전성 보장: currentResults가 배열이 아니면 빈 배열 반환
     if (!Array.isArray(currentResults)) {
       console.warn('currentResults is not an array:', currentResults);
@@ -233,7 +234,7 @@ export default function ProductInput() {
     if (e.key === "Enter") action();
   };
 
-  const safeAddHistory = (keyword: string, items: any[]) => {
+  const safeAddHistory = (keyword: string, items: (ProductItem | DeepLinkResponse)[]) => {
     if (keyword.trim()) addHistory(keyword, items);
   };
 
