@@ -1,16 +1,18 @@
+// @ts-ignore: Deno 모듈 import
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// @ts-ignore: Supabase client
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+import { createEdgeFunctionHandler, safeJsonParse, validateEnvVars } from '../_shared/server.ts';
+import { ok, fail } from '../_shared/response.ts';
+import { ResearchPack } from '../_shared/type.ts';
+
 // Deno 환경 타입 선언
 declare const Deno: {
   env: {
     get(key: string): string | undefined;
   };
 };
-
-// @ts-ignore: Deno 모듈 import
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-// @ts-ignore: Supabase client
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-import { corsHeaders } from '../_shared/cors.ts'
 
 interface ItemResearchRequest {
   itemName: string;
@@ -141,39 +143,45 @@ async function researchItemWithPerplexity(itemName: string): Promise<ItemResearc
   }
 }
 
-serve(async (req) => {
-  // CORS 헤더 설정
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+async function handleItemResearch(req: Request): Promise<Response> {
+  // 필수 환경 변수 검증
+  const missingEnvVars = validateEnvVars([
+    'SUPABASE_URL', 
+    'SUPABASE_SERVICE_ROLE_KEY',
+    'PERPLEXITY_API_KEY'
+  ]);
+  
+  if (missingEnvVars.length > 0) {
+    return fail(
+      `필수 환경 변수가 설정되지 않았습니다: ${missingEnvVars.join(', ')}`,
+      "ENV_VARS_MISSING",
+      500
+    );
   }
 
-  try {
-    // Supabase 클라이언트 초기화
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-      auth: { persistSession: false }
-    });
+  // Supabase 클라이언트 초기화
+  const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    auth: { persistSession: false }
+  });
 
-    // UTF-8 디코딩 처리 개선
-    const requestBuffer = await req.arrayBuffer();
-    const decoder = new TextDecoder('utf-8');
-    const requestText = decoder.decode(requestBuffer);
-    console.log('Decoded request text:', requestText);
-    
-    const requestData = JSON.parse(requestText);
-    const { itemName, projectId, itemId, productData }: ItemResearchRequest = requestData;
-    
-    if (!itemName || !projectId || !itemId) {
-      return new Response(
-        JSON.stringify({ error: 'itemName, projectId, and itemId are required' }),
-        { 
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' }
-        }
-      )
-    }
+  // 요청 데이터 파싱
+  const body = await safeJsonParse<ItemResearchRequest>(req);
+  if (!body) {
+    return fail("요청 데이터를 파싱할 수 없습니다.", "INVALID_JSON", 400);
+  }
+
+  const { itemName, projectId, itemId, productData } = body;
+  
+  if (!itemName || !projectId || !itemId) {
+    return fail(
+      'itemName, projectId, itemId가 필요합니다.',
+      "VALIDATION_ERROR", 
+      400
+    );
+  }
 
     console.log('Research request:', { itemName, projectId, itemId })
     
@@ -204,48 +212,25 @@ serve(async (req) => {
         updated_at: new Date().toISOString()
       }, { onConflict: 'project_id,item_id' });
 
-    if (dbError) {
-      console.error('Database error:', dbError);
-      return new Response(
-        JSON.stringify({ error: 'Database save failed', details: dbError.message }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' }
-        }
-      );
-    }
-
-    const response: ItemResearchResponse = {
-      itemName,
-      researchData,
-      success: true
-    }
-
-    console.log('Research completed and saved for:', itemName);
-
-    return new Response(
-      JSON.stringify(response, null, 2),
-      {
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json; charset=utf-8',
-          'Cache-Control': 'no-cache'
-        }
-      }
-    )
-    
-  } catch (error) {
-    console.error('Item research error:', error)
-    
-    return new Response(
-      JSON.stringify({ 
-        error: error.message || 'Internal server error',
-        success: false
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' }
-      }
-    )
+  if (dbError) {
+    console.error('Database error:', dbError);
+    return fail(
+      'Database save failed',
+      "DATABASE_ERROR",
+      500,
+      { details: dbError.message }
+    );
   }
-})
+
+  const response: ItemResearchResponse = {
+    itemName,
+    researchData,
+    success: true
+  }
+
+  console.log('Research completed and saved for:', itemName);
+
+  return ok(response);
+}
+
+serve(createEdgeFunctionHandler(handleItemResearch));

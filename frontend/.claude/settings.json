@@ -1,0 +1,23 @@
+{
+  "model": "claude-opus-4-1-20250805",
+  "permissions": {
+    "allow": [
+      "Bash(npm run dev)",
+      "Bash(npm run build)",
+      "Bash(npm run test)",
+      "Bash(npm run test:*)",
+      "Bash(npm run lint)",
+      "Bash(mkdir:*)",
+      "Bash(touch:*)"
+    ],
+    "deny": [
+      "Bash(rm:*)",
+      "Bash(curl:*)",
+      "Read(./.env)"
+    ]
+  },
+  "env": {
+    "CLAUDE_CODE_ENABLE_TELEMETRY": "1",
+    "NODE_ENV": "development"
+  }
+}

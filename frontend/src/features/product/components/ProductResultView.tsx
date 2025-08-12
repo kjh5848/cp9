@@ -8,6 +8,7 @@ import { useProductActions } from '../hooks/useProductActions';
 import { isProductItem, isDeepLinkResponse, generateItemId } from '../utils/product-helpers';
 import ActionModal from './ActionModal';
 import SeoLoadingOverlay from './SeoLoadingOverlay';
+import SelectedItemDetail from './SelectedItemDetail';
 
 interface ProductResultViewProps {
   loading: boolean;
@@ -67,6 +68,21 @@ export default function ProductResultView({
     );
   };
 
+  // 선택된 첫 번째 아이템 찾기
+  const getSelectedItem = () => {
+    if (selected.length === 0) return null;
+    const selectedId = selected[0];
+    
+    // ID에서 인덱스 추출 (itemId 형식: "product-{index}" 또는 "deeplink-{index}")
+    const indexMatch = selectedId.match(/-(.+)$/);
+    if (!indexMatch) return null;
+    
+    const index = parseInt(indexMatch[1]);
+    if (isNaN(index) || index >= filteredResults.length) return null;
+    
+    return filteredResults[index] || null;
+  };
+
   // 복사 아이콘 SVG 컴포넌트
   const CopyIcon = () => (
     <svg 
@@ -81,252 +97,273 @@ export default function ProductResultView({
 
   return (
     <div className="mt-6">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="font-bold">
-          {mode === 'deeplink' ? '딥링크 변환 결과' : '딥링크/상품 결과'}{" "}
-          <span className="text-sm text-gray-500 font-normal">
-            ({Array.isArray(filteredResults) ? filteredResults.length : 0})
-          </span>
-        </h3>
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            variant={viewType === "grid" ? "default" : "outline"}
-            onClick={() => setViewType("grid")}
-          >
-            그리드
-          </Button>
-          <Button
-            size="sm"
-            variant={viewType === "list" ? "default" : "outline"}
-            onClick={() => setViewType("list")}
-          >
-            리스트
-          </Button>
-        </div>
-      </div>
-      {loading ? (
-        <div className="flex h-48 w-full items-center justify-center">
-          로딩 중...
-        </div>
-      ) : (
-        <ul
-          className={`${viewType === "grid"
-              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4"
-              : "flex flex-col gap-2"
-            } h-full w-full`}
-        >
-          {Array.isArray(filteredResults) && filteredResults.map((item, i) => {
-            // 아이템 ID 생성
-            const itemId = generateItemId(item, i);
-
-            return (
-              <li
-                key={i}
-                className={`${cardClass} ${
-                  selected.includes(itemId)
-                    ? cardSelected
-                    : ""
-                  }`}
-                onClick={() => handleSelect(itemId)}
+      {/* 데스크톱: 7:3 레이아웃, 모바일: 스택 레이아웃 */}
+      <div className="lg:grid lg:grid-cols-10 lg:gap-6">
+        {/* 왼쪽: 상품 목록 (7) */}
+        <div className="lg:col-span-7">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-bold">
+              {mode === 'deeplink' ? '딥링크 변환 결과' : '딥링크/상품 결과'}{" "}
+              <span className="text-sm text-gray-500 font-normal">
+                ({Array.isArray(filteredResults) ? filteredResults.length : 0})
+              </span>
+            </h3>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant={viewType === "grid" ? "default" : "outline"}
+                onClick={() => setViewType("grid")}
               >
-                {/* 딥링크 모드일 때는 상품 정보 숨기기 */}
-                {mode !== 'deeplink' && (
-                  <>
-                    {isProductItem(item) && item.isRocket && (
-                      <span className="absolute right-2 top-2 rounded bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-700">
-                        로켓
-                      </span>
-                    )}
-                    {isProductItem(item) && item.productImage && (
-                      <div className="relative mx-auto mb-2 h-32 w-32">
-                        <Image
-                          src={item.productImage}
-                          alt={item.productName || '상품 이미지'}
-                          fill
-                          className="object-cover rounded"
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                          }}
-                        />
-                      </div>
-                    )}
-                  </>
-                )}
+                그리드
+              </Button>
+              <Button
+                size="sm"
+                variant={viewType === "list" ? "default" : "outline"}
+                onClick={() => setViewType("list")}
+              >
+                리스트
+              </Button>
+            </div>
+          </div>
+          
+          {loading ? (
+            <div className="flex h-48 w-full items-center justify-center">
+              로딩 중...
+            </div>
+          ) : (
+            <ul
+              className={`${viewType === "grid"
+                  ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4"
+                  : "flex flex-col gap-2"
+                } h-full w-full`}
+            >
+              {Array.isArray(filteredResults) && filteredResults.map((item, i) => {
+                // 아이템 ID 생성
+                const itemId = generateItemId(item, i);
 
-                <div className="mb-2 flex flex-1 flex-col gap-2">
-                  {/* 딥링크 모드일 때는 제목 간소화 */}
-                  {mode === 'deeplink' ? (
-                    <span className="pr-10 font-bold line-clamp-2">
-                      딥링크 #{i + 1}
-                    </span>
-                  ) : (
-                    <span className="pr-10 font-bold line-clamp-2">
-                      {isProductItem(item) 
-                        ? item.productName 
-                        : isDeepLinkResponse(item)
-                        ? '딥링크 변환 결과'
-                        : '알 수 없는 아이템'
-                      }
-                    </span>
-                  )}
-
-                  <div className="border-t"></div>
-                  
-                  {/* 딥링크 모드가 아닐 때만 상품 정보 표시 */}
-                  {mode !== 'deeplink' && (
-                    <>
-                      {isProductItem(item) && (
-                        <div className="text-sm text-gray-500">
-                          가격:{" "}
-                          <span className="font-semibold text-gray-800">
-                            {item.productPrice.toLocaleString()}원
+                return (
+                  <li
+                    key={i}
+                    className={`${cardClass} ${
+                      selected.includes(itemId)
+                        ? cardSelected
+                        : ""
+                      }`}
+                    onClick={() => handleSelect(itemId)}
+                  >
+                    {/* 딥링크 모드일 때는 상품 정보 숨기기 */}
+                    {mode !== 'deeplink' && (
+                      <>
+                        {isProductItem(item) && item.isRocket && (
+                          <span className="absolute right-2 top-2 rounded bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-700">
+                            로켓
                           </span>
-                        </div>
+                        )}
+                        {isProductItem(item) && item.productImage && (
+                          <div className="relative mx-auto mb-2 h-32 w-32">
+                            <Image
+                              src={item.productImage}
+                              alt={item.productName || '상품 이미지'}
+                              fill
+                              className="object-cover rounded"
+                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    <div className="mb-2 flex flex-1 flex-col gap-2">
+                      {/* 딥링크 모드일 때는 제목 간소화 */}
+                      {mode === 'deeplink' ? (
+                        <span className="pr-10 font-bold line-clamp-2">
+                          딥링크 #{i + 1}
+                        </span>
+                      ) : (
+                        <span className="pr-10 font-bold line-clamp-2">
+                          {isProductItem(item) 
+                            ? item.productName 
+                            : isDeepLinkResponse(item)
+                            ? '딥링크 변환 결과'
+                            : '알 수 없는 아이템'
+                          }
+                        </span>
                       )}
+
                       <div className="border-t"></div>
-                      {isProductItem(item) && (
-                        <div className="text-xs text-gray-500">
-                          카테고리: {item.categoryName}
-                        </div>
-                      )}
-                      <div className="border-t"></div>
-                    </>
-                  )}
-
-                  {/* 링크 표시 - 딥링크 모드에서는 복사 아이콘 추가 */}
-                  {mode === 'deeplink' && isDeepLinkResponse(item) ? (
-                    // 딥링크 모드: 3개 링크만 깔끔하게 표시
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1 min-w-0">
-                          <div className="text-xs text-blue-600 font-medium mb-1">원본 URL:</div>
-                          <a
-                            href={item.originalUrl}
-                            className="text-sm text-blue-600 hover:underline truncate block"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {item.originalUrl}
-                          </a>
-                        </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCopyToClipboard(item.originalUrl || '', '원본 URL');
-                          }}
-                          className="ml-2 p-1 hover:bg-gray-100 rounded"
-                        >
-                          <CopyIcon />
-                        </button>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1 min-w-0">
-                          <div className="text-xs text-green-600 font-medium mb-1">단축 URL:</div>
-                          <a
-                            href={item.shortenUrl}
-                            className="text-sm text-green-600 hover:underline truncate block"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {item.shortenUrl}
-                          </a>
-                        </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCopyToClipboard(item.shortenUrl || '', '단축 URL');
-                          }}
-                          className="ml-2 p-1 hover:bg-gray-100 rounded"
-                        >
-                          <CopyIcon />
-                        </button>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1 min-w-0">
-                          <div className="text-xs text-purple-600 font-medium mb-1">랜딩 URL:</div>
-                          <a
-                            href={item.landingUrl}
-                            className="text-sm text-purple-600 hover:underline truncate block"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {item.landingUrl}
-                          </a>
-                        </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCopyToClipboard(item.landingUrl || '', '랜딩 URL');
-                          }}
-                          className="ml-2 p-1 hover:bg-gray-100 rounded"
-                        >
-                          <CopyIcon />
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    // 기존 모드: 기존 방식대로 표시
-                    <>
-                      <div className="truncate text-xs text-blue-600">
-                        {isProductItem(item) ? '링크: ' : '원본 URL: '}
-                        <a
-                          href={isProductItem(item) ? item.productUrl : isDeepLinkResponse(item) ? item.originalUrl : '#'}
-                          className="hover:underline"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {isProductItem(item) ? item.productUrl : isDeepLinkResponse(item) ? item.originalUrl : '#'}
-                        </a>
-                      </div>
-                      {isDeepLinkResponse(item) && (
+                      
+                      {/* 딥링크 모드가 아닐 때만 상품 정보 표시 */}
+                      {mode !== 'deeplink' && (
                         <>
+                          {isProductItem(item) && (
+                            <div className="text-sm text-gray-500">
+                              가격:{" "}
+                              <span className="font-semibold text-gray-800">
+                                {item.productPrice.toLocaleString()}원
+                              </span>
+                            </div>
+                          )}
                           <div className="border-t"></div>
-                          <div className="truncate text-xs text-green-600">
-                            단축 URL:{" "}
-                            <a
-                              href={item.shortenUrl}
-                              className="hover:underline"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {item.shortenUrl}
-                            </a>
-                          </div>
+                          {isProductItem(item) && (
+                            <div className="text-xs text-gray-500">
+                              카테고리: {item.categoryName}
+                            </div>
+                          )}
                           <div className="border-t"></div>
-                          <div className="truncate text-xs text-purple-600">
-                            랜딩 URL:{" "}
-                            <a
-                              href={item.landingUrl}
-                              className="hover:underline"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {item.landingUrl}
-                            </a>
-                          </div>
                         </>
                       )}
-                    </>
-                  )}
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+
+                      {/* 링크 표시 - 딥링크 모드에서는 복사 아이콘 추가 */}
+                      {mode === 'deeplink' && isDeepLinkResponse(item) ? (
+                        // 딥링크 모드: 3개 링크만 깔끔하게 표시
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="text-xs text-blue-600 font-medium mb-1">원본 URL:</div>
+                              <a
+                                href={item.originalUrl}
+                                className="text-sm text-blue-600 hover:underline truncate block"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {item.originalUrl}
+                              </a>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCopyToClipboard(item.originalUrl || '', '원본 URL');
+                              }}
+                              className="ml-2 p-1 hover:bg-gray-100 rounded"
+                            >
+                              <CopyIcon />
+                            </button>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="text-xs text-green-600 font-medium mb-1">단축 URL:</div>
+                              <a
+                                href={item.shortenUrl}
+                                className="text-sm text-green-600 hover:underline truncate block"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {item.shortenUrl}
+                              </a>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCopyToClipboard(item.shortenUrl || '', '단축 URL');
+                              }}
+                              className="ml-2 p-1 hover:bg-gray-100 rounded"
+                            >
+                              <CopyIcon />
+                            </button>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="text-xs text-purple-600 font-medium mb-1">랜딩 URL:</div>
+                              <a
+                                href={item.landingUrl}
+                                className="text-sm text-purple-600 hover:underline truncate block"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {item.landingUrl}
+                              </a>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCopyToClipboard(item.landingUrl || '', '랜딩 URL');
+                              }}
+                              className="ml-2 p-1 hover:bg-gray-100 rounded"
+                            >
+                              <CopyIcon />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        // 기존 모드: 기존 방식대로 표시
+                        <>
+                          <div className="truncate text-xs text-blue-600">
+                            {isProductItem(item) ? '링크: ' : '원본 URL: '}
+                            <a
+                              href={isProductItem(item) ? item.productUrl : isDeepLinkResponse(item) ? item.originalUrl : '#'}
+                              className="hover:underline"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {isProductItem(item) ? item.productUrl : isDeepLinkResponse(item) ? item.originalUrl : '#'}
+                            </a>
+                          </div>
+                          {isDeepLinkResponse(item) && (
+                            <>
+                              <div className="border-t"></div>
+                              <div className="truncate text-xs text-green-600">
+                                단축 URL:{" "}
+                                <a
+                                  href={item.shortenUrl}
+                                  className="hover:underline"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  {item.shortenUrl}
+                                </a>
+                              </div>
+                              <div className="border-t"></div>
+                              <div className="truncate text-xs text-purple-600">
+                                랜딩 URL:{" "}
+                                <a
+                                  href={item.landingUrl}
+                                  className="hover:underline"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  {item.landingUrl}
+                                </a>
+                              </div>
+                            </>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+
+        {/* 오른쪽: 선택된 아이템 정보 (3) - 데스크톱만 */}
+        <div className="hidden lg:block lg:col-span-3">
+          <div className="sticky top-4">
+            <SelectedItemDetail
+              item={getSelectedItem()}
+              onActionButtonClick={handleActionButtonClick}
+              selectedCount={selected.length}
+              mode={mode}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 모바일에서만 표시되는 액션 버튼 */}
       {Array.isArray(filteredResults) && filteredResults.length > 0 && (
-        <div className="mt-4 flex justify-center">
+        <div className="mt-4 flex justify-center lg:hidden">
           <Button 
             onClick={handleActionButtonClick} 
             disabled={loading || selected.length === 0}
@@ -353,4 +390,4 @@ export default function ProductResultView({
       <SeoLoadingOverlay isLoading={isSeoLoading} />
     </div>
   );
-} 
+}

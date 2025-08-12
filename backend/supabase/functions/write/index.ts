@@ -3,33 +3,15 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 // @ts-ignore
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// Deno 타입 선언 추가
+import { ResearchPack, SeoDraft } from "../_shared/type.ts";
+import { ok, fail } from "../_shared/response.ts";
+import { createEdgeFunctionHandler, safeJsonParse } from "../_shared/server.ts";
+
+// Deno 타입 선언
 declare const Deno: {
   env: {
     get(key: string): string | undefined;
   };
-};
-
-// ... existing code ...
-/** ----- 타입 ----- */
-type ResearchPack = {
-  itemId: string;
-  title?: string;
-  priceKRW?: number | null;
-  isRocket?: boolean | null;
-  features?: string[];
-  pros?: string[];
-  cons?: string[];
-  keywords?: string[];
-  metaTitle?: string;
-  metaDescription?: string;
-  slug?: string;
-};
-
-type SeoDraft = {
-  itemId: string;
-  meta: { title: string; description: string; slug: string; tags?: string[] };
-  markdown: string;
 };
 
 type ReqBody = {
@@ -37,20 +19,8 @@ type ReqBody = {
   itemIds?: string[];
   promptVersion?: string;
   force?: boolean;
-  maxWords?: number;           // 선택: 본문 길이 제한(대략)
+  maxWords?: number;
 };
-
-/** ----- 공통 응답/헤더 ----- */
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST,OPTIONS",
-  "Access-Control-Allow-Headers": "content-type, authorization, apikey",
-  "Access-Control-Max-Age": "86400",
-  "content-type": "application/json; charset=utf-8",
-} as const;
-
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), { status, headers: CORS });
 
 /** ----- ENV & Supabase ----- */
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -59,14 +29,12 @@ const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY")!;
 
 const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
 
-/** ----- 서버 진입 ----- */
-serve(async (req) => {
-  if (req.method === "OPTIONS") return json(null, 204);
-  if (req.method !== "POST") return json({ success: false, error: "METHOD_NOT_ALLOWED" }, 405);
-
-  try {
-    const body = await safeJson<ReqBody>(req);
-    if (!body?.projectId) return json({ success: false, error: "PROJECT_ID_REQUIRED" }, 400);
+/** ----- 메인 핸들러 ----- */
+async function handleWriteRequest(req: Request): Promise<Response> {
+  const body = await safeJsonParse<ReqBody>(req);
+  if (!body?.projectId) {
+    return fail("PROJECT_ID_REQUIRED", "VALIDATION_ERROR", 400);
+  }
 
     const projectId = body.projectId.trim();
     const promptVersion = body.promptVersion || "v1";
@@ -135,13 +103,11 @@ serve(async (req) => {
       }
     }
 
-    return json({ success: true, data: { written, failed } });
+  return ok({ written, failed });
+}
 
-  } catch (e) {
-    console.error(e);
-    return json({ success: false, error: "UNEXPECTED_ERROR" }, 500);
-  }
-});
+/** ----- 서버 진입점 ----- */
+serve(createEdgeFunctionHandler(handleWriteRequest));
 
 /** ----- Draft 생성 (OpenAI Chat Completions) ----- */
 async function makeDraft(pack: ResearchPack, v: string, maxWords: number): Promise<SeoDraft> {

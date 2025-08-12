@@ -29,11 +29,11 @@ export function isDeepLinkResponse(item: ProductItem | DeepLinkResponse): item i
  */
 export function generateItemId(item: ProductItem | DeepLinkResponse, index: number): string {
   if (isProductItem(item)) {
-    return item.productId.toString();
+    return `product-${index}`;
   } else if (isDeepLinkResponse(item)) {
-    return item.originalUrl || index.toString();
+    return `deeplink-${index}`;
   }
-  return index.toString();
+  return `unknown-${index}`;
 }
 
 /**

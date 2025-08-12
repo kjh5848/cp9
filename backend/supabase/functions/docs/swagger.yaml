@@ -1,0 +1,1134 @@
+openapi: 3.0.3
+info:
+  title: CP9 Supabase Edge Functions API
+  description: |
+    CP9 쿠팡 파트너스 자동 블로그 SaaS의 백엔드 API 문서입니다.
+    
+    **주요 기능:**
+    - AI 기반 상품 리서치 및 SEO 콘텐츠 생성
+    - Redis 캐싱 시스템 및 백그라운드 작업 처리
+    - LangGraph 워크플로우 오케스트레이션
+    
+    **인증:**
+    모든 API 호출시 Supabase 인증 토큰이 필요합니다.
+    
+    **기술 스택:**
+    - Runtime: Deno (Supabase Edge Functions)
+    - AI Services: Perplexity API, OpenAI GPT
+    - Cache: Redis
+    - Database: Supabase PostgreSQL
+  version: 1.0.0
+  contact:
+    name: CP9 Backend Team
+    email: support@cp9.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:54321/functions/v1
+    description: 로컬 개발 서버
+  - url: https://{project-ref}.supabase.co/functions/v1
+    description: 프로덕션 서버
+    variables:
+      project-ref:
+        default: your-project-ref
+        description: Supabase 프로젝트 레퍼런스 ID
+
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase 인증 토큰 (anon key 또는 access token)
+
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: API 호출 성공 여부
+        data:
+          type: object
+          description: 응답 데이터 (성공시만 포함)
+        error:
+          type: string
+          description: 에러 메시지 (실패시만 포함)
+        code:
+          type: string
+          description: 에러 코드 (실패시만 포함)
+        details:
+          type: object
+          description: 추가 에러 정보 (실패시만 포함)
+      required:
+        - success
+      example:
+        success: true
+        data:
+          message: "Operation completed successfully"
+
+    ResearchPack:
+      type: object
+      description: 상품 리서치 데이터 구조
+      properties:
+        itemId:
+          type: string
+          description: 상품 고유 ID
+        title:
+          type: string
+          description: 상품명
+        priceKRW:
+          type: number
+          nullable: true
+          description: 상품 가격 (원)
+        isRocket:
+          type: boolean
+          nullable: true
+          description: 로켓배송 여부
+        features:
+          type: array
+          items:
+            type: string
+          description: 상품 주요 기능
+        pros:
+          type: array
+          items:
+            type: string
+          description: 상품 장점
+        cons:
+          type: array
+          items:
+            type: string
+          description: 상품 단점
+        keywords:
+          type: array
+          items:
+            type: string
+          description: 관련 키워드
+        metaTitle:
+          type: string
+          description: SEO 메타 제목
+        metaDescription:
+          type: string
+          description: SEO 메타 설명
+        slug:
+          type: string
+          description: URL 슬러그
+      required:
+        - itemId
+        - features
+        - pros
+        - cons
+        - keywords
+
+    ProductData:
+      type: object
+      description: 쿠팡 상품 데이터
+      properties:
+        productName:
+          type: string
+          description: 상품명
+        productPrice:
+          type: number
+          description: 상품 가격
+        productImage:
+          type: string
+          format: uri
+          description: 상품 이미지 URL
+        productUrl:
+          type: string
+          format: uri
+          description: 상품 페이지 URL
+        categoryName:
+          type: string
+          description: 카테고리명
+        isRocket:
+          type: boolean
+          description: 로켓배송 여부
+        isFreeShipping:
+          type: boolean
+          description: 무료배송 여부
+
+    SeoDraft:
+      type: object
+      description: 생성된 SEO 콘텐츠
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 드래프트 고유 ID
+        itemId:
+          type: string
+          description: 연관된 상품 ID
+        title:
+          type: string
+          description: 블로그 포스트 제목
+        content:
+          type: string
+          description: 마크다운 형식의 콘텐츠
+        metaTitle:
+          type: string
+          description: SEO 메타 제목
+        metaDescription:
+          type: string
+          description: SEO 메타 설명
+        slug:
+          type: string
+          description: URL 슬러그
+        status:
+          type: string
+          enum: [draft, published, archived]
+          description: 콘텐츠 상태
+        createdAt:
+          type: string
+          format: date-time
+          description: 생성 시간
+        updatedAt:
+          type: string
+          format: date-time
+          description: 수정 시간
+
+    QueueJob:
+      type: object
+      description: 큐 작업 정의
+      properties:
+        id:
+          type: string
+          description: 작업 고유 ID
+        type:
+          type: string
+          enum: [research_workflow, content_generation, batch_processing, data_sync]
+          description: 작업 타입
+        payload:
+          type: object
+          description: 작업 입력 데이터
+        priority:
+          type: string
+          enum: [high, medium, low]
+          default: medium
+          description: 작업 우선순위
+        maxRetries:
+          type: integer
+          minimum: 0
+          maximum: 5
+          default: 3
+          description: 최대 재시도 횟수
+      required:
+        - id
+        - type
+        - payload
+
+    WorkflowExecution:
+      type: object
+      description: 워크플로우 실행 정보
+      properties:
+        executionId:
+          type: string
+          description: 실행 고유 ID
+        workflowId:
+          type: string
+          description: 워크플로우 ID
+        status:
+          type: string
+          enum: [pending, running, paused, completed, failed, cancelled]
+          description: 실행 상태
+        currentStep:
+          type: string
+          description: 현재 실행 중인 단계
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: 진행률 (%)
+        estimatedCompletion:
+          type: string
+          format: date-time
+          description: 예상 완료 시간
+        result:
+          type: object
+          nullable: true
+          description: 실행 결과 (완료시만 포함)
+
+  responses:
+    BadRequest:
+      description: 잘못된 요청
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ApiResponse'
+              - type: object
+                properties:
+                  success:
+                    example: false
+                  error:
+                    example: "Invalid request parameters"
+                  code:
+                    example: "VALIDATION_ERROR"
+
+    Unauthorized:
+      description: 인증 실패
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ApiResponse'
+              - type: object
+                properties:
+                  success:
+                    example: false
+                  error:
+                    example: "Authentication required"
+                  code:
+                    example: "AUTH_ERROR"
+
+    InternalError:
+      description: 서버 내부 오류
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ApiResponse'
+              - type: object
+                properties:
+                  success:
+                    example: false
+                  error:
+                    example: "Internal server error"
+                  code:
+                    example: "INTERNAL_ERROR"
+
+paths:
+  /item-research:
+    post:
+      tags:
+        - Research
+      summary: 상품 리서치 데이터 생성
+      description: |
+        Perplexity API를 활용하여 상품명 기반으로 리서치 데이터를 생성하고 
+        Supabase `research` 테이블에 저장합니다.
+        
+        **주요 기능:**
+        - AI 기반 상품 분석
+        - ResearchPack 데이터 구조 생성
+        - 한글 텍스트 처리 최적화
+        - 데이터베이스 자동 저장
+      operationId: createItemResearch
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                itemName:
+                  type: string
+                  description: 리서치할 상품명
+                  example: "무선 이어폰"
+                projectId:
+                  type: string
+                  description: 프로젝트 ID
+                  example: "project_123"
+                itemId:
+                  type: string
+                  description: 상품 고유 ID
+                  example: "item_456"
+                productData:
+                  $ref: '#/components/schemas/ProductData'
+              required:
+                - itemName
+                - projectId
+                - itemId
+            examples:
+              samsung_galaxy_book5:
+                summary: 삼성 갤럭시 노트북 5 실제 테스트 예제
+                value:
+                  itemName: "삼성 갤럭시 노트북 5"
+                  projectId: "test_project_001"
+                  itemId: "samsung_galaxy_book5_001"
+                  productData:
+                    productName: "삼성 갤럭시 노트북 5 15.6인치"
+                    productPrice: 1299000
+                    productImage: "https://example.com/samsung-galaxy-book5.jpg"
+                    productUrl: "https://coupang.com/products/samsung-galaxy-book5"
+                    categoryName: "노트북/태블릿"
+                    isRocket: true
+                    isFreeShipping: true
+              basic:
+                summary: 기본 요청
+                value:
+                  itemName: "무선 이어폰"
+                  projectId: "project_123"
+                  itemId: "item_456"
+              with_product_data:
+                summary: 상품 데이터 포함 요청
+                value:
+                  itemName: "무선 이어폰"
+                  projectId: "project_123"
+                  itemId: "item_456"
+                  productData:
+                    productName: "삼성 갤럭시 버즈3"
+                    productPrice: 199000
+                    productImage: "https://image-url.com"
+                    productUrl: "https://coupang.com/products/..."
+                    categoryName: "전자제품"
+                    isRocket: true
+                    isFreeShipping: true
+      responses:
+        '200':
+          description: 리서치 생성 성공
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          itemName:
+                            type: string
+                            example: "삼성 갤럭시 노트북 5"
+                          researchData:
+                            type: object
+                            properties:
+                              overview:
+                                type: string
+                                example: "삼성 갤럭시 노트북 5는 삼성의 최신 프리미엄 노트북으로, 강력한 성능과 휴대성을 겸비한 제품입니다. Intel 최신 프로세서와 고해상도 디스플레이를 탑재하여 업무와 창작 활동 모두에 최적화되어 있습니다."
+                              features:
+                                type: array
+                                items:
+                                  type: string
+                                example: ["Intel 12세대 Core i7 프로세서", "15.6인치 AMOLED 디스플레이", "16GB LPDDR5 메모리", "512GB NVMe SSD", "갤럭시 연동 기능", "S펜 지원", "고속 충전", "경량 디자인 (1.55kg)"]
+                              benefits:
+                                type: array
+                                items:
+                                  type: string
+                                example: ["뛰어난 휴대성과 경량 설계", "갤럭시 생태계와의 완벽한 연동", "고품질 AMOLED 디스플레이", "S펜을 활용한 창작 활동 지원", "빠른 충전과 긴 배터리 수명", "프리미엄 마감과 내구성"]
+                              targetAudience:
+                                type: string
+                                example: "비즈니스 전문가, 창작자, 대학생, 갤럭시 사용자"
+                              marketAnalysis:
+                                type: string
+                                example: "프리미엄 노트북 시장에서 MacBook과 경쟁하며, 특히 안드로이드/갤럭시 사용자들에게 강력한 어필을 하고 있습니다. 가격대비 성능과 디자인에서 높은 평가를 받고 있습니다."
+                              recommendations:
+                                type: array
+                                items:
+                                  type: string
+                                example: ["갤럭시 스마트폰 사용자에게 최적", "창작 활동이 많은 사용자에게 추천", "휴대성을 중시하는 비즈니스맨에게 적합", "고품질 디스플레이가 필요한 작업에 이상적"]
+                              priceRange:
+                                type: string
+                                example: "100만원 후반대 ~ 150만원대"
+                              popularBrands:
+                                type: array
+                                items:
+                                  type: string
+                                example: ["삼성", "갤럭시북", "갤럭시노트북", "삼성노트북"]
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /write:
+    post:
+      tags:
+        - Content Generation
+      summary: SEO 최적화 콘텐츠 생성
+      description: |
+        OpenAI GPT API를 활용하여 SEO 최적화된 블로그 콘텐츠를 생성하고 
+        `drafts` 테이블에 저장합니다.
+        
+        **주요 기능:**
+        - GPT-4 기반 SEO 콘텐츠 생성
+        - 5장 구성의 구조화된 블로그 포스트
+        - ResearchPack 데이터 활용
+        - 마크다운 형식 출력
+      operationId: generateSeoContent
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                itemId:
+                  type: string
+                  description: 상품 ID
+                  example: "item_456"
+                researchPack:
+                  $ref: '#/components/schemas/ResearchPack'
+              required:
+                - itemId
+                - researchPack
+            examples:
+              samsung_galaxy_book5:
+                summary: 삼성 갤럭시 노트북 5 실제 테스트 예제
+                value:
+                  itemId: "samsung_galaxy_book5_001"
+                  researchPack:
+                    itemId: "samsung_galaxy_book5_001"
+                    title: "삼성 갤럭시 노트북 5 15.6인치"
+                    priceKRW: 1299000
+                    isRocket: true
+                    features: ["Intel 12세대 Core i7 프로세서", "15.6인치 AMOLED 디스플레이", "16GB LPDDR5 메모리", "512GB NVMe SSD", "갤럭시 연동 기능", "S펜 지원", "고속 충전", "경량 디자인 (1.55kg)"]
+                    pros: ["뛰어난 휴대성과 경량 설계", "갤럭시 생태계와의 완벽한 연동", "고품질 AMOLED 디스플레이", "S펜을 활용한 창작 활동 지원", "빠른 충전과 긴 배터리 수명", "프리미엄 마감과 내구성"]
+                    cons: ["높은 가격대", "MacOS 호환성 부족", "게임 성능의 한계", "업그레이드 제약"]
+                    keywords: ["삼성", "갤럭시북", "갤럭시노트북", "삼성노트북", "프리미엄노트북", "S펜"]
+                    metaTitle: "삼성 갤럭시 노트북 5 리뷰 및 구매 가이드"
+                    metaDescription: "삼성 갤럭시 노트북 5의 상세 리뷰, 장단점, 구매 가이드까지 완벽 정리"
+                    slug: "samsung-galaxy-book5-review-guide"
+              basic_example:
+                summary: 기본 예제
+                value:
+                  itemId: "item_456"
+                  researchPack:
+                    title: "삼성 갤럭시 버즈3"
+                    features: ["노이즈 캔슬링", "24시간 배터리", "무선 충전"]
+                    pros: ["뛰어난 음질", "편안한 착용감", "긴 배터리 수명"]
+                    cons: ["비싼 가격", "연결 불안정"]
+                    keywords: ["삼성", "갤럭시버즈", "무선이어폰"]
+                    metaTitle: "삼성 갤럭시 버즈3 리뷰 및 구매 가이드"
+                    metaDescription: "삼성 갤럭시 버즈3의 모든 것을 알아보세요"
+      responses:
+        '200':
+          description: 콘텐츠 생성 성공
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          draft:
+                            $ref: '#/components/schemas/SeoDraft'
+              examples:
+                samsung_galaxy_book5_success:
+                  summary: 삼성 갤럭시 노트북 5 콘텐츠 생성 성공 예제
+                  value:
+                    success: true
+                    data:
+                      draft:
+                        id: "draft_samsung_galaxy_book5_001"
+                        itemId: "samsung_galaxy_book5_001"
+                        title: "삼성 갤럭시 노트북 5 완벽 가이드: 2024년 최고의 프리미엄 노트북"
+                        content: "# 삼성 갤럭시 노트북 5 완벽 가이드\n\n## 1장: 제품 소개 및 개요\n\n삼성 갤럭시 노트북 5는 삼성의 최신 프리미엄 노트북 라인업으로, 강력한 성능과 휴대성을 완벽하게 결합한 제품입니다.\n\n### 주요 스펙\n- **프로세서**: Intel 12세대 Core i7\n- **디스플레이**: 15.6인치 AMOLED (2880x1800)\n- **메모리**: 16GB LPDDR5\n- **스토리지**: 512GB NVMe SSD\n- **무게**: 1.55kg\n\n## 2장: 주요 기능 및 특징\n\n### 🖥️ 디스플레이 품질\nAMOLED 패널을 탑재하여 뛰어난 색상 표현력과 명암비를 제공합니다.\n\n### 🎨 S펜 지원\n창작 활동과 메모 작성에 최적화된 S펜을 기본 제공합니다.\n\n### 📱 갤럭시 연동\n갤럭시 스마트폰과의 완벽한 연동으로 생산성을 극대화합니다.\n\n## 3장: 장점과 단점 분석\n\n### ✅ 장점\n- 뛰어난 휴대성 (1.55kg)\n- 프리미엄 AMOLED 디스플레이\n- 갤럭시 생태계 완벽 연동\n- S펜 창작 기능\n- 빠른 충전 지원\n\n### ❌ 단점\n- 높은 가격대 (130만원대)\n- 게임 성능의 한계\n- 메모리/스토리지 업그레이드 제약\n\n## 4장: 사용자 경험 및 활용법\n\n### 💼 비즈니스 활용\n- 외근 시 휴대성 우수\n- 프레젠테이션용 고품질 화면\n- 갤럭시폰 연동 업무 효율성\n\n### 🎨 창작 활동\n- S펜을 활용한 디지털 드로잉\n- 색상 정확도가 중요한 디자인 작업\n- 동영상 편집 (가벼운 작업)\n\n## 5장: 구매 가이드 및 결론\n\n### 👥 추천 대상\n- 갤럭시 스마트폰 사용자\n- 휴대성을 중시하는 직장인\n- 창작 활동을 하는 사용자\n- 프리미엄 노트북을 찾는 사용자\n\n### 💰 구매 팁\n- 쿠팡 로켓배송으로 빠른 배송 가능\n- 정기 할인 이벤트 활용 권장\n- 삼성 공식몰 대비 가격 비교 필수\n\n### 🎯 최종 평가\n삼성 갤럭시 노트북 5는 휴대성과 성능, 갤럭시 생태계 연동이라는 세 마리 토끼를 모두 잡은 우수한 제품입니다. 특히 갤럭시 사용자라면 반드시 고려해볼 만한 선택입니다.\n\n**종합 평점: ⭐⭐⭐⭐⭐ (5/5)**"
+                        metaTitle: "삼성 갤럭시 노트북 5 완벽 가이드: 2024년 최고의 프리미엄 노트북"
+                        metaDescription: "삼성 갤럭시 노트북 5의 상세 리뷰, 장단점, S펜 기능, 갤럭시 연동, 구매 가이드까지 완벽 정리. 130만원대 프리미엄 노트북 구매 전 필독!"
+                        slug: "samsung-galaxy-book5-complete-review-guide-2024"
+                        status: "draft"
+                        createdAt: "2024-08-12T14:40:00.000Z"
+                        updatedAt: "2024-08-12T14:40:00.000Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /cache-gateway:
+    post:
+      tags:
+        - Cache
+      summary: Redis 캐시 관리
+      description: |
+        Redis를 활용한 캐싱 시스템 및 요청 최적화를 제공합니다.
+        
+        **지원 액션:**
+        - get: 캐시 데이터 조회
+        - set: 캐시 데이터 저장
+        - delete: 캐시 데이터 삭제
+        - stats: 캐시 통계 조회
+      operationId: manageCacheData
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - title: 캐시 조회
+                  type: object
+                  properties:
+                    action:
+                      type: string
+                      enum: [get]
+                    key:
+                      type: string
+                      description: 캐시 키
+                    namespace:
+                      type: string
+                      description: 네임스페이스
+                  required: [action, key, namespace]
+                - title: 캐시 저장
+                  type: object
+                  properties:
+                    action:
+                      type: string
+                      enum: [set]
+                    key:
+                      type: string
+                      description: 캐시 키
+                    value:
+                      type: object
+                      description: 저장할 데이터
+                    ttl:
+                      type: integer
+                      minimum: 1
+                      description: TTL (초)
+                    namespace:
+                      type: string
+                      description: 네임스페이스
+                  required: [action, key, value, namespace]
+                - title: 캐시 삭제
+                  type: object
+                  properties:
+                    action:
+                      type: string
+                      enum: [delete]
+                    key:
+                      type: string
+                      description: 캐시 키
+                    namespace:
+                      type: string
+                      description: 네임스페이스
+                  required: [action, key, namespace]
+                - title: 캐시 통계
+                  type: object
+                  properties:
+                    action:
+                      type: string
+                      enum: [stats]
+                    namespace:
+                      type: string
+                      description: 네임스페이스
+                  required: [action, namespace]
+            examples:
+              cache_get:
+                summary: 캐시 조회
+                value:
+                  action: "get"
+                  key: "product:123"
+                  namespace: "products"
+              cache_set:
+                summary: 캐시 저장
+                value:
+                  action: "set"
+                  key: "product:123"
+                  value:
+                    productName: "상품명"
+                    productPrice: 29900
+                  ttl: 3600
+                  namespace: "products"
+              cache_delete:
+                summary: 캐시 삭제
+                value:
+                  action: "delete"
+                  key: "product:123"
+                  namespace: "products"
+              cache_stats:
+                summary: 캐시 통계
+                value:
+                  action: "stats"
+                  namespace: "products"
+      responses:
+        '200':
+          description: 캐시 작업 성공
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - title: 조회 결과
+                    allOf:
+                      - $ref: '#/components/schemas/ApiResponse'
+                      - type: object
+                        properties:
+                          data:
+                            type: object
+                            properties:
+                              hit:
+                                type: boolean
+                              value:
+                                type: object
+                                nullable: true
+                              ttl:
+                                type: integer
+                              cached_at:
+                                type: string
+                                format: date-time
+                  - title: 저장 결과
+                    allOf:
+                      - $ref: '#/components/schemas/ApiResponse'
+                      - type: object
+                        properties:
+                          data:
+                            type: object
+                            properties:
+                              cached:
+                                type: boolean
+                              key:
+                                type: string
+                              ttl:
+                                type: integer
+                  - title: 통계 결과
+                    allOf:
+                      - $ref: '#/components/schemas/ApiResponse'
+                      - type: object
+                        properties:
+                          data:
+                            type: object
+                            properties:
+                              namespace:
+                                type: string
+                              keys_count:
+                                type: integer
+                              hit_rate:
+                                type: number
+                                format: float
+                              total_requests:
+                                type: integer
+                              cache_hits:
+                                type: integer
+                              cache_misses:
+                                type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /queue-worker:
+    post:
+      tags:
+        - Queue
+      summary: 백그라운드 작업 관리
+      description: |
+        LangGraph 기반의 백그라운드 작업 처리를 위한 큐 시스템을 관리합니다.
+        
+        **지원 액션:**
+        - enqueue: 작업 큐에 추가
+        - status: 작업 상태 조회
+        - cancel: 작업 취소
+        - stats: 큐 통계 조회
+      operationId: manageQueueJob
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - title: 작업 추가
+                  type: object
+                  properties:
+                    action:
+                      type: string
+                      enum: [enqueue]
+                    job:
+                      $ref: '#/components/schemas/QueueJob'
+                  required: [action, job]
+                - title: 작업 상태 조회
+                  type: object
+                  properties:
+                    action:
+                      type: string
+                      enum: [status]
+                    jobId:
+                      type: string
+                  required: [action, jobId]
+                - title: 작업 취소
+                  type: object
+                  properties:
+                    action:
+                      type: string
+                      enum: [cancel]
+                    jobId:
+                      type: string
+                  required: [action, jobId]
+                - title: 큐 통계
+                  type: object
+                  properties:
+                    action:
+                      type: string
+                      enum: [stats]
+                    queueName:
+                      type: string
+                      default: "langgraph-queue"
+                  required: [action]
+            examples:
+              enqueue_job:
+                summary: 작업 큐에 추가
+                value:
+                  action: "enqueue"
+                  job:
+                    id: "job_12345"
+                    type: "research_workflow"
+                    payload:
+                      itemName: "무선 이어폰"
+                      itemId: "item_001"
+                      projectId: "proj_001"
+                    priority: "high"
+                    maxRetries: 3
+              job_status:
+                summary: 작업 상태 조회
+                value:
+                  action: "status"
+                  jobId: "job_12345"
+              cancel_job:
+                summary: 작업 취소
+                value:
+                  action: "cancel"
+                  jobId: "job_12345"
+              queue_stats:
+                summary: 큐 통계 조회
+                value:
+                  action: "stats"
+                  queueName: "langgraph-queue"
+      responses:
+        '200':
+          description: 큐 작업 성공
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - title: 작업 추가 결과
+                    allOf:
+                      - $ref: '#/components/schemas/ApiResponse'
+                      - type: object
+                        properties:
+                          data:
+                            type: object
+                            properties:
+                              jobId:
+                                type: string
+                              status:
+                                type: string
+                                enum: [queued]
+                              priority:
+                                type: string
+                              estimatedWaitTime:
+                                type: integer
+                              queuePosition:
+                                type: integer
+                  - title: 작업 상태 결과
+                    allOf:
+                      - $ref: '#/components/schemas/ApiResponse'
+                      - type: object
+                        properties:
+                          data:
+                            type: object
+                            properties:
+                              jobId:
+                                type: string
+                              status:
+                                type: string
+                                enum: [queued, running, completed, failed, cancelled]
+                              progress:
+                                type: integer
+                                minimum: 0
+                                maximum: 100
+                              currentStep:
+                                type: string
+                              startedAt:
+                                type: string
+                                format: date-time
+                                nullable: true
+                              estimatedCompletion:
+                                type: string
+                                format: date-time
+                                nullable: true
+                              retryCount:
+                                type: integer
+                              result:
+                                type: object
+                                nullable: true
+                  - title: 큐 통계 결과
+                    allOf:
+                      - $ref: '#/components/schemas/ApiResponse'
+                      - type: object
+                        properties:
+                          data:
+                            type: object
+                            properties:
+                              queueName:
+                                type: string
+                              totalJobs:
+                                type: integer
+                              queuedJobs:
+                                type: integer
+                              runningJobs:
+                                type: integer
+                              completedJobs:
+                                type: integer
+                              failedJobs:
+                                type: integer
+                              averageProcessTime:
+                                type: number
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /langgraph-api:
+    post:
+      tags:
+        - Workflow
+      summary: AI 워크플로우 오케스트레이션
+      description: |
+        LangGraph 기반의 복잡한 AI 워크플로우를 실행하고 관리합니다.
+        
+        **지원 액션:**
+        - execute: 워크플로우 실행
+        - status: 실행 상태 조회
+        - cancel: 워크플로우 중단
+        - resume: 체크포인트에서 재개
+      operationId: manageWorkflow
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - title: 워크플로우 실행
+                  type: object
+                  properties:
+                    action:
+                      type: string
+                      enum: [execute]
+                    workflow:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          enum: [research-to-content, batch-processing]
+                          description: 워크플로우 ID
+                        input:
+                          type: object
+                          description: 워크플로우 입력 데이터
+                        config:
+                          type: object
+                          properties:
+                            maxSteps:
+                              type: integer
+                              minimum: 1
+                              maximum: 50
+                              default: 10
+                            timeout:
+                              type: integer
+                              minimum: 30
+                              maximum: 600
+                              default: 300
+                            enableCheckpoints:
+                              type: boolean
+                              default: true
+                      required: [id, input]
+                  required: [action, workflow]
+                - title: 워크플로우 상태 조회
+                  type: object
+                  properties:
+                    action:
+                      type: string
+                      enum: [status]
+                    executionId:
+                      type: string
+                  required: [action, executionId]
+                - title: 워크플로우 취소
+                  type: object
+                  properties:
+                    action:
+                      type: string
+                      enum: [cancel]
+                    executionId:
+                      type: string
+                  required: [action, executionId]
+                - title: 체크포인트에서 재개
+                  type: object
+                  properties:
+                    action:
+                      type: string
+                      enum: [resume]
+                    executionId:
+                      type: string
+                    checkpointId:
+                      type: string
+                  required: [action, executionId, checkpointId]
+            examples:
+              execute_workflow:
+                summary: 워크플로우 실행
+                value:
+                  action: "execute"
+                  workflow:
+                    id: "research-to-content"
+                    input:
+                      keyword: "무선 이어폰"
+                      productData:
+                        productName: "삼성 갤럭시 버즈3"
+                        productPrice: 199000
+                    config:
+                      maxSteps: 10
+                      timeout: 300
+                      enableCheckpoints: true
+              workflow_status:
+                summary: 워크플로우 상태 조회
+                value:
+                  action: "status"
+                  executionId: "exec_12345"
+              cancel_workflow:
+                summary: 워크플로우 취소
+                value:
+                  action: "cancel"
+                  executionId: "exec_12345"
+              resume_workflow:
+                summary: 체크포인트에서 재개
+                value:
+                  action: "resume"
+                  executionId: "exec_12345"
+                  checkpointId: "checkpoint_step_3"
+      responses:
+        '200':
+          description: 워크플로우 작업 성공
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/WorkflowExecution'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /hello:
+    post:
+      tags:
+        - Test
+      summary: 테스트용 기본 함수
+      description: |
+        Edge Functions의 기본 동작을 확인하고 공유 유틸리티 사용 예제를 제공하는 
+        가장 단순한 테스트용 함수입니다.
+        
+        **용도:**
+        - API 연결 테스트
+        - 인증 확인
+        - 공유 유틸리티 동작 검증
+      operationId: testHelloFunction
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: 인사할 이름
+                  example: "Claude"
+                message:
+                  type: string
+                  description: 추가 메시지 (선택사항)
+                  example: "Hello World"
+              required:
+                - name
+            examples:
+              actual_test:
+                summary: 실제 API 테스트 예제
+                value:
+                  name: "삼성 갤럭시 노트북 5 테스터"
+                  message: "API 연결 테스트입니다"
+              basic:
+                summary: 기본 예제
+                value:
+                  name: "Claude"
+                  message: "Hello World"
+      responses:
+        '200':
+          description: 테스트 성공
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          greeting:
+                            type: string
+                            example: "Hello, 삼성 갤럭시 노트북 5 테스터!"
+                          timestamp:
+                            type: string
+                            format: date-time
+                            example: "2024-08-12T14:40:27.663Z"
+                          message:
+                            type: string
+                            example: "API 연결 테스트입니다"
+                          server:
+                            type: string
+                            example: "Supabase Edge Functions"
+                          version:
+                            type: string
+                            example: "1.0.0"
+              examples:
+                actual_test_response:
+                  summary: 실제 API 테스트 응답 예제
+                  value:
+                    success: true
+                    data:
+                      greeting: "Hello, 삼성 갤럭시 노트북 5 테스터!"
+                      timestamp: "2024-08-12T14:40:27.663Z"
+                      message: "API 연결 테스트입니다"
+                      server: "Supabase Edge Functions"
+                      version: "1.0.0"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+tags:
+  - name: Research
+    description: 상품 리서치 관련 API
+  - name: Content Generation
+    description: SEO 콘텐츠 생성 관련 API
+  - name: Cache
+    description: 캐싱 시스템 관련 API
+  - name: Queue
+    description: 백그라운드 작업 큐 관련 API
+  - name: Workflow
+    description: AI 워크플로우 오케스트레이션 API
+  - name: Test
+    description: 테스트 및 개발 지원 API
+
+externalDocs:
+  description: CP9 프로젝트 문서
+  url: https://github.com/your-org/cp9
