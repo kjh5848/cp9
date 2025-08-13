@@ -1,291 +1,218 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-/**
- * Edge Function 테스트 페이지
- * Supabase Edge Function들의 동작을 테스트합니다.
- */
 export default function EdgeFunctionTestPage() {
-  const [name, setName] = useState('CP9');
-  const [result, setResult] = useState<string>('');
-  const [loading, setLoading] = useState(false);
-  const [threadId, setThreadId] = useState('test-thread-123');
-  const [productIds, setProductIds] = useState('123456,789012');
+  const [results, setResults] = useState<Record<string, any>>({})
+  const [loading, setLoading] = useState<Record<string, boolean>>({})
 
-  /**
-   * Hello Edge Function 테스트
-   */
   const testHelloFunction = async () => {
-    setLoading(true);
+    setLoading(prev => ({ ...prev, hello: true }))
     try {
-      const response = await fetch('/api/test/edge-function', {
+      const response = await fetch('/api/edge-function-test/hello', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          functionName: 'hello',
-          data: { name },
-        }),
-      });
-
-      const data = await response.json();
-      setResult(JSON.stringify(data, null, 2));
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Test User' })
+      })
+      const data = await response.json()
+      setResults(prev => ({ ...prev, hello: data }))
     } catch (error) {
-      setResult(`오류: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+      setResults(prev => ({ ...prev, hello: { error: error.message } }))
     } finally {
-      setLoading(false);
+      setLoading(prev => ({ ...prev, hello: false }))
     }
-  };
+  }
 
-  /**
-   * LangGraph API Edge Function 테스트
-   */
   const testLangGraphFunction = async () => {
-    setLoading(true);
+    setLoading(prev => ({ ...prev, langgraph: true }))
     try {
-      const response = await fetch('/api/test/edge-function', {
+      const response = await fetch('/api/edge-function-test/langgraph', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          functionName: 'langgraph-api',
-          data: {
-            action: 'status',
-            threadId,
-          },
-        }),
-      });
-
-      const data = await response.json();
-      setResult(JSON.stringify(data, null, 2));
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'test',
+          input: { test: 'data' }
+        })
+      })
+      const data = await response.json()
+      setResults(prev => ({ ...prev, langgraph: data }))
     } catch (error) {
-      setResult(`오류: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+      setResults(prev => ({ ...prev, langgraph: { error: error.message } }))
     } finally {
-      setLoading(false);
+      setLoading(prev => ({ ...prev, langgraph: false }))
     }
-  };
+  }
 
-  /**
-   * LangGraph 실행 테스트
-   */
   const testLangGraphExecute = async () => {
-    setLoading(true);
+    setLoading(prev => ({ ...prev, execute: true }))
     try {
-      const response = await fetch('/api/test/edge-function', {
+      const response = await fetch('/api/edge-function-test/langgraph-execute', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          functionName: 'langgraph-api',
-          data: {
-            action: 'execute',
-            initialState: {
-              input: {
-                urls: [`https://www.coupang.com/vp/products/${productIds.split(',')[0]}`],
-                productIds: productIds.split(',').map(id => id.trim()),
-              },
-            },
-            threadId: `execute-${Date.now()}`,
-          },
-        }),
-      });
-
-      const data = await response.json();
-      setResult(JSON.stringify(data, null, 2));
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'execute',
+          input: { 
+            urls: ['https://example.com'],
+            keyword: 'test'
+          }
+        })
+      })
+      const data = await response.json()
+      setResults(prev => ({ ...prev, execute: data }))
     } catch (error) {
-      setResult(`오류: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+      setResults(prev => ({ ...prev, execute: { error: error.message } }))
     } finally {
-      setLoading(false);
+      setLoading(prev => ({ ...prev, execute: false }))
     }
-  };
+  }
 
-  /**
-   * Cache Gateway 테스트
-   */
   const testCacheGateway = async () => {
-    setLoading(true);
+    setLoading(prev => ({ ...prev, cache: true }))
     try {
-      const response = await fetch('/api/test/edge-function', {
+      const response = await fetch('/api/edge-function-test/cache-gateway', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          functionName: 'cache-gateway',
-          data: {
-            productIds: productIds.split(',').map(id => id.trim()),
-            threadId: `cache-${Date.now()}`,
-            forceRefresh: false,
-          },
-        }),
-      });
-
-      const data = await response.json();
-      setResult(JSON.stringify(data, null, 2));
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          productIds: ['123', '456'],
+          threadId: 'test-thread-123'
+        })
+      })
+      const data = await response.json()
+      setResults(prev => ({ ...prev, cache: data }))
     } catch (error) {
-      setResult(`오류: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+      setResults(prev => ({ ...prev, cache: { error: error.message } }))
     } finally {
-      setLoading(false);
+      setLoading(prev => ({ ...prev, cache: false }))
     }
-  };
+  }
 
-  /**
-   * Queue Worker 테스트
-   */
   const testQueueWorker = async () => {
-    setLoading(true);
+    setLoading(prev => ({ ...prev, queue: true }))
     try {
-      const response = await fetch('/api/test/edge-function', {
+      const response = await fetch('/api/edge-function-test/queue-worker', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          functionName: 'queue-worker',
-          data: {
-            action: 'process',
-          },
-        }),
-      });
-
-      const data = await response.json();
-      setResult(JSON.stringify(data, null, 2));
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'process',
+          jobId: 'test-job-123'
+        })
+      })
+      const data = await response.json()
+      setResults(prev => ({ ...prev, queue: data }))
     } catch (error) {
-      setResult(`오류: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+      setResults(prev => ({ ...prev, queue: { error: error.message } }))
     } finally {
-      setLoading(false);
+      setLoading(prev => ({ ...prev, queue: false }))
     }
-  };
+  }
 
   return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Edge Function 테스트</h1>
+    <div className="container mx-auto p-6 space-y-6">
+      <h1 className="text-3xl font-bold">Edge Function 테스트</h1>
       
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card>
           <CardHeader>
-            <CardTitle>Hello Function 테스트</CardTitle>
+            <CardTitle>Hello Function</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="name">이름</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="테스트할 이름을 입력하세요"
-              />
-            </div>
             <Button 
               onClick={testHelloFunction} 
-              disabled={loading}
+              disabled={loading.hello}
               className="w-full"
             >
-              {loading ? '테스트 중...' : 'Hello Function 테스트'}
+              {loading.hello ? '테스트 중...' : '테스트'}
             </Button>
+            {results.hello && (
+              <pre className="text-sm bg-gray-100 p-2 rounded overflow-auto">
+                {JSON.stringify(results.hello, null, 2)}
+              </pre>
+            )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>LangGraph API 테스트</CardTitle>
+            <CardTitle>LangGraph Function</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="threadId">Thread ID</Label>
-              <Input
-                id="threadId"
-                value={threadId}
-                onChange={(e) => setThreadId(e.target.value)}
-                placeholder="테스트할 Thread ID"
-              />
-            </div>
             <Button 
               onClick={testLangGraphFunction} 
-              disabled={loading}
+              disabled={loading.langgraph}
               className="w-full"
             >
-              {loading ? '테스트 중...' : '상태 조회 테스트'}
+              {loading.langgraph ? '테스트 중...' : '테스트'}
             </Button>
+            {results.langgraph && (
+              <pre className="text-sm bg-gray-100 p-2 rounded overflow-auto">
+                {JSON.stringify(results.langgraph, null, 2)}
+              </pre>
+            )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>LangGraph 실행 테스트</CardTitle>
+            <CardTitle>LangGraph Execute</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="productIds">상품 ID (쉼표로 구분)</Label>
-              <Input
-                id="productIds"
-                value={productIds}
-                onChange={(e) => setProductIds(e.target.value)}
-                placeholder="123456,789012"
-              />
-            </div>
             <Button 
               onClick={testLangGraphExecute} 
-              disabled={loading}
+              disabled={loading.execute}
               className="w-full"
             >
-              {loading ? '실행 중...' : 'LangGraph 실행'}
+              {loading.execute ? '테스트 중...' : '테스트'}
             </Button>
+            {results.execute && (
+              <pre className="text-sm bg-gray-100 p-2 rounded overflow-auto">
+                {JSON.stringify(results.execute, null, 2)}
+              </pre>
+            )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Cache Gateway 테스트</CardTitle>
+            <CardTitle>Cache Gateway</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <Button 
               onClick={testCacheGateway} 
-              disabled={loading}
+              disabled={loading.cache}
               className="w-full"
             >
-              {loading ? '테스트 중...' : 'Cache Gateway 테스트'}
+              {loading.cache ? '테스트 중...' : '테스트'}
             </Button>
+            {results.cache && (
+              <pre className="text-sm bg-gray-100 p-2 rounded overflow-auto">
+                {JSON.stringify(results.cache, null, 2)}
+              </pre>
+            )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Queue Worker 테스트</CardTitle>
+            <CardTitle>Queue Worker</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <Button 
               onClick={testQueueWorker} 
-              disabled={loading}
+              disabled={loading.queue}
               className="w-full"
             >
-              {loading ? '테스트 중...' : 'Queue Worker 테스트'}
+              {loading.queue ? '테스트 중...' : '테스트'}
             </Button>
+            {results.queue && (
+              <pre className="text-sm bg-gray-100 p-2 rounded overflow-auto">
+                {JSON.stringify(results.queue, null, 2)}
+              </pre>
+            )}
           </CardContent>
         </Card>
       </div>
-
-      {result && (
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle>결과</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <pre className="bg-gray-100 p-4 rounded-lg overflow-auto text-sm max-h-96">
-              {result}
-            </pre>
-          </CardContent>
-        </Card>
-      )}
     </div>
-  );
+  )
 }

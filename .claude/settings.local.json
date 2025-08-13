@@ -10,8 +10,19 @@
       "mcp__sequential-thinking__sequentialthinking",
       "Bash(git add:*)",
       "Bash(git push:*)",
-      "Bash(supabase functions deploy:*)"
+      "Bash(supabase functions deploy:*)",
+      "Bash(mkdir:*)",
+      "Bash(supabase status:*)",
+      "Bash(npm install:*)",
+      "Bash(supabase db reset:*)",
+      "Bash(mv:*)",
+      "Bash(wsl:*)",
+      "Bash(taskkill:*)",
+      "Bash(git gc:*)",
+      "Bash(git clone:*)",
+      "Bash(git commit:*)"
     ],
     "deny": []
-  }
+  },
+  "model": "claude-opus-4-1-20250805"
 }

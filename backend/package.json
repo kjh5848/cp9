@@ -1,5 +1,21 @@
 {
+  "name": "cp9-backend",
+  "version": "1.0.0",
+  "description": "CP9 Supabase Edge Functions Backend",
+  "scripts": {
+    "dev": "supabase functions serve",
+    "deploy": "supabase functions deploy",
+    "deploy:prod": "supabase functions deploy --no-verify-jwt",
+    "deploy:docs": "supabase functions deploy docs",
+    "logs": "supabase functions logs",
+    "docs": "echo 'API 문서: http://localhost:54321/functions/v1/docs' && supabase functions serve",
+    "docs:serve": "swagger-ui-serve swagger.yaml",
+    "docs:build": "swagger-codegen generate -i swagger.yaml -l typescript-fetch -o ./generated",
+    "docs:validate": "swagger-codegen validate -i swagger.yaml"
+  },
   "devDependencies": {
-    "supabase": "^2.33.9"
+    "supabase": "^2.33.9",
+    "swagger-ui-serve": "^2.2.10",
+    "swagger-codegen": "^2.4.30"
   }
 }

@@ -1,3 +1,15 @@
+<<<<<<< HEAD
+=======
+// @ts-ignore: Deno 모듈 import
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// @ts-ignore: Supabase client
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+import { createEdgeFunctionHandler, safeJsonParse, validateEnvVars } from '../_shared/server.ts';
+import { ok, fail } from '../_shared/response.ts';
+import { ResearchPack } from '../_shared/type.ts';
+
+>>>>>>> f18ff8d74d034f2f67395e7ef7f802d65ecf7746
 // Deno 환경 타입 선언
 declare const Deno: {
   env: {
@@ -5,6 +17,7 @@ declare const Deno: {
   };
 };
 
+<<<<<<< HEAD
 // @ts-ignore: Deno 모듈 import
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -12,6 +25,21 @@ import { corsHeaders } from '../_shared/cors.ts'
 
 interface ItemResearchRequest {
   itemName: string
+=======
+interface ItemResearchRequest {
+  itemName: string;
+  projectId: string;
+  itemId: string;
+  productData?: {
+    productName: string;
+    productPrice: number;
+    productImage: string;
+    productUrl: string;
+    categoryName: string;
+    isRocket: boolean;
+    isFreeShipping: boolean;
+  };
+>>>>>>> f18ff8d74d034f2f67395e7ef7f802d65ecf7746
 }
 
 interface ItemResearchResponse {
@@ -48,6 +76,7 @@ async function researchItemWithPerplexity(itemName: string): Promise<ItemResearc
         messages: [
           {
             role: 'system',
+<<<<<<< HEAD
             content: '당신은 상품 분석 전문가입니다. 주어진 상품명에 대해 최신 시장 정보를 바탕으로 상세한 분석을 제공하세요. 응답은 반드시 JSON 형식으로만 제공해주세요.'
           },
           {
@@ -63,6 +92,25 @@ async function researchItemWithPerplexity(itemName: string): Promise<ItemResearc
               "priceRange": "일반적인 가격대",
               "popularBrands": ["인기 브랜드 1", "인기 브랜드 2", "인기 브랜드 3"]
             }`
+=======
+            content: '당신은 상품 분석 전문가입니다. 주어진 상품명에 대해 최신 시장 정보를 바탕으로 상세한 분석을 제공하세요. 응답은 반드시 JSON 형식으로만 제공해주세요. 한글 상품명을 정확히 인식하고 처리해주세요.'
+          },
+          {
+            role: 'user',
+            content: `상품명: "${itemName}"
+
+위 상품에 대해 다음 정보를 JSON 형식으로 분석해주세요:
+{
+  "overview": "상품 개요 (2-3문장)",
+  "features": ["주요 기능 1", "주요 기능 2", "주요 기능 3"],
+  "benefits": ["장점 1", "장점 2", "장점 3"],
+  "targetAudience": "타겟 고객층",
+  "marketAnalysis": "시장 분석 (트렌드, 경쟁 상황)",
+  "recommendations": ["구매 추천 이유 1", "구매 추천 이유 2"],
+  "priceRange": "일반적인 가격대",
+  "popularBrands": ["인기 브랜드 1", "인기 브랜드 2", "인기 브랜드 3"]
+}`
+>>>>>>> f18ff8d74d034f2f67395e7ef7f802d65ecf7746
           }
         ],
         max_tokens: 2000,
@@ -126,6 +174,7 @@ async function researchItemWithPerplexity(itemName: string): Promise<ItemResearc
   }
 }
 
+<<<<<<< HEAD
 serve(async (req) => {
   // CORS 헤더 설정
   if (req.method === 'OPTIONS') {
@@ -189,3 +238,96 @@ serve(async (req) => {
     )
   }
 })
+=======
+async function handleItemResearch(req: Request): Promise<Response> {
+  // 필수 환경 변수 검증
+  const missingEnvVars = validateEnvVars([
+    'SUPABASE_URL', 
+    'SUPABASE_SERVICE_ROLE_KEY',
+    'PERPLEXITY_API_KEY'
+  ]);
+  
+  if (missingEnvVars.length > 0) {
+    return fail(
+      `필수 환경 변수가 설정되지 않았습니다: ${missingEnvVars.join(', ')}`,
+      "ENV_VARS_MISSING",
+      500
+    );
+  }
+
+  // Supabase 클라이언트 초기화
+  const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    auth: { persistSession: false }
+  });
+
+  // 요청 데이터 파싱
+  const body = await safeJsonParse<ItemResearchRequest>(req);
+  if (!body) {
+    return fail("요청 데이터를 파싱할 수 없습니다.", "INVALID_JSON", 400);
+  }
+
+  const { itemName, projectId, itemId, productData } = body;
+  
+  if (!itemName || !projectId || !itemId) {
+    return fail(
+      'itemName, projectId, itemId가 필요합니다.',
+      "VALIDATION_ERROR", 
+      400
+    );
+  }
+
+    console.log('Research request:', { itemName, projectId, itemId })
+    
+    const researchData = await researchItemWithPerplexity(itemName)
+
+    // ResearchPack 형태로 데이터 구성
+    const researchPack = {
+      itemId,
+      title: productData?.productName || itemName,
+      priceKRW: productData?.productPrice || null,
+      isRocket: productData?.isRocket || null,
+      features: researchData.features,
+      pros: researchData.benefits,
+      cons: ['AI 분석으로 단점 파악 중...'], // 기본값
+      keywords: researchData.popularBrands,
+      metaTitle: `${itemName} 리뷰 및 구매 가이드`,
+      metaDescription: researchData.overview,
+      slug: itemName.toLowerCase().replace(/\s+/g, '-')
+    };
+
+    // research 테이블에 저장
+    const { error: dbError } = await supabase
+      .from('research')
+      .upsert({
+        project_id: projectId,
+        item_id: itemId,
+        pack: researchPack,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'project_id,item_id' });
+
+  if (dbError) {
+    console.error('Database error:', dbError);
+    return fail(
+      'Database save failed',
+      "DATABASE_ERROR",
+      500,
+      { details: dbError.message }
+    );
+  }
+
+  const response: ItemResearchResponse = {
+    itemName,
+    researchData,
+    success: true
+  }
+
+  console.log('Research completed and saved for:', itemName);
+
+  return ok(response);
+}
+
+serve(createEdgeFunctionHandler(handleItemResearch));
+>>>>>>> f18ff8d74d034f2f67395e7ef7f802d65ecf7746

@@ -1,374 +1,281 @@
-'use client';
+'use client'
 
-import { useState, useEffect } from 'react';
-import toast from 'react-hot-toast';
-import { Button } from '@/shared/ui/button';
-import { Card } from '@/shared/ui/card';
-import { useSearchStore } from '@/store/searchStore';
-import { useProductFilter } from '@/features/product/hooks/useProductFilter';
-import ProductCategorySearchForm from './ProductCategorySearchForm';
-import ProductKeywordSearchForm from './ProductKeywordSearchForm';
-import ProductLinkSearchForm from './ProductLinkSearchForm';
-import ProductResultView from './ProductResultView';
-import ProductHistoryView from './ProductHistoryView';
+import { useState, useCallback, useMemo } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useProductAPI } from '../hooks/useProductAPI'
+import { useProductActions } from '../hooks/useProductActions'
+import { useSearchHistory } from '@/features/search/hooks/useSearchHistory'
+import { ProductItem, DeepLinkResponse } from '@/shared/types/api'
+import { generateItemId } from '../utils/product-helpers'
+
+type SearchMode = 'link' | 'keyword' | 'category'
 
 export default function ProductInput() {
-  const {
+  const [searchMode, setSearchMode] = useState<SearchMode>('keyword')
+  const [keyword, setKeyword] = useState('')
+  const [urls, setUrls] = useState('')
+  const [categoryId, setCategoryId] = useState('')
+  const [imageSize, setImageSize] = useState(200)
+  const [bestLimit, setBestLimit] = useState(20)
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000])
+  const [priceSort, setPriceSort] = useState<'none' | 'asc' | 'desc'>('none')
+
+  const { 
+    searchProducts, 
+    searchByCategory, 
+    convertToDeeplinks, 
+    loading 
+  } = useProductAPI()
+
+  const { 
+    handleCopyToClipboard, 
+    handleCopySelectedLinks, 
+    handleGenerateSeo,
+    isActionModalOpen,
+    setIsActionModalOpen,
     selected,
-    setSelected,
-    addHistory,
-  } = useSearchStore();
+    setSelected
+  } = useProductActions()
 
-  const [mode, setMode] = useState<"link" | "keyword" | "category">("category");
-  const [links, setLinks] = useState("");
-  const [itemCount, setItemCount] = useState(5);
-  const [deeplinkResult, setDeeplinkResult] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [viewType, setViewType] = useState<"grid" | "list">("grid");
+  const { addHistory, searchHistory } = useSearchHistory()
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setViewType((localStorage.getItem("viewType") as "grid" | "list") || "grid");
-    }
-  }, []);
+  const handleKeywordSearch = useCallback(async () => {
+    if (!keyword.trim()) return
 
-  const [rocketOnly, setRocketOnly] = useState(false);
-
-  // 링크 결과
-  const [linkResults, setLinkResults] = useState<any[]>([]);
-
-  // 키워드 입력/결과
-  const [keywordInput, setKeywordInput] = useState('');
-  const [keywordResults, setKeywordResults] = useState<any[]>([]);
-
-  // 카테고리 결과
-  const [categoryResults, setCategoryResults] = useState<any[]>([]);
-
-  // 가격 정렬 상태 추가 (localStorage 연동)
-  const [priceSort, setPriceSort] = useState<'none' | 'asc' | 'desc'>('none');
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedPriceSort = localStorage.getItem("priceSort") as 'none' | 'asc' | 'desc';
-      if (savedPriceSort) {
-        setPriceSort(savedPriceSort);
-      }
-    }
-  }, []);
-
-  const handlePriceSortChange = (newSort: 'none' | 'asc' | 'desc') => {
-    setPriceSort(newSort);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("priceSort", newSort);
-    }
-  };
-
-  // sortOrder로 변환하는 계산된 값 추가
-  const sortOrder: 'asc' | 'desc' | null = priceSort === 'none' ? null : priceSort as 'asc' | 'desc';
-  const setSortOrder = (order: 'asc' | 'desc' | null) => {
-    setPriceSort(order === null ? 'none' : order);
-  };
-
-  // 모드별로 입력/결과 상태를 분리한 상태를 실제 검색/입력/결과 핸들러와 렌더링에 모두 반영한다.
-  let currentResults: any[] = [];
-  if (mode === 'link') currentResults = linkResults;
-  else if (mode === 'keyword') currentResults = keywordResults;
-  else if (mode === 'category') currentResults = categoryResults;
-
-  // getFilteredResults에서 currentResults를 사용하고 항상 배열을 반환하도록 보장
-  const getFilteredResults = (): any[] => {
-    // 타입 안전성 보장: currentResults가 배열이 아니면 빈 배열 반환
-    if (!Array.isArray(currentResults)) {
-      console.warn('currentResults is not an array:', currentResults);
-      return [];
-    }
-
-    let base = currentResults;
-    if (rocketOnly) {
-      base = base.filter((item) => item.isRocket || item.rocketShipping);
-    }
-    // 카테고리 모드에서는 가격 필터링을 ProductCategorySearchForm에서 처리
-    // 여기서는 로켓배송 필터만 적용
-    // 가격 정렬
-    if (priceSort === 'asc') {
-      base = [...base].sort((a, b) => (a.productPrice ?? a.price ?? 0) - (b.productPrice ?? b.price ?? 0));
-    } else if (priceSort === 'desc') {
-      base = [...base].sort((a, b) => (b.productPrice ?? b.price ?? 0) - (a.productPrice ?? a.price ?? 0));
-    }
-    return base;
-  };
-
-  const filteredResults = getFilteredResults();
-
-  const { allChecked, handleSelectAll } = useProductFilter({
-    deeplinkResult,
-    rocketOnly,
-    mode,
-    selected,
-    setSelected,
-  });
-
-  // 링크 검색 핸들러
-  const handleLinkSubmit = async () => {
-    // 입력 검증
-    if (!links.trim()) {
-      toast.error('최소 1개 이상의 링크를 입력해주세요');
-      return;
-    }
-
-    setLoading(true);
     try {
-      const urls = links
-        .split(',')
-        .map((v) => v.trim())
-        .filter(Boolean)
-        .slice(0, 20);
-      
-      if (urls.length === 0) {
-        toast.error('유효한 링크를 입력해주세요');
-        setLoading(false);
-        return;
-      }
-
-      const res = await fetch('/api/products/deeplink', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ urls }),
-      });
-      const items = await res.json();
-      setLinkResults(Array.isArray(items) ? items : []);
-      safeAddHistory(links, Array.isArray(items) ? items : []);
-      
-      if (Array.isArray(items) && items.length > 0) {
-        toast.success(`${items.length}개의 딥링크가 생성되었습니다`);
-      }
-    } catch (e) {
-      toast.error('딥링크 변환 실패: ' + (e instanceof Error ? e.message : ''));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 키워드 검색 핸들러
-  const handleKeywordSearch = async () => {
-    // 입력 검증
-    if (!keywordInput.trim()) {
-      toast.error('검색할 키워드를 입력해주세요');
-      return;
-    }
-
-    setLoading(true);
-    setKeywordResults([]);
-    try {
-      const res = await fetch('/api/products/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keyword: keywordInput }),
-      });
-      const data = await res.json();
-      const results = Array.isArray(data) ? data.slice(0, itemCount) : [];
-      setKeywordResults(results);
-      safeAddHistory(keywordInput, results);
-      
+      const results = await searchProducts(keyword.trim())
       if (results.length > 0) {
-        toast.success(`${results.length}개의 상품을 찾았습니다`);
-      } else {
-        toast.error('검색 결과가 없습니다');
+        addHistory(keyword.trim(), results)
       }
-    } catch (e) {
-      toast.error('키워드 검색 실패: ' + (e instanceof Error ? e.message : ''));
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error('키워드 검색 오류:', error)
     }
-  };
+  }, [keyword, searchProducts, addHistory])
 
-  // 카테고리 검색 핸들러
-  const handleCategorySearch = async (options: {
+  const handleLinkSubmit = useCallback(async () => {
+    if (!urls.trim()) return
+
+    const urlList = urls.split('\n').map(url => url.trim()).filter(Boolean)
+    if (urlList.length === 0) return
+
+    try {
+      const results = await convertToDeeplinks(urlList)
+      if (results.length > 0) {
+        addHistory('딥링크 변환', results)
+      }
+    } catch (error) {
+      console.error('딥링크 변환 오류:', error)
+    }
+  }, [urls, convertToDeeplinks, addHistory])
+
+  const handleCategorySearch = useCallback(async (options: {
     categoryId: string;
     imageSize: number;
     bestLimit: number;
     priceRange: [number, number];
   }) => {
-    // 입력 검증
-    if (!options.categoryId || !options.categoryId.trim()) {
-      toast.error('카테고리를 선택해주세요');
-      return;
-    }
-
-    setLoading(true);
     try {
-      const imageSize = `${options.imageSize}x${options.imageSize}`;
-      const res = await fetch('/api/products/bestcategories', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          categoryId: options.categoryId, 
-          limit: options.bestLimit, 
-          imageSize 
-        }),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      const products = await res.json();
-      const results = Array.isArray(products) ? products : [];
-      setCategoryResults(results);
-      
+      const results = await searchByCategory(options)
       if (results.length > 0) {
-        addHistory(products[0].categoryName || options.categoryId, products);
-        toast.success(`${results.length}개의 베스트 상품을 찾았습니다`);
-      } else {
-        addHistory(options.categoryId, results);
-        toast.error('해당 카테고리에서 상품을 찾을 수 없습니다');
+        addHistory(`카테고리 ${options.categoryId}`, results)
       }
-    } catch (e) {
-      toast.error('카테고리 상품 검색 실패: ' + (e instanceof Error ? e.message : ''));
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error('카테고리 검색 오류:', error)
     }
-  };
+  }, [searchByCategory, addHistory])
 
   const handleEnter = (
     e: React.KeyboardEvent<HTMLInputElement>,
     action: () => void
   ) => {
-    if (e.key === "Enter") action();
-  };
+    if (e.key === 'Enter') {
+      action()
+    }
+  }
 
-  const safeAddHistory = (keyword: string, items: any[]) => {
-    if (keyword.trim()) addHistory(keyword, items);
-  };
+  const safeAddHistory = (keyword: string, items: (ProductItem | DeepLinkResponse)[]) => {
+    try {
+      addHistory(keyword, items)
+    } catch (error) {
+      console.error('검색 이력 저장 오류:', error)
+    }
+  }
 
   const handleDeeplinkConvert = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setDeeplinkResult(
-        deeplinkResult.map((item) =>
-          selected.includes(item.productId || item.url)
-            ? {
-                ...item,
-                deepLink: (item.url || item.originalUrl) + "?deeplink=1",
-              }
-            : item
-        )
-      );
-      setLoading(false);
-    }, 500);
-  };
+    if (!urls.trim()) {
+      alert('URL을 입력해주세요')
+      return
+    }
+    handleLinkSubmit()
+  }
 
   const handleModeChange = (newMode: "link" | "keyword" | "category") => {
-    setMode(newMode);
-    setSelected([]);
-  };
-
-  // 렌더링 시 currentResults만 사용
+    setSearchMode(newMode)
+    setKeyword('')
+    setUrls('')
+    setCategoryId('')
+  }
 
   return (
-    <div className="flex w-full flex-col gap-6 md:flex-row">
-      <Card className="w-full flex-1 p-6 hover:bg-white hover:bg-opacity-90 hover:shadow-md transition-colors bg-white text-[#171717]">
-        <div className="flex gap-2 mb-4">
-          <Button
-            variant={mode === "link" ? "default" : "outline"}
-            onClick={() => handleModeChange("link")}
-            className="bg-[#ededed] text-[#171717] hover:bg-white hover:bg-opacity-90 transition-colors"
-          >
-            딥링크
-          </Button>
-          <Button
-            variant={mode === "keyword" ? "default" : "outline"}
-            onClick={() => handleModeChange("keyword")}
-            className="bg-[#ededed] text-[#171717] hover:bg-white hover:bg-opacity-90 transition-colors"
-          >
-            키워드 검색
-          </Button>
-          <Button
-            variant={mode === "category" ? "default" : "outline"}
-            onClick={() => handleModeChange("category")}
-            className="bg-[#ededed] text-[#171717] hover:bg-white hover:bg-opacity-90 transition-colors"
-          >
-            카테고리 검색
-          </Button>
-        </div>
+    <div className="space-y-6">
+      {/* 검색 모드 선택 */}
+      <div className="flex space-x-2">
+        <Button
+          variant={searchMode === 'keyword' ? 'default' : 'outline'}
+          onClick={() => handleModeChange('keyword')}
+        >
+          키워드 검색
+        </Button>
+        <Button
+          variant={searchMode === 'link' ? 'default' : 'outline'}
+          onClick={() => handleModeChange('link')}
+        >
+          URL 검색
+        </Button>
+        <Button
+          variant={searchMode === 'category' ? 'default' : 'outline'}
+          onClick={() => handleModeChange('category')}
+        >
+          카테고리 검색
+        </Button>
+      </div>
 
-        {mode === "category" && (
-          <ProductCategorySearchForm
-            loading={loading}
-            onSearch={handleCategorySearch}
-          />
-        )}
+      {/* 키워드 검색 */}
+      {searchMode === 'keyword' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>키워드로 상품 검색</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Input
+                placeholder="검색할 키워드를 입력하세요 (예: 무선 이어폰)"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                onKeyDown={(e) => handleEnter(e, handleKeywordSearch)}
+              />
+            </div>
+            <Button 
+              onClick={handleKeywordSearch} 
+              disabled={loading || !keyword.trim()}
+              className="w-full"
+            >
+              {loading ? '검색 중...' : '검색'}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
-        {mode === "keyword" && (
-          <ProductKeywordSearchForm
-            loading={loading}
-            keyword={keywordInput}
-            setKeyword={setKeywordInput}
-            itemCount={itemCount}
-            setItemCount={setItemCount}
-            handleKeywordSearch={handleKeywordSearch}
-            handleEnter={handleEnter}
-          />
-        )}
+      {/* URL 검색 */}
+      {searchMode === 'link' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>URL로 딥링크 변환</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <textarea
+                className="w-full p-3 border rounded-md resize-none"
+                rows={4}
+                placeholder="쿠팡 상품 URL을 한 줄에 하나씩 입력하세요"
+                value={urls}
+                onChange={(e) => setUrls(e.target.value)}
+              />
+            </div>
+            <Button 
+              onClick={handleDeeplinkConvert} 
+              disabled={loading || !urls.trim()}
+              className="w-full"
+            >
+              {loading ? '변환 중...' : '딥링크 변환'}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
-        {mode === "link" && (
-          <ProductLinkSearchForm
-            loading={loading}
-            links={links}
-            setLinks={setLinks}
-            handleLinkSubmit={handleLinkSubmit}
-            handleEnter={handleEnter}
-          />
-        )}
+      {/* 카테고리 검색 */}
+      {searchMode === 'category' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>카테고리별 베스트 상품</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">카테고리 ID</label>
+                <Input
+                  placeholder="카테고리 ID"
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">이미지 크기</label>
+                <Input
+                  type="number"
+                  value={imageSize}
+                  onChange={(e) => setImageSize(Number(e.target.value))}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">상품 개수</label>
+                <Input
+                  type="number"
+                  value={bestLimit}
+                  onChange={(e) => setBestLimit(Number(e.target.value))}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">가격 정렬</label>
+                <select
+                  value={priceSort}
+                  onChange={(e) => setPriceSort(e.target.value as 'none' | 'asc' | 'desc')}
+                  className="w-full p-2 border rounded-md"
+                >
+                  <option value="none">정렬 안함</option>
+                  <option value="asc">낮은 가격순</option>
+                  <option value="desc">높은 가격순</option>
+                </select>
+              </div>
+            </div>
+            <Button 
+              onClick={() => handleCategorySearch({
+                categoryId,
+                imageSize,
+                bestLimit,
+                priceRange
+              })} 
+              disabled={loading || !categoryId}
+              className="w-full"
+            >
+              {loading ? '검색 중...' : '카테고리 검색'}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
-        <div className="my-2 flex items-center gap-4">
-          <label className="flex items-center gap-1 text-sm">
-            <input
-              type="checkbox"
-              checked={rocketOnly}
-              onChange={(e) => setRocketOnly(e.target.checked)}
-            />
-            로켓배송만 보기
-          </label>
-
-          <label className="flex items-center gap-1 text-sm">
-            <input
-              type="checkbox"
-              checked={allChecked}
-              onChange={handleSelectAll}
-            />
-            전체선택
-          </label>
-          <Button
-            size="sm"
-            variant="outline"
-            className="ml-2"
-            onClick={() => {
-              setRocketOnly(false);
-              // 가격 필터는 ProductCategorySearchForm에서 관리
-            }}
-          >
-            필터 초기화
-          </Button>
-        </div>
-
-        {/* 가격 필터 UI 근처에 정렬 드롭다운 추가 */}
-        <div className="flex items-center gap-2">
-          <label className="text-sm">가격 정렬</label>
-          <select value={priceSort} onChange={e => handlePriceSortChange(e.target.value as any)} className="border rounded px-2 py-1 text-sm">
-            <option value="none">기본</option>
-            <option value="desc">높은순</option>
-            <option value="asc">낮은순</option>
-          </select>
-        </div>
-
-        <ProductResultView
-          loading={loading}
-          viewType={viewType}
-          setViewType={setViewType}
-          filteredResults={filteredResults}
-          handleDeeplinkConvert={handleDeeplinkConvert}
-          mode={mode === "link" ? "deeplink" : "product"}
-        />
-      </Card>
-
-      <ProductHistoryView />
+      {/* 검색 이력 */}
+      {searchHistory.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>최근 검색</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {searchHistory.slice(0, 5).map((item, index) => (
+                <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  <span className="text-sm">{item.keyword}</span>
+                  <span className="text-xs text-gray-500">{item.results.length}개 결과</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
-  );
+  )
 } 

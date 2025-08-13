@@ -1,191 +1,156 @@
-import { useState, useCallback } from 'react';
-import { useForm } from 'react-hook-form';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { supabase } from '@/infrastructure/api/supabase';
-import { LoginFormData } from '../types';
-import { validateEmail, validatePassword, formatAuthError } from '../utils';
+'use client'
+
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { supabase } from '@/shared/lib/supabase-config'
+
+interface LoginFormData {
+  email: string
+  password: string
+}
 
 interface AuthFormState {
-  isLoading: boolean;
-  isSignUp: boolean;
-  message: string;
+  isLoading: boolean
+  isSignUp: boolean
+  message: string
 }
 
 interface UseAuthFormReturn {
   // 폼 관련
-  register: ReturnType<typeof useForm<LoginFormData>>['register'];
-  handleSubmit: (e: React.FormEvent) => void;
-  formState: ReturnType<typeof useForm<LoginFormData>>['formState'];
-  reset: ReturnType<typeof useForm<LoginFormData>>['reset'];
+  register: ReturnType<typeof useForm<LoginFormData>>['register']
+  handleSubmit: (e: React.FormEvent) => void
+  formState: ReturnType<typeof useForm<LoginFormData>>['formState']
+  reset: ReturnType<typeof useForm<LoginFormData>>['reset']
   
   // 인증 상태 관련
-  authState: AuthFormState;
+  authState: AuthFormState
   
   // 액션 관련
-  toggleAuthMode: () => void;
-  handleGoogleSignIn: () => Promise<void>;
-  clearMessage: () => void;
+  toggleAuthMode: () => void
+  handleGoogleSignIn: () => Promise<void>
+  clearMessage: () => void
 }
 
-/**
- * 인증 폼 관리를 위한 커스텀 훅
- * 
- * @returns 폼 상태와 액션들을 포함한 객체
- * 
- * @example
- * ```tsx
- * const {
- *   register,
- *   handleSubmit,
- *   formState: { errors, isSubmitting },
- *   toggleAuthMode,
- *   handleGoogleSignIn
- * } = useAuthForm();
- * ```
- */
-export function useAuthForm(): UseAuthFormReturn {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  
-  // 폼 상태 관리
-  const {
-    register,
-    handleSubmit: handleFormSubmit,
-    formState,
-    reset,
-  } = useForm<LoginFormData>({
-    defaultValues: {
-      email: '',
-      password: '',
-    },
-    mode: 'onChange',
-  });
-
-  // 인증 상태 관리
+export function useAuthForm(returnTo?: string): UseAuthFormReturn {
   const [authState, setAuthState] = useState<AuthFormState>({
     isLoading: false,
     isSignUp: false,
-    message: '',
-  });
+    message: ''
+  })
 
-  // 메시지 초기화
-  const clearMessage = useCallback(() => {
-    setAuthState(prev => ({ ...prev, message: '' }));
-  }, []);
+  const { register, handleSubmit: handleFormSubmit, formState, reset } = useForm<LoginFormData>()
 
-  // 인증 모드 토글 (로그인/회원가입)
-  const toggleAuthMode = useCallback(() => {
-    setAuthState(prev => ({ 
-      ...prev, 
+  const toggleAuthMode = () => {
+    setAuthState(prev => ({
+      ...prev,
       isSignUp: !prev.isSignUp,
-      message: '' 
-    }));
-    reset();
-  }, [reset]);
+      message: ''
+    }))
+  }
 
-  // 이메일/비밀번호 로그인/회원가입
-  const handleAuthSubmit = useCallback(async (data: LoginFormData) => {
-    setAuthState(prev => ({ ...prev, isLoading: true, message: '' }));
+  const clearMessage = () => {
+    setAuthState(prev => ({ ...prev, message: '' }))
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    const formData = new FormData(e.target as HTMLFormElement)
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
+
+    if (!email || !password) {
+      setAuthState(prev => ({ ...prev, message: '이메일과 비밀번호를 입력해주세요.' }))
+      return
+    }
+
+    setAuthState(prev => ({ ...prev, isLoading: true, message: '' }))
 
     try {
-      // 이메일 유효성 검사
-      if (!validateEmail(data.email)) {
-        throw new Error('유효하지 않은 이메일 형식입니다.');
-      }
-
-      // 비밀번호 유효성 검사 (회원가입 시에만)
       if (authState.isSignUp) {
-        const passwordValidation = validatePassword(data.password);
-        if (!passwordValidation.isValid) {
-          throw new Error(passwordValidation.message);
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`
+          }
+        })
+
+        if (error) throw error
+
+        setAuthState(prev => ({
+          ...prev,
+          message: '가입 확인 이메일을 확인해주세요.',
+          isLoading: false
+        }))
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        })
+
+        if (error) throw error
+
+        // 로그인 성공 시 리디렉션
+        if (returnTo) {
+          window.location.href = returnTo
         }
       }
-
-      if (authState.isSignUp) {
-        // 회원가입
-        const { error } = await supabase.auth.signUp({
-          email: data.email,
-          password: data.password,
-        });
-        if (error) throw error;
-        setAuthState(prev => ({ 
-          ...prev, 
-          message: '회원가입 성공! 이메일을 확인해주세요.' 
-        }));
-      } else {
-        // 로그인
-        const { error } = await supabase.auth.signInWithPassword({
-          email: data.email,
-          password: data.password,
-        });
-        if (error) throw error;
-        setAuthState(prev => ({ 
-          ...prev, 
-          message: '로그인 성공!' 
-        }));
-        // 로그인 성공 후 리디렉트
-        setTimeout(() => {
-          const returnTo = searchParams.get('returnTo');
-          const redirectPath = returnTo || '/product';
-          router.push(redirectPath);
-        }, 1000);
-      }
     } catch (error) {
-      const errorMessage = formatAuthError(error);
-      setAuthState(prev => ({ ...prev, message: errorMessage }));
-    } finally {
-      setAuthState(prev => ({ ...prev, isLoading: false }));
+      const errorMessage = error instanceof Error ? error.message : '인증 오류가 발생했습니다.'
+      setAuthState(prev => ({
+        ...prev,
+        message: errorMessage,
+        isLoading: false
+      }))
     }
-  }, [authState.isSignUp, router, searchParams]);
+  }
 
-  // 구글 OAuth 로그인
-  const handleGoogleSignIn = useCallback(async () => {
-    setAuthState(prev => ({ ...prev, isLoading: true, message: '' }));
+  const handleGoogleSignIn = async () => {
+    setAuthState(prev => ({ ...prev, isLoading: true, message: '' }))
 
     try {
-      // returnTo 파라미터를 여러 방법으로 전달
-      const returnTo = searchParams.get('returnTo');
-      console.log('Google OAuth 시작, returnTo:', returnTo);
-      
-      // localStorage에 저장 (fallback)
-      if (returnTo) {
-        localStorage.setItem('auth_returnTo', returnTo);
-      }
+      console.log('Google OAuth 시작')
+      console.log('- returnTo:', returnTo)
+      console.log('- baseUrl:', typeof window !== 'undefined' ? window.location.origin : 'server-side')
+
+      // 동적 베이스 URL 처리 (포트 3000/3001/3002 등 자동 감지)
+      const baseUrl = typeof window !== 'undefined' 
+        ? window.location.origin 
+        : 'http://localhost:3000'
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `http://localhost:3000/auth/callback${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`,
-          queryParams: returnTo ? { returnTo } : undefined,
+          redirectTo: `${baseUrl}/auth/callback${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         },
-      });
-      if (error) throw error;
+      })
+
+      if (error) throw error
+
+      setAuthState(prev => ({ ...prev, message: 'Google 로그인을 진행합니다...', isLoading: false }))
     } catch (error) {
-      const errorMessage = formatAuthError(error);
-      setAuthState(prev => ({ ...prev, message: errorMessage }));
-      // 에러 시 localStorage 정리
-      localStorage.removeItem('auth_returnTo');
-    } finally {
-      setAuthState(prev => ({ ...prev, isLoading: false }));
+      const errorMessage = error instanceof Error ? error.message : 'Google 로그인 오류가 발생했습니다.'
+      setAuthState(prev => ({
+        ...prev,
+        message: errorMessage,
+        isLoading: false
+      }))
     }
-  }, [searchParams]);
+  }
 
   return {
-    // 폼 관련
     register,
-    handleSubmit: (e: React.FormEvent) => {
-      e.preventDefault();
-      handleFormSubmit(handleAuthSubmit)(e);
-    },
+    handleSubmit,
     formState,
     reset,
-    
-    // 인증 상태 관련
     authState,
-    
-    // 액션 관련
     toggleAuthMode,
     handleGoogleSignIn,
-    clearMessage,
-  };
+    clearMessage
+  }
 } 

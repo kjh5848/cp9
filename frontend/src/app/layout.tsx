@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import "./globals.css";
+import "../styles/scrollbar.css";
 import { AuthProvider } from "@/features/auth/contexts/AuthContext";
 import Navbar from "@/components/common/navbar";
 

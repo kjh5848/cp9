@@ -1,0 +1,39 @@
+{
+  "mcpServers": {
+    "context7": {
+      "name": "Context7 - Documentation & Research",
+      "description": "Access to up-to-date library documentation, code examples, and best practices for Supabase, Deno, TypeScript, and AI APIs",
+      "recommended": true
+    },
+    "sequential-thinking": {
+      "name": "Sequential Thinking",
+      "description": "Complex multi-step problem solving for debugging Edge Functions and AI workflow orchestration",
+      "recommended": true
+    },
+    "magic": {
+      "name": "Magic UI Components",
+      "description": "Generate modern UI components for admin dashboards and monitoring interfaces",
+      "recommended": false
+    }
+  },
+  "projectContext": {
+    "type": "supabase-edge-functions",
+    "runtime": "deno",
+    "language": "typescript",
+    "primaryFunctions": [
+      "item-research",
+      "write",
+      "cache-gateway",
+      "queue-worker",
+      "langgraph-api"
+    ],
+    "externalAPIs": [
+      "Coupang Open API",
+      "Perplexity API",
+      "OpenAI GPT",
+      "WordPress REST API"
+    ],
+    "database": "Supabase PostgreSQL",
+    "authentication": "Supabase Auth (JWT)"
+  }
+}

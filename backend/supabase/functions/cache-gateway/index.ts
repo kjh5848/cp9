@@ -1,7 +1,14 @@
 // @ts-ignore: Deno 모듈 import
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+<<<<<<< HEAD
 // @ts-ignore: Supabase 모듈 import
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+=======
+
+import { createRedisClient, generateCacheKey, generateJobId } from "../_shared/redis.ts";
+import { createEdgeFunctionHandler, safeJsonParse } from "../_shared/server.ts";
+import { ok, fail } from "../_shared/response.ts";
+>>>>>>> f18ff8d74d034f2f67395e7ef7f802d65ecf7746
 
 interface CacheGatewayRequest {
   productIds: string[];
@@ -16,6 +23,7 @@ interface CacheGatewayResponse {
   message: string;
 }
 
+<<<<<<< HEAD
 /**
  * Redis 클라이언트 초기화
  */
@@ -45,16 +53,26 @@ function getRedisClient() {
     }
   };
 }
+=======
+// Redis 클라이언트는 공통 모듈에서 import
+>>>>>>> f18ff8d74d034f2f67395e7ef7f802d65ecf7746
 
 /**
  * 큐에 작업 추가
  */
 async function addToQueue(productIds: string[], threadId: string): Promise<string> {
+<<<<<<< HEAD
   // @ts-ignore: Deno 환경 변수
   const queueName = Deno.env.get("LANGGRAPH_QUEUE_NAME") || "langgraph-queue";
   const redis = getRedisClient();
   
   const jobId = `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+=======
+  const queueName = Deno.env.get("LANGGRAPH_QUEUE_NAME") || "langgraph-queue";
+  const redis = createRedisClient();
+  
+  const jobId = generateJobId();
+>>>>>>> f18ff8d74d034f2f67395e7ef7f802d65ecf7746
   const job = {
     id: jobId,
     type: 'scrape',
@@ -78,6 +96,7 @@ async function addToQueue(productIds: string[], threadId: string): Promise<strin
 }
 
 /**
+<<<<<<< HEAD
  * 캐시 키 생성
  */
 function generateCacheKey(productId: string): string {
@@ -90,6 +109,13 @@ function generateCacheKey(productId: string): string {
 async function getFromCache(productId: string): Promise<any | null> {
   const redis = getRedisClient();
   const cacheKey = generateCacheKey(productId);
+=======
+ * 캐시에서 데이터 조회
+ */
+async function getFromCache(productId: string): Promise<any | null> {
+  const redis = createRedisClient();
+  const cacheKey = generateCacheKey("product", productId);
+>>>>>>> f18ff8d74d034f2f67395e7ef7f802d65ecf7746
   
   const cachedData = await redis.get(cacheKey);
   if (!cachedData) {
@@ -109,8 +135,13 @@ async function getFromCache(productId: string): Promise<any | null> {
  * 캐시에 데이터 저장
  */
 async function saveToCache(productId: string, data: any, ttl: number = 86400): Promise<void> {
+<<<<<<< HEAD
   const redis = getRedisClient();
   const cacheKey = generateCacheKey(productId);
+=======
+  const redis = createRedisClient();
+  const cacheKey = generateCacheKey("product", productId);
+>>>>>>> f18ff8d74d034f2f67395e7ef7f802d65ecf7746
   
   const cacheData = JSON.stringify({
     data,
@@ -125,6 +156,7 @@ async function saveToCache(productId: string, data: any, ttl: number = 86400): P
  * Cache Gateway 핸들러
  */
 async function handleCacheGateway(req: Request): Promise<Response> {
+<<<<<<< HEAD
   try {
     const { productIds, threadId, forceRefresh = false }: CacheGatewayRequest = await req.json();
 
@@ -149,6 +181,25 @@ async function handleCacheGateway(req: Request): Promise<Response> {
     }
 
     const redis = getRedisClient();
+=======
+  const body = await safeJsonParse<CacheGatewayRequest>(req);
+  
+  if (!body) {
+    return fail("요청 데이터를 파싱할 수 없습니다.", "INVALID_JSON", 400);
+  }
+
+  const { productIds, threadId, forceRefresh = false } = body;
+
+  if (!productIds || productIds.length === 0) {
+    return fail("productIds가 필요합니다.", "VALIDATION_ERROR", 400);
+  }
+
+  if (!threadId) {
+    return fail("threadId가 필요합니다.", "VALIDATION_ERROR", 400);
+  }
+
+  const redis = createRedisClient();
+>>>>>>> f18ff8d74d034f2f67395e7ef7f802d65ecf7746
     const cachedResults: any[] = [];
     const missingIds: string[] = [];
 
@@ -167,6 +218,7 @@ async function handleCacheGateway(req: Request): Promise<Response> {
       }
     }
 
+<<<<<<< HEAD
     // 모든 데이터가 캐시에 있는 경우
     if (missingIds.length === 0) {
       return new Response(
@@ -214,11 +266,30 @@ function setCorsHeaders(headers: Headers) {
   headers.set("Access-Control-Allow-Origin", "*");
   headers.set("Access-Control-Allow-Headers", "authorization, x-client-info, apikey, content-type");
   headers.set("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+=======
+  // 모든 데이터가 캐시에 있는 경우
+  if (missingIds.length === 0) {
+    return ok({
+      cachedData: cachedResults,
+      message: "모든 데이터가 캐시에서 조회되었습니다.",
+    });
+  }
+
+  // 캐시되지 않은 데이터가 있는 경우 큐에 작업 추가
+  const jobId = await addToQueue(missingIds, threadId);
+
+  return ok({
+    cachedData: cachedResults.length > 0 ? cachedResults : undefined,
+    jobId,
+    message: `캐시 미스: ${missingIds.length}개 상품이 큐에 추가되었습니다.`,
+  });
+>>>>>>> f18ff8d74d034f2f67395e7ef7f802d65ecf7746
 }
 
 /**
  * 메인 핸들러
  */
+<<<<<<< HEAD
 serve(async (req) => {
   // CORS preflight 요청 처리
   if (req.method === "OPTIONS") {
@@ -254,3 +325,6 @@ serve(async (req) => {
     );
   }
 }); 
+=======
+serve(createEdgeFunctionHandler(handleCacheGateway));
+>>>>>>> f18ff8d74d034f2f67395e7ef7f802d65ecf7746

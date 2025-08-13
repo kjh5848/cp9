@@ -1,9 +1,9 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { Button } from '@/shared/ui/button';
-import { Card } from '@/shared/ui/card';
-import { Input } from '@/shared/ui/input';
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 
 interface TestResult {
   success: boolean;
@@ -21,221 +21,200 @@ interface TestResult {
 }
 
 export default function PerplexityTestPage() {
-  const [loading, setLoading] = useState(false);
-  const [keyword, setKeyword] = useState('무선 이어폰');
-  const [result, setResult] = useState<TestResult | null>(null);
-  const [logs, setLogs] = useState<string[]>([]);
+  const [keyword, setKeyword] = useState('')
+  const [results, setResults] = useState<TestResult[]>([])
+  const [loading, setLoading] = useState(false)
 
   const addLog = (message: string) => {
-    const timestamp = new Date().toLocaleTimeString();
-    setLogs(prev => [...prev, `[${timestamp}] ${message}`]);
-  };
+    console.log(`[${new Date().toISOString()}] ${message}`)
+  }
 
   const runPerplexityTest = async () => {
-    setLoading(true);
-    setResult(null);
-    setLogs([]);
-    
-    addLog('🚀 Perplexity API 테스트 시작...');
-    addLog(`🔍 테스트 키워드: "${keyword}"`);
+    if (!keyword.trim()) {
+      alert('키워드를 입력해주세요')
+      return
+    }
+
+    setLoading(true)
+    addLog(`Perplexity 테스트 시작: ${keyword}`)
 
     try {
-      addLog('📡 백엔드 API 호출 중...');
-      
-      const response = await fetch('/api/test-perplexity', {
+      // 테스트 1: 기본 API 호출
+      addLog('테스트 1: 기본 API 호출')
+      const response1 = await fetch('/api/test-perplexity', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          testMode: 'full_workflow',
-          keyword: keyword.trim() || '무선 이어폰'
-        }),
-      });
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keyword: keyword.trim() })
+      })
 
-      addLog(`📥 응답 수신: ${response.status} ${response.statusText}`);
+      const result1: TestResult = await response1.json()
+      result1.testInfo = {
+        testMode: '기본 API 호출',
+        keyword: keyword.trim(),
+        executedAt: new Date().toISOString(),
+        logs: [`API 응답 상태: ${response1.status}`]
+      }
 
-      const data: TestResult = await response.json();
-      setResult(data);
+      setResults(prev => [result1, ...prev])
+      addLog(`테스트 1 완료: ${result1.success ? '성공' : '실패'}`)
 
-      if (data.success) {
-        addLog('✅ 테스트 성공!');
-        if (data.testInfo?.logs) {
-          data.testInfo.logs.forEach(log => addLog(log));
+      // 테스트 2: Edge Function 직접 호출
+      addLog('테스트 2: Edge Function 직접 호출')
+      try {
+        const response2 = await fetch('http://127.0.0.1:54321/functions/v1/item-research', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            itemName: keyword.trim(),
+            projectId: 'test-project',
+            itemId: 'test-item'
+          })
+        })
+
+        const result2: TestResult = await response2.json()
+        result2.testInfo = {
+          testMode: 'Edge Function 직접 호출',
+          keyword: keyword.trim(),
+          executedAt: new Date().toISOString(),
+          logs: [`Edge Function 응답 상태: ${response2.status}`]
         }
-      } else {
-        addLog(`❌ 테스트 실패: ${data.error}`);
-        if (data.logs) {
-          data.logs.forEach(log => addLog(log));
+
+        setResults(prev => [result2, ...prev])
+        addLog(`테스트 2 완료: ${result2.success ? '성공' : '실패'}`)
+      } catch (edgeError) {
+        addLog(`Edge Function 오류: ${edgeError}`)
+        const result2: TestResult = {
+          success: false,
+          message: 'Edge Function 호출 실패',
+          error: edgeError instanceof Error ? edgeError.message : '알 수 없는 오류',
+          testInfo: {
+            testMode: 'Edge Function 직접 호출',
+            keyword: keyword.trim(),
+            executedAt: new Date().toISOString(),
+            logs: [`Edge Function 오류: ${edgeError}`]
+          }
         }
+        setResults(prev => [result2, ...prev])
       }
 
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류';
-      addLog(`💥 네트워크 오류: ${errorMessage}`);
-      setResult({
+      addLog(`전체 테스트 오류: ${error}`)
+      const errorResult: TestResult = {
         success: false,
-        error: errorMessage,
-        message: '테스트 실행 중 네트워크 오류가 발생했습니다.'
-      });
+        message: '테스트 실행 중 오류 발생',
+        error: error instanceof Error ? error.message : '알 수 없는 오류',
+        testInfo: {
+          testMode: '전체 테스트',
+          keyword: keyword.trim(),
+          executedAt: new Date().toISOString(),
+          logs: [`테스트 오류: ${error}`]
+        }
+      }
+      setResults(prev => [errorResult, ...prev])
     } finally {
-      setLoading(false);
-      addLog('🏁 테스트 완료');
+      setLoading(false)
+      addLog('Perplexity 테스트 완료')
     }
-  };
+  }
 
   return (
-    <div className=\"min-h-screen bg-gray-50 p-8\">
-      <div className=\"max-w-6xl mx-auto\">
-        <h1 className=\"text-3xl font-bold text-gray-900 mb-8\">
-          🤖 Perplexity API 테스트 도구
-        </h1>
-        
-        <div className=\"grid grid-cols-1 lg:grid-cols-2 gap-8\">
-          {/* 테스트 실행 패널 */}
-          <Card className=\"p-6\">
-            <h2 className=\"text-xl font-semibold mb-4\">테스트 실행</h2>
-            
-            <div className=\"space-y-4\">
-              <div>
-                <label className=\"block text-sm font-medium text-gray-700 mb-2\">
-                  테스트 키워드
-                </label>
-                <Input
-                  type=\"text\"
-                  value={keyword}
-                  onChange={(e) => setKeyword(e.target.value)}
-                  placeholder=\"예: 무선 이어폰, 블루투스 스피커\"
-                  className=\"w-full\"
-                />
-                <p className=\"text-sm text-gray-500 mt-1\">
-                  이 키워드로 상품을 검색하고 SEO 글을 생성합니다.
-                </p>
-              </div>
-              
-              <Button
-                onClick={runPerplexityTest}
-                disabled={loading}
-                className=\"w-full py-3\"
-              >
-                {loading ? (
-                  <div className=\"flex items-center gap-2\">
-                    <div className=\"w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin\"></div>
-                    테스트 실행 중...
-                  </div>
-                ) : (
-                  '🚀 Perplexity API 테스트 시작'
-                )}
-              </Button>
-            </div>
-
-            {/* 테스트 정보 */}
-            <div className=\"mt-6 p-4 bg-blue-50 rounded-lg\">
-              <h3 className=\"font-medium text-blue-900 mb-2\">테스트 내용</h3>
-              <ul className=\"text-sm text-blue-700 space-y-1\">
-                <li>• Perplexity API 연결 확인</li>
-                <li>• 키워드 기반 상품 검색</li>
-                <li>• AI 상품 조사 실행</li>
-                <li>• SEO 최적화 블로그 글 생성</li>
-                <li>• 전체 워크플로우 로그 확인</li>
-              </ul>
-            </div>
-          </Card>
-
-          {/* 실시간 로그 */}
-          <Card className=\"p-6\">
-            <h2 className=\"text-xl font-semibold mb-4\">실시간 로그</h2>
-            
-            <div className=\"bg-black text-green-400 p-4 rounded-lg font-mono text-sm h-96 overflow-y-auto\">
-              {logs.length === 0 ? (
-                <div className=\"text-gray-500\">로그가 표시될 예정입니다...</div>
-              ) : (
-                logs.map((log, index) => (
-                  <div key={index} className=\"mb-1\">{log}</div>
-                ))
-              )}
-            </div>
-          </Card>
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold mb-4">Perplexity API 테스트</h1>
+          <p className="text-gray-600 mb-8">
+            Perplexity API와 Edge Function의 동작을 테스트합니다.
+          </p>
         </div>
 
-        {/* 테스트 결과 */}
-        {result && (
-          <Card className=\"mt-8 p-6\">
-            <h2 className=\"text-xl font-semibold mb-4\">테스트 결과</h2>
-            
-            <div className={`p-4 rounded-lg mb-4 ${
-              result.success ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
-            } border`}>
-              <div className={`font-medium ${
-                result.success ? 'text-green-800' : 'text-red-800'
-              }`}>
-                {result.success ? '✅ 테스트 성공' : '❌ 테스트 실패'}
-              </div>
-              <div className={`text-sm mt-1 ${
-                result.success ? 'text-green-600' : 'text-red-600'
-              }`}>
-                {result.message}
-              </div>
-              {result.error && (
-                <div className=\"text-red-600 text-sm mt-2\">
-                  오류: {result.error}
-                </div>
-              )}
+        <Card>
+          <CardHeader>
+            <CardTitle>테스트 설정</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label htmlFor="keyword" className="block text-sm font-medium mb-2">
+                테스트 키워드
+              </label>
+              <Input
+                id="keyword"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                placeholder="예: 무선 이어폰, 노트북 등"
+                className="w-full"
+              />
             </div>
+            <Button 
+              onClick={runPerplexityTest} 
+              disabled={loading || !keyword.trim()}
+              className="w-full"
+            >
+              {loading ? '테스트 중...' : '테스트 실행'}
+            </Button>
+          </CardContent>
+        </Card>
 
-            {/* SEO 콘텐츠 결과 */}
-            {result.success && result.data?.workflow?.seoAgent && (
-              <div className=\"space-y-6\">
-                <div>
-                  <h3 className=\"font-medium text-gray-900 mb-2\">생성된 SEO 콘텐츠</h3>
-                  <div className=\"bg-gray-50 p-4 rounded-lg\">
-                    <h4 className=\"font-medium text-lg mb-2\">
-                      {result.data.workflow.seoAgent.title}
-                    </h4>
-                    <p className=\"text-gray-600 text-sm mb-3\">
-                      {result.data.workflow.seoAgent.summary}
-                    </p>
-                    <div className=\"text-xs text-gray-500\">
-                      키워드: {result.data.workflow.seoAgent.keywords?.join(', ')}
+        {results.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>테스트 결과</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {results.map((result, index) => (
+                  <div key={index} className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold">
+                        {result.testInfo?.testMode || '테스트'}
+                      </h3>
+                      <span className={`px-2 py-1 rounded text-sm ${
+                        result.success 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {result.success ? '성공' : '실패'}
+                      </span>
                     </div>
-                  </div>
-                </div>
+                    
+                    <div className="text-sm text-gray-600 mb-2">
+                      <p><strong>키워드:</strong> {result.testInfo?.keyword}</p>
+                      <p><strong>실행 시간:</strong> {result.testInfo?.executedAt}</p>
+                    </div>
 
-                <div>
-                  <h3 className=\"font-medium text-gray-900 mb-2\">생성된 콘텐츠 미리보기</h3>
-                  <div className=\"bg-white p-4 rounded-lg border max-h-64 overflow-y-auto\">
-                    <pre className=\"whitespace-pre-wrap text-sm text-gray-700\">
-                      {result.data.workflow.seoAgent.content?.substring(0, 1000)}
-                      {result.data.workflow.seoAgent.content?.length > 1000 && '...'}
-                    </pre>
-                  </div>
-                </div>
+                    {result.message && (
+                      <p className="mb-2"><strong>메시지:</strong> {result.message}</p>
+                    )}
 
-                {/* 실행 통계 */}
-                <div className=\"bg-blue-50 p-4 rounded-lg\">
-                  <h3 className=\"font-medium text-blue-900 mb-2\">실행 통계</h3>
-                  <div className=\"text-sm text-blue-700 space-y-1\">
-                    <div>실행 시간: {result.data.metadata?.executionTime}ms</div>
-                    <div>처리 상품 수: {result.data.workflow.aiProductResearch?.enrichedData?.length}개</div>
-                    <div>생성된 콘텐츠 길이: {result.data.workflow.seoAgent.content?.length}자</div>
-                    <div>완료된 노드: {result.data.metadata?.completedNodes?.join(', ')}</div>
+                    {result.error && (
+                      <p className="mb-2 text-red-600"><strong>오류:</strong> {result.error}</p>
+                    )}
+
+                    {result.data && (
+                      <div className="mb-2">
+                        <strong>데이터:</strong>
+                        <pre className="bg-gray-100 p-2 rounded text-xs overflow-auto">
+                          {JSON.stringify(result.data, null, 2)}
+                        </pre>
+                      </div>
+                    )}
+
+                    {result.testInfo?.logs && result.testInfo.logs.length > 0 && (
+                      <div>
+                        <strong>로그:</strong>
+                        <div className="bg-gray-100 p-2 rounded text-xs space-y-1">
+                          {result.testInfo.logs.map((log, logIndex) => (
+                            <div key={logIndex} className="text-gray-700">{log}</div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
+                ))}
               </div>
-            )}
-
-            {/* 원시 데이터 (개발용) */}
-            <details className=\"mt-6\">
-              <summary className=\"cursor-pointer font-medium text-gray-600 hover:text-gray-900\">
-                원시 응답 데이터 보기 (개발용)
-              </summary>
-              <pre className=\"mt-2 p-4 bg-gray-100 rounded-lg text-xs overflow-auto max-h-64\">
-                {JSON.stringify(result, null, 2)}
-              </pre>
-            </details>
+            </CardContent>
           </Card>
         )}
       </div>
     </div>
-  );
+  )
 }
