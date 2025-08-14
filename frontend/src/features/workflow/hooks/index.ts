@@ -1,6 +1,5 @@
 // Legacy hooks
 export { useWorkflow } from './useWorkflow';
-export { useWorkflow as useWorkflowRefactored } from './useWorkflow.refactored';
 export type { WorkflowStatus, WorkflowParams } from './useWorkflow';
 
 // New feature-based hooks

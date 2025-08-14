@@ -1,7 +1,7 @@
 'use client'
 
-import { GlassCard } from '@/components/ui/glass-card'
-import { AnimatedButton } from '@/components/ui/animated-button'
+import { GlassCard } from '@/features/home/components/ui/glass-card'
+import { AnimatedButton } from '@/features/home/components/ui/animated-button'
 import { 
   Search, 
   Brain, 
