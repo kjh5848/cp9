@@ -1,7 +1,7 @@
 'use client'
 
-import { LoginForm } from './LoginForm'
-import { GlassCard } from '@/components/ui/glass-card'
+import { LoginForm } from '@/features/auth/components/LoginForm'
+import { GlassCard } from '@/shared/ui/glass-card'
 import { Sparkles } from 'lucide-react'
 
 export function LoginCard() {

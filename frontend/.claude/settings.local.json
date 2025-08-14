@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm:*)",
+      "Bash(npx next:*)",
+      "Bash(node:*)",
+      "mcp__sequential-thinking__sequentialthinking",
+      "Bash(mkdir:*)",
+      "Bash(mv:*)",
+      "Bash(rm:*)",
+      "Bash(npm run build:*)",
+      "Bash(cp:*)",
+      "Bash(touch:*)",
+      "Bash(npm run lint)"
+    ],
+    "deny": [],
+    "ask": [],
+    "additionalDirectories": [
+      "D:\\",
+      "D:\\workspace\\cp9"
+    ]
+  }
+}

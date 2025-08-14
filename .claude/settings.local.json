@@ -10,7 +10,10 @@
       "mcp__sequential-thinking__sequentialthinking",
       "Bash(git add:*)",
       "Bash(git push:*)",
-      "Bash(supabase functions deploy:*)"
+      "Bash(supabase functions deploy:*)",
+      "Bash(gh:*)",
+      "Bash(git fetch:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": []
   }

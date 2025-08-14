@@ -9,7 +9,6 @@ export { usePriceRange } from './hooks/usePriceRange';
 export { usePricePreset } from './hooks/usePricePreset';
 export { useSearchOptions } from './hooks/useSearchOptions';
 export { useProductActions } from './hooks/useProductActions';
-export { useProductActions as useProductActionsRefactored } from './hooks/useProductActions.refactored';
 
 // === New Feature-Based Hooks ===
 // API 레이어

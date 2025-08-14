@@ -1,12 +1,12 @@
 'use client'
 
 import { useAuth } from '@/features/auth/contexts/AuthContext'
-import { HeroSection } from '@/components/home/HeroSection'
-import { FeatureGrid, FeatureStats } from '@/components/home/FeatureGrid'
-import { GradientBackground } from '@/components/ui/gradient-background'
+import { HeroSection } from '@/features/components/HeroSection'
+import { FeatureGrid, FeatureStats } from '@/features/components/FeatureGrid'
+import { GradientBackground } from '@/features/components/ui/gradient-background'
 import { Loader2 } from 'lucide-react'
 
-export function HomePageClient() {
+export function ComponentsPageClient() {
   const { loading } = useAuth()
   
   if (loading) {
@@ -27,7 +27,12 @@ export function HomePageClient() {
       
       <div className="relative z-10">
         {/* Hero Section */}
-        <HeroSection />
+        <HeroSection 
+          title={{ main: 'CP9', highlight: 'Components' }}
+          description="AI 기술과 자동화 워크플로우로 쿠팡 파트너스 비즈니스를 한 단계 업그레이드하세요"
+          primaryAction={{ text: '시작하기', href: '/components' }}
+          secondaryAction={{ text: '더 알아보기', href: '/components' }}
+        />
         
         {/* Features Section */}
         <section className="container mx-auto px-4 py-20">
@@ -40,8 +45,8 @@ export function HomePageClient() {
             </p>
           </div>
           
-          <FeatureGrid />
-          <FeatureStats />
+          <FeatureGrid features={[]} />
+          <FeatureStats stats={[]} />
         </section>
         
         {/* CTA Section */}

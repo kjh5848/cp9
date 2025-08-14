@@ -5,7 +5,6 @@
 
 // === Legacy Hooks (호환성 유지) ===
 export { useWorkflow } from './hooks/useWorkflow';
-export { useWorkflow as useWorkflowRefactored } from './hooks/useWorkflow.refactored';
 export type { WorkflowStatus, WorkflowParams } from './hooks/useWorkflow';
 
 // === New Feature-Based Hooks ===
