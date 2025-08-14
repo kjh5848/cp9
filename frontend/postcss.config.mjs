@@ -1,7 +1,6 @@
 // postcss.config.mjs
 export default {
-    plugins: {
-      '@tailwindcss/postcss': {},
-    },
-  }
-  
+  plugins: {
+    '@tailwindcss/postcss': {},
+  },
+};

@@ -3,7 +3,12 @@
     "allow": [
       "Bash(doppler configure:*)",
       "Bash(doppler:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(del D:workspacecp9frontendtailwind.config.ts)",
+      "Bash(npm uninstall:*)",
+      "Bash(pnpm remove:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm run dev:*)"
     ],
     "defaultMode": "acceptEdits"
   }

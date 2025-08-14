@@ -201,6 +201,7 @@ src/
 - Use `@/` path alias for imports from `src/`
 - Follow existing patterns in `features/` folders
 - Test pages available in `app/[feature]-test/`
+- **개발 서버 관리**: 개발 서버를 자동으로 시작하지 마세요. 사용자가 명시적으로 요청할 때만 `npm run dev` 또는 `pnpm run dev`를 실행하세요.
 
 ---
 

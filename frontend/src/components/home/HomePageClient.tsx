@@ -6,9 +6,9 @@ import { FeatureGrid, FeatureStats } from '@/components/home/FeatureGrid'
 import { GradientBackground } from '@/components/ui/gradient-background'
 import { Loader2 } from 'lucide-react'
 
-export default function Home() {
+export function HomePageClient() {
   const { loading } = useAuth()
-
+  
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
@@ -22,7 +22,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <>
       <GradientBackground />
       
       <div className="relative z-10">
@@ -56,6 +56,6 @@ export default function Home() {
           </div>
         </section>
       </div>
-    </div>
+    </>
   )
 }
