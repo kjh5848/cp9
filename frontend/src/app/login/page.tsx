@@ -1,15 +1,14 @@
-import AuthForm from '@/features/auth/components/AuthForm';
+'use client'
+
+import { LoginCard } from '@/components/auth/LoginCard'
+import { GradientBackground } from '@/components/ui/gradient-background'
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            로그인
-          </h2>
-        </div>
-        <AuthForm />
+    <div className="min-h-screen bg-gray-950 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <GradientBackground />
+      <div className="relative z-10 w-full max-w-md">
+        <LoginCard />
       </div>
     </div>
   );

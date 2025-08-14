@@ -64,3 +64,7 @@ export function getClientSupabaseConfig(): Pick<SupabaseConfig, 'url' | 'anonKey
     anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   };
 }
+
+// Supabase 클라이언트 인스턴스를 위한 re-export
+// infrastructure/api/supabase.ts의 인스턴스를 사용
+export { supabase } from '@/infrastructure/api/supabase';

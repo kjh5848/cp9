@@ -3,6 +3,81 @@
 ## 🔐 중요: 보안 안내
 이 문서의 API 키들은 모두 예시값입니다. 실제 값들은 Doppler에 안전하게 저장되어 있습니다.
 
+## 0. Doppler CLI 설치 (새 PC 설정)
+
+### Windows 설치
+```bash
+# 방법 1: winget 사용 (Windows 11/10 권장)
+winget install --id Doppler.doppler
+
+# 방법 2: Scoop 패키지 매니저 사용
+# Scoop이 없다면 먼저 설치: https://scoop.sh
+scoop bucket add dopplerhq https://github.com/DopplerHQ/scoop-bucket.git
+scoop install doppler
+
+# 방법 3: PowerShell 스크립트
+# 관리자 권한 PowerShell에서 실행
+$url = "https://cli.doppler.com/download?os=windows&arch=amd64&format=zip"
+$output = "$env:TEMP\doppler.zip"
+Invoke-WebRequest -Uri $url -OutFile $output
+Expand-Archive -Path $output -DestinationPath "C:\Program Files\Doppler"
+[Environment]::SetEnvironmentVariable("Path", $env:Path + ";C:\Program Files\Doppler", [EnvironmentVariableTarget]::Machine)
+
+# 방법 4: 수동 설치
+# https://cli.doppler.com/download 에서 Windows용 바이너리 다운로드
+# C:\Program Files\Doppler 폴더에 압축 해제
+# 시스템 환경변수 PATH에 추가
+```
+
+### macOS 설치
+```bash
+# 방법 1: Homebrew 사용 (권장)
+brew install dopplerhq/cli/doppler
+
+# 방법 2: 직접 다운로드 (Apple Silicon)
+curl -Ls --tlsv1.2 --proto "=https" --retry 3 https://cli.doppler.com/download?os=macos&arch=arm64 | tar xz
+sudo mv ./doppler /usr/local/bin
+
+# 방법 3: 직접 다운로드 (Intel)
+curl -Ls --tlsv1.2 --proto "=https" --retry 3 https://cli.doppler.com/download?os=macos&arch=amd64 | tar xz
+sudo mv ./doppler /usr/local/bin
+```
+
+### Linux 설치
+```bash
+# Ubuntu/Debian
+# APT 저장소 추가
+curl -sLf --retry 3 --tlsv1.2 --proto "=https" 'https://packages.doppler.com/public/cli/gpg.DE2A7741A397C129.key' | sudo apt-key add -
+echo "deb https://packages.doppler.com/public/cli/deb/debian any-version main" | sudo tee /etc/apt/sources.list.d/doppler-cli.list
+sudo apt-get update && sudo apt-get install doppler
+
+# RedHat/CentOS/Fedora
+# YUM 저장소 추가
+sudo rpm --import 'https://packages.doppler.com/public/cli/gpg.DE2A7741A397C129.key'
+curl -sLf --retry 3 --tlsv1.2 --proto "=https" 'https://packages.doppler.com/public/cli/config.rpm.txt' | sudo tee /etc/yum.repos.d/doppler-cli.repo
+sudo yum install doppler
+
+# Arch Linux
+yay -S doppler-cli
+
+# 범용 설치 스크립트
+curl -Ls --tlsv1.2 --proto "=https" --retry 3 https://cli.doppler.com/install.sh | sudo sh
+```
+
+### 설치 확인 및 PATH 설정
+```bash
+# 설치 확인
+doppler --version
+
+# PATH 문제 해결 (Windows)
+# PowerShell에서 실행
+[Environment]::SetEnvironmentVariable("Path", $env:Path + ";C:\Program Files\Doppler", [EnvironmentVariableTarget]::User)
+
+# PATH 문제 해결 (macOS/Linux)
+echo 'export PATH="/usr/local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
 ## 1. Doppler 계정 및 프로젝트 설정
 
 ### 1.1 Doppler 회원가입 및 로그인

@@ -259,17 +259,17 @@ export default function ProductInput() {
       )}
 
       {/* 검색 이력 */}
-      {searchHistory.length > 0 && (
+      {searchHistory?.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>최근 검색</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {searchHistory.slice(0, 5).map((item, index) => (
+              {searchHistory?.slice(0, 5).map((item, index) => (
                 <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                   <span className="text-sm">{item.keyword}</span>
-                  <span className="text-xs text-gray-500">{item.results.length}개 결과</span>
+                  <span className="text-xs text-gray-500">{item.results?.length}개 결과</span>
                 </div>
               ))}
             </div>

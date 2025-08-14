@@ -1,57 +1,47 @@
 {
-  "project": {
-    "name": "CP9 Backend - Supabase Edge Functions",
-    "type": "supabase-edge-functions",
-    "description": "AI-powered workflow automation backend for Coupang Partners Auto-Blog SaaS"
-  },
-  "runtime": {
-    "platform": "deno",
-    "version": "1.40+",
-    "package_manager": "supabase-cli"
-  },
-  "development": {
-    "localServer": "http://localhost:54321",
-    "functionsPath": "/functions/v1/",
-    "defaultHeaders": {
-      "Content-Type": "application/json",
-      "Authorization": "Bearer {SUPABASE_ANON_KEY}"
-    }
-  },
-  "testing": {
-    "framework": "deno-test",
-    "coverage": {
-      "enabled": false,
-      "threshold": 70
-    }
-  },
-  "codeStyle": {
-    "indentation": 2,
-    "quotes": "double",
-    "semicolons": true,
-    "lineLength": 100,
-    "trailingComma": "es5"
-  },
-  "aiAssistance": {
-    "preferredPatterns": [
-      "CORS handling for all Edge Functions",
-      "Proper error handling with try-catch",
-      "Environment variable access via Deno.env.get()",
-      "TypeScript type definitions for all data structures",
-      "Standardized response format"
+  "model": "claude-opus-4-1-20250805",
+  "permissions": {
+    "allow": [
+      "Bash(supabase start)",
+      "Bash(supabase stop)",
+      "Bash(supabase status)",
+      "Bash(supabase functions serve)",
+      "Bash(supabase functions serve *)",
+      "Bash(supabase functions deploy)",
+      "Bash(supabase functions deploy *)",
+      "Bash(supabase functions logs *)",
+      "Bash(supabase db push)",
+      "Bash(supabase db reset)",
+      "Bash(supabase secrets set *)",
+      "Bash(supabase secrets list)",
+      "Bash(deno *)",
+      "Bash(mkdir:*)",
+      "Bash(touch:*)",
+      "Read:functions/**/*",
+      "Write:functions/**/*",
+      "Edit:functions/**/*",
+      "MultiEdit:functions/**/*"
     ],
-    "avoidPatterns": [
-      "Node.js specific imports",
-      "npm packages (use esm.sh or skypack)",
-      "Synchronous file operations",
-      "Global state mutations"
+    "deny": [
+      "Bash(rm:*)",
+      "Bash(curl:*)",
+      "Read(./.env)",
+      "Read(**/.env*)"
+    ],
+    "additionalDirectories": [
+      "functions",
+      "supabase"
     ]
   },
-  "quickCommands": {
-    "start": "supabase start",
-    "stop": "supabase stop",
-    "deploy": "supabase functions deploy",
-    "logs": "supabase functions logs --tail",
-    "migrate": "supabase db push",
-    "reset": "supabase db reset"
+  "env": {
+    "CLAUDE_CODE_ENABLE_TELEMETRY": "1",
+    "SUPABASE_LOCAL_URL": "http://localhost:54321",
+    "FUNCTIONS_PATH": "/functions/v1/",
+    "NODE_ENV": "development"
+  },
+  "hooks": {
+    "beforeToolCall": {
+      "Bash:supabase functions deploy *": "echo 'Deploying Supabase function...'"
+    }
   }
 }

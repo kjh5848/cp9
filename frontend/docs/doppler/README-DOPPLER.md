@@ -2,6 +2,45 @@
 
 Doppler를 사용하여 환경변수를 안전하고 효율적으로 관리합니다.
 
+## 📦 새 PC에 Doppler 설치
+
+### Windows
+```bash
+# 방법 1: winget 사용 (권장)
+winget install --id Doppler.doppler
+
+# 방법 2: Scoop 사용
+scoop bucket add dopplerhq https://github.com/DopplerHQ/scoop-bucket.git
+scoop install doppler
+
+# 방법 3: 수동 다운로드
+# https://cli.doppler.com/download 에서 Windows 설치 파일 다운로드
+```
+
+### macOS
+```bash
+# Homebrew 사용
+brew install dopplerhq/cli/doppler
+```
+
+### Linux
+```bash
+# APT (Debian/Ubuntu)
+curl -sLf --retry 3 --tlsv1.2 --proto "=https" 'https://packages.doppler.com/public/cli/gpg.DE2A7741A397C129.key' | sudo apt-key add -
+echo "deb https://packages.doppler.com/public/cli/deb/debian any-version main" | sudo tee /etc/apt/sources.list.d/doppler-cli.list
+sudo apt-get update && sudo apt-get install doppler
+
+# YUM (RedHat/CentOS)
+sudo rpm --import 'https://packages.doppler.com/public/cli/gpg.DE2A7741A397C129.key'
+curl -sLf --retry 3 --tlsv1.2 --proto "=https" 'https://packages.doppler.com/public/cli/config.rpm.txt' | sudo tee /etc/yum.repos.d/doppler-cli.repo
+sudo yum install doppler
+```
+
+### 설치 확인
+```bash
+doppler --version
+```
+
 ## 🚀 빠른 시작
 
 ### 1. Doppler 설정 (최초 1회)
