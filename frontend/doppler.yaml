@@ -1,0 +1,44 @@
+# Doppler 프로젝트 설정
+# https://docs.doppler.com/docs/config-file
+
+setup:
+  project: cp9
+  config: dev  # dev, staging, production
+
+# 환경별 설정
+environments:
+  - name: dev
+    config: dev
+    command: npm run dev
+    
+  - name: staging
+    config: staging
+    command: npm run build && npm run start
+    
+  - name: production
+    config: production
+    command: npm run build && npm run start
+
+# 필수 환경변수 목록 (검증용)
+required_secrets:
+  # Supabase
+  - NEXT_PUBLIC_SUPABASE_URL
+  - NEXT_PUBLIC_SUPABASE_ANON_KEY
+  
+  # 쿠팡 파트너스
+  - COUPANG_ACCESS_KEY
+  - COUPANG_SECRET_KEY
+  
+  # Base URL
+  - NEXT_PUBLIC_BASE_URL
+
+# 선택적 환경변수
+optional_secrets:
+  - SUPABASE_SERVICE_ROLE_KEY
+  - OPENAI_API_KEY
+  - PERPLEXITY_API_KEY
+  - GOOGLE_CLIENT_ID
+  - GOOGLE_CLIENT_SECRET
+  - WORDPRESS_API_KEY
+  - WORDPRESS_SITE_URL
+  - NEXT_PUBLIC_LANGGRAPH_API_URL

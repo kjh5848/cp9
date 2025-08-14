@@ -4,6 +4,7 @@
  */
 
 import { SEOInfo, PerplexityConfig } from '@/shared/types/enrichment';
+import { config } from '@/shared/lib/config';
 
 /**
  * Perplexity API 응답 타입
@@ -256,7 +257,7 @@ export class PerplexityAPI {
  * 기본 Perplexity API 인스턴스
  */
 export const perplexityAPI = new PerplexityAPI(
-  process.env.PERPLEXITY_API_KEY || '',
+  config.PERPLEXITY_API_KEY || '',
   {
     model: 'gpt-4o',
     maxTokens: 2000,

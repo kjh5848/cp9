@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(doppler configure:*)",
+      "Bash(doppler:*)",
+      "Bash(cat:*)"
+    ],
+    "defaultMode": "acceptEdits"
+  }
+}
