@@ -22,9 +22,11 @@ export default function RootLayout({
       <body className={inter.className}>
         <AuthProvider>
           <Navbar />
+          
           <main className="mx-auto">
             {children}
           </main>
+
           <Toaster 
             position="top-right"
             toastOptions={{

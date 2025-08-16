@@ -5,12 +5,20 @@
 
 import { CacheConfig } from '@/shared/types/enrichment';
 
+interface RedisClient {
+  get(key: string): Promise<string | null>;
+  set(key: string, value: string, ttl?: number): Promise<void>;
+  del(key: string): Promise<void>;
+  exists(key: string): Promise<boolean>;
+  keys(pattern: string): Promise<string[]>;
+}
+
 /**
  * Redis 클라이언트 (Supabase Edge Functions용)
  */
 export class RedisCache {
   private config: CacheConfig;
-  private redis: any; // Supabase Redis 클라이언트
+  private redis: RedisClient | null = null;
 
   constructor(config: Partial<CacheConfig> = {}) {
     this.config = {

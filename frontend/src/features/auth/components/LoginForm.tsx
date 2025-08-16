@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/features/auth/contexts/AuthContext'
 import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react'
-import { AnimatedButton } from '@/shared/ui/animated-button'
+import { AnimatedButton } from '@/shared/components/advanced-ui'
 
 export function LoginForm() {
   const [email, setEmail] = useState('')

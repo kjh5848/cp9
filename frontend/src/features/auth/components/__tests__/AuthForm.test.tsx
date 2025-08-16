@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import AuthForm from '../AuthForm';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/infrastructure/api/supabase';
 
 // Supabase 모킹
 vi.mock('@/lib/supabase', () => ({

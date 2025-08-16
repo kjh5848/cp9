@@ -17,6 +17,7 @@ import ProductResultView from './ProductResultView';
 import ProductHistoryView from './ProductHistoryView';
 import { Link, Search, Package, Filter, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
+import type { ProductItem } from '../types';
 
 export default function ProductClientPage() {
 
@@ -38,7 +39,7 @@ export default function ProductClientPage() {
   } = useProductUIStore();
 
   // 선택 상태 관리 (로컬 상태로 변경)
-  const [selected, setSelected] = useState<any[]>([]);
+  const [selected, setSelected] = useState<ProductItem[]>([]);
 
   // 기존 useProductUIState에서 필요한 것들
   const {
@@ -70,13 +71,13 @@ export default function ProductClientPage() {
   const loading = keywordLoading || categoryLoading || linkLoading;
 
   // 모드별 결과 선택
-  let currentResults: any[] = [];
+  let currentResults: ProductItem[] = [];
   if (mode === 'link') currentResults = linkResults;
   else if (mode === 'keyword') currentResults = keywordResults;
   else if (mode === 'category') currentResults = categoryResults;
 
   // getFilteredResults에서 currentResults를 사용하고 항상 배열을 반환하도록 보장
-  const getFilteredResults = (): any[] => {
+  const getFilteredResults = (): ProductItem[] => {
     // 타입 안전성 보장: currentResults가 배열이 아니면 빈 배열 반환
     if (!Array.isArray(currentResults)) {
       console.warn('currentResults is not an array:', currentResults);

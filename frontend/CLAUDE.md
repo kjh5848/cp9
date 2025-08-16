@@ -100,6 +100,170 @@ pnpm type-check
 pnpm lint
 ```
 
+## 🛡️ TypeScript 타입 안전성 규칙
+
+### 핵심 원칙
+- **`any` 타입 절대 금지**: 모든 변수와 함수는 명시적 타입 정의 필수
+- **인터페이스 우선**: 객체 구조는 인터페이스로 정의하여 재사용성 확보
+- **Generic 활용**: 재사용 가능한 컴포넌트와 훅에는 Generic 타입 적극 활용
+- **타입 가드 사용**: 런타임 타입 검증을 통한 안전한 타입 변환
+
+### 타입 정의 체계
+- **공통 타입**: `src/shared/types/` - 전역에서 사용하는 기본 타입들
+- **기능별 타입**: `src/features/{기능}/types/` - 특정 기능에서만 사용하는 타입들
+- **Infrastructure 타입**: `src/infrastructure/types/` - API 응답, 캐시, 큐 시스템 타입들
+
+### 필수 타입 패턴
+
+#### 1. 컴포넌트 Props 인터페이스
+```typescript
+interface ProductItemProps {
+  item: ProductItem;
+  onSelect: (item: ProductItem) => void;
+  isSelected: boolean;
+  loading?: boolean;
+}
+```
+
+#### 2. API 응답 타입 정의
+```typescript
+interface DeepLinkResponse {
+  productId?: string;
+  url: string;
+  originalUrl?: string;
+  deepLink?: string;
+  title?: string;
+  price?: number;
+}
+
+interface ApiResponse<T> {
+  data: T;
+  success: boolean;
+  message?: string;
+  error?: string;
+}
+```
+
+#### 3. 상태 관리 타입
+```typescript
+interface ProductUIState {
+  mode: 'link' | 'keyword' | 'category';
+  itemCount: number;
+  keywordInput: string;
+  links: string;
+  rocketOnly: boolean;
+  sortOrder: 'asc' | 'desc' | 'none';
+}
+```
+
+#### 4. Hook 반환 타입
+```typescript
+interface UseDeeplinkConversionReturn {
+  links: string;
+  setLinks: (value: string) => void;
+  linkResults: DeepLinkResponse[];
+  deeplinkResult: DeepLinkResponse[];
+  handleLinkSubmit: (linksValue?: string) => Promise<void>;
+  handleDeeplinkConvert: (selected: string[]) => void;
+  loading: boolean;
+}
+```
+
+#### 5. Infrastructure 타입
+```typescript
+interface RedisClient {
+  get(key: string): Promise<string | null>;
+  set(key: string, value: string, ttl?: number): Promise<void>;
+  del(key: string): Promise<void>;
+  exists(key: string): Promise<boolean>;
+  keys(pattern: string): Promise<string[]>;
+}
+
+interface CacheConfig {
+  ttl: number;
+  prefix: string;
+}
+```
+
+### 타입 안전성 검증 방법
+
+#### 1. 배열 타입 검증
+```typescript
+// ❌ 잘못된 방법
+const results: any[] = data;
+
+// ✅ 올바른 방법
+const results: ProductItem[] = Array.isArray(data) ? data : [];
+```
+
+#### 2. 타입 가드 활용
+```typescript
+function isProductItem(item: unknown): item is ProductItem {
+  return typeof item === 'object' && 
+         item !== null && 
+         'productId' in item;
+}
+
+// 사용
+if (isProductItem(data)) {
+  // data는 이제 ProductItem 타입으로 안전하게 사용 가능
+}
+```
+
+#### 3. Generic 컴포넌트
+```typescript
+interface GenericButtonProps<T> {
+  value: T;
+  onClick: (value: T) => void;
+  children: React.ReactNode;
+}
+
+function GenericButton<T>({ value, onClick, children }: GenericButtonProps<T>) {
+  return <button onClick={() => onClick(value)}>{children}</button>;
+}
+```
+
+### 린트 및 타입 검사 설정
+```json
+// tsconfig.json 핵심 설정
+{
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true
+  }
+}
+```
+
+### 타입 오류 해결 가이드
+
+#### 1. `any` 타입 발견 시
+```bash
+# any 타입 사용처 검색
+grep -r "any\[\]" src/
+grep -r ": any" src/
+```
+
+#### 2. 타입 체크 명령어
+```bash
+# 전체 타입 체크
+pnpm type-check
+
+# 특정 파일 타입 체크
+npx tsc --noEmit src/path/to/file.ts
+```
+
+#### 3. 프로덕션 빌드 전 검증
+```bash
+# 필수 검증 순서
+pnpm type-check  # 타입 오류 확인
+pnpm lint        # 코딩 스타일 검증
+pnpm build       # 빌드 성공 확인
+```
+
 ## 📝 컴포넌트 작성 가이드
 
 ### Import 순서

@@ -8,7 +8,7 @@ interface UseDeeplinkConversionReturn {
   links: string;
   setLinks: (value: string) => void;
   linkResults: DeepLinkResponse[];
-  deeplinkResult: any[];
+  deeplinkResult: DeepLinkResponse[];
   handleLinkSubmit: (linksValue?: string) => Promise<void>;
   handleDeeplinkConvert: (selected: string[]) => void;
   loading: boolean;
@@ -22,7 +22,7 @@ interface UseDeeplinkConversionReturn {
 export function useDeeplinkConversion(): UseDeeplinkConversionReturn {
   const [links, setLinks] = useState('');
   const [linkResults, setLinkResults] = useState<DeepLinkResponse[]>([]);
-  const [deeplinkResult, setDeeplinkResult] = useState<any[]>([]);
+  const [deeplinkResult, setDeeplinkResult] = useState<DeepLinkResponse[]>([]);
   const [loading, setLoading] = useState(false);
 
   const handleLinkSubmit = async (linksValue?: string) => {
