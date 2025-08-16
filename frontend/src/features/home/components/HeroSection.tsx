@@ -1,11 +1,33 @@
 'use client'
 
 import { useAuth } from '@/features/auth/contexts/AuthContext'
-import { AnimatedButton } from '@/components/ui/animated-button'
+import { AnimatedButton } from '@/shared/components/advanced-ui'
 import { ArrowRight, Sparkles, Zap, Shield, Globe } from 'lucide-react'
 import Link from 'next/link'
 
-export function HeroSection() {
+export interface HeroSectionProps {
+  title: {
+    main: string
+    highlight: string
+  }
+  description: string
+  primaryAction: {
+    text: string
+    href: string
+  }
+  secondaryAction: {
+    text: string
+    href?: string
+    onClick?: () => void
+  }
+}
+
+export function HeroSection({
+  title,
+  description,
+  primaryAction,
+  secondaryAction,
+}: HeroSectionProps) {
   const { user } = useAuth()
 
   return (

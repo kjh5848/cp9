@@ -1,8 +1,8 @@
 'use client'
 
 import { useAuth } from '@/features/auth/contexts/AuthContext'
-import { HeroSection } from '@/features/components/HeroSection'
-import { FeatureGrid, FeatureStats } from '@/features/components/FeatureGrid'
+import { HeroSection } from './HeroSection'
+import { FeatureGrid, FeatureStats } from './FeatureGrid'
 import { Button, Card } from '@/shared/ui'
 import { 
   GradientBackground, 

@@ -1,8 +1,8 @@
 'use client'
 
 import { useAuth } from '@/features/auth/contexts/AuthContext'
-import { HeroSection } from '@/features/components/HeroSection'
-import { FeatureGrid, FeatureStats } from '@/features/components/FeatureGrid'
+import { HeroSection } from './HeroSection'
+import { FeatureGrid, FeatureStats } from './FeatureGrid'
 import { 
   Search, 
   Brain, 
@@ -20,6 +20,8 @@ import { Loader2 } from 'lucide-react'
 
 export function HomePageClient() {
   const { loading } = useAuth()
+  
+  console.log('HomePageClient loaded, loading:', loading)
   
   if (loading) {
     return (

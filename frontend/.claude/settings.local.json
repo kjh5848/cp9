@@ -18,7 +18,10 @@
       "mcp__playwright__browser_press_key",
       "Bash(npm run dev:*)",
       "Bash(npx tsc:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_console_messages",
+      "mcp__playwright__browser_wait_for"
     ],
     "deny": [],
     "ask": [],
