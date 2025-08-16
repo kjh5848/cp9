@@ -5,7 +5,6 @@ import { Card } from '@/shared/ui/card';
 import { FadeInSection, ScaleOnHover } from '@/shared/components/advanced-ui';
 import { useProductUIStore } from '../store/useProductUIStore';
 import { 
-  useProductFilter,
   useKeywordSearch,
   useCategorySearch,
   useDeeplinkConversion,
@@ -17,6 +16,7 @@ import ProductLinkSearchForm from './ProductLinkSearchForm';
 import ProductResultView from './ProductResultView';
 import ProductHistoryView from './ProductHistoryView';
 import { Link, Search, Package, Filter, RotateCcw } from 'lucide-react';
+import { useState } from 'react';
 
 export default function ProductClientPage() {
 
@@ -37,8 +37,8 @@ export default function ProductClientPage() {
     setSortOrder,
   } = useProductUIStore();
 
-  // 선택 상태 및 히스토리 관리
-  const { selected, setSelected, addHistory } = useSearchStore();
+  // 선택 상태 관리 (로컬 상태로 변경)
+  const [selected, setSelected] = useState<any[]>([]);
 
   // 기존 useProductUIState에서 필요한 것들
   const {
@@ -100,18 +100,19 @@ export default function ProductClientPage() {
 
   const filteredResults = getFilteredResults();
 
-  const { allChecked, handleSelectAll } = useProductFilter({
-    filteredResults,
-    selected,
-    setSelected,
-  });
+  // 전체 선택 기능
+  const allChecked = filteredResults.length > 0 && selected.length === filteredResults.length;
+  const handleSelectAll = () => {
+    if (allChecked) {
+      setSelected([]);
+    } else {
+      setSelected(filteredResults);
+    }
+  };
 
-  // Hook에서 제공하는 핸들러들을 래핑하여 히스토리 추가 기능 포함
+  // 검색 핸들러들 (히스토리 기능 제거)
   const handleKeywordSearch = async () => {
     await keywordSearchHandler(keywordInput, itemCount);
-    if (keywordResults.length > 0) {
-      safeAddHistory(keywordInput, keywordResults);
-    }
   };
 
   const handleCategorySearch = async (options: {
@@ -121,18 +122,10 @@ export default function ProductClientPage() {
     priceRange: [number, number];
   }) => {
     await categorySearchHandler(options);
-    if (categoryResults.length > 0) {
-      addHistory(categoryResults[0]?.categoryName || options.categoryId, categoryResults);
-    } else {
-      addHistory(options.categoryId, categoryResults);
-    }
   };
 
   const handleLinkSubmit = async () => {
     await linkSubmitHandler(links);
-    if (linkResults.length > 0) {
-      safeAddHistory(links, linkResults);
-    }
   };
 
   const handleEnter = (
@@ -142,9 +135,6 @@ export default function ProductClientPage() {
     if (e.key === "Enter") action();
   };
 
-  const safeAddHistory = (keyword: string, items: any[]) => {
-    if (keyword.trim()) addHistory(keyword, items);
-  };
 
   const handleModeChangeWithReset = (newMode: "link" | "keyword" | "category") => {
     setMode(newMode);

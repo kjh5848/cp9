@@ -1,5 +1,6 @@
 import { HomePageClient } from '@/features/home/components/HomePageClient'
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 
 export const metadata: Metadata = {
   title: 'CP9 - 쿠팡 파트너스 자동화 플랫폼',
@@ -17,7 +18,9 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-950">
       {/* 클라이언트 컴포넌트는 여기서 렌더링 */}
+      <Suspense fallback={<div>Loading...</div>}>
       <HomePageClient />
+      </Suspense>
     </div>
   )
 }
