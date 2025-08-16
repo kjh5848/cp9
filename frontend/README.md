@@ -10,6 +10,7 @@ CP9는 쿠팡 파트너스 상품을 기반으로 AI가 자동으로 SEO 최적�
 - **🤖 AI 콘텐츠 생성**: LangGraph 기반 AI 워크플로우로 SEO 최적화된 블로그 포스트 자동 생성
 - **📊 실시간 모니터링**: 워크플로우 진행 상황 실시간 추적
 - **🔐 인증 시스템**: Supabase Auth 기반 사용자 관리
+- **🎨 커스텀 UI 라이브러리**: 애니메이션과 인터랙티브 요소를 포함한 완전한 커스텀 UI 시스템
 - **📱 반응형 디자인**: Tailwind CSS 기반 모던 UI/UX
 
 ## 🏛️ 아키텍처
@@ -43,7 +44,7 @@ src/
 - **Framework**: Next.js 15.4.6 (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
-- **UI Components**: Custom components with shadcn/ui patterns
+- **UI Components**: Fully custom UI components with animations and interactive elements
 - **State Management**: React Context + Zustand
 - **Authentication**: Supabase Auth
 - **Database**: Supabase PostgreSQL

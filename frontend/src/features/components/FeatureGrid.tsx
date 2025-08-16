@@ -1,7 +1,6 @@
 'use client'
 
-import { GlassCard } from '@/features/components/ui/glass-card'
-import { AnimatedButton } from '@/features/components/ui/animated-button'
+import { GlassCard, AnimatedButton } from '@/shared/components/advanced-ui'
 import { LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import React from 'react'

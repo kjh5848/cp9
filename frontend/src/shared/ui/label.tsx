@@ -26,4 +26,6 @@ export function Label({ className = '', children, ...props }: LabelProps) {
       {children}
     </label>
   );
-} 
+}
+
+export type { LabelProps };

@@ -1,12 +1,8 @@
 'use client'
 
 import { HeroSection, FeatureGrid, FeatureStats, ComponentsPageClient } from '@/features/components'
-import { GlassCard } from '@/features/components/ui/glass-card'
-import { AnimatedButton } from '@/features/components/ui/animated-button'
-import { Button } from '@/features/components/ui/button'
-import { Card } from '@/features/components/ui/card'
-import { Input } from '@/shared/components/ui/input'
-import { Label } from '@/shared/components/ui/label'
+import { Button, Card, Input, Label } from '@/shared/ui'
+import { GlassCard, AnimatedButton } from '@/shared/components/advanced-ui'
 import { 
   Search, 
   Brain, 

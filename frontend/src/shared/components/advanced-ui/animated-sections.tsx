@@ -197,3 +197,11 @@ export function PulseEffect({
     </div>
   )
 }
+
+export type { 
+  FadeInSectionProps, 
+  FloatingElementProps, 
+  ScaleOnHoverProps, 
+  StaggeredListProps, 
+  PulseEffectProps 
+}

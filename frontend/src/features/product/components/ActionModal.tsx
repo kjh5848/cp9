@@ -1,8 +1,7 @@
 'use client';
 
-import { Button } from '@/features/components/ui/button';
-import { Card } from '@/features/components/ui/card';
-import { ScaleOnHover, FadeInSection } from '@/features/components/ui/animated-sections';
+import { Button, Card } from '@/shared/ui';
+import { ScaleOnHover, FadeInSection } from '@/shared/components/advanced-ui';
 import { Copy, Edit, X } from 'lucide-react';
 
 /**

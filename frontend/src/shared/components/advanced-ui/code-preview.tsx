@@ -1,8 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Button } from '@/features/components/ui/button'
-import { Card } from '@/features/components/ui/card'
+import { Button, Card } from '@/shared/ui'
 import { Copy, Code, Eye } from 'lucide-react'
 
 interface CodePreviewProps {

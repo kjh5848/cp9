@@ -1,9 +1,7 @@
 'use client';
 
-import { Input } from '@/features/components/ui/input';
-import { Button } from '@/features/components/ui/button';
-import { Label } from '@/features/components/ui/label';
-import { ScaleOnHover } from '@/features/components/ui/animated-sections';
+import { Input, Button, Label } from '@/shared/ui';
+import { ScaleOnHover } from '@/shared/components/advanced-ui';
 import { useItemCountForm } from '../hooks/useItemCountForm';
 
 interface ProductKeywordSearchFormProps {

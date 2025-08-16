@@ -17,8 +17,16 @@ src/
 │   ├── login/             # 로그인 페이지
 │   └── ...                # 기타 페이지들
 ├── shared/                # 🔄 전역 공유 리소스
-│   ├── components/        # 공통 복합 컴포넌트 (navbar 등)
-│   ├── ui/               # 기본 UI 컴포넌트 (button, input, card)
+│   ├── components/        # 공통 복합 컴포넌트
+│   │   ├── navbar.tsx     # 네비게이션 바
+│   │   ├── advanced-ui/   # 고급 UI 컴포넌트 (애니메이션, 인터랙티브)
+│   │   └── index.ts       # 통합 export
+│   ├── ui/               # 커스텀 기본 UI 컴포넌트
+│   │   ├── button.tsx     # 커스텀 버튼
+│   │   ├── card.tsx       # 커스텀 카드
+│   │   ├── input.tsx      # 커스텀 입력
+│   │   ├── label.tsx      # 커스텀 라벨
+│   │   └── index.ts       # 기본 UI export
 │   ├── hooks/            # 전역 훅
 │   ├── lib/              # 유틸리티 함수
 │   └── types/            # 공통 타입 정의
@@ -58,8 +66,9 @@ src/
 - **store/**: 전역 상태 관리
 
 #### 3. 컴포넌트 분류 체계
-- **shared/ui/**: 기본 UI 컴포넌트 (버튼, 인풋 등)
-- **shared/components/**: 공통 복합 컴포넌트 (네비바 등)
+- **shared/ui/**: 커스텀 기본 UI 컴포넌트 (버튼, 카드, 인풋, 라벨)
+- **shared/components/advanced-ui/**: 고급 UI 컴포넌트 (애니메이션, 캐러셀, 슬라이드 패널)
+- **shared/components/**: 복합 컴포넌트 (네비게이션 바 등)
 - **features/{feature}/components/**: 특정 기능 전용 컴포넌트
 
 ## 🔧 개발 환경
@@ -68,7 +77,7 @@ src/
 - **Framework**: Next.js 15.4.6 (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
-- **UI Components**: Custom components with shadcn/ui patterns
+- **UI Components**: Fully custom UI components (no shadcn/ui dependency)
 - **State Management**: React Context + Custom Hooks
 - **Authentication**: Supabase Auth
 - **Database**: Supabase PostgreSQL
@@ -100,7 +109,8 @@ import React from 'react'
 import { NextPage } from 'next'
 
 // 2. 내부 shared 리소스
-import { Button } from '@/shared/ui/button'
+import { Button, Card } from '@/shared/ui'
+import { FadeInSection, Carousel } from '@/shared/components/advanced-ui'
 import { useModal } from '@/shared/hooks/useModal'
 
 // 3. 내부 features
@@ -114,8 +124,8 @@ import './component.css'
 ```typescript
 'use client'
 
-import { Button } from '@/shared/ui/button'
-import { Card } from '@/shared/ui/card'
+import { Button, Card } from '@/shared/ui'
+import { FadeInSection } from '@/shared/components/advanced-ui'
 import { useAuth } from '@/features/auth/hooks'
 
 interface MyComponentProps {
@@ -133,17 +143,30 @@ export default function MyComponent({ title, onAction }: MyComponentProps) {
   const { user, isLoading } = useAuth()
 
   return (
-    <Card>
-      <h2>{title}</h2>
-      <Button onClick={onAction} disabled={isLoading}>
-        실행
-      </Button>
-    </Card>
+    <FadeInSection>
+      <Card>
+        <h2>{title}</h2>
+        <Button onClick={onAction} disabled={isLoading}>
+          실행
+        </Button>
+      </Card>
+    </FadeInSection>
   )
 }
 ```
 
 ## 🔄 최근 변경사항
+
+### 2024-08-16: UI 컴포넌트 구조 완전 재조직화
+- **문제**: shadcn/ui 의존성과 커스텀 UI 혼재, 컴포넌트 분류 체계 불명확
+- **해결**: 완전한 커스텀 UI 생태계 구축
+- **변경사항**:
+  - ✅ `shared/ui/` → 완전한 커스텀 기본 UI로 전환
+  - ✅ `features/components/ui/` → `shared/components/advanced-ui/`로 이전
+  - ✅ shadcn/ui 의존성 제거, 모든 UI 컴포넌트 프로젝트 특화
+  - ✅ 체계적인 index.ts 관리 시스템 구축
+  - ✅ 애니메이션, 인터랙티브 컴포넌트 통합 관리
+  - ✅ 모든 import 경로 새로운 구조로 업데이트
 
 ### 2024-08-14: 컴포넌트 구조 리팩토링
 - **문제**: `src/components`와 `src/shared` 간 중복, 일관성 없는 구조
@@ -156,10 +179,12 @@ export default function MyComponent({ title, onAction }: MyComponentProps) {
   - ✅ 빈 components 디렉토리 제거
 
 ### 개선 효과
-- 🎯 **명확한 책임 분리**: 기능별 vs 공통 컴포넌트
-- 🚀 **확장성 향상**: 새 기능 추가 시 일관된 구조
-- 🧹 **중복 제거**: 동일한 UI 컴포넌트의 중복 해결
-- 📚 **유지보수성**: 컴포넌트 위치 예측 가능
+- 🎯 **완전한 커스텀 UI**: 모든 UI 컴포넌트가 프로젝트에 최적화
+- 🏗️ **체계적 구조**: 기본 UI vs 고급 UI 명확한 분리
+- 📦 **통합 관리**: index.ts를 통한 중앙집중식 export 시스템
+- 🚀 **확장성**: 새 컴포넌트 추가 시 명확한 위치 가이드
+- 🧹 **의존성 정리**: 외부 UI 라이브러리 의존성 제거
+- 📚 **개발자 경험**: 일관된 import 패턴과 예측 가능한 구조
 
 ## 🎯 주요 기능
 
@@ -219,9 +244,27 @@ pnpm install
 ```
 
 ### Import 오류 시
-- `@/shared/ui/*`: 기본 UI 컴포넌트
-- `@/shared/components/*`: 공통 복합 컴포넌트  
-- `@/features/{기능}/components/*`: 기능별 컴포넌트
+- `@/shared/ui`: 커스텀 기본 UI 컴포넌트 (Button, Card, Input, Label)
+- `@/shared/components/advanced-ui`: 고급 UI 컴포넌트 (애니메이션, 캐러셀, 슬라이드 패널)
+- `@/shared/components`: 복합 컴포넌트 (Navbar 등)
+- `@/features/{기능}/components`: 기능별 전용 컴포넌트
+
+### 새로운 Import 패턴
+```typescript
+// 기본 UI 컴포넌트
+import { Button, Card, Input, Label } from '@/shared/ui'
+
+// 고급 UI 컴포넌트
+import { 
+  FadeInSection, 
+  Carousel, 
+  GradientBackground,
+  SlidePanel
+} from '@/shared/components/advanced-ui'
+
+// 복합 컴포넌트
+import { Navbar } from '@/shared/components'
+```
 
 ## 📞 지원
 

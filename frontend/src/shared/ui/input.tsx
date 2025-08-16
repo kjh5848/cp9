@@ -27,4 +27,6 @@ export function Input({ className = '', ...props }: InputProps) {
       {...props}
     />
   );
-} 
+}
+
+export type { InputProps };

@@ -52,4 +52,6 @@ export function Button({
       {children}
     </button>
   );
-} 
+}
+
+export type { ButtonProps };

@@ -3,13 +3,19 @@
 import { useAuth } from '@/features/auth/contexts/AuthContext'
 import { HeroSection } from '@/features/components/HeroSection'
 import { FeatureGrid, FeatureStats } from '@/features/components/FeatureGrid'
-import { GradientBackground } from '@/features/components/ui/gradient-background'
-import { Carousel } from '@/features/components/ui/carousel'
-import { SlidePanel, AnimatedAccordion } from '@/features/components/ui/slide-panel'
-import { FadeInSection, FloatingElement, ScaleOnHover, StaggeredList } from '@/features/components/ui/animated-sections'
-import { Card } from '@/features/components/ui/card'
-import { Button } from '@/features/components/ui/button'
-import { CodePreview, ComponentSection } from '@/features/components/ui/code-preview'
+import { Button, Card } from '@/shared/ui'
+import { 
+  GradientBackground, 
+  Carousel, 
+  SlidePanel, 
+  AnimatedAccordion,
+  FadeInSection, 
+  FloatingElement, 
+  ScaleOnHover, 
+  StaggeredList,
+  CodePreview,
+  ComponentSection
+} from '@/shared/components/advanced-ui'
 import { Loader2, Play, Palette, Zap, Layers, Settings, ArrowRight, Sparkles } from 'lucide-react'
 
 export function ComponentsPageClient() {
@@ -236,7 +242,7 @@ export function ComponentsPageClient() {
               title="Button"
               description="다양한 스타일의 버튼 컴포넌트"
               category="기본 UI"
-              code={`import { Button } from '@/features/components/ui/button'
+              code={`import { Button } from '@/shared/ui'
 
 <Button variant="default">기본 버튼</Button>
 <Button variant="outline">아웃라인 버튼</Button>
@@ -259,7 +265,7 @@ export function ComponentsPageClient() {
               title="Card"
               description="콘텐츠를 담는 카드 컴포넌트"
               category="기본 UI"
-              code={`import { Card } from '@/features/components/ui/card'
+              code={`import { Card } from '@/shared/ui'
 
 <Card className="p-6">
   <h3 className="text-lg font-semibold mb-2">카드 제목</h3>
@@ -278,7 +284,7 @@ export function ComponentsPageClient() {
               title="Carousel"
               description="자동 슬라이드와 네비게이션이 있는 캐러셀"
               category="인터랙티브"
-              code={`import { Carousel } from '@/features/components/ui/carousel'
+              code={`import { Carousel } from '@/shared/components/advanced-ui'
 
 const items = [
   <div key="1">슬라이드 1</div>,
@@ -311,7 +317,7 @@ const items = [
               title="SlidePanel"
               description="좌우로 슬라이드되는 패널 컴포넌트"
               category="인터랙티브"
-              code={`import { SlidePanel } from '@/features/components/ui/slide-panel'
+              code={`import { SlidePanel } from '@/shared/components/advanced-ui'
 
 <SlidePanel
   title="설정 패널"
@@ -339,7 +345,7 @@ const items = [
               title="AnimatedAccordion"
               description="부드러운 애니메이션이 있는 아코디언 메뉴"
               category="인터랙티브"
-              code={`import { AnimatedAccordion } from '@/features/components/ui/slide-panel'
+              code={`import { AnimatedAccordion } from '@/shared/components/advanced-ui'
 
 const items = [
   {
@@ -368,7 +374,7 @@ const items = [
               title="FadeInSection"
               description="스크롤 시 페이드인 애니메이션"
               category="애니메이션"
-              code={`import { FadeInSection } from '@/features/components/ui/animated-sections'
+              code={`import { FadeInSection } from '@/shared/components/advanced-ui'
 
 <FadeInSection delay={200}>
   <div>페이드인 될 내용</div>
@@ -389,7 +395,7 @@ const items = [
               title="FloatingElement"
               description="부유하는 애니메이션 효과"
               category="애니메이션"
-              code={`import { FloatingElement } from '@/features/components/ui/animated-sections'
+              code={`import { FloatingElement } from '@/shared/components/advanced-ui'
 
 <FloatingElement amplitude={10} duration={3}>
   <div>부유하는 요소</div>
@@ -409,7 +415,7 @@ const items = [
               title="ScaleOnHover"
               description="호버 시 크기가 변하는 효과"
               category="애니메이션"
-              code={`import { ScaleOnHover } from '@/features/components/ui/animated-sections'
+              code={`import { ScaleOnHover } from '@/shared/components/advanced-ui'
 
 <ScaleOnHover scale={1.05}>
   <div>호버하면 커지는 요소</div>

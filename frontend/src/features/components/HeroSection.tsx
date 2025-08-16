@@ -1,6 +1,6 @@
 'use client'
 
-import { AnimatedButton } from '@/features/components/ui/animated-button'
+import { AnimatedButton } from '@/shared/components/advanced-ui'
 import { ArrowRight, Sparkles, Zap, Shield, Globe, LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import React from 'react'

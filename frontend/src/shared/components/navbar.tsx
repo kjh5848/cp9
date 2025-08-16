@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Button } from '@/features/components/ui/button'
+import { Button } from '@/shared/ui'
 import { useAuth } from '@/features/auth/contexts/AuthContext'
 import { Menu, X, User, LogOut, Package, Search } from 'lucide-react'
 

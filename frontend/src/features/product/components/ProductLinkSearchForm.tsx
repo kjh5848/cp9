@@ -1,8 +1,7 @@
 'use client';
 
-import { Input } from '@/features/components/ui/input';
-import { Button } from '@/features/components/ui/button';
-import { ScaleOnHover } from '@/features/components/ui/animated-sections';
+import { Input, Button } from '@/shared/ui';
+import { ScaleOnHover } from '@/shared/components/advanced-ui';
 
 interface ProductLinkSearchFormProps {
   loading: boolean;

@@ -106,3 +106,5 @@ export function Carousel({
     </div>
   )
 }
+
+export type { CarouselProps }

@@ -2,9 +2,8 @@
 
 import { Button } from '@/shared/ui/button';
 import { Card } from '@/shared/ui/card';
-import { FadeInSection, ScaleOnHover } from '@/shared/ui/animated-sections';
+import { FadeInSection, ScaleOnHover } from '@/shared/components/advanced-ui';
 import { useProductUIStore } from '../store/useProductUIStore';
-import { useSearchStore } from '../store';
 import { 
   useProductFilter,
   useKeywordSearch,

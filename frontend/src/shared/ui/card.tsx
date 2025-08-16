@@ -98,4 +98,6 @@ export function CardContent({ className = '', children, ...props }: CardContentP
       {children}
     </div>
   );
-} 
+}
+
+export type { CardProps, CardHeaderProps, CardTitleProps, CardContentProps };

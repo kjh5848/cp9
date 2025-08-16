@@ -1,9 +1,7 @@
 'use client';
 
-import { Button } from '@/features/components/ui/button';
-import { Input } from '@/features/components/ui/input';
-import { Label } from '@/features/components/ui/label';
-import { ScaleOnHover } from '@/features/components/ui/animated-sections';
+import { Button, Input, Label } from '@/shared/ui';
+import { ScaleOnHover } from '@/shared/components/advanced-ui';
 import { PricePreset, useProductPresetStore } from '../store';
 import { 
   usePriceRange, 

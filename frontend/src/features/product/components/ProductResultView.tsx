@@ -1,9 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import { Button } from '@/features/components/ui/button';
-import { Card } from '@/features/components/ui/card';
-import { ScaleOnHover, FadeInSection, StaggeredList } from '@/features/components/ui/animated-sections';
+import { Button, Card } from '@/shared/ui';
+import { ScaleOnHover, FadeInSection, StaggeredList } from '@/shared/components/advanced-ui';
 import { useSearchStore } from '../store';
 import { ProductItem, DeepLinkResponse, ViewType } from '../types';
 import { useProductActions } from '../hooks/useProductActions';
