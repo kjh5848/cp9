@@ -1,9 +1,10 @@
 'use client';
 
-import { Button } from '@/features/components/ui/button';
-import { Card } from '@/features/components/ui/card';
-import { FadeInSection, ScaleOnHover } from '@/features/components/ui/animated-sections';
-import { useSearchStore } from '@/store/searchStore';
+import { Button } from '@/shared/ui/button';
+import { Card } from '@/shared/ui/card';
+import { FadeInSection, ScaleOnHover } from '@/shared/ui/animated-sections';
+import { useProductUIStore } from '../store/useProductUIStore';
+import { useSearchStore } from '../store';
 import { 
   useProductFilter,
   useKeywordSearch,
@@ -19,29 +20,36 @@ import ProductHistoryView from './ProductHistoryView';
 import { Link, Search, Package, Filter, RotateCcw } from 'lucide-react';
 
 export default function ProductClientPage() {
-  const {
-    selected,
-    setSelected,
-    addHistory,
-  } = useSearchStore();
 
-  // 커스텀 hooks 사용
+
+  // 새로운 UI 상태 관리
   const {
     mode,
+    setMode,
     itemCount,
     setItemCount,
-    viewType,
-    setViewType,
+    keywordInput,
+    setKeywordInput,
+    links,
+    setLinks,
     rocketOnly,
     setRocketOnly,
+    sortOrder,
+    setSortOrder,
+  } = useProductUIStore();
+
+  // 선택 상태 및 히스토리 관리
+  const { selected, setSelected, addHistory } = useSearchStore();
+
+  // 기존 useProductUIState에서 필요한 것들
+  const {
+    viewType,
+    setViewType,
     priceSort,
-    handleModeChange,
     handlePriceSortChange,
   } = useProductUIState();
 
   const {
-    keywordInput,
-    setKeywordInput,
     keywordResults,
     handleKeywordSearch: keywordSearchHandler,
     loading: keywordLoading,
@@ -54,8 +62,6 @@ export default function ProductClientPage() {
   } = useCategorySearch();
 
   const {
-    links,
-    setLinks,
     linkResults,
     handleLinkSubmit: linkSubmitHandler,
     loading: linkLoading,
@@ -103,7 +109,7 @@ export default function ProductClientPage() {
 
   // Hook에서 제공하는 핸들러들을 래핑하여 히스토리 추가 기능 포함
   const handleKeywordSearch = async () => {
-    await keywordSearchHandler(itemCount);
+    await keywordSearchHandler(keywordInput, itemCount);
     if (keywordResults.length > 0) {
       safeAddHistory(keywordInput, keywordResults);
     }
@@ -124,7 +130,7 @@ export default function ProductClientPage() {
   };
 
   const handleLinkSubmit = async () => {
-    await linkSubmitHandler();
+    await linkSubmitHandler(links);
     if (linkResults.length > 0) {
       safeAddHistory(links, linkResults);
     }
@@ -142,7 +148,7 @@ export default function ProductClientPage() {
   };
 
   const handleModeChangeWithReset = (newMode: "link" | "keyword" | "category") => {
-    handleModeChange(newMode);
+    setMode(newMode);
     setSelected([]);
   };
 

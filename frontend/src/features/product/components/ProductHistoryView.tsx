@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ProductHistory } from '@/store/searchStore';
+import { ProductHistory } from '../store';
 
 const formatDate = (iso: string) => {
   if (!iso) return "---";

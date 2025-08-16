@@ -4,7 +4,7 @@ import { Button } from '@/features/components/ui/button';
 import { Input } from '@/features/components/ui/input';
 import { Label } from '@/features/components/ui/label';
 import { ScaleOnHover } from '@/features/components/ui/animated-sections';
-import { PricePreset, useSearchStore } from '@/store/searchStore';
+import { PricePreset, useProductPresetStore } from '../store';
 import { 
   usePriceRange, 
   usePricePreset, 
@@ -82,7 +82,7 @@ export default function ProductCategorySearchForm({
   
 
   // 전역 프리셋 관리
-  const { pricePresets, addPricePreset, removePricePreset } = useSearchStore();
+  const { pricePresets, addPricePreset, removePricePreset } = useProductPresetStore();
 
   // 검색 실행
   const handleCategorySearch = () => {

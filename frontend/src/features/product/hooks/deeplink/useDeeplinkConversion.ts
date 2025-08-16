@@ -9,7 +9,7 @@ interface UseDeeplinkConversionReturn {
   setLinks: (value: string) => void;
   linkResults: DeepLinkResponse[];
   deeplinkResult: any[];
-  handleLinkSubmit: () => Promise<void>;
+  handleLinkSubmit: (linksValue?: string) => Promise<void>;
   handleDeeplinkConvert: (selected: string[]) => void;
   loading: boolean;
 }
@@ -25,16 +25,19 @@ export function useDeeplinkConversion(): UseDeeplinkConversionReturn {
   const [deeplinkResult, setDeeplinkResult] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const handleLinkSubmit = async () => {
+  const handleLinkSubmit = async (linksValue?: string) => {
+    // 외부에서 전달된 값이 있으면 우선 사용, 없으면 내부 상태 사용
+    const searchLinks = linksValue !== undefined ? linksValue : links;
+    
     // 입력 검증
-    if (!links.trim()) {
+    if (!searchLinks.trim()) {
       toast.error('최소 1개 이상의 링크를 입력해주세요');
       return;
     }
 
     setLoading(true);
     try {
-      const urls = links
+      const urls = searchLinks
         .split(',')
         .map((v) => v.trim())
         .filter(Boolean)

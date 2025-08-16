@@ -8,7 +8,7 @@ interface UseKeywordSearchReturn {
   keywordInput: string;
   setKeywordInput: (value: string) => void;
   keywordResults: ProductItem[];
-  handleKeywordSearch: (itemCount: number) => Promise<void>;
+  handleKeywordSearch: (keyword?: string, itemCount?: number) => Promise<void>;
   loading: boolean;
 }
 
@@ -22,9 +22,13 @@ export function useKeywordSearch(): UseKeywordSearchReturn {
   const [keywordResults, setKeywordResults] = useState<ProductItem[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const handleKeywordSearch = async (itemCount: number) => {
+  const handleKeywordSearch = async (keyword?: string, itemCount?: number) => {
+    // 외부에서 전달된 값이 있으면 우선 사용, 없으면 내부 상태 사용
+    const searchKeyword = keyword !== undefined ? keyword : keywordInput;
+    const searchItemCount = itemCount !== undefined ? itemCount : 5;
+    
     // 입력 검증
-    if (!keywordInput.trim()) {
+    if (!searchKeyword.trim()) {
       toast.error('검색할 키워드를 입력해주세요');
       return;
     }
@@ -35,7 +39,7 @@ export function useKeywordSearch(): UseKeywordSearchReturn {
       const res = await fetch('/api/products/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keyword: keywordInput, limit: itemCount }),
+        body: JSON.stringify({ keyword: searchKeyword, limit: searchItemCount }),
       });
       
       if (!res.ok) {

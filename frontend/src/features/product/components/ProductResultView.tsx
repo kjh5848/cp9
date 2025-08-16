@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { Button } from '@/features/components/ui/button';
 import { Card } from '@/features/components/ui/card';
 import { ScaleOnHover, FadeInSection, StaggeredList } from '@/features/components/ui/animated-sections';
-import { useSearchStore } from '@/store/searchStore';
+import { useSearchStore } from '../store';
 import { ProductItem, DeepLinkResponse, ViewType } from '../types';
 import { useProductActions } from '../hooks/useProductActions';
 import { isProductItem, isDeepLinkResponse, generateItemId } from '../utils/product-helpers';
