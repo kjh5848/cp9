@@ -1,0 +1,12 @@
+# Environment files with secrets
+.env.local
+.env.production
+
+# API Keys and sensitive configuration
+*.key
+*.pem
+secret_*
+
+# Temporary files
+*.tmp
+*.log
