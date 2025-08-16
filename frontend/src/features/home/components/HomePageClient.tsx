@@ -1,7 +1,8 @@
 'use client'
 
 import { useAuth } from '@/features/auth/contexts/AuthContext'
-import { HeroSection, FeatureGrid, FeatureStats } from '@/features/components'
+import { HeroSection } from '@/features/components/HeroSection'
+import { FeatureGrid, FeatureStats } from '@/features/components/FeatureGrid'
 import { 
   Search, 
   Brain, 
@@ -13,7 +14,8 @@ import {
   Globe,
   Shield
 } from 'lucide-react'
-import { GradientBackground } from '@/shared/ui/gradient-background'
+import { FadeInSection, AnimatedButton } from '@/shared/components/advanced-ui'
+import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
 
 export function HomePageClient() {
@@ -22,8 +24,7 @@ export function HomePageClient() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <GradientBackground />
-        <div className="text-center relative z-10">
+        <div className="text-center">
           <Loader2 className="w-16 h-16 text-blue-500 animate-spin mx-auto mb-4" />
           <p className="text-lg text-gray-400">로딩 중...</p>
         </div>
@@ -32,39 +33,36 @@ export function HomePageClient() {
   }
 
   return (
-    <>
-      <GradientBackground />
+    <div className="min-h-screen bg-gray-950">
+      {/* Hero Section */}
+      <HeroSection 
+        title={{
+          main: "AI로 쿠팡 파트너스",
+          highlight: "SEO 콘텐츠 자동 생성"
+        }}
+        description="AI 기술을 활용한 쿠팡 파트너스 자동화 플랫폼. 상품 리서치부터 SEO 최적화 콘텐츠 생성까지 한 번에."
+        primaryAction={{
+          text: "무료로 시작하기",
+          href: "/product"
+        }}
+        secondaryAction={{
+          text: "데모 보기",
+          href: "/components"
+        }}
+      />
       
-      <div className="relative z-10">
-        {/* Hero Section */}
-        <HeroSection 
-          title={{
-            main: "Your shortcut to",
-            highlight: "everything"
-          }}
-          description="AI 기술을 활용한 쿠팡 파트너스 자동화 플랫폼. 상품 리서치부터 SEO 최적화 콘텐츠 생성까지 한 번에."
-          primaryAction={{
-            text: "무료로 시작하기",
-            href: "/login"
-          }}
-          secondaryAction={{
-            text: "데모 보기",
-            href: "#"
-          }}
-        />
+      {/* Features Section */}
+      <FadeInSection className="container mx-auto px-4 py-20">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            강력한 기능들
+          </h2>
+          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+            AI 기술과 자동화 워크플로우로 쿠팡 파트너스 비즈니스를 한 단계 업그레이드하세요
+          </p>
+        </div>
         
-        {/* Features Section */}
-        <section className="container mx-auto px-4 py-20">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              강력한 기능들
-            </h2>
-            <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-              AI 기술과 자동화 워크플로우로 쿠팡 파트너스 비즈니스를 한 단계 업그레이드하세요
-            </p>
-          </div>
-          
-          <FeatureGrid features={[
+        <FeatureGrid features={[
             {
               icon: Search,
               title: '스마트 상품 검색',
@@ -84,31 +82,36 @@ export function HomePageClient() {
               title: 'SEO 콘텐츠 생성',
               description: 'GPT-4 기반으로 검색 엔진 최적화된 고품질 블로그 콘텐츠를 자동 생성합니다.',
               gradient: 'from-green-500 to-emerald-500',
-              href: '#'
+              href: '#',
+              disabled: true
             },
             {
               icon: TrendingUp,
               title: '실시간 분석',
               description: '상품 가격, 리뷰, 판매량 등을 실시간으로 모니터링하고 인사이트를 제공합니다.',
               gradient: 'from-orange-500 to-red-500',
-              href: '#'
+              href: '#',
+              disabled: true
             },
             {
               icon: Layers,
               title: '워크플로우 자동화',
               description: 'LangGraph 기반 AI 워크플로우로 반복 작업을 완전 자동화합니다.',
               gradient: 'from-indigo-500 to-purple-500',
-              href: '#'
+              href: '#',
+              disabled: true
             },
             {
               icon: Rocket,
               title: '원클릭 퍼블리싱',
               description: 'WordPress와 연동하여 생성된 콘텐츠를 즉시 블로그에 발행할 수 있습니다.',
               gradient: 'from-pink-500 to-rose-500',
-              href: '#'
+              href: '#',
+              disabled: true
             }
-          ]} />
-          <FeatureStats stats={[
+        ]} />
+        
+        <FeatureStats stats={[
             {
               icon: BarChart3,
               value: '10K+',
@@ -127,21 +130,32 @@ export function HomePageClient() {
               label: '자동 모니터링',
               color: 'text-green-400'
             }
-          ]} />
-        </section>
-        
-        {/* CTA Section */}
-        <section className="container mx-auto px-4 py-20 text-center">
-          <div className="max-w-3xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              지금 바로 시작하세요
-            </h2>
-            <p className="text-xl text-gray-400 mb-8">
-              무료로 시작하고 언제든지 업그레이드할 수 있습니다
-            </p>
+        ]} />
+      </FadeInSection>
+      
+      {/* CTA Section */}
+      <FadeInSection delay={400} className="container mx-auto px-4 py-20 text-center">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            지금 바로 시작하세요
+          </h2>
+          <p className="text-xl text-gray-400 mb-8">
+            무료로 시작하고 언제든지 업그레이드할 수 있습니다
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/product">
+              <AnimatedButton variant="gradient" size="lg" className="min-w-[200px]">
+                무료로 시작하기
+              </AnimatedButton>
+            </Link>
+            <Link href="/login">
+              <AnimatedButton variant="outline" size="lg" className="min-w-[200px]">
+                로그인
+              </AnimatedButton>
+            </Link>
           </div>
-        </section>
-      </div>
-    </>
+        </div>
+      </FadeInSection>
+    </div>
   )
 }
