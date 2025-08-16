@@ -1,34 +1,29 @@
 import { useMemo } from 'react';
+import { generateItemId } from '../utils/product-helpers';
+import { ProductItem, DeepLinkResponse } from '../types';
 
 export function useProductFilter({
-  deeplinkResult,
-  rocketOnly,
-  mode,
+  filteredResults,
   selected,
   setSelected,
 }: {
-  deeplinkResult: any[];
-  rocketOnly: boolean;
-  mode: string;
+  filteredResults: (ProductItem | DeepLinkResponse)[];
   selected: string[];
   setSelected: (ids: string[]) => void;
 }) {
-  // 필터링된 결과 (로켓배송 필터만 적용)
-  const filteredResults = useMemo(() => {
-    let base = deeplinkResult;
-    if (rocketOnly) {
-      base = base.filter((item) => item.isRocket || item.rocketShipping);
-    }
-    // 가격 필터링은 ProductCategorySearchForm에서 처리
-    return base;
-  }, [deeplinkResult, rocketOnly]);
+  // 전체선택을 위한 모든 ID 생성 (ProductResultView와 동일한 방식 사용)
+  const allIds = useMemo(() => 
+    filteredResults.map((item, index) => generateItemId(item, index)),
+    [filteredResults]
+  );
 
-  // 전체선택
-  const allIds = useMemo(() => filteredResults.map((item: any) => item.productId || item.url), [filteredResults]);
-  const allChecked = allIds.length > 0 && allIds.every((id: any) => selected.includes(id));
+  // 전체선택 상태 확인
+  const allChecked = allIds.length > 0 && allIds.every((id) => selected.includes(id));
+
+  // 전체선택/해제 핸들러
   const handleSelectAll = () => {
     setSelected(allChecked ? [] : allIds);
   };
 
-  return { filteredResults, allIds, allChecked, handleSelectAll };
+  return { allIds, allChecked, handleSelectAll };
 } 

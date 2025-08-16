@@ -50,6 +50,8 @@ export function useSearchOptions(initialOptions?: Partial<SearchOptions>) {
   // 베스트 상품 개수 업데이트
   const setBestLimit = useCallback((bestLimit: number) => {
     updateOption('bestLimit', bestLimit);
+
+
   }, [updateOption]);
 
   // 가격 범위 업데이트

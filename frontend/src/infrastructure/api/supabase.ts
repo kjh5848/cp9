@@ -1,3 +1,4 @@
+import { log } from '@/shared/lib/logger';
 import { createClient } from '@supabase/supabase-js';
 
 // Supabase 환경 변수

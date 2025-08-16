@@ -1,7 +1,9 @@
 'use client';
 
-import { Button } from '@/shared/ui/button';
-import { useWorkflow } from '@/features/workflow/hooks/useWorkflow';
+import { Button } from '@/features/components/ui/button';
+import { Card } from '@/features/components/ui/card';
+import { ScaleOnHover, FadeInSection } from '@/features/components/ui/animated-sections';
+import { Copy, Edit, X } from 'lucide-react';
 
 /**
  * 액션 선택 모달 컴포넌트
@@ -42,43 +44,84 @@ export default function ActionModal({
 }: ActionModalProps) {
   if (!isOpen) return null;
 
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <h3 className="text-lg font-semibold mb-4">
-          선택된 상품 ({selectedCount}개)에 대한 액션을 선택하세요
-        </h3>
-        
-        <div className="space-y-3">
-          <Button
-            onClick={onCopy}
-            className="w-full justify-start"
-            variant="outline"
-          >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-            링크 복사
-          </Button>
+    <div 
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 px-4"
+      onClick={handleBackdropClick}
+    >
+      <FadeInSection>
+        <Card className="bg-gray-900 border-gray-700 p-6 max-w-md w-full">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-xl font-bold text-white mb-1">
+                액션 선택
+              </h3>
+              <p className="text-sm text-gray-400">
+                선택된 상품 {selectedCount}개에 대한 작업을 선택하세요
+              </p>
+            </div>
+            <ScaleOnHover scale={1.1}>
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-400 hover:text-white" />
+              </button>
+            </ScaleOnHover>
+          </div>
           
-          <Button
-            onClick={onSeo}
-            className="w-full justify-start"
-            variant="outline"
-          >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-            SEO 글 작성 (AI 분석)
-          </Button>
-        </div>
-        
-        <div className="mt-6 flex justify-end">
-          <Button onClick={onClose} variant="ghost">
-            취소
-          </Button>
-        </div>
-      </div>
+          {/* Action Buttons */}
+          <div className="space-y-3">
+            <ScaleOnHover scale={1.02}>
+              <Button
+                onClick={onCopy}
+                className="w-full justify-start bg-gray-800 hover:bg-gray-700 border-gray-700 text-white p-4 h-auto"
+                variant="outline"
+              >
+                <Copy className="w-5 h-5 mr-3 text-blue-400" />
+                <div className="text-left">
+                  <div className="font-medium">링크 복사</div>
+                  <div className="text-sm text-gray-400">선택된 상품 링크를 클립보드에 복사</div>
+                </div>
+              </Button>
+            </ScaleOnHover>
+            
+            <ScaleOnHover scale={1.02}>
+              <Button
+                onClick={onSeo}
+                className="w-full justify-start bg-gray-800 hover:bg-gray-700 border-gray-700 text-white p-4 h-auto"
+                variant="outline"
+              >
+                <Edit className="w-5 h-5 mr-3 text-green-400" />
+                <div className="text-left">
+                  <div className="font-medium">SEO 글 작성</div>
+                  <div className="text-sm text-gray-400">AI가 상품을 분석하여 SEO 최적화 글을 생성</div>
+                </div>
+              </Button>
+            </ScaleOnHover>
+          </div>
+          
+          {/* Footer */}
+          <div className="mt-6 flex justify-end">
+            <ScaleOnHover scale={1.05}>
+              <Button 
+                onClick={onClose} 
+                variant="ghost"
+                className="text-gray-400 hover:text-white hover:bg-gray-800"
+              >
+                취소
+              </Button>
+            </ScaleOnHover>
+          </div>
+        </Card>
+      </FadeInSection>
     </div>
   );
 } 

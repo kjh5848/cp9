@@ -11,7 +11,11 @@
       "Bash(npm run build:*)",
       "Bash(cp:*)",
       "Bash(touch:*)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_evaluate",
+      "mcp__playwright__browser_press_key"
     ],
     "deny": [],
     "ask": [],

@@ -1,7 +1,7 @@
 'use client';
 
-import { Card } from '@/shared/ui/card';
-import { Button } from '@/shared/ui/button';
+import { Card } from '@/shared/components/ui/card';
+import { Button } from '@/shared/components/ui/button';
 import { WorkflowStatus } from '../hooks/useWorkflow';
 
 interface WorkflowProgressProps {

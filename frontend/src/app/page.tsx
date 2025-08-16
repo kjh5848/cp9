@@ -5,10 +5,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
 import { useWorkflow } from "@/features/workflow";
-import { Button } from "@/shared/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
+import { Button } from "@/shared/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Input } from "@/shared/components/ui/input";
+import { Label } from "@/shared/components/ui/label";
 import { WorkflowProgress } from "@/features/workflow";
 
 export default function Home() {

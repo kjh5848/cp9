@@ -1,12 +1,13 @@
-import ProductInput from '@/features/product/components/ProductInput';
 import { AuthGuard } from '@/features/auth/components/AuthGuard';
+import { Suspense } from 'react';
+import ProductClientPage from '@/features/product/components/ProductClientPage';
 
 export default function ProductPage() {
   return (
     <AuthGuard>
-      <main className="p-4 md:p-6">
-        <ProductInput />
-      </main>
+      <Suspense fallback={<div>Loading...</div>}>
+        <ProductClientPage />
+      </Suspense>
     </AuthGuard>
   );
 }

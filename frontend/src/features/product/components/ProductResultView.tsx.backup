@@ -1,16 +1,13 @@
 'use client';
 
 import Image from 'next/image';
-import { Button } from '@/features/components/ui/button';
-import { Card } from '@/features/components/ui/card';
-import { ScaleOnHover, FadeInSection, StaggeredList } from '@/features/components/ui/animated-sections';
+import { Button } from '@/shared/ui/button';
 import { useSearchStore } from '@/store/searchStore';
 import { ProductItem, DeepLinkResponse, ViewType } from '../types';
 import { useProductActions } from '../hooks/useProductActions';
 import { isProductItem, isDeepLinkResponse, generateItemId } from '../utils/product-helpers';
 import ActionModal from './ActionModal';
 import SeoLoadingOverlay from './SeoLoadingOverlay';
-import { Grid, List, Copy, ExternalLink, Package, Zap, Loader2, Check, Circle } from 'lucide-react';
 
 interface ProductResultViewProps {
   loading: boolean;
@@ -21,24 +18,8 @@ interface ProductResultViewProps {
 }
 
 const cardClass =
-  "relative flex flex-col rounded-lg border p-4 cursor-pointer transition-all duration-300 ease-out";
-const cardDefault = "border-gray-700 bg-gray-800/50 hover:bg-gray-800 hover:border-gray-600";
-const cardSelected = "border-blue-400 bg-gradient-to-br from-blue-900/40 to-blue-800/30 shadow-lg shadow-blue-500/20 ring-1 ring-blue-400/50";
-
-// 선택 표시 인디케이터 컴포넌트
-const SelectionIndicator = ({ isSelected }: { isSelected: boolean }) => (
-  <div className="absolute top-3 right-3 z-10">
-    {isSelected ? (
-      <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center shadow-lg">
-        <Check className="w-4 h-4 text-white" />
-      </div>
-    ) : (
-      <div className="w-6 h-6 border-2 border-gray-400 rounded-full bg-white/10 backdrop-blur-sm opacity-60 hover:opacity-100 transition-opacity">
-        <Circle className="w-5 h-5 text-transparent" />
-      </div>
-    )}
-  </div>
-);
+  "relative flex flex-col rounded-lg border p-4 hover:bg-gray-50 cursor-pointer transition-colors";
+const cardSelected = "border-blue-500 bg-blue-50";
 
 /**
  * 상품 검색 결과를 표시하는 컴포넌트
@@ -86,113 +67,76 @@ export default function ProductResultView({
     );
   };
 
-  const handleCopyClick = (text: string, label: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    handleCopyToClipboard(text, label);
-  };
-  
+  // 복사 아이콘 SVG 컴포넌트
+  const CopyIcon = () => (
+    <svg 
+      className="w-4 h-4 text-gray-500 hover:text-gray-700 cursor-pointer" 
+      fill="none" 
+      stroke="currentColor" 
+      viewBox="0 0 24 24"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+    </svg>
+  );
 
-  const handdleUrl = (url: string) => {
-    return url.length > 25 ? url.slice(0, 25) + '...' : url;
-  }
   return (
-    <div className="mt-8">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <Package className="w-5 h-5 text-blue-400" />
-          <h3 className="text-base sm:text-lg font-semibold text-white">
-            {mode === 'deeplink' ? '딥링크 변환 결과' : '상품 검색 결과'}
-          </h3>
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-1 bg-gray-800 text-gray-300 text-xs sm:text-sm rounded-full">
-              {Array.isArray(filteredResults) ? filteredResults.length : 0}개
-            </span>
-            {selected.length > 0 && (
-              <span className="px-2 py-1 bg-blue-600 text-white text-xs sm:text-sm rounded-full animate-pulse">
-                {selected.length}개 선택됨
-              </span>
-            )}
-          </div>
-        </div>
-        
+    <div className="mt-6">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="font-bold">
+          {mode === 'deeplink' ? '딥링크 변환 결과' : '딥링크/상품 결과'}{" "}
+          <span className="text-sm text-gray-500 font-normal">
+            ({Array.isArray(filteredResults) ? filteredResults.length : 0})
+          </span>
+        </h3>
         <div className="flex gap-2">
-          <ScaleOnHover scale={1.05}>
-            <Button
-              size="sm"
-              variant={viewType === "grid" ? "default" : "outline"}
-              onClick={() => setViewType("grid")}
-              className={`flex items-center gap-2 ${
-                viewType === "grid" 
-                  ? "bg-blue-600 text-white" 
-                  : "border-gray-700 text-gray-300 hover:bg-gray-800"
-              }`}
-            >
-              <Grid className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">그리드</span>
-            </Button>
-          </ScaleOnHover>
-          
-          <ScaleOnHover scale={1.05}>
-            <Button
-              size="sm"
-              variant={viewType === "list" ? "default" : "outline"}
-              onClick={() => setViewType("list")}
-              className={`flex items-center gap-2 ${
-                viewType === "list" 
-                  ? "bg-blue-600 text-white" 
-                  : "border-gray-700 text-gray-300 hover:bg-gray-800"
-              }`}
-            >
-              <List className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">리스트</span>
-            </Button>
-          </ScaleOnHover>
+          <Button
+            size="sm"
+            variant={viewType === "grid" ? "default" : "outline"}
+            onClick={() => setViewType("grid")}
+          >
+            그리드
+          </Button>
+          <Button
+            size="sm"
+            variant={viewType === "list" ? "default" : "outline"}
+            onClick={() => setViewType("list")}
+          >
+            리스트
+          </Button>
         </div>
       </div>
-
       {loading ? (
         <div className="flex h-48 w-full items-center justify-center">
-          <div className="flex items-center gap-3 text-gray-400">
-            <Loader2 className="w-6 h-6 animate-spin" />
-            <span className="text-lg">검색 중...</span>
-          </div>
+          로딩 중...
         </div>
       ) : (
-        <StaggeredList 
-          staggerDelay={100}
+        <ul
           className={`${viewType === "grid"
               ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4"
-              : "flex flex-col gap-3"
+              : "flex flex-col gap-2"
             } h-full w-full`}
         >
           {Array.isArray(filteredResults) && filteredResults.map((item, i) => {
             // 아이템 ID 생성
             const itemId = generateItemId(item, i);
 
-            const isSelected = selected.includes(itemId);
-            
             return (
-              <ScaleOnHover key={i} scale={isSelected ? 1.02 : 1.01}>
-                <Card
-                  className={`${cardClass} ${
-                    isSelected ? cardSelected : cardDefault
+              <li
+                key={i}
+                className={`${cardClass} ${
+                  selected.includes(itemId)
+                    ? cardSelected
+                    : ""
                   }`}
-                  onClick={() => handleSelect(itemId)}
-                  aria-label={`${isSelected ? '선택됨' : '선택 안됨'} - ${
-                    isProductItem(item) ? item.productName : `딥링크 #${i + 1}`
-                  }`}
-                >
-                  {/* 선택 표시 인디케이터 */}
-                  <SelectionIndicator isSelected={isSelected} />
+                onClick={() => handleSelect(itemId)}
+              >
                 {/* 딥링크 모드일 때는 상품 정보 숨기기 */}
                 {mode !== 'deeplink' && (
                   <>
                     {isProductItem(item) && item.isRocket && (
-                      <div className="absolute right-2 top-12 flex items-center gap-1 rounded-full bg-blue-600 px-2 py-1 text-xs font-semibold text-white z-10">
-                        <Zap className="w-3 h-3" />
-                        로켓배송
-                      </div>
+                      <span className="absolute right-2 top-2 rounded bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-700">
+                        로켓
+                      </span>
                     )}
                     {isProductItem(item) && item.productImage && (
                       <div className="relative mx-auto mb-2 h-32 w-32">
@@ -215,11 +159,11 @@ export default function ProductResultView({
                 <div className="mb-2 flex flex-1 flex-col gap-2">
                   {/* 딥링크 모드일 때는 제목 간소화 */}
                   {mode === 'deeplink' ? (
-                    <span className="pr-10 text-xs sm:text-sm font-bold text-white line-clamp-2">
+                    <span className="pr-10 font-bold line-clamp-2">
                       딥링크 #{i + 1}
                     </span>
                   ) : (
-                    <span className="pr-10 text-xs sm:text-sm md:text-base font-bold text-white line-clamp-2">
+                    <span className="pr-10 font-bold line-clamp-2">
                       {isProductItem(item) 
                         ? item.productName 
                         : isDeepLinkResponse(item)
@@ -229,25 +173,26 @@ export default function ProductResultView({
                     </span>
                   )}
 
-                  <div className="border-t border-gray-700 my-3"></div>
+                  <div className="border-t"></div>
                   
                   {/* 딥링크 모드가 아닐 때만 상품 정보 표시 */}
                   {mode !== 'deeplink' && (
                     <>
                       {isProductItem(item) && (
-                        <div className="text-xs sm:text-sm text-gray-300 mb-2">
+                        <div className="text-sm text-gray-500">
                           가격:{" "}
-                          <span className="font-semibold text-blue-400">
+                          <span className="font-semibold text-gray-800">
                             {item.productPrice.toLocaleString()}원
                           </span>
                         </div>
                       )}
+                      <div className="border-t"></div>
                       {isProductItem(item) && (
-                        <div className="text-xs text-gray-400 mb-3 truncate">
+                        <div className="text-xs text-gray-500">
                           카테고리: {item.categoryName}
                         </div>
                       )}
-                      <div className="border-t border-gray-700 mb-3"></div>
+                      <div className="border-t"></div>
                     </>
                   )}
 
@@ -257,10 +202,10 @@ export default function ProductResultView({
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="flex-1 min-w-0">
-                          <div className="text-xs text-blue-400 font-medium mb-1">원본 URL:</div>
+                          <div className="text-xs text-blue-600 font-medium mb-1">원본 URL:</div>
                           <a
                             href={item.originalUrl}
-                            className="text-xs sm:text-sm text-blue-400 hover:text-blue-300 hover:underline truncate block"
+                            className="text-sm text-blue-600 hover:underline truncate block"
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
@@ -269,10 +214,13 @@ export default function ProductResultView({
                           </a>
                         </div>
                         <button
-                          onClick={(e) => handleCopyClick(item.originalUrl || '', '원본 URL', e)}
-                          className="ml-2 p-1.5 hover:bg-gray-700 rounded-md transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopyToClipboard(item.originalUrl || '', '원본 URL');
+                          }}
+                          className="ml-2 p-1 hover:bg-gray-100 rounded"
                         >
-                          <Copy className="w-4 h-4 text-gray-400 hover:text-white" />
+                          <CopyIcon />
                         </button>
                       </div>
 
@@ -281,7 +229,7 @@ export default function ProductResultView({
                           <div className="text-xs text-green-600 font-medium mb-1">단축 URL:</div>
                           <a
                             href={item.shortenUrl}
-                            className="text-xs sm:text-sm text-green-600 hover:underline truncate block"
+                            className="text-sm text-green-600 hover:underline truncate block"
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
@@ -290,10 +238,13 @@ export default function ProductResultView({
                           </a>
                         </div>
                         <button
-                          onClick={(e) => handleCopyClick(item.shortenUrl || '', '단축 URL', e)}
-                          className="ml-2 p-1.5 hover:bg-gray-700 rounded-md transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopyToClipboard(item.shortenUrl || '', '단축 URL');
+                          }}
+                          className="ml-2 p-1 hover:bg-gray-100 rounded"
                         >
-                          <Copy className="w-4 h-4 text-gray-400 hover:text-white" />
+                          <CopyIcon />
                         </button>
                       </div>
 
@@ -302,7 +253,7 @@ export default function ProductResultView({
                           <div className="text-xs text-purple-600 font-medium mb-1">랜딩 URL:</div>
                           <a
                             href={item.landingUrl}
-                            className="text-xs sm:text-sm text-purple-600 hover:underline truncate block"
+                            className="text-sm text-purple-600 hover:underline truncate block"
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
@@ -311,36 +262,39 @@ export default function ProductResultView({
                           </a>
                         </div>
                         <button
-                          onClick={(e) => handleCopyClick(item.landingUrl || '', '랜딩 URL', e)}
-                          className="ml-2 p-1.5 hover:bg-gray-700 rounded-md transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopyToClipboard(item.landingUrl || '', '랜딩 URL');
+                          }}
+                          className="ml-2 p-1 hover:bg-gray-100 rounded"
                         >
-                          <Copy className="w-4 h-4 text-gray-400 hover:text-white" />
+                          <CopyIcon />
                         </button>
                       </div>
                     </div>
                   ) : (
                     // 기존 모드: 기존 방식대로 표시
                     <>
-                      <div className="text-xs text-blue-400">
+                      <div className="truncate text-xs text-blue-600">
                         {isProductItem(item) ? '링크: ' : '원본 URL: '}
                         <a
                           href={isProductItem(item) ? item.productUrl : isDeepLinkResponse(item) ? item.originalUrl : '#'}
-                          className="hover:underline hover:text-blue-300 break-all block mt-1"
+                          className="hover:underline"
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          {handdleUrl(isProductItem(item) ? item.productUrl : isDeepLinkResponse(item) ? item.originalUrl : '#')}
+                          {isProductItem(item) ? item.productUrl : isDeepLinkResponse(item) ? item.originalUrl : '#'}
                         </a>
                       </div>
                       {isDeepLinkResponse(item) && (
                         <>
-                          <div className="border-t border-gray-700"></div>
-                          <div className="text-xs text-green-600">
+                          <div className="border-t"></div>
+                          <div className="truncate text-xs text-green-600">
                             단축 URL:{" "}
                             <a
                               href={item.shortenUrl}
-                              className="hover:underline break-all block mt-1"
+                              className="hover:underline"
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
@@ -348,12 +302,12 @@ export default function ProductResultView({
                               {item.shortenUrl}
                             </a>
                           </div>
-                          <div className="border-t border-gray-700"></div>
-                          <div className="text-xs text-purple-600">
+                          <div className="border-t"></div>
+                          <div className="truncate text-xs text-purple-600">
                             랜딩 URL:{" "}
                             <a
                               href={item.landingUrl}
-                              className="hover:underline break-all block mt-1"
+                              className="hover:underline"
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
@@ -366,29 +320,40 @@ export default function ProductResultView({
                     </>
                   )}
                 </div>
-                </Card>
-              </ScaleOnHover>
+              </li>
             );
           })}
-        </StaggeredList>
+        </ul>
       )}
-      {Array.isArray(filteredResults) && filteredResults.length > 0 && (
-        <FadeInSection delay={300}>
-          <div className="mt-6 flex justify-center">
-            <ScaleOnHover scale={1.05}>
-              <Button 
-                onClick={handleActionButtonClick} 
-                disabled={loading || selected.length === 0}
-                className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-700 disabled:text-gray-400"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                선택된 상품 액션 ({selected.length}개)
-              </Button>
-            </ScaleOnHover>
+        </div>
+
+        {/* 오른쪽: 선택된 아이템 정보 (3) - 데스크톱만 */}
+        <div className="hidden lg:block lg:col-span-3">
+          <div className="sticky top-4">
+            <SelectedItemDetail
+              item={getSelectedItem()}
+              onActionButtonClick={handleActionButtonClick}
+              selectedCount={selected.length}
+              mode={mode}
+            />
           </div>
-        </FadeInSection>
+        </div>
+      </div>
+
+      {/* 모바일에서만 표시되는 액션 버튼 */}
+      {Array.isArray(filteredResults) && filteredResults.length > 0 && (
+        <div className="mt-4 flex justify-center lg:hidden">
+          <Button 
+            onClick={handleActionButtonClick} 
+            disabled={loading || selected.length === 0}
+            className="flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            선택된 상품 액션 ({selected.length}개)
+          </Button>
+        </div>
       )}
 
       {/* 액션 선택 모달 */}
