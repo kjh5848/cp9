@@ -21,7 +21,11 @@
       "Bash(git add:*)",
       "mcp__playwright__browser_snapshot",
       "mcp__playwright__browser_console_messages",
-      "mcp__playwright__browser_wait_for"
+      "mcp__playwright__browser_wait_for",
+      "Bash(pkill:*)",
+      "Bash(true)",
+      "Bash(git stash:*)",
+      "Bash(git rm:*)"
     ],
     "deny": [],
     "ask": [],
