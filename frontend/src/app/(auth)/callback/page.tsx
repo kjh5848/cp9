@@ -3,6 +3,7 @@
 import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/infrastructure/api/supabase';
+import { AuthLoadingSpinner, SimpleAuthLoadingSpinner } from '@/shared/components/advanced-ui';
 
 function AuthCallbackComponent() {
   const router = useRouter();
@@ -100,36 +101,12 @@ function AuthCallbackComponent() {
     handleAuthCallback();
   }, [router, searchParams]);
 
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          인증 처리 중...
-        </h2>
-        <p className="text-gray-600">
-          잠시만 기다려 주세요.
-        </p>
-      </div>
-    </div>
-  );
+  return <AuthLoadingSpinner type="callback" />;
 }
 
 export default function AuthCallback() {
   return (
-    <Suspense fallback={
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            로딩 중...
-          </h2>
-          <p className="text-gray-600">
-            잠시만 기다려 주세요.
-          </p>
-        </div>
-      </div>
-    }>
+    <Suspense fallback={<SimpleAuthLoadingSpinner message="인증 정보 로딩 중..." />}>
       <AuthCallbackComponent />
     </Suspense>
   );

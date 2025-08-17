@@ -16,6 +16,10 @@ export { GradientBackground } from './gradient-background'
 export { GlassCard } from './glass-card'
 export { AnimatedButton } from './animated-button'
 
+// Loading Components
+export { LoadingSpinner, SimpleLoadingSpinner } from './loading-spinner'
+export { AuthLoadingSpinner, SimpleAuthLoadingSpinner } from './auth-loading-spinner'
+
 // Development Components
 export { CodePreview, ComponentSection } from './code-preview'
 
@@ -28,3 +32,5 @@ export type {
   PulseEffectProps 
 } from './animated-sections'
 export type { CarouselProps } from './carousel'
+export type { LoadingSpinnerProps } from './loading-spinner'
+export type { AuthLoadingSpinnerProps } from './auth-loading-spinner'
