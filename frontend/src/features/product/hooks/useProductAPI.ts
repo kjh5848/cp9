@@ -15,12 +15,14 @@ export interface ProductSearchParams {
   categoryId?: string;
   priceMin?: number;
   priceMax?: number;
+  [key: string]: unknown; // 인덱스 시그니처 추가
 }
 
 export interface ProductCategoryParams {
   categoryId: string;
   limit?: number;
   imageSize?: string;
+  [key: string]: unknown; // 인덱스 시그니처 추가
 }
 
 export interface DeepLinkParams {

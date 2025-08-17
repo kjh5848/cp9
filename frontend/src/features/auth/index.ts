@@ -10,7 +10,7 @@ export { useAuthForm } from './hooks/useAuthForm';
 export { AuthForm, AuthGuard } from './components';
 
 // === Contexts ===
-export { AuthContext } from './contexts/AuthContext';
+export { AuthProvider, useAuth } from './contexts/AuthContext';
 
 // === Types ===
 export type * from './types';

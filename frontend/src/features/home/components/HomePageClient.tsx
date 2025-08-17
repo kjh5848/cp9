@@ -33,7 +33,7 @@ export function HomePageClient() {
       </div>
     )
   }
-
+  
   return (
     <div className="min-h-screen bg-gray-950">
       {/* Hero Section */}
@@ -64,7 +64,7 @@ export function HomePageClient() {
           </p>
         </div>
         
-        <FeatureGrid features={[
+        {/* <FeatureGrid features={[
             {
               icon: Search,
               title: '스마트 상품 검색',
@@ -111,9 +111,9 @@ export function HomePageClient() {
               href: '#',
               disabled: true
             }
-        ]} />
+        ]} /> */}
         
-        <FeatureStats stats={[
+        {/* <FeatureStats stats={[
             {
               icon: BarChart3,
               value: '10K+',
@@ -132,7 +132,7 @@ export function HomePageClient() {
               label: '자동 모니터링',
               color: 'text-green-400'
             }
-        ]} />
+        ]} /> */}
       </FadeInSection>
       
       {/* CTA Section */}

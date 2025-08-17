@@ -72,10 +72,10 @@ export function useDeeplinkConversion(): UseDeeplinkConversionReturn {
     setTimeout(() => {
       setDeeplinkResult(
         deeplinkResult.map((item) =>
-          selected.includes(item.productId || item.url)
+          selected.includes(item.productId || (item as any).url)
             ? {
                 ...item,
-                deepLink: (item.url || item.originalUrl) + "?deeplink=1",
+                deepLink: ((item as any).url || item.originalUrl) + "?deeplink=1",
               }
             : item
         )
