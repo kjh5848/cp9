@@ -64,7 +64,7 @@ export function LoginForm() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`,
+          redirectTo: `${window.location.origin}/callback${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`,
           queryParams: returnTo ? { returnTo } : undefined,
         }
       })
