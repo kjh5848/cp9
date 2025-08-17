@@ -184,7 +184,7 @@ export function PulseEffect({
     high: 'animate-bounce'
   }
 
-  const colorMap = {
+  const colorMap: Record<string, string> = {
     blue: 'shadow-blue-500/50',
     purple: 'shadow-purple-500/50',
     green: 'shadow-green-500/50',
@@ -192,7 +192,7 @@ export function PulseEffect({
   }
 
   return (
-    <div className={`${intensityMap[intensity]} drop-shadow-lg ${colorMap[color]} ${className}`}>
+    <div className={`${intensityMap[intensity]} drop-shadow-lg ${colorMap[color] || ''} ${className}`}>
       {children}
     </div>
   )

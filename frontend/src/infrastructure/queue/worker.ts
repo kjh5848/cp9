@@ -3,7 +3,24 @@
  * LangGraph 작업 큐 관리 및 처리
  */
 
-import { QueueJob } from '@/features/langgraph/types';
+// TODO: langgraph 타입 구현 필요
+// import { QueueJob } from '@/features/langgraph/types';
+
+// 임시 타입 정의
+interface QueueJob {
+  id: string;
+  type: string;
+  data: any;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  priority?: 'low' | 'normal' | 'high';
+  retries?: number;
+  maxRetries?: number;
+  scheduledAt?: number;
+  createdAt: Date;
+  updatedAt?: Date;
+  result?: any;
+  error?: string;
+}
 
 /**
  * 큐 작업 상태
@@ -78,7 +95,7 @@ export class QueueWorker {
     const fullJob: QueueJob = {
       ...job,
       id: jobId,
-      createdAt: Date.now(),
+      createdAt: new Date(),
     };
 
     const jobKey = `${this.config.queueName}:job:${jobId}`;
@@ -88,7 +105,7 @@ export class QueueWorker {
     await redis.setex(jobKey, this.config.jobTimeout, JSON.stringify(fullJob));
     
     // 큐에 추가 (우선순위 기반)
-    const priority = this.getPriorityScore(job.priority);
+    const priority = this.getPriorityScore(job.priority || 'normal');
     await redis.zadd(queueKey, priority, jobId);
 
     return jobId;
@@ -126,7 +143,7 @@ export class QueueWorker {
     await redis.setex(statusKey, this.config.jobTimeout, JSON.stringify(statusData));
 
     // 실패한 작업 재시도
-    if (status === 'failed' && job.retries < job.maxRetries) {
+    if (status === 'failed' && (job.retries || 0) < (job.maxRetries || 3)) {
       await this.retryJob(jobId);
     }
   }
@@ -139,12 +156,12 @@ export class QueueWorker {
     const job = await this.getJob(jobId);
     if (!job) return;
 
-    const delay = this.config.retryDelays[job.retries] || this.config.retryDelays[this.config.retryDelays.length - 1];
+    const delay = this.config.retryDelays[job.retries || 0] || this.config.retryDelays[this.config.retryDelays.length - 1];
     const retryTime = Date.now() + delay;
 
     const retryJob: QueueJob = {
       ...job,
-      retries: job.retries + 1,
+      retries: (job.retries || 0) + 1,
       scheduledAt: retryTime,
     };
 
@@ -176,7 +193,7 @@ export class QueueWorker {
         const retryJob: QueueJob = JSON.parse(retryJobData);
         await redis.zrem(retryQueueKey, jobId);
         await redis.del(retryKey);
-        await redis.zadd(queueKey, this.getPriorityScore(retryJob.priority), jobId);
+        await redis.zadd(queueKey, this.getPriorityScore(retryJob.priority || 'normal'), jobId);
       }
     }
 
@@ -268,7 +285,7 @@ export class QueueWorker {
       const finalResult: JobResult = {
         ...result,
         executionTime,
-        retries: job.retries,
+        retries: job.retries || 0,
       };
 
       await this.updateJobStatus(job.id, 'completed', finalResult);
@@ -280,7 +297,7 @@ export class QueueWorker {
         success: false,
         error: error instanceof Error ? error.message : '알 수 없는 오류',
         executionTime,
-        retries: job.retries,
+        retries: job.retries || 0,
       };
 
       await this.updateJobStatus(job.id, 'failed', result);

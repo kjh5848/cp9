@@ -145,9 +145,11 @@ export class CoupangScraper {
 
       const { chromium } = await import('playwright');
       const browser = await chromium.launch({ headless: true });
-      const page = await browser.newPage();
+      const context = await browser.newContext({
+        userAgent: this.config.userAgent || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      });
+      const page = await context.newPage();
 
-      await page.setUserAgent(this.config.userAgent || '');
       await page.goto(url, { waitUntil: 'networkidle', timeout: this.config.timeout });
 
       // 상품 정보 추출

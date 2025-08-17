@@ -8,9 +8,12 @@ import { CacheConfig } from '@/shared/types/enrichment';
 interface RedisClient {
   get(key: string): Promise<string | null>;
   set(key: string, value: string, ttl?: number): Promise<void>;
-  del(key: string): Promise<void>;
+  setex(key: string, ttl: number, value: string): Promise<void>;
+  del(key: string, ...moreKeys: string[]): Promise<void>;
   exists(key: string): Promise<boolean>;
   keys(pattern: string): Promise<string[]>;
+  expire(key: string, seconds: number): Promise<boolean>;
+  info(section?: string): Promise<string>;
 }
 
 /**
@@ -46,7 +49,17 @@ export class RedisCache {
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
       
       // Redis 연결 (Supabase의 Redis 확장 사용)
-      this.redis = supabase.rpc('redis_connect');
+      // TODO: 실제 Redis 클라이언트 구현 필요
+      this.redis = {
+        get: async (key: string) => null,
+        set: async (key: string, value: string, ttl?: number) => {},
+        setex: async (key: string, ttl: number, value: string) => {},
+        del: async (key: string, ...moreKeys: string[]) => {},
+        exists: async (key: string) => false,
+        keys: async (pattern: string) => [],
+        expire: async (key: string, seconds: number) => false,
+        info: async (section?: string) => 'Redis info not available',
+      } as RedisClient;
     }
     
     return this.redis;
@@ -71,7 +84,9 @@ export class RedisCache {
         timestamp: Date.now(),
       });
 
-      await redis.setex(cacheKey, ttl || this.config.ttl, cacheData);
+      if (redis) {
+        await redis.setex(cacheKey, ttl || this.config.ttl, cacheData);
+      }
     } catch (error) {
       console.error('Redis 저장 실패:', error);
       // 캐시 실패는 치명적이지 않으므로 에러를 던지지 않음
@@ -86,7 +101,7 @@ export class RedisCache {
       const redis = await this.getRedisClient();
       const cacheKey = this.generateKey(key);
       
-      const cachedData = await redis.get(cacheKey);
+      const cachedData = redis ? await redis.get(cacheKey) : null;
       
       if (!cachedData) {
         return null;
@@ -108,7 +123,9 @@ export class RedisCache {
       const redis = await this.getRedisClient();
       const cacheKey = this.generateKey(key);
       
-      await redis.del(cacheKey);
+      if (redis) {
+        await redis.del(cacheKey);
+      }
     } catch (error) {
       console.error('Redis 삭제 실패:', error);
     }
@@ -122,8 +139,8 @@ export class RedisCache {
       const redis = await this.getRedisClient();
       const cacheKey = this.generateKey(key);
       
-      const result = await redis.exists(cacheKey);
-      return result === 1;
+      const result = redis ? await redis.exists(cacheKey) : false;
+      return result;
     } catch (error) {
       console.error('Redis 존재 확인 실패:', error);
       return false;
@@ -138,7 +155,9 @@ export class RedisCache {
       const redis = await this.getRedisClient();
       const cacheKey = this.generateKey(key);
       
-      await redis.expire(cacheKey, ttl);
+      if (redis) {
+        await redis.expire(cacheKey, ttl);
+      }
     } catch (error) {
       console.error('Redis 만료 시간 설정 실패:', error);
     }
@@ -152,7 +171,7 @@ export class RedisCache {
       const redis = await this.getRedisClient();
       const searchPattern = this.generateKey(pattern);
       
-      const keys = await redis.keys(searchPattern);
+      const keys = redis ? await redis.keys(searchPattern) : [];
       return keys.map((key: string) => key.replace(this.config.prefix, ''));
     } catch (error) {
       console.error('Redis 키 검색 실패:', error);
@@ -171,7 +190,7 @@ export class RedisCache {
     try {
       const redis = await this.getRedisClient();
       
-      const info = await redis.info('memory');
+      const info = redis ? await redis.info('memory') : 'N/A';
       const keys = await this.keys('*');
       
       return {
@@ -199,7 +218,11 @@ export class RedisCache {
       
       if (keys.length > 0) {
         const cacheKeys = keys.map(key => this.generateKey(key));
-        await redis.del(...cacheKeys);
+        if (redis) {
+          for (const key of cacheKeys) {
+            await redis.del(key);
+          }
+        }
       }
     } catch (error) {
       console.error('Redis 전체 삭제 실패:', error);

@@ -130,7 +130,7 @@ export function useRealtimeStatus(config: RealtimeConfig = { enabled: true }) {
           
           reconnectTimeoutRef.current = setTimeout(() => {
             console.log(`[useRealtimeStatus] 재연결 시도 ${reconnectAttemptsRef.current}`);
-            startRealtimeUpdates(threadId, onUpdateRef.current);
+            startRealtimeUpdates(threadId, onUpdateRef.current || undefined);
           }, reconnectInterval);
         } else {
           setConnectionError('최대 재연결 시도 횟수 초과');

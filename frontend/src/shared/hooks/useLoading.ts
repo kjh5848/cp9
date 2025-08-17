@@ -172,6 +172,20 @@ export function useLoading() {
   const loadingCount = Object.values(loadingState).filter(state => state.isLoading).length;
   const loadingKeys = Object.keys(loadingState).filter(key => loadingState[key].isLoading);
 
+  /**
+   * 특정 키의 로딩 상태 확인
+   */
+  const isLoading = useCallback((key: string = 'default') => {
+    return loadingState[key]?.isLoading || false;
+  }, [loadingState]);
+
+  /**
+   * 특정 키의 로딩 메시지 조회
+   */
+  const getLoadingMessage = useCallback((key: string = 'default') => {
+    return loadingState[key]?.message;
+  }, [loadingState]);
+
   return {
     // 상태
     loadingState,
@@ -187,5 +201,7 @@ export function useLoading() {
     updateMessage,
     clearAllLoading,
     getLoadingState,
+    isLoading,
+    getLoadingMessage,
   };
 }

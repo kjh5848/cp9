@@ -3,7 +3,29 @@
  * 포스트 생성, 수정, 중복 체크 기능
  */
 
-import { WordPressPost, WordPressResponse } from '@/features/langgraph/types';
+// TODO: langgraph 타입 구현 필요
+// import { WordPressPost, WordPressResponse } from '@/features/langgraph/types';
+
+// 임시 타입 정의
+interface WordPressPost {
+  id?: number;
+  title: string;
+  content: string;
+  excerpt?: string;
+  status?: 'publish' | 'draft' | 'pending';
+  slug?: string;
+  categories?: number[];
+  tags?: number[];
+  featured_media?: number;
+  meta?: any;
+}
+
+interface WordPressResponse {
+  id: number;
+  link: string;
+  title: { rendered: string };
+  content: { rendered: string };
+}
 
 /**
  * WordPress API 설정

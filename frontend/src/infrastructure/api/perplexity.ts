@@ -159,7 +159,7 @@ export class PerplexityAPI {
         }
 
         const data: PerplexityResponse = await response.json();
-        return data.choices[0]?.delta?.content || data.choices[0]?.content || '';
+        return data.choices[0]?.delta?.content || (data.choices[0] as any)?.content || '';
 
       } catch (error) {
         lastError = error instanceof Error ? error : new Error('알 수 없는 오류');
