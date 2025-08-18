@@ -1,8 +1,8 @@
-// Navigation Component
-export { default as Navbar } from './navbar'
+// Navigation Components
+export { default as Navbar } from './navbar';
 
-// Basic Custom UI
-export * from '../ui'
+// Basic Custom UI Components
+export * from './custom-ui';
 
 // Advanced UI Components
-export * from './advanced-ui'
+export * from './advanced-ui';

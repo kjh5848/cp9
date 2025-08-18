@@ -3,14 +3,17 @@ import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/shared/lib/utils"
 
-const labelVariants = cva(
+export const labelVariants = cva(
   "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
 )
 
-const Label = React.forwardRef<
+export interface LabelProps 
+  extends React.LabelHTMLAttributes<HTMLLabelElement>,
+    VariantProps<typeof labelVariants> {}
+
+export const Label = React.forwardRef<
   HTMLLabelElement,
-  React.LabelHTMLAttributes<HTMLLabelElement> &
-    VariantProps<typeof labelVariants>
+  LabelProps
 >(({ className, ...props }, ref) => (
   <label
     ref={ref}
@@ -18,6 +21,4 @@ const Label = React.forwardRef<
     {...props}
   />
 ))
-Label.displayName = "Label"
-
-export { Label } 
+Label.displayName = "Label" 
