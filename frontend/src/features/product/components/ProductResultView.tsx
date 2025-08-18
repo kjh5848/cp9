@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { useEffect } from 'react';
 import { Button, Card } from '@/shared/ui';
 import { ScaleOnHover, FadeInSection, StaggeredList } from '@/shared/components/advanced-ui';
 import { useSearchStore } from '../store';
@@ -9,6 +10,7 @@ import { useProductActions } from '../hooks/useProductActions';
 import { isProductItem, isDeepLinkResponse, generateItemId } from '../utils/product-helpers';
 import ActionModal from './ActionModal';
 import SeoLoadingOverlay from './SeoLoadingOverlay';
+import FloatingActionButton from './FloatingActionButton';
 import { Grid, List, Copy, ExternalLink, Package, Zap, Loader2, Check, Circle } from 'lucide-react';
 
 interface ProductResultViewProps {
@@ -77,6 +79,13 @@ export default function ProductResultView({
     handleCopyToClipboard
   } = useProductActions(filteredResults, selected);
 
+  // 새로고침 시 results가 없으면 selected 초기화
+  useEffect(() => {
+    if ((!filteredResults || filteredResults.length === 0) && selected.length > 0) {
+      setSelected([]);
+    }
+  }, [filteredResults, selected.length, setSelected]);
+
   const handleSelect = (id: string) => {
     setSelected(
       selected.includes(id)
@@ -95,7 +104,7 @@ export default function ProductResultView({
     return url.length > 25 ? url.slice(0, 25) + '...' : url;
   }
   return (
-    <div className="mt-8">
+    <div className="mt-8 pb-24">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -371,24 +380,6 @@ export default function ProductResultView({
           })}
         </StaggeredList>
       )}
-      {Array.isArray(filteredResults) && filteredResults.length > 0 && (
-        <FadeInSection delay={300}>
-          <div className="mt-6 flex justify-center">
-            <ScaleOnHover scale={1.05}>
-              <Button 
-                onClick={handleActionButtonClick} 
-                disabled={loading || selected.length === 0}
-                className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-700 disabled:text-gray-400"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                선택된 상품 액션 ({selected.length}개)
-              </Button>
-            </ScaleOnHover>
-          </div>
-        </FadeInSection>
-      )}
 
       {/* 액션 선택 모달 */}
       <ActionModal
@@ -401,6 +392,14 @@ export default function ProductResultView({
 
       {/* SEO 로딩 오버레이 */}
       <SeoLoadingOverlay isLoading={isSeoLoading} />
+
+      {/* 플로팅 액션 버튼 - Portal로 전역 렌더링 */}
+      <FloatingActionButton
+        selectedCount={selected.length}
+        loading={loading}
+        onAction={handleActionButtonClick}
+        onClearSelection={() => setSelected([])}
+      />
     </div>
   );
 } 
