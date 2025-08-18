@@ -3,9 +3,11 @@ export { Button } from './button'
 export { Card, CardHeader, CardTitle, CardContent } from './card'
 export { Input } from './input'
 export { Label } from './label'
+export { Table } from './table'
 
 // 타입들
 export type { ButtonProps } from './button'
 export type { CardProps, CardHeaderProps, CardTitleProps, CardContentProps } from './card'
 export type { InputProps } from './input'
 export type { LabelProps } from './label'
+export type { TableProps, TableHeader } from './table'
