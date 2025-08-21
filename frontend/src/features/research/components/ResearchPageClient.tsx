@@ -11,11 +11,15 @@ import BlogView from './views/BlogView';
 import { useResearchData } from '../hooks/useResearchData';
 import { LoadingSpinner } from '@/shared/components/advanced-ui';
 
+interface ResearchPageClientProps {
+  currentSessionId?: string;
+}
+
 /**
  * 리서치 결과 페이지 클라이언트 컴포넌트
  * 선택된 상품들의 리서치 결과를 다양한 뷰로 표시
  */
-export default function ResearchPageClient() {
+export default function ResearchPageClient({ currentSessionId = '1' }: ResearchPageClientProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('card');
   const { data, loading, error } = useResearchData();
 
@@ -71,7 +75,7 @@ export default function ResearchPageClient() {
       {/* 컨텐츠 영역 */}
       <div className="container mx-auto px-4 pb-12">
         {data.length > 0 ? (
-          <ViewComponent data={data} />
+          <ViewComponent data={data} currentSessionId={currentSessionId} />
         ) : (
           <div className="text-center py-12">
             <p className="text-gray-400 text-lg">표시할 리서치 결과가 없습니다</p>
