@@ -163,4 +163,28 @@ export interface FormState {
 export interface CategoryOption {
   value: string;
   label: string;
+}
+
+/**
+ * 상품 변형 타입 (동일 상품의 다른 옵션)
+ */
+export interface ProductVariant {
+  item: ProductItem;
+  vendorItemId: string;
+  itemId: string;
+  priceDiff: number; // 최저가 대비 가격 차이
+}
+
+/**
+ * 그룹화된 상품 아이템 타입
+ */
+export interface GroupedProductItem {
+  productId: number;
+  mainItem: ProductItem; // 대표 상품 (최저가)
+  variants: ProductVariant[]; // 모든 변형 상품들
+  priceRange: {
+    min: number;
+    max: number;
+  };
+  variantCount: number; // 변형 상품 개수
 } 

@@ -23,7 +23,7 @@ export default function RootLayout({
         <AuthProvider>
           <Navbar />
           
-          <main className="mx-auto">
+          <main className="mx-auto pt-24">
             {children}
           </main>
 

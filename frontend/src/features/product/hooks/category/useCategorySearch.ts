@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { ProductItem } from '../../types';
+import { ProductItem, GroupedProductItem } from '../../types';
+import { groupProductsByProductId, flattenGroupedProducts } from '../../utils/product-helpers';
 
 interface CategorySearchOptions {
   categoryId: string;
@@ -13,6 +14,7 @@ interface CategorySearchOptions {
 
 interface UseCategorySearchReturn {
   categoryResults: ProductItem[];
+  groupedCategoryResults: GroupedProductItem[];
   handleCategorySearch: (options: CategorySearchOptions) => Promise<void>;
   loading: boolean;
 }
@@ -24,6 +26,7 @@ interface UseCategorySearchReturn {
  */
 export function useCategorySearch(): UseCategorySearchReturn {
   const [categoryResults, setCategoryResults] = useState<ProductItem[]>([]);
+  const [groupedCategoryResults, setGroupedCategoryResults] = useState<GroupedProductItem[]>([]);
   const [loading, setLoading] = useState(false);
 
   const handleCategorySearch = async (options: CategorySearchOptions) => {
@@ -48,10 +51,22 @@ export function useCategorySearch(): UseCategorySearchReturn {
       if (!res.ok) throw new Error(await res.text());
       const products = await res.json();
       const results = Array.isArray(products) ? products : [];
-      setCategoryResults(results);
       
-      if (results.length > 0) {
-        toast.success(`${results.length}개의 베스트 상품을 찾았습니다`);
+      // 중복 productId 그룹화
+      const groupedResults = groupProductsByProductId(results);
+      setGroupedCategoryResults(groupedResults);
+      
+      // 호환성을 위해 평탄화된 결과도 저장
+      const flattenedResults = flattenGroupedProducts(groupedResults);
+      setCategoryResults(flattenedResults);
+      
+      if (groupedResults.length > 0) {
+        const totalVariants = groupedResults.reduce((sum, group) => sum + group.variantCount, 0);
+        const duplicateCount = totalVariants - groupedResults.length;
+        const message = duplicateCount > 0 
+          ? `${groupedResults.length}개의 베스트 상품을 찾았습니다 (${duplicateCount}개 옵션 포함)`
+          : `${groupedResults.length}개의 베스트 상품을 찾았습니다`;
+        toast.success(message);
       } else {
         toast.error('해당 카테고리에서 상품을 찾을 수 없습니다');
       }
@@ -64,6 +79,7 @@ export function useCategorySearch(): UseCategorySearchReturn {
 
   return {
     categoryResults,
+    groupedCategoryResults,
     handleCategorySearch,
     loading,
   };

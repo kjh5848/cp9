@@ -5,12 +5,13 @@ import { useEffect } from 'react';
 import { Button, Card } from '@/shared/ui';
 import { ScaleOnHover, FadeInSection, StaggeredList } from '@/shared/components/advanced-ui';
 import { useSearchStore } from '../store';
-import { ProductItem, DeepLinkResponse, ViewType } from '../types';
+import { ProductItem, DeepLinkResponse, ViewType, GroupedProductItem } from '../types';
 import { useProductActions } from '../hooks/useProductActions';
 import { isProductItem, isDeepLinkResponse, generateItemId } from '../utils/product-helpers';
 import ActionModal from './ActionModal';
 import SeoLoadingOverlay from './SeoLoadingOverlay';
 import FloatingActionButton from './FloatingActionButton';
+import GroupedProductCard from './GroupedProductCard';
 import { Grid, List, Copy, ExternalLink, Package, Zap, Loader2, Check, Circle } from 'lucide-react';
 
 interface ProductResultViewProps {
@@ -18,6 +19,7 @@ interface ProductResultViewProps {
   viewType: ViewType;
   setViewType: (value: ViewType) => void;
   filteredResults: (ProductItem | DeepLinkResponse)[];
+  groupedResults?: GroupedProductItem[];
   mode?: 'product' | 'deeplink';
 }
 
@@ -66,6 +68,7 @@ export default function ProductResultView({
   viewType,
   setViewType,
   filteredResults,
+  groupedResults = [],
   mode = 'product',
 }: ProductResultViewProps) {
   const { selected, setSelected } = useSearchStore();
@@ -114,7 +117,10 @@ export default function ProductResultView({
           </h3>
           <div className="flex items-center gap-2">
             <span className="px-2 py-1 bg-gray-800 text-gray-300 text-xs sm:text-sm rounded-full">
-              {Array.isArray(filteredResults) ? filteredResults.length : 0}개
+              {groupedResults && groupedResults.length > 0 && mode === 'product' 
+                ? `${groupedResults.length}개` 
+                : `${Array.isArray(filteredResults) ? filteredResults.length : 0}개`
+              }
             </span>
             {selected.length > 0 && (
               <span className="px-2 py-1 bg-blue-600 text-white text-xs sm:text-sm rounded-full animate-pulse">
@@ -174,7 +180,24 @@ export default function ProductResultView({
               : "flex flex-col gap-3"
             } h-full w-full`}
         >
-          {Array.isArray(filteredResults) && filteredResults.map((item, i) => {
+          {/* 그룹화된 상품이 있는 경우 그룹화된 카드 표시 */}
+          {groupedResults && groupedResults.length > 0 && mode === 'product' ? (
+            groupedResults.map((group, i) => {
+              const itemId = group.productId.toString();
+              const isSelected = selected.includes(itemId);
+              
+              return (
+                <GroupedProductCard
+                  key={group.productId}
+                  group={group}
+                  isSelected={isSelected}
+                  onSelect={() => handleSelect(itemId)}
+                />
+              );
+            })
+          ) : (
+            // 기존 방식: 개별 상품 카드 표시
+            Array.isArray(filteredResults) && filteredResults.map((item, i) => {
             // 아이템 ID 생성
             const itemId = generateItemId(item, i);
 
@@ -377,7 +400,8 @@ export default function ProductResultView({
                 </Card>
               </ScaleOnHover>
             );
-          })}
+          })
+          )}
         </StaggeredList>
       )}
 

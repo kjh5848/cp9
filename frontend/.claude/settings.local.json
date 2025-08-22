@@ -27,7 +27,8 @@
       "Bash(git stash:*)",
       "Bash(git rm:*)",
       "Bash(git gc:*)",
-      "Bash(if exist .next rmdir /s /q .next)"
+      "Bash(taskkill:*)",
+      "Bash(cmd.exe:*)"
     ],
     "deny": [],
     "ask": [],

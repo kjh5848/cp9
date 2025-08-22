@@ -2,12 +2,14 @@
 
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { ProductItem } from '../../types';
+import { ProductItem, GroupedProductItem } from '../../types';
+import { groupProductsByProductId, flattenGroupedProducts } from '../../utils/product-helpers';
 
 interface UseKeywordSearchReturn {
   keywordInput: string;
   setKeywordInput: (value: string) => void;
   keywordResults: ProductItem[];
+  groupedKeywordResults: GroupedProductItem[];
   handleKeywordSearch: (keyword?: string, itemCount?: number) => Promise<void>;
   loading: boolean;
 }
@@ -20,6 +22,7 @@ interface UseKeywordSearchReturn {
 export function useKeywordSearch(): UseKeywordSearchReturn {
   const [keywordInput, setKeywordInput] = useState('');
   const [keywordResults, setKeywordResults] = useState<ProductItem[]>([]);
+  const [groupedKeywordResults, setGroupedKeywordResults] = useState<GroupedProductItem[]>([]);
   const [loading, setLoading] = useState(false);
 
   const handleKeywordSearch = async (keyword?: string, itemCount?: number) => {
@@ -55,10 +58,21 @@ export function useKeywordSearch(): UseKeywordSearchReturn {
       
       const results = Array.isArray(data) ? data : [];
       
-      setKeywordResults(results);
+      // 중복 productId 그룹화
+      const groupedResults = groupProductsByProductId(results);
+      setGroupedKeywordResults(groupedResults);
       
-      if (results.length > 0) {
-        toast.success(`${results.length}개의 상품을 찾았습니다`);
+      // 호환성을 위해 평탄화된 결과도 저장
+      const flattenedResults = flattenGroupedProducts(groupedResults);
+      setKeywordResults(flattenedResults);
+      
+      if (groupedResults.length > 0) {
+        const totalVariants = groupedResults.reduce((sum, group) => sum + group.variantCount, 0);
+        const duplicateCount = totalVariants - groupedResults.length;
+        const message = duplicateCount > 0 
+          ? `${groupedResults.length}개의 상품을 찾았습니다 (${duplicateCount}개 옵션 포함)`
+          : `${groupedResults.length}개의 상품을 찾았습니다`;
+        toast.success(message);
       } else {
         toast.error('검색 결과가 없습니다');
       }
@@ -74,6 +88,7 @@ export function useKeywordSearch(): UseKeywordSearchReturn {
     keywordInput,
     setKeywordInput,
     keywordResults,
+    groupedKeywordResults,
     handleKeywordSearch,
     loading,
   };

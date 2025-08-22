@@ -17,7 +17,7 @@ import ProductResultView from './ProductResultView';
 import ProductHistoryView from './ProductHistoryView';
 import { Link, Search, Package, Filter, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
-import type { ProductItem } from '../types';
+import type { ProductItem, GroupedProductItem } from '../types';
 
 export default function ProductClientPage() {
 
@@ -51,12 +51,14 @@ export default function ProductClientPage() {
 
   const {
     keywordResults,
+    groupedKeywordResults,
     handleKeywordSearch: keywordSearchHandler,
     loading: keywordLoading,
   } = useKeywordSearch();
 
   const {
     categoryResults,
+    groupedCategoryResults,
     handleCategorySearch: categorySearchHandler,
     loading: categoryLoading,
   } = useCategorySearch();
@@ -72,9 +74,18 @@ export default function ProductClientPage() {
 
   // 모드별 결과 선택
   let currentResults: ProductItem[] = [];
-  if (mode === 'link') currentResults = linkResults as unknown as ProductItem[]; // TODO: 타입 변환 로직 구현 필요
-  else if (mode === 'keyword') currentResults = keywordResults;
-  else if (mode === 'category') currentResults = categoryResults;
+  let currentGroupedResults: GroupedProductItem[] = [];
+  
+  if (mode === 'link') {
+    currentResults = linkResults as unknown as ProductItem[]; // TODO: 타입 변환 로직 구현 필요
+    currentGroupedResults = []; // 링크 모드는 그룹화 지원 안함
+  } else if (mode === 'keyword') {
+    currentResults = keywordResults;
+    currentGroupedResults = groupedKeywordResults;
+  } else if (mode === 'category') {
+    currentResults = categoryResults;
+    currentGroupedResults = groupedCategoryResults;
+  }
 
   // getFilteredResults에서 currentResults를 사용하고 항상 배열을 반환하도록 보장
   const getFilteredResults = (): ProductItem[] => {
@@ -304,6 +315,7 @@ export default function ProductClientPage() {
                   viewType={viewType}
                   setViewType={setViewType}
                   filteredResults={filteredResults}
+                  groupedResults={currentGroupedResults}
                   // handleDeeplinkConvert={handleDeeplinkConvert}
                   mode={mode === "link" ? "deeplink" : "product"}
                 />

@@ -77,5 +77,5 @@ async function getResearchSession(id: string): Promise<ResearchSession | null> {
   // API 호출 지연 시뮬레이션
   await new Promise(resolve => setTimeout(resolve, 300));
   
-  return getResearchSessionById(id);
+  return getResearchSessionById(id) || null;
 }
