@@ -13,7 +13,11 @@
       "Bash(supabase functions deploy:*)",
       "Bash(gh:*)",
       "Bash(git fetch:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(echo $env:USERPROFILE)",
+      "Bash(where bash)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)"
     ],
     "deny": []
   }
