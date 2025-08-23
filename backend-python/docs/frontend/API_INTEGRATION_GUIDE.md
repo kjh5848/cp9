@@ -53,13 +53,13 @@ const response = await fetch('/api/v1/research/products?return_coupang_preview=t
       product_name: "삼성전자 갤럭시 버드3 프로",
       category: "이어폰/헤드폰",
       price_exact: 189000,
-      // 🆕 쿠팡 실제 API 필드들
-      product_id: 7582946,
-      product_url: "https://www.coupang.com/vp/products/7582946",
-      product_image: "https://thumbnail10.coupangcdn.com/...",
-      is_rocket: true,
-      is_free_shipping: true,
-      category_name: "이어폰/헤드폰",
+      // 🆕 쿠팡 실제 API 필드들 (수정됨)
+      product_id: 7582946,           // productId (실제 쿠팡 API)
+      product_url: "https://www.coupang.com/vp/products/7582946",  // productUrl
+      product_image: "https://thumbnail10.coupangcdn.com/...",     // productImage
+      is_rocket: true,               // isRocket
+      is_free_shipping: true,        // isFreeShipping
+      category_name: "이어폰/헤드폰",  // categoryName
       seller_or_store: "쿠팡"
     }]
   })
@@ -84,8 +84,8 @@ interface ProductItemRequest {
   currency?: string;             // 기본값: "KRW"
   seller_or_store?: string;      // 최대 200자
   
-  // 🆕 쿠팡 API 실제 구조 기반 필드들
-  product_id?: number;           // productId (쿠팡 실제 필드)
+  // 🆕 쿠팡 API 실제 구조 기반 필드들 (2024-08-23 수정)
+  product_id?: number;           // productId (쿠팡 실제 필드, number 타입)
   product_image?: string;        // productImage (쿠팡 실제 필드)
   product_url?: string;          // productUrl (쿠팡 실제 필드)
   is_rocket?: boolean;           // isRocket (쿠팡 실제 필드)
@@ -146,16 +146,16 @@ interface ProductReviews {
   notable_reviews: NotableReview[];
 }
 
-// 🆕 쿠팡 정보 응답
+// 🆕 쿠팡 정보 응답 (실제 API 구조 기준)
 interface CoupangInfo {
-  product_id?: number;         // 쿠팡 제품 ID (productId)
-  product_url?: string;        // 쿠팡 제품 URL (productUrl)
-  product_image?: string;      // 쿠팡 제품 이미지 URL (productImage)
-  is_rocket?: boolean;         // 로켓배송 여부 (isRocket)
-  is_free_shipping?: boolean;  // 무료배송 여부 (isFreeShipping)
-  category_name?: string;      // 쿠팡 카테고리명 (categoryName)
-  product_price?: number;      // 쿠팡 현재 가격 (productPrice)
-  price_comparison?: {         // 가격 비교 정보
+  productId?: number;          // 쿠팡 제품 ID (실제 필드명: productId, number 타입)
+  productUrl?: string;         // 쿠팡 제품 URL (실제 필드명: productUrl)
+  productImage?: string;       // 쿠팡 제품 이미지 URL (실제 필드명: productImage)
+  isRocket?: boolean;          // 로켓배송 여부 (실제 필드명: isRocket)
+  isFreeShipping?: boolean;    // 무료배송 여부 (실제 필드명: isFreeShipping)
+  categoryName?: string;       // 쿠팡 카테고리명 (실제 필드명: categoryName)
+  productPrice?: number;       // 쿠팡 현재 가격 (실제 필드명: productPrice)
+  price_comparison?: {         // 가격 비교 정보 (백엔드에서 계산)
     coupang_current_price: number;
     price_difference: number;
     price_change_percent: number;
@@ -256,11 +256,12 @@ const createCoupangPreviewResearch = async (items: ProductItemRequest[]) => {
     body: JSON.stringify({
       items: items.map(item => ({
         ...item,
-        // 쿠팡 메타데이터 구조화
+        // 쿠팡 메타데이터 구조화 (실제 API 기준)
         metadata: {
           source: "coupang_partners",
           selected_at: new Date().toISOString(),
           frontend_session_id: `session_${Date.now()}`,
+          original_coupang_response: item.metadata?.original_coupang_response,
           ...item.metadata
         }
       })),
@@ -432,13 +433,14 @@ const ProductResearcher: React.FC = () => {
   const [category, setCategory] = useState('');
   const [price, setPrice] = useState('');
   
-  // 🆕 쿠팡 정보 필드들
+  // 🆕 쿠팡 정보 필드들 (실제 API 구조)
   const [coupangInfo, setCoupangInfo] = useState({
-    product_id: '',
-    product_url: '',
-    product_image: '',
-    is_rocket: false,
-    is_free_shipping: false
+    productId: 0,                    // productId (number)
+    productUrl: '',                  // productUrl
+    productImage: '',                // productImage
+    isRocket: false,                 // isRocket
+    isFreeShipping: false,           // isFreeShipping
+    categoryName: ''                 // categoryName
   });
   const [useCoupangPreview, setUseCoupangPreview] = useState(false);
   
@@ -451,13 +453,14 @@ const ProductResearcher: React.FC = () => {
       product_name: productName,
       category,
       price_exact: parseFloat(price),
-      // 🆕 쿠팡 정보 포함 (선택사항)
+      // 🆕 쿠팡 정보 포함 (실제 API 구조)
       ...(useCoupangPreview && {
-        product_id: coupangInfo.product_id ? parseInt(coupangInfo.product_id) : undefined,
-        product_url: coupangInfo.product_url || undefined,
-        product_image: coupangInfo.product_image || undefined,
-        is_rocket: coupangInfo.is_rocket,
-        is_free_shipping: coupangInfo.is_free_shipping,
+        product_id: coupangInfo.productId || undefined,
+        product_url: coupangInfo.productUrl || undefined,
+        product_image: coupangInfo.productImage || undefined,
+        is_rocket: coupangInfo.isRocket,
+        is_free_shipping: coupangInfo.isFreeShipping,
+        category_name: coupangInfo.categoryName || undefined,
         seller_or_store: "쿠팡"
       })
     }];
@@ -519,8 +522,8 @@ const ProductResearcher: React.FC = () => {
                 <label>쿠팡 제품 ID:</label>
                 <input
                   type="number"
-                  value={coupangInfo.product_id}
-                  onChange={(e) => setCoupangInfo(prev => ({ ...prev, product_id: e.target.value }))}
+                  value={coupangInfo.productId}
+                  onChange={(e) => setCoupangInfo(prev => ({ ...prev, productId: parseInt(e.target.value) || 0 }))}
                   placeholder="7582946"
                 />
               </div>
@@ -529,8 +532,8 @@ const ProductResearcher: React.FC = () => {
                 <label>쿠팡 제품 URL:</label>
                 <input
                   type="url"
-                  value={coupangInfo.product_url}
-                  onChange={(e) => setCoupangInfo(prev => ({ ...prev, product_url: e.target.value }))}
+                  value={coupangInfo.productUrl}
+                  onChange={(e) => setCoupangInfo(prev => ({ ...prev, productUrl: e.target.value }))}
                   placeholder="https://www.coupang.com/vp/products/7582946"
                 />
               </div>
@@ -539,8 +542,8 @@ const ProductResearcher: React.FC = () => {
                 <label>제품 이미지 URL:</label>
                 <input
                   type="url"
-                  value={coupangInfo.product_image}
-                  onChange={(e) => setCoupangInfo(prev => ({ ...prev, product_image: e.target.value }))}
+                  value={coupangInfo.productImage}
+                  onChange={(e) => setCoupangInfo(prev => ({ ...prev, productImage: e.target.value }))}
                   placeholder="https://thumbnail10.coupangcdn.com/..."
                 />
               </div>
@@ -549,8 +552,8 @@ const ProductResearcher: React.FC = () => {
                 <label>
                   <input
                     type="checkbox"
-                    checked={coupangInfo.is_rocket}
-                    onChange={(e) => setCoupangInfo(prev => ({ ...prev, is_rocket: e.target.checked }))}
+                    checked={coupangInfo.isRocket}
+                    onChange={(e) => setCoupangInfo(prev => ({ ...prev, isRocket: e.target.checked }))}
                   />
                   로켓배송
                 </label>
@@ -558,8 +561,8 @@ const ProductResearcher: React.FC = () => {
                 <label>
                   <input
                     type="checkbox"
-                    checked={coupangInfo.is_free_shipping}
-                    onChange={(e) => setCoupangInfo(prev => ({ ...prev, is_free_shipping: e.target.checked }))}
+                    checked={coupangInfo.isFreeShipping}
+                    onChange={(e) => setCoupangInfo(prev => ({ ...prev, isFreeShipping: e.target.checked }))}
                   />
                   무료배송
                 </label>
@@ -611,20 +614,20 @@ const ProductResearcher: React.FC = () => {
               {result.coupang_info && (
                 <div className="coupang-info">
                   <h5>🛍️ 쿠팡 정보</h5>
-                  {result.coupang_info.product_image && (
+                  {result.coupang_info.productImage && (
                     <img 
-                      src={result.coupang_info.product_image} 
+                      src={result.coupang_info.productImage} 
                       alt={result.product_name}
                       className="product-image"
                       style={{ width: '100px', height: '100px', objectFit: 'cover' }}
                     />
                   )}
                   <div className="coupang-badges">
-                    {result.coupang_info.is_rocket && <span className="badge rocket">🚀 로켓배송</span>}
-                    {result.coupang_info.is_free_shipping && <span className="badge free-ship">📦 무료배송</span>}
+                    {result.coupang_info.isRocket && <span className="badge rocket">🚀 로켓배송</span>}
+                    {result.coupang_info.isFreeShipping && <span className="badge free-ship">📦 무료배송</span>}
                   </div>
-                  {result.coupang_info.product_price && (
-                    <p><strong>쿠팡 현재가:</strong> {result.coupang_info.product_price.toLocaleString()}원</p>
+                  {result.coupang_info.productPrice && (
+                    <p><strong>쿠팡 현재가:</strong> {result.coupang_info.productPrice.toLocaleString()}원</p>
                   )}
                   {result.coupang_info.price_comparison && (
                     <div className="price-comparison">
@@ -1509,10 +1512,10 @@ const CoupangProductCard: React.FC<{ product: ProductResult }> = ({ product }) =
   
   return (
     <div className="coupang-card">
-      {product.coupang_info.product_image && (
+      {product.coupang_info.productImage && (
         <div className="card-image">
           <img 
-            src={product.coupang_info.product_image} 
+            src={product.coupang_info.productImage} 
             alt={product.product_name}
             loading="lazy"
           />
@@ -1526,25 +1529,25 @@ const CoupangProductCard: React.FC<{ product: ProductResult }> = ({ product }) =
           <span className="current-price">
             {product.price_exact.toLocaleString()}원
           </span>
-          {product.coupang_info.product_price && (
+          {product.coupang_info.productPrice && (
             <span className="coupang-price">
-              쿠팡 {product.coupang_info.product_price.toLocaleString()}원
+              쿠팡 {product.coupang_info.productPrice.toLocaleString()}원
             </span>
           )}
         </div>
         
         <div className="badges">
-          {product.coupang_info.is_rocket && (
+          {product.coupang_info.isRocket && (
             <span className="badge rocket">🚀 로켓배송</span>
           )}
-          {product.coupang_info.is_free_shipping && (
+          {product.coupang_info.isFreeShipping && (
             <span className="badge free-ship">📦 무료배송</span>
           )}
         </div>
         
-        {product.coupang_info.product_url && (
+        {product.coupang_info.productUrl && (
           <a 
-            href={product.coupang_info.product_url}
+            href={product.coupang_info.productUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="coupang-link-btn"
