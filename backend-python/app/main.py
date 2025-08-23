@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import router as api_v1_router
 from app.core.config import settings
+from app.core.constants import API_TAGS
 from app.core.logging import setup_logging
 from app.infra.db.session import close_db, init_db
 
@@ -25,13 +26,46 @@ async def lifespan(app: FastAPI):
     await close_db()
 
 
-# Create FastAPI application
+# Create FastAPI application with enhanced Swagger documentation
 app = FastAPI(
-    title=settings.app_name,
-    description="Research Backend with Clean Architecture",
-    version="0.1.0",
+    title="제품 리서치 API",
+    description="""
+## 🚀 Perplexity AI 기반 제품 정보 리서치 시스템
+
+### 주요 기능
+- **최대 10개 제품 동시 리서치** (환경변수로 조정 가능)
+- **필수 리뷰 데이터 수집** (평점, 리뷰 수)
+- **상세 제품 스펙 및 가격 비교**
+- **신뢰도 높은 출처 우선순위**
+- **실시간 진행 상황 추적**
+- **비동기 처리 및 Celery 백그라운드 작업 지원**
+
+### API 사용법
+1. `POST /api/v1/research/products` - 제품 리서치 요청
+2. `GET /api/v1/research/products/{job_id}` - 결과 조회
+3. `GET /api/v1/research/products/{job_id}/status` - 상태 확인
+
+### 인증
+현재 API는 인증이 필요하지 않습니다. 프로덕션 환경에서는 API 키 인증을 추가하세요.
+    """,
+    version="1.0.0",
     debug=settings.debug,
     lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_tags=API_TAGS,
+    servers=[
+        {"url": "http://localhost:8000", "description": "개발 서버"},
+        {"url": "https://api.example.com", "description": "프로덕션 서버"},
+    ],
+    contact={
+        "name": "API Support",
+        "email": "support@example.com",
+    },
+    license_info={
+        "name": "MIT",
+        "url": "https://opensource.org/licenses/MIT",
+    },
 )
 
 # Configure CORS
