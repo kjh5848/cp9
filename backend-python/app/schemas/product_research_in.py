@@ -47,6 +47,52 @@ class ProductItemRequest(BaseModel):
         description="판매자 또는 스토어명",
         examples=["쿠팡", "11번가"]
     )
+    
+    # Coupang API 실제 구조 기반 필드들
+    product_id: Optional[int] = Field(
+        None,
+        description="쿠팡 제품 ID (productId)",
+        examples=[7582946]
+    )
+    product_image: Optional[str] = Field(
+        None,
+        description="쿠팡 제품 이미지 URL (productImage)",
+        examples=["https://thumbnail10.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/..."]
+    )
+    product_url: Optional[str] = Field(
+        None,
+        description="쿠팡 제품 상세 페이지 URL (productUrl)",
+        examples=["https://www.coupang.com/vp/products/7582946"]
+    )
+    is_rocket: Optional[bool] = Field(
+        None,
+        description="로켓배송 여부 (isRocket)",
+        examples=[True]
+    )
+    is_free_shipping: Optional[bool] = Field(
+        None,
+        description="무료배송 여부 (isFreeShipping)",
+        examples=[True]
+    )
+    category_name: Optional[str] = Field(
+        None,
+        description="쿠팡 카테고리명 (categoryName)",
+        examples=["이어폰/헤드폰"]
+    )
+    
+    # 키워드 검색 전용 필드
+    keyword: Optional[str] = Field(
+        None,
+        description="키워드 검색어 (keyword)",
+        examples=["갤럭시 버드3 프로"]
+    )
+    rank: Optional[int] = Field(
+        None,
+        ge=1,
+        description="키워드 검색 시 순위 (rank)",
+        examples=[1]
+    )
+    
     metadata: Optional[Dict[str, Any]] = Field(
         default_factory=dict,
         description="추가 메타데이터"
@@ -64,11 +110,22 @@ class ProductItemRequest(BaseModel):
         """Pydantic config."""
         json_schema_extra = {
             "example": {
-                "product_name": "베이직스 2024 베이직북 14 N-시리즈",
-                "category": "가전디지털",
-                "price_exact": 388000,
+                "product_name": "삼성전자 갤럭시 버드3 프로",
+                "category": "이어폰/헤드폰",
+                "price_exact": 189000,
                 "currency": "KRW",
-                "seller_or_store": "베이직스 공식몰"
+                "seller_or_store": "쿠팡",
+                "product_id": 7582946,
+                "product_url": "https://www.coupang.com/vp/products/7582946",
+                "product_image": "https://thumbnail10.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/...",
+                "is_rocket": True,
+                "is_free_shipping": True,
+                "category_name": "이어폰/헤드폰",
+                "metadata": {
+                    "source": "coupang_partners",
+                    "selected_at": "2024-08-23T10:30:00Z",
+                    "frontend_session_id": "session_abc123"
+                }
             }
         }
 

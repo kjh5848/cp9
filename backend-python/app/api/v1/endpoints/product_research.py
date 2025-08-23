@@ -43,7 +43,8 @@ router = APIRouter(
 async def create_product_research(
     request: ProductResearchRequest,
     background_tasks: BackgroundTasks,
-    use_celery: bool = Query(False, description="Celery 백그라운드 작업 사용 여부")
+    use_celery: bool = Query(False, description="Celery 백그라운드 작업 사용 여부"),
+    return_coupang_preview: bool = Query(False, description="쿠팡 정보 즉시 리턴 여부")
 ) -> ProductResearchResponse:
     """제품 리서치 작업을 생성합니다.
     
@@ -96,18 +97,67 @@ async def create_product_research(
                 )
             )
         else:
-            # Create async job
-            job = await service.create_research_job(
-                items=items,
-                priority=request.priority,
-                callback_url=request.callback_url
-            )
+            # Check if Coupang preview is requested
+            if return_coupang_preview:
+                # Create job with immediate Coupang preview
+                job = await service.create_research_job_with_coupang_preview(
+                    items=items,
+                    priority=request.priority,
+                    callback_url=request.callback_url
+                )
+            else:
+                # Create regular async job
+                job = await service.create_research_job(
+                    items=items,
+                    priority=request.priority,
+                    callback_url=request.callback_url
+                )
+            
+            # Convert results to response format
+            results = []
+            if return_coupang_preview and job.results:
+                for result in job.results:
+                    # Extract Coupang info from metadata for response
+                    coupang_info = None
+                    if "coupang_info" in result.metadata:
+                        coupang_metadata = result.metadata["coupang_info"]
+                        from app.schemas.product_research_out import CoupangInfoResponse
+                        coupang_info = CoupangInfoResponse(
+                            product_id=coupang_metadata.get("product_id"),
+                            product_url=coupang_metadata.get("product_url"),
+                            product_image=coupang_metadata.get("product_image"),
+                            is_rocket=coupang_metadata.get("is_rocket"),
+                            is_free_shipping=coupang_metadata.get("is_free_shipping"),
+                            category_name=coupang_metadata.get("category_name"),
+                            product_price=result.price_exact
+                        )
+                    
+                    results.append(ProductResultResponse(
+                        product_name=result.product_name,
+                        brand=result.brand,
+                        category=result.category,
+                        model_or_variant=result.model_or_variant,
+                        price_exact=result.price_exact,
+                        currency=result.currency,
+                        seller_or_store=result.seller_or_store,
+                        deeplink_or_product_url=result.deeplink_or_product_url,
+                        coupang_price=result.coupang_price,
+                        coupang_info=coupang_info,
+                        specs=result.specs,
+                        reviews=result.reviews,
+                        sources=result.sources,
+                        captured_at=result.captured_at,
+                        status=result.status.value,
+                        error_message=result.error_message,
+                        missing_fields=result.missing_fields,
+                        suggested_queries=result.suggested_queries
+                    ))
             
             # Convert to response
             return ProductResearchResponse(
                 job_id=job.id,
                 status=job.status.value,
-                results=[],
+                results=results,
                 metadata=ResearchMetadataResponse(
                     total_items=job.total_items,
                     successful_items=job.successful_items,

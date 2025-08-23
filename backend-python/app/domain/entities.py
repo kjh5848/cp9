@@ -24,6 +24,7 @@ class ResultStatus(str, Enum):
     SUCCESS = "success"
     ERROR = "error"
     SKIPPED = "skipped"
+    COUPANG_PREVIEW = "coupang_preview"
 
 
 @dataclass

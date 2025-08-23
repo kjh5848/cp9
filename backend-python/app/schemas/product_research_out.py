@@ -7,6 +7,43 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 
+class CoupangInfoResponse(BaseModel):
+    """Coupang product information response schema."""
+    
+    product_id: Optional[int] = Field(None, description="쿠팡 제품 ID (productId)")
+    product_url: Optional[str] = Field(None, description="쿠팡 제품 URL (productUrl)")
+    product_image: Optional[str] = Field(None, description="쿠팡 제품 이미지 URL (productImage)")
+    is_rocket: Optional[bool] = Field(None, description="로켓배송 여부 (isRocket)")
+    is_free_shipping: Optional[bool] = Field(None, description="무료배송 여부 (isFreeShipping)")
+    category_name: Optional[str] = Field(None, description="쿠팡 카테고리명 (categoryName)")
+    product_price: Optional[float] = Field(None, description="쿠팡 현재 가격 (productPrice)")
+    
+    # 가격 비교 정보
+    price_comparison: Optional[Dict[str, float]] = Field(
+        None,
+        description="가격 비교 정보"
+    )
+    
+    class Config:
+        """Pydantic config."""
+        json_schema_extra = {
+            "example": {
+                "product_id": 7582946,
+                "product_url": "https://www.coupang.com/vp/products/7582946",
+                "product_image": "https://thumbnail10.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/...",
+                "is_rocket": True,
+                "is_free_shipping": True,
+                "category_name": "이어폰/헤드폰",
+                "product_price": 189000,
+                "price_comparison": {
+                    "coupang_current_price": 185000,
+                    "price_difference": 4000,
+                    "price_change_percent": 2.1
+                }
+            }
+        }
+
+
 class ProductAttributeResponse(BaseModel):
     """Product attribute response schema."""
     
@@ -149,6 +186,13 @@ class ProductResultResponse(BaseModel):
     seller_or_store: Optional[str] = Field(None, description="판매자 또는 스토어")
     deeplink_or_product_url: Optional[str] = Field(None, description="제품 상세 URL")
     coupang_price: Optional[float] = Field(None, description="쿠팡 가격")
+    
+    # 쿠팡 정보 (실제 API 구조 기준)
+    coupang_info: Optional[CoupangInfoResponse] = Field(
+        None,
+        description="쿠팡 제품 정보"
+    )
+    
     specs: ProductSpecsResponse = Field(
         default_factory=ProductSpecsResponse,
         description="제품 스펙"

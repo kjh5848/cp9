@@ -105,6 +105,19 @@ class ProductResearchItem:
     price_exact: float
     currency: str = "KRW"
     seller_or_store: Optional[str] = None
+    
+    # Coupang API 실제 구조 기반 필드들
+    product_id: Optional[int] = None
+    product_image: Optional[str] = None
+    product_url: Optional[str] = None
+    is_rocket: Optional[bool] = None
+    is_free_shipping: Optional[bool] = None
+    category_name: Optional[str] = None
+    
+    # 키워드 검색 전용 필드
+    keyword: Optional[str] = None
+    rank: Optional[int] = None
+    
     metadata: Dict[str, Any] = field(default_factory=dict)
     
     def __post_init__(self) -> None:
@@ -124,6 +137,14 @@ class ProductResearchItem:
             "price_exact": self.price_exact,
             "currency": self.currency,
             "seller_or_store": self.seller_or_store,
+            "product_id": self.product_id,
+            "product_image": self.product_image,
+            "product_url": self.product_url,
+            "is_rocket": self.is_rocket,
+            "is_free_shipping": self.is_free_shipping,
+            "category_name": self.category_name,
+            "keyword": self.keyword,
+            "rank": self.rank,
             "metadata": self.metadata
         }
 
