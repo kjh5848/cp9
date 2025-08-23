@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { ViewMode } from '../types';
+import { useState, useMemo } from 'react';
+import { ViewMode, CoupangProduct } from '../types';
 import ViewSwitcher from './ViewSwitcher';
 import ResearchHeader from './ResearchHeader';
 import GalleryView from './views/GalleryView';
@@ -23,13 +23,37 @@ export default function ResearchPageClient({ currentSessionId = '1' }: ResearchP
   const [viewMode, setViewMode] = useState<ViewMode>('card');
   const { data, loading, error } = useResearchData();
 
-  // 뷰 컴포넌트 매핑
-  const ViewComponent = {
-    gallery: GalleryView,
-    card: CardView,
-    table: TableView,
-    blog: BlogView
-  }[viewMode];
+  // ResearchItem을 CoupangProduct로 변환하는 메모화된 함수
+  const coupangProducts = useMemo((): CoupangProduct[] => {
+    return data.map((item, index) => ({
+      productName: item.productName,
+      productImage: item.productImage,
+      productPrice: item.productPrice,
+      productUrl: item.productUrl,
+      productId: parseInt(item.productId) || index + 1,
+      isRocket: false, // ResearchItem에는 없는 정보
+      isFreeShipping: false, // ResearchItem에는 없는 정보
+      categoryName: item.category
+    }));
+  }, [data]);
+
+  // 뷰 컴포넌트 매핑 (GalleryView는 별도 처리)
+  const getViewComponent = () => {
+    switch (viewMode) {
+      case 'card':
+        return CardView;
+      case 'table':
+        return TableView;
+      case 'blog':
+        return BlogView;
+      case 'gallery':
+        return null; // 별도 처리
+      default:
+        return null;
+    }
+  };
+
+  const ViewComponent = getViewComponent();
 
   if (loading) {
     return (
@@ -75,7 +99,15 @@ export default function ResearchPageClient({ currentSessionId = '1' }: ResearchP
       {/* 컨텐츠 영역 */}
       <div className="container mx-auto px-4 pb-12">
         {data.length > 0 ? (
-          <ViewComponent data={data} currentSessionId={currentSessionId} />
+          viewMode === 'gallery' ? (
+            <GalleryView products={coupangProducts} />
+          ) : ViewComponent ? (
+            <ViewComponent data={data} currentSessionId={currentSessionId} />
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-gray-400 text-lg">선택하신 뷰 모드를 처리할 수 없습니다</p>
+            </div>
+          )
         ) : (
           <div className="text-center py-12">
             <p className="text-gray-400 text-lg">표시할 리서치 결과가 없습니다</p>

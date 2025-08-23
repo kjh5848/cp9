@@ -5,6 +5,7 @@ import ResearchDetail from './ResearchDetail';
 import { Loader2, AlertCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { FadeInSection } from '@/shared/components/advanced-ui';
+import { CoupangProduct, ProductResult } from '../types';
 
 interface ResearchIdPageClientProps {
   sessionId: string;
@@ -79,7 +80,85 @@ export default function ResearchIdPageClient({ sessionId }: ResearchIdPageClient
         </div>
 
         {/* 리서치 상세 컴포넌트 */}
-        <ResearchDetail session={session} />
+        {session.products.length > 0 ? (
+          <div className="space-y-8">
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-white mb-2">{session.title}</h1>
+              <p className="text-gray-300 max-w-3xl mx-auto">{session.description}</p>
+              <div className="flex items-center justify-center gap-4 mt-4">
+                <span className="px-3 py-1 bg-blue-600/20 text-blue-400 rounded-full text-sm">
+                  {session.category_focus}
+                </span>
+                <span className="text-gray-400 text-sm">
+                  {session.total_products}개 제품 분석
+                </span>
+                <span className="text-gray-400 text-sm">
+                  {session.created_at} 생성
+                </span>
+              </div>
+            </div>
+            
+            {/* 제품별 상세 정보 */}
+            {session.products.map((product, index) => {
+              // ResearchProduct를 ResearchDetail에 필요한 형태로 변환
+              const coupangProduct = {
+                productName: product.product_name,
+                productImage: `/api/placeholder/400/400?text=${encodeURIComponent(product.product_name)}`,
+                productPrice: product.price_exact,
+                productUrl: product.deeplink_or_product_url || '#',
+                productId: index + 1,
+                isRocket: false,
+                isFreeShipping: false,
+                categoryName: product.category
+              };
+
+              const researchResult = {
+                product_name: product.product_name,
+                brand: product.brand,
+                category: product.category,
+                model_or_variant: product.model_or_variant,
+                price_exact: product.price_exact,
+                currency: product.currency,
+                seller_or_store: product.seller_or_store || '',
+                deeplink_or_product_url: product.deeplink_or_product_url || '',
+                coupang_price: undefined,
+                specs: {
+                  main: product.specs_or_features.main_specs,
+                  attributes: product.specs_or_features.attributes,
+                  size_or_weight: product.specs_or_features.size_or_weight,
+                  options: product.specs_or_features.color_options,
+                  included_items: product.specs_or_features.included_items
+                },
+                reviews: {
+                  rating_avg: 0,
+                  review_count: 0,
+                  summary_positive: [],
+                  summary_negative: [],
+                  notable_reviews: []
+                },
+                sources: [],
+                captured_at: session.created_at,
+                status: 'success' as const
+              };
+
+              return (
+                <div key={product.product_name} className="mb-12">
+                  <ResearchDetail 
+                    coupangProduct={coupangProduct}
+                    researchResult={researchResult}
+                  />
+                  {index < session.products.length - 1 && (
+                    <div className="border-t border-gray-700 mt-12"></div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-gray-400">이 세션에는 분석된 제품이 없습니다.</p>
+          </div>
+        )}
       </div>
     </div>
   );

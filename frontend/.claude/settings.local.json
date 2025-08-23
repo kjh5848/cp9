@@ -28,7 +28,10 @@
       "Bash(git rm:*)",
       "Bash(git gc:*)",
       "Bash(taskkill:*)",
-      "Bash(cmd.exe:*)"
+      "Bash(cmd.exe:*)",
+      "Read(/C:\\Users\\kjh58\\문서\\GitHub\\cp9\\backend-python\\docs/**)",
+      "Bash(grep:*)",
+      "Read(/C:\\Users\\kjh58\\문서\\GitHub\\cp9\\backend-python\\docs\\frontend/**)"
     ],
     "deny": [],
     "ask": [],
