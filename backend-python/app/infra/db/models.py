@@ -31,7 +31,7 @@ class ResearchJobModel(Base):
     total_items = Column(Integer, nullable=False, default=0)
     processed_items = Column(Integer, nullable=False, default=0)
     failed_items = Column(Integer, nullable=False, default=0)
-    metadata = Column(JSON, nullable=False, default=dict)
+    meta_data = Column(JSON, nullable=False, default=dict)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     started_at = Column(DateTime, nullable=True)
@@ -59,7 +59,7 @@ class ItemModel(Base):
     price = Column(Float, nullable=False)
     category = Column(String(255), nullable=True)
     hash = Column(String(64), nullable=False, index=True)
-    metadata = Column(JSON, nullable=False, default=dict)
+    meta_data = Column(JSON, nullable=False, default=dict)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     # Relationships
