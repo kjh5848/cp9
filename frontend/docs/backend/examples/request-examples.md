@@ -15,17 +15,19 @@ interface ProductItemRequest {
   metadata?: Record<string, any>;
 }
 
-// 확장된 타입 (수정 후)
+// 확장된 타입 (실제 쿠팡 API 기준)
 interface EnhancedProductItemRequest extends ProductItemRequest {
-  coupang_product_id?: string;
-  coupang_product_url?: string;
-  product_image_url?: string;
-  is_rocket_delivery?: boolean;
-  review_count?: number;
-  rating_average?: number;
+  product_id?: number;            // 실제: productId (number)
+  product_url?: string;           // 실제: productUrl
+  product_image?: string;         // 실제: productImage
+  is_rocket?: boolean;            // 실제: isRocket
+  is_free_shipping?: boolean;     // 실제: isFreeShipping
+  category_name?: string;         // 실제: categoryName
+  keyword?: string;               // 키워드 검색용
+  rank?: number;                  // 검색 순위
   metadata?: {
     source: "coupang_partners";
-    original_data?: any;
+    original_coupang_response?: any;
     selected_at?: string;
     frontend_session_id?: string;
   }
@@ -63,22 +65,25 @@ const enhancedSingleRequest = {
       currency: "KRW",
       seller_or_store: "쿠팡",
       
-      // 쿠팡 추가 정보
-      coupang_product_id: "7582946",
-      coupang_product_url: "https://www.coupang.com/vp/products/7582946",
-      product_image_url: "https://thumbnail10.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/2024/07/10/11/0/c2f8e8d4-8b2e-4f7e-9c84-7a3b9e5f8d12.jpg",
-      is_rocket_delivery: true,
-      review_count: 1247,
-      rating_average: 4.3,
+      // 쿠팡 추가 정보 (실제 API 기준)
+      product_id: 7582946,
+      product_url: "https://www.coupang.com/vp/products/7582946",
+      product_image: "https://thumbnail10.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/2024/07/10/11/0/c2f8e8d4-8b2e-4f7e-9c84-7a3b9e5f8d12.jpg",
+      is_rocket: true,
+      is_free_shipping: true,
+      category_name: "이어폰/헤드폰",
       
       metadata: {
         source: "coupang_partners",
         selected_at: "2024-08-23T10:30:00Z",
         frontend_session_id: "session_abc123",
-        original_data: {
+        original_coupang_response: {
           productId: 7582946,
-          vendorItemId: 21234567890,
-          categoryId: 456789
+          productName: "삼성전자 갤럭시 버드3 프로",
+          productPrice: 189000,
+          categoryName: "이어폰/헤드폰",
+          isRocket: true,
+          isFreeShipping: true
         }
       }
     }
@@ -100,12 +105,12 @@ const multipleProductsRequest = {
       product_name: "레노버 IdeaPad Slim 1",
       category: "노트북",
       price_exact: 298000,
-      coupang_product_id: "1234567",
-      coupang_product_url: "https://www.coupang.com/vp/products/1234567",
-      product_image_url: "https://thumbnail10.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/lenovo-ideapad.jpg",
-      is_rocket_delivery: true,
-      review_count: 892,
-      rating_average: 4.1,
+      product_id: 1234567,
+      product_url: "https://www.coupang.com/vp/products/1234567",
+      product_image: "https://thumbnail10.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/lenovo-ideapad.jpg",
+      is_rocket: true,
+      is_free_shipping: false,
+      category_name: "노트북",
       seller_or_store: "쿠팡",
       metadata: {
         source: "coupang_partners",
@@ -117,12 +122,12 @@ const multipleProductsRequest = {
       product_name: "ASUS VivoBook 15",
       category: "노트북",
       price_exact: 359000,
-      coupang_product_id: "2345678",
-      coupang_product_url: "https://www.coupang.com/vp/products/2345678",
-      product_image_url: "https://thumbnail10.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/asus-vivobook.jpg",
-      is_rocket_delivery: false,
-      review_count: 567,
-      rating_average: 4.0,
+      product_id: 2345678,
+      product_url: "https://www.coupang.com/vp/products/2345678",
+      product_image: "https://thumbnail10.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/asus-vivobook.jpg",
+      is_rocket: false,
+      is_free_shipping: true,
+      category_name: "노트북",
       seller_or_store: "쿠팡",
       metadata: {
         source: "coupang_partners",
@@ -134,12 +139,12 @@ const multipleProductsRequest = {
       product_name: "HP 15s",
       category: "노트북", 
       price_exact: 419000,
-      coupang_product_id: "3456789",
-      coupang_product_url: "https://www.coupang.com/vp/products/3456789",
-      product_image_url: "https://thumbnail10.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/hp-15s.jpg",
-      is_rocket_delivery: true,
-      review_count: 1043,
-      rating_average: 4.2,
+      product_id: 3456789,
+      product_url: "https://www.coupang.com/vp/products/3456789",
+      product_image: "https://thumbnail10.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/hp-15s.jpg",
+      is_rocket: true,
+      is_free_shipping: true,
+      category_name: "노트북",
       seller_or_store: "쿠팡",
       metadata: {
         source: "coupang_partners",
@@ -167,12 +172,12 @@ const advancedOptionsRequest = {
       product_name: "iPhone 15 Pro 128GB",
       category: "스마트폰",
       price_exact: 1350000,
-      coupang_product_id: "9876543",
-      coupang_product_url: "https://www.coupang.com/vp/products/9876543",
-      product_image_url: "https://thumbnail10.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/iphone15pro.jpg",
-      is_rocket_delivery: true,
-      review_count: 2847,
-      rating_average: 4.7,
+      product_id: 9876543,
+      product_url: "https://www.coupang.com/vp/products/9876543",
+      product_image: "https://thumbnail10.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/iphone15pro.jpg",
+      is_rocket: true,
+      is_free_shipping: false,
+      category_name: "스마트폰",
       seller_or_store: "쿠팡",
       metadata: {
         source: "coupang_partners",
@@ -189,12 +194,12 @@ const advancedOptionsRequest = {
       product_name: "갤럭시 S24 Ultra 256GB",
       category: "스마트폰",
       price_exact: 1298000,
-      coupang_product_id: "8765432",
-      coupang_product_url: "https://www.coupang.com/vp/products/8765432",
-      product_image_url: "https://thumbnail10.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/galaxy-s24-ultra.jpg",
-      is_rocket_delivery: true,
-      review_count: 1954,
-      rating_average: 4.5,
+      product_id: 8765432,
+      product_url: "https://www.coupang.com/vp/products/8765432",
+      product_image: "https://thumbnail10.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/galaxy-s24-ultra.jpg",
+      is_rocket: true,
+      is_free_shipping: true,
+      category_name: "스마트폰",
       seller_or_store: "쿠팡",
       metadata: {
         source: "coupang_partners",
@@ -257,19 +262,19 @@ export const useBackendResearch = () => {
         currency: "KRW",
         seller_or_store: "쿠팡",
         
-        // 쿠팡 추가 정보
-        coupang_product_id: product.productId.toString(),
-        coupang_product_url: product.productUrl,
-        product_image_url: product.productImage,
-        is_rocket_delivery: product.isRocket,
-        review_count: product.reviewCount || 0,
-        rating_average: product.rating || 0,
+        // 쿠팡 추가 정보 (실제 API 기준)
+        product_id: product.productId,
+        product_url: product.productUrl,
+        product_image: product.productImage,
+        is_rocket: product.isRocket,
+        is_free_shipping: product.isFreeShipping,
+        category_name: product.categoryName,
         
         metadata: {
           source: "coupang_partners" as const,
           selected_at: new Date().toISOString(),
           frontend_session_id: `session_${Date.now()}`,
-          original_data: product
+          original_coupang_response: product
         }
       }));
 

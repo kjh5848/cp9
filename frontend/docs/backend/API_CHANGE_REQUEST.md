@@ -21,7 +21,7 @@ interface ProductItemRequest {
 
 ### 1. 쿠팡 제품 정보 필드 추가
 
-#### A. 필수 추가 필드
+#### A. 실제 쿠팡 API 구조 기반 추가 필드
 ```typescript
 interface ProductItemRequest {
   // 기존 필드
@@ -29,13 +29,17 @@ interface ProductItemRequest {
   category: string;
   price_exact: number;
   
-  // 🆕 추가 요청 필드
-  coupang_product_id?: string;    // 쿠팡 제품 ID
-  coupang_product_url?: string;   // 쿠팡 제품 페이지 URL
-  product_image_url?: string;     // 제품 이미지 URL
-  is_rocket_delivery?: boolean;   // 로켓배송 여부
-  review_count?: number;          // 리뷰 개수
-  rating_average?: number;        // 평균 평점 (0-5)
+  // 🆕 쿠팡 API 실제 구조 기반 추가 요청 필드
+  product_id?: number;            // productId (쿠팡 실제 필드)
+  product_image?: string;         // productImage (쿠팡 실제 필드)
+  product_url?: string;           // productUrl (쿠팡 실제 필드)
+  is_rocket?: boolean;            // isRocket (쿠팡 실제 필드)
+  is_free_shipping?: boolean;     // isFreeShipping (쿠팡 실제 필드)
+  category_name?: string;         // categoryName (쿠팡에서 이미 제공)
+  
+  // 키워드 검색 전용 필드
+  keyword?: string;               // keyword (키워드 검색 시)
+  rank?: number;                  // rank (키워드 검색 시 순위)
   
   // 기존 옵션 필드 활용
   seller_or_store: "쿠팡";        // 기본값으로 "쿠팡" 설정
@@ -43,7 +47,7 @@ interface ProductItemRequest {
   metadata?: {
     // 🆕 메타데이터 구조화 요청
     source: "coupang_partners";
-    original_data?: any;         // 원본 쿠팡 API 응답 보관용
+    original_coupang_response?: any; // 원본 쿠팡 API 응답 보관용
     selected_at?: string;        // 선택된 시간 (ISO string)
     frontend_session_id?: string; // 프론트엔드 세션 추적용
   }
@@ -61,14 +65,15 @@ interface ProductResult {
   category: string;
   price_exact: number;
   
-  // 🆕 쿠팡 관련 응답 필드 추가 요청
+  // 🆕 쿠팡 관련 응답 필드 추가 요청 (실제 쿠팡 API 기준)
   coupang_info?: {
-    product_id?: string;
-    product_url?: string;
-    image_url?: string;
-    is_rocket_delivery?: boolean;
-    review_count?: number;
-    rating_average?: number;
+    productId?: number;            // 실제 쿠팡 API: productId (number)
+    productUrl?: string;           // 실제 쿠팡 API: productUrl
+    productImage?: string;         // 실제 쿠팡 API: productImage
+    isRocket?: boolean;            // 실제 쿠팡 API: isRocket
+    isFreeShipping?: boolean;      // 실제 쿠팡 API: isFreeShipping
+    categoryName?: string;         // 실제 쿠팡 API: categoryName
+    productPrice?: number;         // 실제 쿠팡 API: productPrice
     price_comparison?: {
       coupang_current_price: number;
       price_difference: number;      // 요청가격 - 현재가격
@@ -106,24 +111,24 @@ interface ProductResearchRequest {
 
 ### 시나리오 1: 프론트엔드에서 쿠팡 제품 선택 후 리서치
 ```typescript
-// 프론트엔드에서 보낼 데이터
+// 프론트엔드에서 보낼 데이터 (실제 쿠팡 API 기준)
 const researchRequest = {
   items: [
     {
       product_name: "삼성전자 갤럭시 버드3 프로",
       category: "이어폰/헤드폰",
       price_exact: 189000,
-      coupang_product_id: "7582946",
-      coupang_product_url: "https://www.coupang.com/vp/products/7582946",
-      product_image_url: "https://thumbnail10.coupangcdn.com/...",
-      is_rocket_delivery: true,
-      review_count: 1247,
-      rating_average: 4.3,
+      product_id: 7582946,                    // 실제: productId (number)
+      product_url: "https://www.coupang.com/vp/products/7582946", // 실제: productUrl
+      product_image: "https://thumbnail10.coupangcdn.com/...",    // 실제: productImage
+      is_rocket: true,                        // 실제: isRocket
+      is_free_shipping: true,                 // 실제: isFreeShipping
+      category_name: "이어폰/헤드폰",          // 실제: categoryName
       seller_or_store: "쿠팡",
       metadata: {
         source: "coupang_partners",
         selected_at: "2024-08-23T10:30:00Z",
-        frontend_session_id: "session_abc123"
+        frontend_session_id: "session_abc123"   
       }
     }
   ],
@@ -138,7 +143,7 @@ const researchRequest = {
 
 ### 시나리오 2: 백엔드 응답에서 쿠팡 정보 활용
 ```typescript
-// 백엔드 응답 예시
+// 백엔드 응답 예시 (실제 쿠팡 API 기준)
 {
   job_id: "research_456def",
   status: "success",
@@ -149,14 +154,15 @@ const researchRequest = {
       category: "이어폰/헤드폰",
       price_exact: 189000,
       
-      // 쿠팡 정보 포함
+      // 쿠팡 정보 포함 (실제 API 구조 기준)
       coupang_info: {
-        product_id: "7582946",
-        product_url: "https://www.coupang.com/vp/products/7582946",
-        image_url: "https://thumbnail10.coupangcdn.com/...",
-        is_rocket_delivery: true,
-        review_count: 1247,
-        rating_average: 4.3,
+        productId: 7582946,                   // 실제: productId (number)
+        productUrl: "https://www.coupang.com/vp/products/7582946", // 실제: productUrl
+        productImage: "https://thumbnail10.coupangcdn.com/...",    // 실제: productImage
+        isRocket: true,                       // 실제: isRocket
+        isFreeShipping: true,                 // 실제: isFreeShipping
+        categoryName: "이어폰/헤드폰",         // 실제: categoryName
+        productPrice: 189000,                 // 실제: productPrice
         price_comparison: {
           coupang_current_price: 185000,
           price_difference: 4000,
@@ -205,8 +211,8 @@ const researchRequest = {
 ## ⚡ 우선순위
 
 ### Phase 1 (필수)
-1. `coupang_product_url`, `product_image_url` 필드 추가
-2. 응답에서 쿠팡 정보 반환
+1. `product_url`, `product_image` 필드 추가 (실제 쿠팡 API 필드명)
+2. 응답에서 쿠팡 정보 반환 (실제 API 구조 기준)
 3. 하위 호환성 보장
 
 ### Phase 2 (권장)

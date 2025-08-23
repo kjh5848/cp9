@@ -25,15 +25,16 @@ interface ProductResult {
   suggested_queries: string[];
 }
 
-// 확장된 응답 타입 (수정 후)
+// 확장된 응답 타입 (실제 쿠팡 API 기준)
 interface EnhancedProductResult extends ProductResult {
   coupang_info?: {
-    product_id?: string;
-    product_url?: string;
-    image_url?: string;
-    is_rocket_delivery?: boolean;
-    review_count?: number;
-    rating_average?: number;
+    productId?: number;            // 실제: productId (number)
+    productUrl?: string;           // 실제: productUrl
+    productImage?: string;         // 실제: productImage
+    isRocket?: boolean;            // 실제: isRocket
+    isFreeShipping?: boolean;      // 실제: isFreeShipping
+    categoryName?: string;         // 실제: categoryName
+    productPrice?: number;         // 실제: productPrice
     price_comparison?: {
       coupang_current_price: number;
       price_difference: number;
@@ -63,12 +64,13 @@ interface EnhancedProductResult extends ProductResult {
       "deeplink_or_product_url": "https://link.coupang.com/a/bVnqQR",
       
       "coupang_info": {
-        "product_id": "7582946",
-        "product_url": "https://www.coupang.com/vp/products/7582946",
-        "image_url": "https://thumbnail10.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/2024/07/10/11/0/c2f8e8d4-8b2e-4f7e-9c84-7a3b9e5f8d12.jpg",
-        "is_rocket_delivery": true,
-        "review_count": 1247,
-        "rating_average": 4.3,
+        "productId": 7582946,
+        "productUrl": "https://www.coupang.com/vp/products/7582946",
+        "productImage": "https://thumbnail10.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/2024/07/10/11/0/c2f8e8d4-8b2e-4f7e-9c84-7a3b9e5f8d12.jpg",
+        "isRocket": true,
+        "isFreeShipping": true,
+        "categoryName": "이어폰/헤드폰",
+        "productPrice": 189000,
         "price_comparison": {
           "coupang_current_price": 185000,
           "price_difference": 4000,
@@ -172,12 +174,13 @@ interface EnhancedProductResult extends ProductResult {
       "deeplink_or_product_url": "https://link.coupang.com/a/bVnqQS",
       
       "coupang_info": {
-        "product_id": "1234567",
-        "product_url": "https://www.coupang.com/vp/products/1234567",
-        "image_url": "https://thumbnail10.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/lenovo-ideapad.jpg",
-        "is_rocket_delivery": true,
-        "review_count": 892,
-        "rating_average": 4.1,
+        "productId": 1234567,
+        "productUrl": "https://www.coupang.com/vp/products/1234567",
+        "productImage": "https://thumbnail10.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/lenovo-ideapad.jpg",
+        "isRocket": true,
+        "isFreeShipping": false,
+        "categoryName": "노트북",
+        "productPrice": 298000,
         "price_comparison": {
           "coupang_current_price": 295000,
           "price_difference": 3000,
@@ -241,12 +244,13 @@ interface EnhancedProductResult extends ProductResult {
       "deeplink_or_product_url": "https://link.coupang.com/a/bVnqQT",
       
       "coupang_info": {
-        "product_id": "2345678",
-        "product_url": "https://www.coupang.com/vp/products/2345678",
-        "image_url": "https://thumbnail10.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/asus-vivobook.jpg",
-        "is_rocket_delivery": false,
-        "review_count": 567,
-        "rating_average": 4.0,
+        "productId": 2345678,
+        "productUrl": "https://www.coupang.com/vp/products/2345678",
+        "productImage": "https://thumbnail10.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/asus-vivobook.jpg",
+        "isRocket": false,
+        "isFreeShipping": true,
+        "categoryName": "노트북",
+        "productPrice": 359000,
         "price_comparison": {
           "coupang_current_price": 359000,
           "price_difference": 0,
@@ -325,12 +329,13 @@ interface EnhancedProductResult extends ProductResult {
       "seller_or_store": "쿠팡",
       
       "coupang_info": {
-        "product_id": "9999999",
-        "product_url": "https://www.coupang.com/vp/products/9999999",
-        "image_url": "https://thumbnail10.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/no-image.jpg",
-        "is_rocket_delivery": false,
-        "review_count": 0,
-        "rating_average": 0
+        "productId": 9999999,
+        "productUrl": "https://www.coupang.com/vp/products/9999999",
+        "productImage": "https://thumbnail10.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/no-image.jpg",
+        "isRocket": false,
+        "isFreeShipping": false,
+        "categoryName": "기타",
+        "productPrice": 99000
       },
       
       "specs": {
@@ -400,7 +405,7 @@ const GalleryCard = ({ product }: { product: EnhancedProductResult }) => {
     <div className="gallery-card">
       {/* 쿠팡 원본 이미지 사용 */}
       <img 
-        src={product.coupang_info?.image_url || '/default-image.jpg'} 
+        src={product.coupang_info?.productImage || '/default-image.jpg'} 
         alt={product.product_name}
       />
       
@@ -420,19 +425,17 @@ const GalleryCard = ({ product }: { product: EnhancedProductResult }) => {
       
       {/* 배지들 */}
       <div className="badges">
-        {product.coupang_info?.is_rocket_delivery && (
+        {product.coupang_info?.isRocket && (
           <span className="rocket-badge">🚀 로켓배송</span>
         )}
-        {product.coupang_info?.rating_average && (
-          <span className="rating-badge">
-            ⭐ {product.coupang_info.rating_average} ({product.coupang_info.review_count})
-          </span>
+        {product.coupang_info?.isFreeShipping && (
+          <span className="shipping-badge">🚚 무료배송</span>
         )}
       </div>
       
       {/* 링크 버튼들 */}
       <div className="action-buttons">
-        <a href={product.coupang_info?.product_url} target="_blank">
+        <a href={product.coupang_info?.productUrl} target="_blank">
           쿠팡에서 보기
         </a>
         <a href={product.deeplink_or_product_url} target="_blank">
@@ -452,7 +455,7 @@ const ProductDetail = ({ product }: { product: EnhancedProductResult }) => {
     <div className="product-detail">
       {/* 헤더 섹션 */}
       <div className="product-header">
-        <img src={product.coupang_info?.image_url} />
+        <img src={product.coupang_info?.productImage} />
         <div>
           <h1>{product.product_name}</h1>
           <p>{product.brand} • {product.model_or_variant}</p>
