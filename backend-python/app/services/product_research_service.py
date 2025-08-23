@@ -143,7 +143,7 @@ class ProductResearchService:
         return job
     
     def _extract_coupang_info(self, item: ProductResearchItem) -> Optional[ProductResearchResult]:
-        """Extract Coupang information from item if available.
+        """Extract Coupang information from item with enhanced error handling.
         
         Args:
             item: Product research item
@@ -151,48 +151,83 @@ class ProductResearchService:
         Returns:
             ProductResearchResult with Coupang preview or None
         """
-        # Check if item has Coupang information
-        if not any([item.product_id, item.product_url, item.product_image]):
+        try:
+            # Check if item has Coupang information
+            available_fields = []
+            missing_fields = []
+            
+            # Check key fields
+            key_fields = ["product_id", "product_url", "product_image"]
+            for field in key_fields:
+                field_value = getattr(item, field, None)
+                if field_value:
+                    available_fields.append(field)
+                else:
+                    missing_fields.append(field)
+            
+            # If no Coupang data at all, return None (not an error)
+            if not available_fields:
+                return None
+            
+            # Create result with available data
+            result = ProductResearchResult(
+                product_name=item.product_name,
+                category=item.category,
+                price_exact=item.price_exact,
+                currency=item.currency,
+                seller_or_store=item.seller_or_store or "쿠팡",
+                status=ResearchStatus.COUPANG_PREVIEW
+            )
+            
+            # Set Coupang-specific data
+            if item.product_url:
+                result.deeplink_or_product_url = item.product_url
+            if item.price_exact:
+                result.coupang_price = item.price_exact
+            
+            # Add Coupang metadata with error handling
+            coupang_metadata = {}
+            try:
+                if item.product_id:
+                    coupang_metadata["product_id"] = item.product_id
+                if item.product_image:
+                    coupang_metadata["product_image"] = item.product_image
+                if item.product_url:
+                    coupang_metadata["product_url"] = item.product_url
+                if item.is_rocket is not None:
+                    coupang_metadata["is_rocket"] = item.is_rocket
+                if item.is_free_shipping is not None:
+                    coupang_metadata["is_free_shipping"] = item.is_free_shipping
+                if item.category_name:
+                    coupang_metadata["category_name"] = item.category_name
+            except Exception as meta_error:
+                logger.warning(f"Failed to extract some Coupang metadata for {item.product_name}: {meta_error}")
+            
+            # Store in result metadata for easy access
+            result.metadata = {
+                "coupang_info": coupang_metadata,
+                "preview": True,
+                "available_fields": available_fields,
+                "missing_fields": missing_fields
+            }
+            
+            # Mark as captured immediately
+            result.captured_at = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+            result.sources = ["쿠팡 파트너스 API"]
+            
+            # Log partial data warning if some fields are missing
+            if missing_fields:
+                logger.info(
+                    f"Partial Coupang data for {item.product_name}: "
+                    f"missing {missing_fields}, available {available_fields}"
+                )
+            
+            return result
+            
+        except Exception as e:
+            logger.warning(f"Coupang info extraction failed for {item.product_name}: {e}")
+            # Return None for extraction failures - don't break the entire flow
             return None
-        
-        result = ProductResearchResult(
-            product_name=item.product_name,
-            category=item.category,
-            price_exact=item.price_exact,
-            currency=item.currency,
-            seller_or_store=item.seller_or_store or "쿠팡",
-            status=ResearchStatus.SUCCESS
-        )
-        
-        # Set Coupang-specific data
-        if item.product_url:
-            result.deeplink_or_product_url = item.product_url
-        if item.price_exact:
-            result.coupang_price = item.price_exact
-        
-        # Add Coupang metadata
-        coupang_metadata = {}
-        if item.product_id:
-            coupang_metadata["product_id"] = item.product_id
-        if item.product_image:
-            coupang_metadata["product_image"] = item.product_image
-        if item.product_url:
-            coupang_metadata["product_url"] = item.product_url
-        if item.is_rocket is not None:
-            coupang_metadata["is_rocket"] = item.is_rocket
-        if item.is_free_shipping is not None:
-            coupang_metadata["is_free_shipping"] = item.is_free_shipping
-        if item.category_name:
-            coupang_metadata["category_name"] = item.category_name
-        
-        # Store in result metadata for easy access
-        result.metadata = {"coupang_info": coupang_metadata, "preview": True}
-        
-        # Mark as captured immediately
-        result.captured_at = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-        result.sources = ["쿠팡 파트너스 API"]
-        
-        return result
     
     async def _process_research_job_with_preview(self, job: ProductResearchJob) -> None:
         """Process research job with existing preview results.

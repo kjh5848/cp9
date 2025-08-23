@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import time
 from typing import Any, Dict, List, Optional
 
 import httpx
@@ -12,6 +13,7 @@ from tenacity import (
     wait_exponential,
 )
 
+from app.core.circuit_breaker import CircuitBreakerRegistry, CircuitBreakerConfig
 from app.core.config import settings
 from app.core.constants import (
     DEFAULT_PERPLEXITY_MODEL,
@@ -25,7 +27,9 @@ from app.core.constants import (
     STATUS_INSUFFICIENT_SOURCES,
     STATUS_TOO_MANY_ITEMS,
 )
+from app.core.exceptions import ExternalServiceException
 from app.core.logging import get_logger
+from app.schemas.error_responses import ErrorCode
 from app.domain.product_entities import (
     NotableReview,
     ProductAttribute,
@@ -78,14 +82,16 @@ class PerplexityResearchClient:
         api_url: Optional[str] = None,
         timeout: Optional[int] = None,
         model: Optional[str] = None,
+        circuit_breaker_config: Optional[CircuitBreakerConfig] = None,
     ):
-        """Initialize enhanced Perplexity research client.
+        """Initialize enhanced Perplexity research client with circuit breaker.
         
         Args:
             api_key: API key for authentication
             api_url: Base URL for API
             timeout: Request timeout in seconds
             model: Model to use for research
+            circuit_breaker_config: Circuit breaker configuration
         """
         self.api_key = api_key or settings.perplexity_api_key
         self.api_url = api_url or settings.perplexity_api_url
@@ -99,6 +105,19 @@ class PerplexityResearchClient:
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
         }
+        
+        # Initialize circuit breaker with custom configuration
+        cb_config = circuit_breaker_config or CircuitBreakerConfig(
+            failure_threshold=3,
+            success_threshold=2,
+            timeout_seconds=120,
+            max_failures_per_window=5,
+            window_seconds=300,
+            slow_call_threshold_ms=self.timeout * 1000 if self.timeout else 30000,
+            error_rate_threshold=0.6
+        )
+        
+        self.circuit_breaker = CircuitBreakerRegistry.get_breaker("perplexity_api", cb_config)
     
     async def research_products(
         self,
@@ -133,9 +152,9 @@ class PerplexityResearchClient:
         # Build the research query
         query = self._build_batch_query(items)
         
-        # Call Perplexity API
+        # Call Perplexity API with circuit breaker protection
         try:
-            response_data = await self._call_perplexity_api(query)
+            response_data = await self.circuit_breaker.acall(self._call_perplexity_api_internal, query)
             
             # Parse the response
             results = self._parse_batch_response(response_data, items)
@@ -143,6 +162,13 @@ class PerplexityResearchClient:
             logger.info(f"Successfully researched {len(items)} products")
             return results
             
+        except ExternalServiceException:
+            # Circuit breaker is open - fail fast
+            logger.error("Circuit breaker is open for Perplexity API")
+            return [
+                self._create_error_result(item, "Perplexity API is temporarily unavailable")
+                for item in items
+            ]
         except Exception as e:
             logger.error(f"Failed to research products: {str(e)}")
             # Return error results for all items
@@ -151,13 +177,8 @@ class PerplexityResearchClient:
                 for item in items
             ]
     
-    @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=2, max=10),
-        retry=retry_if_exception_type((httpx.TimeoutException, httpx.NetworkError)),
-    )
-    async def _call_perplexity_api(self, query: str) -> Dict[str, Any]:
-        """Call Perplexity API with retry logic.
+    async def _call_perplexity_api_internal(self, query: str) -> Dict[str, Any]:
+        """Call Perplexity API internal method (used by circuit breaker).
         
         Args:
             query: Research query
@@ -166,7 +187,7 @@ class PerplexityResearchClient:
             API response data
             
         Raises:
-            PerplexityResearchError: If API request fails
+            ExternalServiceException: If API request fails
         """
         # Prepare system prompt with variables
         system_prompt = self.SYSTEM_PROMPT.format(
@@ -195,20 +216,78 @@ class PerplexityResearchClient:
             "return_sources": True,
         }
         
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{self.api_url}/chat/completions",
-                json=payload,
-                headers=self.headers,
-                timeout=self.timeout,
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{self.api_url}/chat/completions",
+                    json=payload,
+                    headers=self.headers,
+                    timeout=self.timeout,
+                )
+                
+                if response.status_code == 429:
+                    # Rate limiting from Perplexity
+                    raise ExternalServiceException(
+                        error_code=ErrorCode.RATE_LIMIT_EXCEEDED,
+                        service_name="Perplexity AI",
+                        service_status="rate_limited",
+                        details=f"Rate limit exceeded: {response.text}",
+                        estimated_recovery=60
+                    )
+                elif response.status_code >= 500:
+                    # Server error
+                    raise ExternalServiceException(
+                        error_code=ErrorCode.PERPLEXITY_API_UNAVAILABLE,
+                        service_name="Perplexity AI",
+                        service_status="server_error",
+                        details=f"Server error {response.status_code}: {response.text}",
+                        estimated_recovery=300
+                    )
+                elif response.status_code == 408:
+                    # Timeout
+                    raise ExternalServiceException(
+                        error_code=ErrorCode.PERPLEXITY_API_TIMEOUT,
+                        service_name="Perplexity AI",
+                        service_status="timeout",
+                        details=f"Request timeout: {response.text}",
+                        estimated_recovery=30
+                    )
+                elif response.status_code != 200:
+                    # Other client errors
+                    raise ExternalServiceException(
+                        error_code=ErrorCode.PERPLEXITY_API_ERROR,
+                        service_name="Perplexity AI",
+                        service_status="client_error",
+                        details=f"API error {response.status_code}: {response.text}",
+                        estimated_recovery=10
+                    )
+                
+                return response.json()
+                
+        except httpx.TimeoutException:
+            raise ExternalServiceException(
+                error_code=ErrorCode.PERPLEXITY_API_TIMEOUT,
+                service_name="Perplexity AI",
+                service_status="timeout",
+                details="Request timeout",
+                estimated_recovery=30
             )
-            
-            if response.status_code != 200:
-                error_msg = f"API request failed with status {response.status_code}: {response.text}"
-                logger.error(error_msg)
-                raise PerplexityResearchError(error_msg, response.status_code)
-            
-            return response.json()
+        except httpx.NetworkError as e:
+            raise ExternalServiceException(
+                error_code=ErrorCode.PERPLEXITY_API_UNAVAILABLE,
+                service_name="Perplexity AI",
+                service_status="network_error",
+                details=f"Network error: {str(e)}",
+                estimated_recovery=60
+            )
+        except httpx.HTTPStatusError as e:
+            raise ExternalServiceException(
+                error_code=ErrorCode.PERPLEXITY_API_ERROR,
+                service_name="Perplexity AI",
+                service_status="http_error",
+                details=f"HTTP error: {str(e)}",
+                estimated_recovery=10
+            )
     
     def _build_batch_query(self, items: List[ProductResearchItem]) -> str:
         """Build batch research query for products.

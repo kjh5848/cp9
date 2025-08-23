@@ -4,6 +4,8 @@ from fastapi import APIRouter
 
 from app.api.v1.endpoints import research
 from app.api.v1.endpoints import product_research
+from app.api.v1.endpoints import websocket
+from app.api.v1.endpoints import health
 
 router = APIRouter()
 
@@ -20,12 +22,14 @@ router.include_router(
     tags=["제품 리서치"],
 )
 
-# Health check endpoint
-@router.get("/health", tags=["헬스체크"])
-async def health_check() -> dict:
-    """시스템 상태 확인 엔드포인트."""
-    return {
-        "status": "healthy",
-        "service": "product-research-backend",
-        "version": "1.0.0",
-    }
+# Include WebSocket endpoints
+router.include_router(
+    websocket.router,
+    tags=["WebSocket"],
+)
+
+# Include health check endpoints
+router.include_router(
+    health.router,
+    tags=["Health Check"],
+)

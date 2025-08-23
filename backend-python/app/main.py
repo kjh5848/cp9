@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.router import router as api_v1_router
 from app.core.config import settings
 from app.core.constants import API_TAGS
+from app.core.error_handlers import setup_error_handlers
 from app.core.logging import setup_logging
 from app.infra.db.session import close_db, init_db
 
@@ -20,9 +21,18 @@ async def lifespan(app: FastAPI):
     setup_logging()
     await init_db()
     
+    # Initialize Redis PubSub for WebSocket messaging
+    from app.core.redis_pubsub import get_pubsub_manager
+    pubsub_manager = get_pubsub_manager()
+    pubsub_connected = await pubsub_manager.connect()
+    if pubsub_connected:
+        await pubsub_manager.start_listening()
+    
     yield
     
     # Shutdown
+    if pubsub_connected:
+        await pubsub_manager.disconnect()
     await close_db()
 
 
@@ -76,6 +86,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Setup global error handlers
+setup_error_handlers(app)
 
 # Include API routers
 app.include_router(api_v1_router, prefix=settings.api_v1_prefix)

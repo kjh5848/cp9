@@ -1,18 +1,20 @@
-# 🚀 프론트엔드 개발자를 위한 완전한 API 통합 가이드
+# 🚀 Product Research API 통합 가이드
 
-Perplexity AI 기반 제품 리서치 API를 프론트엔드에 통합하는 모든 것을 다루는 완전한 가이드입니다.
+Perplexity AI 기반 제품 리서치 API의 로직과 에러 처리에 대한 기술 가이드입니다.
 
-## 🎯 빠른 시작
+## 🎯 API 기본 정보
 
-### 1. API 기본 정보
 - **Base URL**: `http://localhost:8000/api/v1`
 - **Content-Type**: `application/json`
 - **인증**: 현재 불필요 (프로덕션에서는 API 키 추가 예정)
-- **Swagger UI**: http://localhost:8000/docs
+- **API 문서**: 
+  - **Swagger UI**: http://localhost:8000/docs
+  - **ReDoc**: http://localhost:8000/redoc
 
-### 2. 핵심 워크플로우
+## 📋 핵심 워크플로우
 
-#### A. 일반 리서치 워크플로우
+### 1. 일반 리서치 워크플로우
+
 ```javascript
 // 1. 제품 리서치 요청
 const response = await fetch('/api/v1/research/products', {
@@ -42,7 +44,8 @@ const getResults = async () => {
 };
 ```
 
-#### B. 🆕 쿠팡 즉시 리턴 워크플로우
+### 2. 쿠팡 즉시 리턴 워크플로우
+
 ```javascript
 // 쿠팡 제품 정보와 함께 즉시 결과 받기
 const response = await fetch('/api/v1/research/products?return_coupang_preview=true', {
@@ -53,21 +56,20 @@ const response = await fetch('/api/v1/research/products?return_coupang_preview=t
       product_name: "삼성전자 갤럭시 버드3 프로",
       category: "이어폰/헤드폰",
       price_exact: 189000,
-      // 🆕 쿠팡 실제 API 필드들 (수정됨)
-      product_id: 7582946,           // productId (실제 쿠팡 API)
-      product_url: "https://www.coupang.com/vp/products/7582946",  // productUrl
-      product_image: "https://thumbnail10.coupangcdn.com/...",     // productImage
-      is_rocket: true,               // isRocket
-      is_free_shipping: true,        // isFreeShipping
-      category_name: "이어폰/헤드폰",  // categoryName
+      product_id: 7582946,
+      product_url: "https://www.coupang.com/vp/products/7582946",
+      product_image: "https://thumbnail10.coupangcdn.com/...",
+      is_rocket: true,
+      is_free_shipping: true,
+      category_name: "이어폰/헤드폰",
       seller_or_store: "쿠팡"
     }]
   })
 });
 
 const { job_id, results } = await response.json();
-// results에 즉시 쿠팡 정보 포함! 🎉
-// 백그라운드에서 전체 리서치 계속 진행
+// results에 즉시 쿠팡 정보 포함됨
+// 백그라운드에서 전체 리서치 계속 진행됨
 ```
 
 ## 📋 TypeScript 타입 정의
@@ -75,7 +77,6 @@ const { job_id, results } = await response.json();
 ### 요청 타입
 
 ```typescript
-// 🆕 확장된 제품 정보 (쿠팡 API 실제 구조 기반)
 interface ProductItemRequest {
   // 기본 필수 필드
   product_name: string;           // 1-500자, 필수
@@ -84,1493 +85,517 @@ interface ProductItemRequest {
   currency?: string;             // 기본값: "KRW"
   seller_or_store?: string;      // 최대 200자
   
-  // 🆕 쿠팡 API 실제 구조 기반 필드들 (2024-08-23 수정)
-  product_id?: number;           // productId (쿠팡 실제 필드, number 타입)
-  product_image?: string;        // productImage (쿠팡 실제 필드)
-  product_url?: string;          // productUrl (쿠팡 실제 필드)
-  is_rocket?: boolean;           // isRocket (쿠팡 실제 필드)
-  is_free_shipping?: boolean;    // isFreeShipping (쿠팡 실제 필드)
-  category_name?: string;        // categoryName (쿠팡 실제 필드)
+  // 쿠팡 API 필드들
+  product_id?: number;           // productId
+  product_image?: string;        // productImage
+  product_url?: string;          // productUrl
+  is_rocket?: boolean;           // isRocket
+  is_free_shipping?: boolean;    // isFreeShipping
+  category_name?: string;        // categoryName
   
-  // 키워드 검색 전용 필드
-  keyword?: string;              // keyword (키워드 검색 시)
-  rank?: number;                 // rank (키워드 검색 시 순위)
+  // 키워드 검색 필드
+  keyword?: string;              // keyword
+  rank?: number;                 // rank
   
   metadata?: Record<string, any>; // 추가 메타데이터
 }
 
-// 리서치 요청
 interface ProductResearchRequest {
-  items: ProductItemRequest[];    // 1-10개
-  priority?: number;             // 1-10, 기본값: 5
-  callback_url?: string;         // 완료 시 콜백 URL
-}
-
-// 상태 확인 요청
-interface JobStatusRequest {
-  job_id: string;               // UUID 또는 Celery 태스크 ID
-  is_celery?: boolean;          // 기본값: false
+  items: ProductItemRequest[];   // 최대 10개
+  priority?: number;             // 1-10 (높을수록 우선순위 높음)
 }
 ```
 
 ### 응답 타입
 
 ```typescript
-// 제품 속성
-interface ProductAttribute {
-  name: string;
-  value: string;
-}
-
-// 제품 스펙
-interface ProductSpecs {
-  main: string[];
-  attributes: ProductAttribute[];
-  size_or_weight?: string;
-  options: string[];
-  included_items: string[];
-}
-
-// 리뷰 정보
-interface NotableReview {
-  source: string;
-  quote: string;
-  url?: string;
-}
-
-interface ProductReviews {
-  rating_avg: number;           // 0-5
-  review_count: number;
-  summary_positive: string[];
-  summary_negative: string[];
-  notable_reviews: NotableReview[];
-}
-
-// 🆕 쿠팡 정보 응답 (실제 API 구조 기준)
-interface CoupangInfo {
-  productId?: number;          // 쿠팡 제품 ID (실제 필드명: productId, number 타입)
-  productUrl?: string;         // 쿠팡 제품 URL (실제 필드명: productUrl)
-  productImage?: string;       // 쿠팡 제품 이미지 URL (실제 필드명: productImage)
-  isRocket?: boolean;          // 로켓배송 여부 (실제 필드명: isRocket)
-  isFreeShipping?: boolean;    // 무료배송 여부 (실제 필드명: isFreeShipping)
-  categoryName?: string;       // 쿠팡 카테고리명 (실제 필드명: categoryName)
-  productPrice?: number;       // 쿠팡 현재 가격 (실제 필드명: productPrice)
-  price_comparison?: {         // 가격 비교 정보 (백엔드에서 계산)
-    coupang_current_price: number;
-    price_difference: number;
-    price_change_percent: number;
-  };
-}
-
-// 제품 리서치 결과
-interface ProductResult {
-  product_name: string;
-  brand: string;
-  category: string;
-  model_or_variant: string;
-  price_exact: number;
-  currency: string;
-  seller_or_store?: string;
-  deeplink_or_product_url?: string;
-  coupang_price?: number;
-  
-  // 🆕 쿠팡 정보 (실제 API 구조 기준)
-  coupang_info?: CoupangInfo;
-  
-  specs: ProductSpecs;
-  reviews: ProductReviews;
-  sources: string[];
-  captured_at: string;         // YYYY-MM-DD
-  status: 'success' | 'error';
-  error_message?: string;
-  missing_fields: string[];
-  suggested_queries: string[];
-}
-
-// 메타데이터
-interface ResearchMetadata {
-  total_items: number;
-  successful_items: number;
-  failed_items: number;
-  success_rate: number;        // 0.0-1.0
-  processing_time_ms?: number;
-  created_at: string;          // ISO datetime
-  updated_at: string;
-  started_at?: string;
-  completed_at?: string;
-}
-
-// 최종 응답
+// 작업 생성 응답
 interface ProductResearchResponse {
   job_id: string;
-  status: string;
-  results: ProductResult[];
-  metadata: ResearchMetadata;
+  status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
+  results?: ResearchResultItem[]; // 쿠팡 즉시 리턴 시에만
+  message?: string;
 }
 
 // 작업 상태 응답
 interface JobStatusResponse {
   job_id: string;
-  status: 'pending' | 'processing' | 'success' | 'error';
-  progress: number;            // 0.0-1.0
-  message?: string;
-  metadata?: Record<string, any>;
+  status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
+  total_items: number;
+  successful_items: number;
+  failed_items: number;
+  success_rate: number;
+  processing_time_ms?: number;
+  created_at: string;
+  updated_at: string;
+  started_at?: string;
+  completed_at?: string;
+}
+
+// 리서치 결과
+interface ResearchResultItem {
+  item_hash: string;
+  status: "success" | "failed";
+  
+  // 성공 시 데이터
+  research_data?: {
+    summary: string;
+    rating: number;
+    review_count: number;
+    pros: string[];
+    cons: string[];
+    price_analysis: {
+      current_price: number;
+      is_reasonable: boolean;
+      price_trend: string;
+      alternatives?: Array<{
+        name: string;
+        price: number;
+        url?: string;
+      }>;
+    };
+    specifications?: Record<string, any>;
+    recommendations?: string;
+    sources?: string[];
+  };
+  
+  // 쿠팡 데이터 (있는 경우)
+  coupang_data?: {
+    product_id: number;
+    product_url: string;
+    product_image?: string;
+    is_rocket: boolean;
+    is_free_shipping: boolean;
+    category_name: string;
+  };
+  
+  // 실패 시 에러 정보
+  error?: {
+    error_code: string;
+    message: string;
+    details?: string;
+  };
+  
+  created_at: string;
+  processing_time_ms?: number;
 }
 ```
 
 ## 🔌 API 엔드포인트 상세
 
-### 1. 제품 리서치 생성
-**POST** `/api/v1/research/products`
+### 1. POST /api/v1/research/products
 
-#### A. 일반 리서치
-```typescript
-// 일반 리서치 요청
-const createResearch = async (items: ProductItemRequest[]) => {
-  const response = await fetch('/api/v1/research/products', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      items,
-      priority: 5,
-      callback_url: 'https://your-domain.com/webhook'  // 선택사항
-    })
-  });
+제품 리서치 작업을 생성합니다.
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(`Research creation failed: ${error.detail}`);
-  }
+#### 요청 파라미터
+- `return_coupang_preview`: (선택) 쿠팡 데이터 즉시 리턴 여부
 
-  return response.json() as Promise<ProductResearchResponse>;
-};
-```
+#### 응답 케이스
 
-#### B. 🆕 쿠팡 즉시 리턴 리서치
-```typescript
-// 쿠팡 정보 즉시 리턴 요청
-const createCoupangPreviewResearch = async (items: ProductItemRequest[]) => {
-  const response = await fetch('/api/v1/research/products?return_coupang_preview=true', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      items: items.map(item => ({
-        ...item,
-        // 쿠팡 메타데이터 구조화 (실제 API 기준)
-        metadata: {
-          source: "coupang_partners",
-          selected_at: new Date().toISOString(),
-          frontend_session_id: `session_${Date.now()}`,
-          original_coupang_response: item.metadata?.original_coupang_response,
-          ...item.metadata
-        }
-      })),
-      priority: 5
-    })
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(`Coupang preview research failed: ${error.detail}`);
-  }
-
-  const result = await response.json() as ProductResearchResponse;
-  
-  // 즉시 쿠팡 정보가 results에 포함됨!
-  console.log('즉시 받은 쿠팡 정보:', result.results);
-  
-  return result;
-};
-```
-
-### 2. 작업 상태 확인
-**GET** `/api/v1/research/products/{job_id}/status`
-
-```typescript
-const checkJobStatus = async (jobId: string): Promise<JobStatusResponse> => {
-  const response = await fetch(`/api/v1/research/products/${jobId}/status`);
-  
-  if (!response.ok) {
-    throw new Error(`Status check failed: ${response.statusText}`);
-  }
-
-  return response.json();
-};
-```
-
-### 3. 리서치 결과 조회
-**GET** `/api/v1/research/products/{job_id}`
-
-```typescript
-const getResults = async (
-  jobId: string, 
-  includeFailed: boolean = true
-): Promise<ProductResearchResponse> => {
-  const url = new URL(`/api/v1/research/products/${jobId}`, window.location.origin);
-  url.searchParams.set('include_failed', String(includeFailed));
-
-  const response = await fetch(url.toString());
-  
-  if (!response.ok) {
-    throw new Error(`Results fetch failed: ${response.statusText}`);
-  }
-
-  return response.json();
-};
-```
-
-### 4. 작업 취소
-**DELETE** `/api/v1/research/products/{job_id}`
-
-```typescript
-const cancelJob = async (jobId: string): Promise<void> => {
-  const response = await fetch(`/api/v1/research/products/${jobId}`, {
-    method: 'DELETE'
-  });
-
-  if (!response.ok) {
-    throw new Error(`Job cancellation failed: ${response.statusText}`);
-  }
-};
-```
-
-## ⚛️ React/Next.js 통합 예제
-
-### 커스텀 훅
-
-```typescript
-import { useState, useEffect, useCallback } from 'react';
-
-interface UseResearchOptions {
-  pollingInterval?: number;      // 기본값: 2000ms
-  maxPollingTime?: number;       // 기본값: 300000ms (5분)
+**성공 (201)**
+```json
+{
+  "job_id": "uuid-string",
+  "status": "pending",
+  "message": "Research job created successfully"
 }
+```
 
-export const useProductResearch = (options: UseResearchOptions = {}) => {
-  const { pollingInterval = 2000, maxPollingTime = 300000 } = options;
-  
-  const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<ProductResult[]>([]);
-  const [status, setStatus] = useState<JobStatusResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [hasCoupangPreview, setHasCoupangPreview] = useState(false);
+**쿠팡 즉시 리턴 성공 (201)**
+```json
+{
+  "job_id": "uuid-string", 
+  "status": "pending",
+  "results": [/* 쿠팡 데이터 포함 결과들 */],
+  "message": "Job created with Coupang preview data"
+}
+```
 
-  const startResearch = useCallback(async (
-    items: ProductItemRequest[], 
-    useCoupangPreview: boolean = false
-  ) => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      // 🆕 쿠팡 즉시 리턴 또는 일반 리서치 선택
-      const research = useCoupangPreview 
-        ? await createCoupangPreviewResearch(items)
-        : await createResearch(items);
-      
-      const jobId = research.job_id;
-      setHasCoupangPreview(useCoupangPreview);
-      
-      // 🆕 쿠팡 즉시 리턴의 경우 바로 결과 표시
-      if (useCoupangPreview && research.results.length > 0) {
-        setResults(research.results);
-        console.log('🎉 쿠팡 정보 즉시 표시:', research.results);
+### 2. GET /api/v1/research/products/{job_id}/status
+
+작업 진행 상태를 확인합니다.
+
+```json
+{
+  "job_id": "uuid-string",
+  "status": "in_progress",
+  "total_items": 3,
+  "successful_items": 1,
+  "failed_items": 0,
+  "success_rate": 33.33,
+  "processing_time_ms": 15000,
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-01T00:00:15Z",
+  "started_at": "2024-01-01T00:00:01Z"
+}
+```
+
+### 3. GET /api/v1/research/products/{job_id}
+
+완료된 리서치 결과를 조회합니다.
+
+```json
+{
+  "job_id": "uuid-string",
+  "status": "completed",
+  "results": [
+    {
+      "item_hash": "hash-string",
+      "status": "success",
+      "research_data": {
+        "summary": "상품 요약...",
+        "rating": 4.5,
+        "review_count": 1234,
+        "pros": ["장점1", "장점2"],
+        "cons": ["단점1"],
+        "price_analysis": {
+          "current_price": 388000,
+          "is_reasonable": true,
+          "price_trend": "stable"
+        }
+      },
+      "coupang_data": {
+        "product_id": 7582946,
+        "product_url": "https://www.coupang.com/...",
+        "is_rocket": true
       }
-      
-      // 폴링 시작 (백그라운드 리서치 완료 확인)
-      const startTime = Date.now();
-      const pollStatus = async (): Promise<void> => {
-        if (Date.now() - startTime > maxPollingTime) {
-          throw new Error('작업 시간 초과');
-        }
-
-        const statusResult = await checkJobStatus(jobId);
-        setStatus(statusResult);
-
-        if (statusResult.status === 'success') {
-          const finalResults = await getResults(jobId);
-          // 🆕 쿠팡 즉시 리턴의 경우 기존 결과와 병합하거나 업데이트
-          if (useCoupangPreview) {
-            console.log('🔄 백그라운드 리서치 완료, 결과 업데이트:', finalResults.results);
-          }
-          setResults(finalResults.results);
-          setIsLoading(false);
-        } else if (statusResult.status === 'error') {
-          throw new Error(`작업 실패: ${statusResult.message}`);
-        } else {
-          // 계속 폴링
-          setTimeout(pollStatus, pollingInterval);
-        }
-      };
-
-      await pollStatus();
-      
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '알 수 없는 오류');
-      setIsLoading(false);
     }
-  }, [pollingInterval, maxPollingTime]);
-
-  return {
-    startResearch,
-    isLoading,
-    results,
-    status,
-    error,
-    hasCoupangPreview
-  };
-};
-```
-
-### React 컴포넌트 예제
-
-```tsx
-import React, { useState } from 'react';
-import { useProductResearch } from './hooks/useProductResearch';
-
-const ProductResearcher: React.FC = () => {
-  const [productName, setProductName] = useState('');
-  const [category, setCategory] = useState('');
-  const [price, setPrice] = useState('');
-  
-  // 🆕 쿠팡 정보 필드들 (실제 API 구조)
-  const [coupangInfo, setCoupangInfo] = useState({
-    productId: 0,                    // productId (number)
-    productUrl: '',                  // productUrl
-    productImage: '',                // productImage
-    isRocket: false,                 // isRocket
-    isFreeShipping: false,           // isFreeShipping
-    categoryName: ''                 // categoryName
-  });
-  const [useCoupangPreview, setUseCoupangPreview] = useState(false);
-  
-  const { startResearch, isLoading, results, status, error } = useProductResearch();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const items: ProductItemRequest[] = [{
-      product_name: productName,
-      category,
-      price_exact: parseFloat(price),
-      // 🆕 쿠팡 정보 포함 (실제 API 구조)
-      ...(useCoupangPreview && {
-        product_id: coupangInfo.productId || undefined,
-        product_url: coupangInfo.productUrl || undefined,
-        product_image: coupangInfo.productImage || undefined,
-        is_rocket: coupangInfo.isRocket,
-        is_free_shipping: coupangInfo.isFreeShipping,
-        category_name: coupangInfo.categoryName || undefined,
-        seller_or_store: "쿠팡"
-      })
-    }];
-
-    await startResearch(items, useCoupangPreview);
-  };
-
-  return (
-    <div className="product-researcher">
-      <form onSubmit={handleSubmit} className="research-form">
-        <div>
-          <label>제품명:</label>
-          <input
-            type="text"
-            value={productName}
-            onChange={(e) => setProductName(e.target.value)}
-            required
-            maxLength={500}
-          />
-        </div>
-        
-        <div>
-          <label>카테고리:</label>
-          <input
-            type="text"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            required
-            maxLength={100}
-          />
-        </div>
-        
-        <div>
-          <label>가격:</label>
-          <input
-            type="number"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            required
-            min="0"
-            step="0.01"
-          />
-        </div>
-        
-        {/* 🆕 쿠팡 즉시 리턴 옵션 */}
-        <div className="coupang-section">
-          <label>
-            <input
-              type="checkbox"
-              checked={useCoupangPreview}
-              onChange={(e) => setUseCoupangPreview(e.target.checked)}
-            />
-            쿠팡 정보 즉시 받기
-          </label>
-          
-          {useCoupangPreview && (
-            <div className="coupang-fields">
-              <div>
-                <label>쿠팡 제품 ID:</label>
-                <input
-                  type="number"
-                  value={coupangInfo.productId}
-                  onChange={(e) => setCoupangInfo(prev => ({ ...prev, productId: parseInt(e.target.value) || 0 }))}
-                  placeholder="7582946"
-                />
-              </div>
-              
-              <div>
-                <label>쿠팡 제품 URL:</label>
-                <input
-                  type="url"
-                  value={coupangInfo.productUrl}
-                  onChange={(e) => setCoupangInfo(prev => ({ ...prev, productUrl: e.target.value }))}
-                  placeholder="https://www.coupang.com/vp/products/7582946"
-                />
-              </div>
-              
-              <div>
-                <label>제품 이미지 URL:</label>
-                <input
-                  type="url"
-                  value={coupangInfo.productImage}
-                  onChange={(e) => setCoupangInfo(prev => ({ ...prev, productImage: e.target.value }))}
-                  placeholder="https://thumbnail10.coupangcdn.com/..."
-                />
-              </div>
-              
-              <div className="checkbox-group">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={coupangInfo.isRocket}
-                    onChange={(e) => setCoupangInfo(prev => ({ ...prev, isRocket: e.target.checked }))}
-                  />
-                  로켓배송
-                </label>
-                
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={coupangInfo.isFreeShipping}
-                    onChange={(e) => setCoupangInfo(prev => ({ ...prev, isFreeShipping: e.target.checked }))}
-                  />
-                  무료배송
-                </label>
-              </div>
-            </div>
-          )}
-        </div>
-        
-        <button 
-          type="submit" 
-          disabled={isLoading}
-          className="submit-btn"
-        >
-          {isLoading ? '리서치 중...' : (useCoupangPreview ? '쿠팡 정보 + 리서치 시작' : '리서치 시작')}
-        </button>
-      </form>
-
-      {/* 진행 상황 표시 */}
-      {status && (
-        <div className="progress-status">
-          <div className="status-bar">
-            <div 
-              className="progress-fill" 
-              style={{ width: `${status.progress * 100}%` }}
-            />
-          </div>
-          <p>{status.message}</p>
-        </div>
-      )}
-
-      {/* 에러 표시 */}
-      {error && (
-        <div className="error-message">
-          <p>오류: {error}</p>
-        </div>
-      )}
-
-      {/* 결과 표시 */}
-      {results.length > 0 && (
-        <div className="results">
-          <h3>리서치 결과</h3>
-          {results.map((result, index) => (
-            <div key={index} className="result-item">
-              <h4>{result.product_name}</h4>
-              <p><strong>브랜드:</strong> {result.brand}</p>
-              <p><strong>가격:</strong> {result.price_exact.toLocaleString()}원</p>
-              
-              {/* 🆕 쿠팡 정보 표시 */}
-              {result.coupang_info && (
-                <div className="coupang-info">
-                  <h5>🛍️ 쿠팡 정보</h5>
-                  {result.coupang_info.productImage && (
-                    <img 
-                      src={result.coupang_info.productImage} 
-                      alt={result.product_name}
-                      className="product-image"
-                      style={{ width: '100px', height: '100px', objectFit: 'cover' }}
-                    />
-                  )}
-                  <div className="coupang-badges">
-                    {result.coupang_info.isRocket && <span className="badge rocket">🚀 로켓배송</span>}
-                    {result.coupang_info.isFreeShipping && <span className="badge free-ship">📦 무료배송</span>}
-                  </div>
-                  {result.coupang_info.productPrice && (
-                    <p><strong>쿠팡 현재가:</strong> {result.coupang_info.productPrice.toLocaleString()}원</p>
-                  )}
-                  {result.coupang_info.price_comparison && (
-                    <div className="price-comparison">
-                      <p><strong>가격 차이:</strong> {result.coupang_info.price_comparison.price_difference.toLocaleString()}원</p>
-                      <p><strong>변동률:</strong> {result.coupang_info.price_comparison.price_change_percent.toFixed(1)}%</p>
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              <p><strong>평점:</strong> {result.reviews.rating_avg}/5 ({result.reviews.review_count}개 리뷰)</p>
-              
-              {result.specs.main.length > 0 && (
-                <div className="specs">
-                  <strong>주요 스펙:</strong>
-                  <ul>
-                    {result.specs.main.map((spec, i) => (
-                      <li key={i}>{spec}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              
-              {result.deeplink_or_product_url && (
-                <a 
-                  href={result.deeplink_or_product_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="product-link"
-                >
-                  제품 보기
-                </a>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default ProductResearcher;
-```
-
-## 🎨 UI 컴포넌트 가이드
-
-### 진행 상황 표시기
-
-```tsx
-interface ProgressIndicatorProps {
-  status: JobStatusResponse;
+  ]
 }
-
-const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({ status }) => {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return '#f59e0b';
-      case 'processing': return '#3b82f6';
-      case 'success': return '#10b981';
-      case 'error': return '#ef4444';
-      default: return '#6b7280';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'pending': return '대기 중';
-      case 'processing': return '처리 중';
-      case 'success': return '완료';
-      case 'error': return '오류';
-      default: return '알 수 없음';
-    }
-  };
-
-  return (
-    <div className="progress-indicator">
-      <div className="status-header">
-        <span 
-          className="status-badge" 
-          style={{ backgroundColor: getStatusColor(status.status) }}
-        >
-          {getStatusText(status.status)}
-        </span>
-        <span className="progress-percent">
-          {Math.round(status.progress * 100)}%
-        </span>
-      </div>
-      
-      <div className="progress-bar">
-        <div 
-          className="progress-fill"
-          style={{
-            width: `${status.progress * 100}%`,
-            backgroundColor: getStatusColor(status.status)
-          }}
-        />
-      </div>
-      
-      {status.message && (
-        <p className="progress-message">{status.message}</p>
-      )}
-    </div>
-  );
-};
 ```
 
-### 제품 결과 카드
+### 4. DELETE /api/v1/research/products/{job_id}
 
-```tsx
-interface ProductCardProps {
-  product: ProductResult;
-}
-
-const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const handleBuyClick = () => {
-    if (product.deeplink_or_product_url) {
-      window.open(product.deeplink_or_product_url, '_blank');
-    }
-  };
-
-  return (
-    <div className="product-card">
-      <div className="product-header">
-        <h3 className="product-name">{product.product_name}</h3>
-        <span className="product-brand">{product.brand}</span>
-      </div>
-
-      <div className="product-pricing">
-        <span className="current-price">
-          {product.price_exact.toLocaleString()}원
-        </span>
-        {product.coupang_price && product.coupang_price < product.price_exact && (
-          <span className="compare-price">
-            쿠팡 {product.coupang_price.toLocaleString()}원
-          </span>
-        )}
-      </div>
-
-      <div className="product-reviews">
-        <div className="rating">
-          <span className="rating-score">{product.reviews.rating_avg}</span>
-          <span className="rating-stars">★★★★★</span>
-          <span className="review-count">({product.reviews.review_count})</span>
-        </div>
-      </div>
-
-      {product.specs.main.length > 0 && (
-        <div className="product-specs">
-          <h4>주요 스펙</h4>
-          <ul>
-            {product.specs.main.slice(0, 3).map((spec, index) => (
-              <li key={index}>{spec}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {product.reviews.summary_positive.length > 0 && (
-        <div className="product-highlights">
-          <h4>장점</h4>
-          <ul>
-            {product.reviews.summary_positive.slice(0, 2).map((point, index) => (
-              <li key={index} className="positive-point">{point}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      <div className="product-actions">
-        <button 
-          onClick={handleBuyClick} 
-          className="buy-button"
-          disabled={!product.deeplink_or_product_url}
-        >
-          제품 보기
-        </button>
-        
-        <button className="compare-button">
-          비교하기
-        </button>
-      </div>
-
-      <div className="product-meta">
-        <span className="capture-date">
-          수집일: {product.captured_at}
-        </span>
-        <span className="source-count">
-          {product.sources.length}개 출처
-        </span>
-      </div>
-    </div>
-  );
-};
-```
+진행 중인 작업을 취소합니다.
 
 ## ❌ 에러 처리 가이드
 
-### 공통 에러 타입
+> 📚 **상세한 에러 처리 가이드**: [SHARED_ERROR_HANDLING_GUIDE.md](../SHARED_ERROR_HANDLING_GUIDE.md)  
+> 모든 백엔드 서비스의 공통 에러 처리 패턴과 상세한 구현 방법을 확인하세요.
+
+### 🎯 표준 에러 응답 구조
+
+모든 API 에러는 일관된 구조로 반환됩니다:
 
 ```typescript
-interface APIError {
-  detail: string | ValidationError[];
+interface StandardError {
+  error_code: string;           // 표준화된 에러 코드
+  message: string;              // 사용자 친화적 메시지
+  details?: string;             // 기술적 상세 정보
+  severity: "low" | "medium" | "high" | "critical";
+  recommended_action: "retry" | "retry_later" | "check_input" | "contact_support" | "no_action";
+  retry_after?: number;         // 재시도 권장 시간 (초)
+  metadata?: Record<string, any>; // 추가 컨텍스트 데이터
+  request_id?: string;          // 요청 추적 ID
+  timestamp: string;            // 에러 발생 시간
 }
+```
 
-interface ValidationError {
-  type: string;
-  loc: (string | number)[];
-  msg: string;
-  input: any;
-  ctx?: Record<string, any>;
-}
+### Product Research 전용 에러 코드
 
-// 에러 처리 유틸리티
-export class ResearchAPIError extends Error {
-  constructor(
-    message: string,
-    public status: number,
-    public details?: any
-  ) {
-    super(message);
-    this.name = 'ResearchAPIError';
-  }
-}
+```typescript
+type ProductResearchErrorCode = 
+  | 'VALIDATION_ERROR'          // 입력 검증 실패 (422)
+  | 'BATCH_SIZE_EXCEEDED'       // 배치 크기 초과 (400)
+  | 'JOB_NOT_FOUND'            // 작업 없음 (404)
+  | 'JOB_CANNOT_BE_CANCELLED'  // 취소 불가 (400)
+  | 'RATE_LIMIT_EXCEEDED'      // 요청 한도 초과 (429)
+  | 'PERPLEXITY_API_ERROR'     // AI 서비스 오류 (503)
+  | 'PERPLEXITY_API_TIMEOUT'   // AI 서비스 시간초과 (503)
+  | 'COUPANG_DATA_UNAVAILABLE' // 쿠팡 데이터 없음 (200)
+  | 'COUPANG_PARTIAL_DATA'     // 쿠팡 부분 데이터 (200)
+  | 'INTERNAL_SERVER_ERROR';   // 내부 서버 오류 (500)
+```
 
-export const handleAPIError = async (response: Response) => {
+### 에러 처리 로직 예시
+
+```typescript
+const handleAPIResponse = async (response: Response) => {
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
+    const errorData = await response.json();
     
-    let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-    
-    if (errorData.detail) {
-      if (Array.isArray(errorData.detail)) {
-        // 검증 에러
-        const validationErrors = errorData.detail.map((err: ValidationError) => 
-          `${err.loc.join('.')}: ${err.msg}`
-        ).join(', ');
-        errorMessage = `검증 오류: ${validationErrors}`;
-      } else {
-        errorMessage = errorData.detail;
-      }
+    switch (errorData.error_code) {
+      case 'BATCH_SIZE_EXCEEDED':
+        throw new Error('한 번에 최대 10개 제품만 리서치 가능합니다.');
+        
+      case 'RATE_LIMIT_EXCEEDED':
+        const retryAfter = errorData.retry_after || 3600;
+        throw new Error(`요청 한도 초과. ${retryAfter}초 후 재시도하세요.`);
+        
+      case 'PERPLEXITY_API_UNAVAILABLE':
+        throw new Error('AI 리서치 서비스가 일시적으로 사용불가합니다.');
+        
+      case 'JOB_NOT_FOUND':
+        throw new Error('요청한 작업을 찾을 수 없습니다.');
+        
+      default:
+        throw new Error(errorData.message || '알 수 없는 오류가 발생했습니다.');
     }
-    
-    throw new ResearchAPIError(errorMessage, response.status, errorData);
   }
   
-  return response;
+  return response.json();
 };
 ```
 
-### 에러 상황별 처리
+### Circuit Breaker와 Rate Limiting
+
+API는 다음과 같은 보호 메커니즘을 가지고 있습니다:
+
+- **Rate Limiting**: 엔드포인트당 분당 100회 제한
+- **Circuit Breaker**: 외부 API (Perplexity) 장애 시 자동 차단
+- **Graceful Degradation**: 쿠팡 데이터 실패 시 일반 리서치로 계속 진행
+
+## 🔄 실시간 WebSocket 업데이트
+
+### WebSocket 연결
+
+기존 폴링 방식을 대체하는 실시간 WebSocket 연결:
 
 ```typescript
-export const createResearchWithErrorHandling = async (
-  items: ProductItemRequest[]
-): Promise<ProductResearchResponse> => {
-  try {
-    const response = await fetch('/api/v1/research/products', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items })
-    });
+// WebSocket 연결 생성
+const ws = new WebSocket(`ws://localhost:8000/api/v1/ws/research/${jobId}`);
 
-    await handleAPIError(response);
-    return response.json();
-    
-  } catch (error) {
-    if (error instanceof ResearchAPIError) {
-      switch (error.status) {
-        case 400:
-          throw new Error(`요청 오류: ${error.message}`);
-        case 422:
-          throw new Error(`입력 검증 실패: ${error.message}`);
-        case 429:
-          throw new Error('요청 제한 초과. 잠시 후 다시 시도하세요.');
-        case 500:
-          throw new Error('서버 오류가 발생했습니다. 잠시 후 다시 시도하세요.');
-        default:
-          throw new Error(`API 오류 (${error.status}): ${error.message}`);
-      }
-    }
-    
-    throw error;
-  }
+ws.onopen = (event) => {
+  console.log('WebSocket 연결됨');
+};
+
+ws.onmessage = (event) => {
+  const message = JSON.parse(event.data);
+  handleJobUpdate(message);
+};
+
+ws.onerror = (error) => {
+  console.error('WebSocket 오류:', error);
+  // 폴링으로 fallback
+  startPolling(jobId);
+};
+
+ws.onclose = (event) => {
+  console.log(`WebSocket 연결 종료: ${event.code} - ${event.reason}`);
 };
 ```
 
-## ⚡ 성능 최적화
-
-### 요청 최적화
+### WebSocket 메시지 타입
 
 ```typescript
-// 배치 처리로 여러 제품 한번에 리서치
-const optimizedResearch = async (products: Array<{name: string, category: string, price: number}>) => {
-  // 최대 10개씩 배치 처리
-  const batches = chunkArray(products, 10);
-  
-  const allResults: ProductResult[] = [];
-  
-  for (const batch of batches) {
-    const items: ProductItemRequest[] = batch.map(p => ({
-      product_name: p.name,
-      category: p.category,
-      price_exact: p.price
-    }));
-    
-    const result = await createResearch(items);
-    // 결과 수집...
-  }
-  
-  return allResults;
-};
-
-// 유틸리티 함수
-function chunkArray<T>(array: T[], size: number): T[][] {
-  return Array.from({ length: Math.ceil(array.length / size) }, (_, i) =>
-    array.slice(i * size, i * size + size)
-  );
-}
-```
-
-### 캐싱 전략
-
-```typescript
-interface CacheEntry<T> {
-  data: T;
-  timestamp: number;
-  ttl: number;
+interface WebSocketMessage {
+  type: "job_status" | "job_progress" | "job_complete" | "job_error";
+  job_id: string;
+  data: any;
+  timestamp: string;
 }
 
-class APICache {
-  private cache = new Map<string, CacheEntry<any>>();
-  
-  set<T>(key: string, data: T, ttlMs: number = 300000): void { // 5분 기본 TTL
-    this.cache.set(key, {
-      data,
-      timestamp: Date.now(),
-      ttl: ttlMs
-    });
-  }
-  
-  get<T>(key: string): T | null {
-    const entry = this.cache.get(key);
-    
-    if (!entry) return null;
-    
-    if (Date.now() - entry.timestamp > entry.ttl) {
-      this.cache.delete(key);
-      return null;
-    }
-    
-    return entry.data;
-  }
-  
-  clear(): void {
-    this.cache.clear();
-  }
-}
-
-const apiCache = new APICache();
-
-// 캐시를 활용한 결과 조회
-export const getCachedResults = async (jobId: string): Promise<ProductResearchResponse> => {
-  const cacheKey = `research_${jobId}`;
-  const cached = apiCache.get<ProductResearchResponse>(cacheKey);
-  
-  if (cached) return cached;
-  
-  const results = await getResults(jobId);
-  
-  // 성공한 경우만 캐시
-  if (results.status === 'success') {
-    apiCache.set(cacheKey, results, 600000); // 10분 캐시
-  }
-  
-  return results;
-};
-```
-
-## 🧪 테스트 전략
-
-### API 모킹
-
-```typescript
-// Mock 데이터
-export const mockProductResult: ProductResult = {
-  product_name: "테스트 제품",
-  brand: "테스트 브랜드",
-  category: "테스트",
-  model_or_variant: "v1.0",
-  price_exact: 100000,
-  currency: "KRW",
-  deeplink_or_product_url: "https://example.com/product",
-  specs: {
-    main: ["테스트 스펙 1", "테스트 스펙 2"],
-    attributes: [{ name: "색상", value: "검정" }],
-    options: ["기본"],
-    included_items: ["본체"]
+// job_status 메시지
+{
+  "type": "job_status",
+  "job_id": "uuid-string",
+  "data": {
+    "status": "in_progress",
+    "total_items": 3,
+    "successful_items": 1,
+    "failed_items": 0,
+    "success_rate": 33.33,
+    "processing_time_ms": 15000
   },
-  reviews: {
-    rating_avg: 4.5,
-    review_count: 100,
-    summary_positive: ["좋은 품질"],
-    summary_negative: ["배송 지연"],
-    notable_reviews: []
+  "timestamp": "2024-01-01T00:00:15Z"
+}
+
+// job_progress 메시지
+{
+  "type": "job_progress", 
+  "job_id": "uuid-string",
+  "data": {
+    "current_item": 2,
+    "total_items": 3,
+    "progress_percentage": 66.67,
+    "current_item_name": "삼성 갤럭시북"
   },
-  sources: ["https://example.com"],
-  captured_at: "2024-01-20",
-  status: "success",
-  missing_fields: [],
-  suggested_queries: []
-};
+  "timestamp": "2024-01-01T00:00:20Z"
+}
 
-// API 모킹
-export const mockResearchAPI = {
-  createResearch: jest.fn(() => 
-    Promise.resolve({
-      job_id: "test-job-id",
-      status: "pending",
-      results: [],
-      metadata: {
-        total_items: 1,
-        successful_items: 0,
-        failed_items: 0,
-        success_rate: 0.0,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-    })
-  ),
-  
-  checkJobStatus: jest.fn(() =>
-    Promise.resolve({
-      job_id: "test-job-id",
-      status: "success",
-      progress: 1.0,
-      message: "완료"
-    })
-  ),
-  
-  getResults: jest.fn(() =>
-    Promise.resolve({
-      job_id: "test-job-id",
-      status: "success",
-      results: [mockProductResult],
-      metadata: {
-        total_items: 1,
-        successful_items: 1,
-        failed_items: 0,
-        success_rate: 1.0,
-        processing_time_ms: 3500,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        started_at: new Date().toISOString(),
-        completed_at: new Date().toISOString()
-      }
-    })
-  )
-};
+// job_complete 메시지
+{
+  "type": "job_complete",
+  "job_id": "uuid-string", 
+  "data": {
+    "status": "completed",
+    "results_count": 3,
+    "total_processing_time_ms": 45000
+  },
+  "timestamp": "2024-01-01T00:00:45Z"
+}
 ```
 
-### React 컴포넌트 테스트
+### 실시간 업데이트 처리
 
 ```typescript
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { ProductResearcher } from './ProductResearcher';
-import * as api from '../api/research';
-
-// API 모킹
-jest.mock('../api/research', () => ({
-  ...mockResearchAPI
-}));
-
-describe('ProductResearcher', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  test('제품 리서치 폼이 정상적으로 렌더링된다', () => {
-    render(<ProductResearcher />);
-    
-    expect(screen.getByLabelText('제품명:')).toBeInTheDocument();
-    expect(screen.getByLabelText('카테고리:')).toBeInTheDocument();
-    expect(screen.getByLabelText('가격:')).toBeInTheDocument();
-    expect(screen.getByText('리서치 시작')).toBeInTheDocument();
-  });
-
-  test('폼 제출 시 API가 호출된다', async () => {
-    render(<ProductResearcher />);
-    
-    fireEvent.change(screen.getByLabelText('제품명:'), {
-      target: { value: '테스트 제품' }
-    });
-    fireEvent.change(screen.getByLabelText('카테고리:'), {
-      target: { value: '테스트' }
-    });
-    fireEvent.change(screen.getByLabelText('가격:'), {
-      target: { value: '100000' }
-    });
-    
-    fireEvent.click(screen.getByText('리서치 시작'));
-
-    await waitFor(() => {
-      expect(api.createResearch).toHaveBeenCalledWith([{
-        product_name: '테스트 제품',
-        category: '테스트',
-        price_exact: 100000
-      }]);
-    });
-  });
-
-  test('리서치 결과가 정상적으로 표시된다', async () => {
-    render(<ProductResearcher />);
-    
-    // 폼 제출...
-    fireEvent.change(screen.getByLabelText('제품명:'), {
-      target: { value: '테스트 제품' }
-    });
-    fireEvent.change(screen.getByLabelText('카테고리:'), {
-      target: { value: '테스트' }
-    });
-    fireEvent.change(screen.getByLabelText('가격:'), {
-      target: { value: '100000' }
-    });
-    
-    fireEvent.click(screen.getByText('리서치 시작'));
-
-    await waitFor(() => {
-      expect(screen.getByText('리서치 결과')).toBeInTheDocument();
-      expect(screen.getByText('테스트 제품')).toBeInTheDocument();
-      expect(screen.getByText('테스트 브랜드')).toBeInTheDocument();
-    });
-  });
-});
-```
-
-## 🚀 배포 고려사항
-
-### 환경변수 설정
-
-```typescript
-// 환경별 API 설정
-const getAPIConfig = () => {
-  const env = process.env.NODE_ENV || 'development';
-  
-  const configs = {
-    development: {
-      baseURL: 'http://localhost:8000/api/v1',
-      timeout: 60000,
-      retries: 3
-    },
-    staging: {
-      baseURL: process.env.REACT_APP_API_URL || 'https://api-staging.example.com/api/v1',
-      timeout: 30000,
-      retries: 2
-    },
-    production: {
-      baseURL: process.env.REACT_APP_API_URL || 'https://api.example.com/api/v1',
-      timeout: 30000,
-      retries: 2
-    }
-  };
-  
-  return configs[env as keyof typeof configs] || configs.development;
-};
-```
-
-### CORS 설정 확인
-
-백엔드 CORS 설정이 프론트엔드 도메인을 허용하는지 확인:
-
-```python
-# 백엔드 main.py에서 확인
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # 프론트엔드 도메인 추가
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-```
-
-### 프로덕션 최적화
-
-```typescript
-// API 클라이언트 설정
-export class ResearchAPIClient {
-  private baseURL: string;
-  private timeout: number;
-  private retries: number;
-
-  constructor(config = getAPIConfig()) {
-    this.baseURL = config.baseURL;
-    this.timeout = config.timeout;
-    this.retries = config.retries;
-  }
-
-  private async fetchWithRetry(
-    url: string, 
-    options: RequestInit, 
-    retries = this.retries
-  ): Promise<Response> {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
-
-      const response = await fetch(url, {
-        ...options,
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-      return response;
+const handleJobUpdate = (message: WebSocketMessage) => {
+  switch (message.type) {
+    case 'job_status':
+      updateJobStatus(message.data);
+      break;
       
-    } catch (error) {
-      if (retries > 0 && error.name !== 'AbortError') {
-        await new Promise(resolve => setTimeout(resolve, 1000)); // 1초 대기
-        return this.fetchWithRetry(url, options, retries - 1);
-      }
-      throw error;
-    }
-  }
-
-  async createResearch(items: ProductItemRequest[]): Promise<ProductResearchResponse> {
-    const response = await this.fetchWithRetry(`${this.baseURL}/research/products`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items })
-    });
-
-    await handleAPIError(response);
-    return response.json();
-  }
-
-  // 다른 메서드들...
-}
-
-export const apiClient = new ResearchAPIClient();
-```
-
-## 📞 지원 및 문제 해결
-
-### 일반적인 문제
-
-1. **CORS 에러**
-   - 백엔드 CORS 설정 확인
-   - 프론트엔드 도메인이 허용 목록에 있는지 확인
-
-2. **타임아웃**
-   - 리서치 작업은 최대 60초 소요
-   - 적절한 타임아웃 설정 (최소 65초)
-
-3. **폴링 과부하**
-   - 2-5초 간격으로 상태 확인
-   - 최대 5분 후 타임아웃 처리
-
-4. **배치 크기 제한**
-   - 최대 10개 제품까지 한번에 처리
-   - 더 많은 제품은 여러 배치로 분할
-
-### 디버깅 팁
-
-```typescript
-// 디버그 모드 활성화
-const debugAPI = process.env.NODE_ENV === 'development';
-
-const apiDebugger = {
-  log: (message: string, data?: any) => {
-    if (debugAPI) {
-      console.log(`[API Debug] ${message}`, data);
-    }
-  },
-  
-  logRequest: (url: string, options: RequestInit) => {
-    if (debugAPI) {
-      console.group(`[API Request] ${options.method || 'GET'} ${url}`);
-      console.log('Options:', options);
-      console.log('Body:', options.body);
-      console.groupEnd();
-    }
-  },
-  
-  logResponse: (response: Response, data?: any) => {
-    if (debugAPI) {
-      console.group(`[API Response] ${response.status} ${response.statusText}`);
-      console.log('Headers:', Object.fromEntries(response.headers.entries()));
-      console.log('Data:', data);
-      console.groupEnd();
-    }
+    case 'job_progress':
+      updateProgressBar(message.data.progress_percentage);
+      updateCurrentItem(message.data.current_item_name);
+      break;
+      
+    case 'job_complete':
+      showCompletionMessage();
+      fetchFinalResults(message.job_id);
+      ws.close();
+      break;
+      
+    case 'job_error':
+      showErrorMessage(message.data.error_message);
+      ws.close();
+      break;
   }
 };
 ```
 
-### 성능 모니터링
+### WebSocket + Polling Fallback
 
 ```typescript
-// 성능 메트릭 수집
-export class PerformanceMonitor {
-  private metrics: Map<string, number[]> = new Map();
-
-  startTimer(key: string): () => void {
-    const start = performance.now();
+class JobStatusTracker {
+  private ws: WebSocket | null = null;
+  private pollingInterval: NodeJS.Timeout | null = null;
+  
+  constructor(private jobId: string) {}
+  
+  start() {
+    // WebSocket 연결 시도
+    this.connectWebSocket();
     
-    return () => {
-      const duration = performance.now() - start;
-      this.addMetric(key, duration);
+    // 5초 후 WebSocket 연결 실패 시 폴링으로 fallback
+    setTimeout(() => {
+      if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+        console.log('WebSocket 연결 실패, 폴링으로 전환');
+        this.startPolling();
+      }
+    }, 5000);
+  }
+  
+  private connectWebSocket() {
+    this.ws = new WebSocket(`ws://localhost:8000/api/v1/ws/research/${this.jobId}`);
+    
+    this.ws.onopen = () => {
+      console.log('WebSocket 연결 성공');
+      if (this.pollingInterval) {
+        clearInterval(this.pollingInterval);
+        this.pollingInterval = null;
+      }
+    };
+    
+    this.ws.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      this.handleUpdate(message);
+    };
+    
+    this.ws.onerror = () => {
+      console.log('WebSocket 오류, 폴링으로 전환');
+      this.startPolling();
+    };
+    
+    this.ws.onclose = (event) => {
+      if (event.code !== 1000) { // 정상 종료가 아닌 경우
+        console.log('WebSocket 비정상 종료, 폴링으로 전환');
+        this.startPolling();
+      }
     };
   }
-
-  addMetric(key: string, value: number): void {
-    if (!this.metrics.has(key)) {
-      this.metrics.set(key, []);
-    }
-    this.metrics.get(key)!.push(value);
+  
+  private startPolling() {
+    if (this.pollingInterval) return; // 이미 폴링 중
+    
+    this.pollingInterval = setInterval(async () => {
+      try {
+        const status = await fetch(`/api/v1/research/products/${this.jobId}/status`);
+        const data = await status.json();
+        
+        // WebSocket 메시지 형식으로 변환
+        this.handleUpdate({
+          type: 'job_status',
+          job_id: this.jobId,
+          data: data,
+          timestamp: new Date().toISOString()
+        });
+        
+        if (data.status === 'completed' || data.status === 'failed') {
+          this.stop();
+        }
+      } catch (error) {
+        console.error('폴링 중 오류:', error);
+      }
+    }, 2000);
   }
-
-  getAverageMetric(key: string): number {
-    const values = this.metrics.get(key) || [];
-    return values.reduce((a, b) => a + b, 0) / values.length || 0;
+  
+  private handleUpdate(message: WebSocketMessage) {
+    // 동일한 핸들러로 WebSocket과 폴링 메시지 처리
+    handleJobUpdate(message);
   }
-
-  reportMetrics(): void {
-    console.group('API Performance Metrics');
-    for (const [key, values] of this.metrics) {
-      console.log(`${key}: ${this.getAverageMetric(key).toFixed(2)}ms (${values.length} samples)`);
+  
+  stop() {
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
     }
-    console.groupEnd();
+    
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = null;
+    }
   }
 }
 
-export const performanceMonitor = new PerformanceMonitor();
-
-// 사용 예시
-const timer = performanceMonitor.startTimer('research_create');
-const result = await createResearch(items);
-timer();
+// 사용법
+const tracker = new JobStatusTracker(jobId);
+tracker.start();
 ```
 
-## 🛍️ 쿠팡 통합 특별 가이드
+### 상태별 폴링 로직 (Fallback)
 
-### 쿠팡 즉시 리턴 기능의 장점
-
-1. **빠른 사용자 경험**: 쿠팡 정보를 즉시 표시하여 사용자 만족도 향상
-2. **백그라운드 처리**: AI 리서치는 백그라운드에서 계속 진행
-3. **점진적 개선**: 먼저 쿠팡 정보를 보여주고, 나중에 완전한 분석 결과 제공
-4. **실제 데이터 활용**: 실제 쿠팡 API 구조를 활용한 정확한 정보
-
-### 실제 사용 시나리오
+WebSocket 연결 실패 시 사용되는 폴링 로직:
 
 ```typescript
-// 시나리오 1: 쿠팡에서 제품 선택 → 즉시 정보 표시 → AI 분석 추가
-const handleCoupangProductSelect = async (coupangProduct: any) => {
-  const items = [{
-    product_name: coupangProduct.productName,
-    category: coupangProduct.categoryName,
-    price_exact: coupangProduct.productPrice,
-    product_id: coupangProduct.productId,
-    product_url: coupangProduct.productUrl,
-    product_image: coupangProduct.productImage,
-    is_rocket: coupangProduct.isRocket,
-    is_free_shipping: coupangProduct.isFreeShipping,
-    seller_or_store: "쿠팡"
-  }];
-  
-  // 즉시 쿠팡 정보 받기 + 백그라운드 AI 리서치
-  const research = await createCoupangPreviewResearch(items);
-  
-  // 사용자는 즉시 쿠팡 정보를 볼 수 있음
-  console.log('즉시 표시:', research.results);
-  
-  // 백그라운드에서 AI 분석 계속 진행...
-};
-
-// 시나리오 2: 키워드 검색 결과와 함께 활용
-const handleKeywordSearch = async (keyword: string, searchResults: any[]) => {
-  const items = searchResults.map((result, index) => ({
-    product_name: result.productName,
-    category: result.categoryName,
-    price_exact: result.productPrice,
-    keyword: keyword,
-    rank: index + 1,
-    product_id: result.productId,
-    product_url: result.productUrl,
-    // ... 기타 쿠팡 필드
-  }));
-  
-  // 검색 결과를 즉시 표시하면서 AI 분석도 시작
-  return await createCoupangPreviewResearch(items);
-};
-```
-
-### CSS 스타일 예제
-
-```css
-/* 쿠팡 정보 표시를 위한 스타일 */
-.coupang-section {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 1rem;
-  margin: 1rem 0;
-  background-color: #fef9e7;
-}
-
-.coupang-fields {
-  margin-top: 1rem;
-  display: grid;
-  gap: 0.5rem;
-}
-
-.coupang-info {
-  background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-  color: white;
-  padding: 1rem;
-  border-radius: 8px;
-  margin: 1rem 0;
-}
-
-.coupang-badges {
-  display: flex;
-  gap: 0.5rem;
-  margin: 0.5rem 0;
-}
-
-.badge {
-  padding: 0.25rem 0.5rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.badge.rocket {
-  background-color: #3b82f6;
-  color: white;
-}
-
-.badge.free-ship {
-  background-color: #10b981;
-  color: white;
-}
-
-.price-comparison {
-  background-color: rgba(255, 255, 255, 0.2);
-  padding: 0.5rem;
-  border-radius: 4px;
-  margin-top: 0.5rem;
-}
-
-.product-image {
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.checkbox-group {
-  display: flex;
-  gap: 1rem;
-}
-
-.checkbox-group label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-/* 로딩 상태에서 쿠팡 정보가 있는 경우 */
-.has-coupang-preview .progress-status {
-  background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-  color: white;
-  border-radius: 8px;
-  padding: 1rem;
-}
-
-.has-coupang-preview .progress-status::before {
-  content: "🛍️ ";
-}
-```
-
-### 모바일 최적화
-
-```tsx
-// 모바일에서 쿠팡 정보를 카드 형태로 표시
-const CoupangProductCard: React.FC<{ product: ProductResult }> = ({ product }) => {
-  if (!product.coupang_info) return null;
-  
-  return (
-    <div className="coupang-card">
-      {product.coupang_info.productImage && (
-        <div className="card-image">
-          <img 
-            src={product.coupang_info.productImage} 
-            alt={product.product_name}
-            loading="lazy"
-          />
-        </div>
-      )}
+const pollJobStatus = async (jobId: string, maxAttempts = 60) => {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      const status = await checkStatus(jobId);
       
-      <div className="card-content">
-        <h3 className="product-title">{product.product_name}</h3>
-        
-        <div className="price-info">
-          <span className="current-price">
-            {product.price_exact.toLocaleString()}원
-          </span>
-          {product.coupang_info.productPrice && (
-            <span className="coupang-price">
-              쿠팡 {product.coupang_info.productPrice.toLocaleString()}원
-            </span>
-          )}
-        </div>
-        
-        <div className="badges">
-          {product.coupang_info.isRocket && (
-            <span className="badge rocket">🚀 로켓배송</span>
-          )}
-          {product.coupang_info.isFreeShipping && (
-            <span className="badge free-ship">📦 무료배송</span>
-          )}
-        </div>
-        
-        {product.coupang_info.productUrl && (
-          <a 
-            href={product.coupang_info.productUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="coupang-link-btn"
-          >
-            쿠팡에서 보기
-          </a>
-        )}
-      </div>
-    </div>
-  );
+      if (status.status === 'completed') {
+        return await getResults(jobId);
+      }
+      
+      if (status.status === 'failed') {
+        throw new Error('리서치 작업이 실패했습니다.');
+      }
+      
+      if (status.status === 'cancelled') {
+        throw new Error('리서치 작업이 취소되었습니다.');
+      }
+      
+      // 2초 대기 후 재시도
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+    } catch (error) {
+      if (attempt === maxAttempts - 1) throw error;
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+  }
+  
+  throw new Error('리서치 작업 시간이 초과되었습니다.');
 };
 ```
+
+## 📚 관련 문서
+
+- **[공통 에러 처리 가이드](../SHARED_ERROR_HANDLING_GUIDE.md)**: 모든 백엔드 서비스 공통 에러 처리
+- **[Swagger UI](http://localhost:8000/docs)**: 대화형 API 문서
+- **[ReDoc](http://localhost:8000/redoc)**: 읽기 전용 API 문서
+- **[헬스 체크](http://localhost:8000/api/v1/health)**: 서비스 상태 모니터링
+- **[개발 환경 설정](../CLAUDE.md)**: 프로젝트 설정 및 개발 명령어
 
 ---
 
-## 🎉 마무리
-
-이 가이드는 프론트엔드 개발자가 제품 리서치 API를 완전히 통합하는데 필요한 모든 정보를 제공합니다. 
-
-### 🆕 새로운 쿠팡 즉시 리턴 기능으로:
-- **즉시 응답**: 쿠팡 제품 정보를 선택과 동시에 표시
-- **백그라운드 처리**: AI 리서치는 백그라운드에서 계속 진행
-- **실제 데이터**: 실제 쿠팡 API 구조를 활용한 정확한 정보
-- **점진적 개선**: 기본 정보 → AI 분석 결과로 단계적 업그레이드
-
-추가 질문이나 특정 사용 사례에 대한 도움이 필요하면 백엔드 팀에 문의하세요.
+*이 가이드는 Product Research API의 로직과 에러 처리에 초점을 맞춰 작성되었습니다. UI/UX 구현은 프론트엔드 팀의 디자인 시스템을 따라 자유롭게 구현하세요.*
