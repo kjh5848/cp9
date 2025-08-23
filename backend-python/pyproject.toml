@@ -68,3 +68,11 @@ testpaths = ["app/tests"]
 python_files = ["test_*.py", "*_test.py"]
 addopts = "-v --cov=app --cov-report=html --cov-report=term-missing"
 asyncio_mode = "auto"
+
+[tool.poetry.scripts]
+setup = "scripts.runner:setup"
+dev = "scripts.runner:dev"
+stop = "scripts.runner:stop"
+test = "scripts.runner:test"
+lint = "scripts.runner:lint"
+format = "scripts.runner:format"
