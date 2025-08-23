@@ -4,9 +4,28 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git restore:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(mkdir:*)",
+      "Bash(docker:*)",
+      "Bash(start \"Docker Desktop\" \"C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe\")",
+      "Bash(alembic upgrade:*)",
+      "Bash(poetry run alembic:*)",
+      "Bash(python:*)",
+      "Bash(source:*)",
+      "Bash(pip install:*)",
+      "Bash(venv/Scripts/activate.bat)",
+      "Bash(venv/Scripts/python.exe -m pip install:*)",
+      "Bash(venv/Scripts/python.exe -m alembic upgrade:*)",
+      "Bash(copy .env.local .env)",
+      "Bash(cp:*)",
+      "Bash(venv/Scripts/python.exe:*)",
+      "Bash(set PYTHONPATH=%cd%)",
+      "Bash(export PYTHONPATH=$PWD)"
     ],
     "deny": [],
-    "ask": []
+    "ask": [],
+    "additionalDirectories": [
+      "C:\\c\\Users\\kjh58\\문서\\GitHub\\cp9"
+    ]
   }
 }
