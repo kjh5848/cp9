@@ -30,6 +30,7 @@ export function useProductActions(
 ) {
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
   const [isSeoLoading, setIsSeoLoading] = useState(false);
+  const [isResearchLoading, setIsResearchLoading] = useState(false);
 
   // 타입 가드: ProductItem인지 확인
   const isProductItem = (item: ProductItem | DeepLinkResponse): item is ProductItem => {
@@ -204,6 +205,107 @@ export function useProductActions(
     }
   };
 
+  // 리서치만 하기 (쿠팡 즉시 리턴 워크플로우)
+  const handleResearch = async () => {
+    setIsResearchLoading(true);
+    try {
+      const selectedItems = filteredResults.filter((_, index) => {
+        const itemId = isProductItem(filteredResults[index]) 
+          ? filteredResults[index].productId.toString()
+          : isDeepLinkResponse(filteredResults[index])
+          ? filteredResults[index].originalUrl || index.toString()
+          : index.toString();
+        return selected.includes(itemId);
+      });
+
+      // 선택된 상품 정보를 API 가이드 형식으로 변환
+      const apiItems = selectedItems.map(item => {
+        if (isProductItem(item)) {
+          return {
+            product_name: item.productName,
+            category: item.categoryName,
+            price_exact: item.productPrice,
+            currency: 'KRW',
+            // 쿠팡 API 필드들 (있는 경우)
+            product_id: item.productId,
+            product_url: item.productUrl,
+            product_image: item.productImage,
+            is_rocket: item.isRocket || false,
+            is_free_shipping: item.isFreeShipping || false,
+            category_name: item.categoryName,
+            seller_or_store: '쿠팡'
+          };
+        }
+        return null;
+      }).filter((item): item is NonNullable<typeof item> => item !== null);
+
+      console.log('쿠팡 즉시 리턴 리서치 요청:', {
+        itemsCount: apiItems.length,
+        items: apiItems.map(i => ({ name: i.product_name, price: i.price_exact }))
+      });
+
+      // 쿠팡 즉시 리턴 워크플로우로 API 호출
+      const response = await fetch('/api/research/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          items: apiItems,
+          return_coupang_preview: true,
+          priority: 5 // 높은 우선순위
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        const errorDetails = {
+          status: response.status,
+          statusText: response.statusText,
+          errorText
+        };
+        console.error('리서치 API 오류:', errorDetails);
+        throw new Error(`리서치 분석에 실패했습니다 (${response.status}: ${response.statusText})`);
+      }
+
+      const result = await response.json();
+      
+      if (!result.success || !result.data) {
+        throw new Error(result.message || '리서치 결과를 가져올 수 없습니다.');
+      }
+
+      console.log('쿠팡 즉시 리턴 성공:', {
+        job_id: result.data.job_id,
+        coupangResults: result.data.results ? result.data.results.length : 0,
+        message: result.message
+      });
+
+      // 리서치 관리 페이지를 새 탭에서 열기
+      const researchUrl = result.data.session_id 
+        ? `/research?session=${result.data.session_id}`
+        : '/research';
+      
+      window.open(researchUrl, '_blank');
+
+      toast.success(`리서치가 시작되었습니다! (${apiItems.length}개 상품)`);
+      setIsActionModalOpen(false);
+    } catch (error: unknown) {
+      console.error('리서치 분석 오류:', error);
+      
+      if (error instanceof Error) {
+        console.error('에러 메시지:', error.message);
+        console.error('에러 스택:', error.stack);
+        toast.error(`리서치 분석에 실패했습니다: ${error.message}`);
+      } else {
+        console.error('알 수 없는 에러 타입:', typeof error);
+        console.error('에러 내용:', JSON.stringify(error, null, 2));
+        toast.error('리서치 분석에 실패했습니다 (알 수 없는 오류)');
+      }
+    } finally {
+      setIsResearchLoading(false);
+    }
+  };
+
   // 액션 버튼 클릭 핸들러
   const handleActionButtonClick = () => {
     if (selected.length === 0) {
@@ -221,8 +323,10 @@ export function useProductActions(
   return {
     isActionModalOpen,
     isSeoLoading,
+    isResearchLoading,
     handleCopySelectedLinks,
     handleGenerateSeo,
+    handleResearch,
     handleActionButtonClick,
     closeActionModal,
     handleCopyToClipboard

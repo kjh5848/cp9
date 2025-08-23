@@ -7,8 +7,10 @@ CP9는 쿠팡 파트너스 상품을 기반으로 AI가 자동으로 SEO 최적�
 ## 🚀 주요 기능
 
 - **🔍 상품 검색**: 쿠팡 파트너스 API를 통한 실시간 상품 검색
+- **⚡ 쿠팡 즉시 리턴**: 쿠팡 데이터 즉시 표시 후 백그라운드에서 AI 리서치 진행
+- **🌐 실시간 WebSocket**: 리서치 진행 상황 실시간 업데이트 (진행률, 상태, 현재 작업)
 - **🤖 AI 콘텐츠 생성**: LangGraph 기반 AI 워크플로우로 SEO 최적화된 블로그 포스트 자동 생성
-- **📊 실시간 모니터링**: 워크플로우 진행 상황 실시간 추적
+- **📊 실시간 모니터링**: WebSocket + Polling Fallback으로 안정적인 상태 추적
 - **🔐 인증 시스템**: Supabase Auth 기반 사용자 관리
 - **🎨 커스텀 UI 라이브러리**: 애니메이션과 인터랙티브 요소를 포함한 완전한 커스텀 UI 시스템
 - **📱 반응형 디자인**: Tailwind CSS 기반 모던 UI/UX
@@ -21,13 +23,15 @@ CP9는 쿠팡 파트너스 상품을 기반으로 AI가 자동으로 SEO 최적�
 src/
 ├── shared/                # 🌐 전역 공유 리소스
 │   ├── components/        # 공통 복합 컴포넌트 (navbar 등)
+│   │   └── advanced-ui/   # 고급 UI 컴포넌트 (애니메이션, 캐러셀 등)
 │   ├── ui/               # 기본 UI 컴포넌트 (button, input, card)
-│   ├── hooks/            # 전역 훅
+│   ├── hooks/            # 전역 훅 (WebSocket, 상태 관리 등)
 │   ├── lib/              # 유틸리티 함수
-│   └── types/            # 공통 타입 정의
+│   └── types/            # 공통 타입 정의 (WebSocket, API 등)
 ├── features/              # 🎯 기능별 모듈
 │   ├── auth/             # 인증 시스템
-│   ├── product/          # 상품 검색 및 관리
+│   ├── product/          # 상품 검색 및 관리 (쿠팡 즉시 리턴)
+│   ├── research/         # 리서치 시스템 (실시간 WebSocket)
 │   ├── workflow/         # AI 워크플로우
 │   └── home/             # 홈페이지
 ├── infrastructure/        # 🏗️ 인프라 레이어

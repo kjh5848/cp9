@@ -31,13 +31,16 @@
       "Bash(cmd.exe:*)",
       "Read(/C:\\Users\\kjh58\\문서\\GitHub\\cp9\\backend-python\\docs/**)",
       "Bash(grep:*)",
+      "Read(/C:\\Users\\kjh58\\문서\\GitHub\\cp9\\backend-python\\docs\\frontend/**)",
+      "Bash(git commit:*)",
       "Read(/C:\\Users\\kjh58\\문서\\GitHub\\cp9\\backend-python\\docs\\frontend/**)"
     ],
     "deny": [],
     "ask": [],
     "additionalDirectories": [
       "D:\\",
-      "D:\\workspace\\cp9"
+      "D:\\workspace\\cp9",
+      "C:\\c\\Users\\kjh58\\문서\\GitHub\\cp9"
     ]
   }
 }

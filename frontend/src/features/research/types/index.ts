@@ -96,6 +96,8 @@ export interface ResearchSession {
   total_products: number;
   created_at: string;
   category_focus: string;
+  job_id?: string; // WebSocket 연결용 job_id
+  status?: 'pending' | 'in_progress' | 'completed' | 'failed' | 'cancelled';
 }
 
 /**

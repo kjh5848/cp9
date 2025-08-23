@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { ResearchSession } from '../types';
-import { getAllResearchSessions } from '../data/mockSessions';
+// Mock data import removed - now using real API calls
 
 /**
  * 모든 리서치 세션을 가져오는 훅
@@ -18,16 +18,25 @@ export function useResearchSessions() {
         setLoading(true);
         setError(null);
 
-        // 실제로는 API 호출
-        // const response = await fetch('/api/research/sessions');
-        // const data = await response.json();
+        // 실제 API 호출
+        const response = await fetch('/api/research/sessions', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
 
-        // 시뮬레이션된 지연
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        if (!response.ok) {
+          throw new Error(`API Error: ${response.status} - ${response.statusText}`);
+        }
+
+        const apiData = await response.json();
         
-        // 더미 데이터 사용
-        const mockData = getAllResearchSessions();
-        setSessions(mockData);
+        if (!apiData.success || !apiData.data) {
+          throw new Error(apiData.message || '세션 목록을 가져올 수 없습니다.');
+        }
+
+        setSessions(apiData.data);
         
       } catch (err) {
         setError('리서치 세션을 불러오는데 실패했습니다');
@@ -45,8 +54,24 @@ export function useResearchSessions() {
       setLoading(true);
       setError(null);
       
-      const mockData = getAllResearchSessions();
-      setSessions(mockData);
+      const response = await fetch('/api/research/sessions', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status} - ${response.statusText}`);
+      }
+
+      const apiData = await response.json();
+      
+      if (!apiData.success || !apiData.data) {
+        throw new Error(apiData.message || '세션 목록을 가져올 수 없습니다.');
+      }
+
+      setSessions(apiData.data);
     } catch (err) {
       setError('리서치 세션을 새로고침하는데 실패했습니다');
       console.error('Failed to refresh research sessions:', err);

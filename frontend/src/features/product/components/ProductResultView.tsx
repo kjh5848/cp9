@@ -77,6 +77,7 @@ export default function ProductResultView({
     isSeoLoading,
     handleCopySelectedLinks,
     handleGenerateSeo,
+    handleResearch,
     handleActionButtonClick,
     closeActionModal,
     handleCopyToClipboard
@@ -411,6 +412,7 @@ export default function ProductResultView({
         onClose={closeActionModal}
         onCopy={handleCopySelectedLinks}
         onSeo={handleGenerateSeo}
+        onResearch={handleResearch}
         selectedCount={selected.length}
       />
 
