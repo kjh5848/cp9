@@ -3,10 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ResearchItem, ResearchSession } from '../types';
-import { CacheManager, CacheKeys, cachedCall } from '@/shared/utils/cache';
-
-// 리서치 데이터 캐시 인스턴스 (5분 TTL)
-const researchCache = new CacheManager(5 * 60 * 1000);
+import { researchCache, CacheKeys, cachedCall } from '@/shared/utils/cache';
 
 /**
  * 리서치 데이터를 관리하는 훅 (기존 호환성 유지)

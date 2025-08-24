@@ -1,10 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
-import { CacheManager, CacheKeys } from '@/shared/utils/cache';
-
-// 리서치 데이터 캐시 인스턴스 (5분 TTL)
-const researchCache = new CacheManager(5 * 60 * 1000);
+import { researchCache, CacheKeys } from '@/shared/utils/cache';
 
 /**
  * 리서치 관련 캐시를 관리하는 훅

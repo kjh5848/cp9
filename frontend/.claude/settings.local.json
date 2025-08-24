@@ -36,7 +36,8 @@
       "Read(/C:\\Users\\kjh58\\문서\\GitHub\\cp9\\backend-python\\docs\\frontend/**)",
       "Read(/C:\\Users\\kjh58\\문서\\GitHub\\cp9\\backend-python\\docs/**)",
       "Read(/C:\\Users\\kjh58\\문서\\GitHub\\cp9\\backend-python\\docs\\api\\product-research/**)",
-      "Read(/C:\\Users\\kjh58\\문서\\GitHub\\cp9\\backend-python\\docs/**)"
+      "Read(/C:\\Users\\kjh58\\문서\\GitHub\\cp9\\backend-python\\docs/**)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": [],

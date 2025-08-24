@@ -9,9 +9,12 @@ interface CacheEntry<T> {
   ttl: number; // Time to live in milliseconds
 }
 
-class CacheManager {
+export class CacheManager {
   private cache = new Map<string, CacheEntry<any>>();
   private maxSize: number;
+  private hitCount = 0;
+  private missCount = 0;
+  private lastCleanup = new Date().toISOString();
 
   constructor(maxSize = 50) {
     this.maxSize = maxSize;
@@ -45,17 +48,20 @@ class CacheManager {
     const entry = this.cache.get(key);
     
     if (!entry) {
+      this.missCount++;
       console.log(`[Cache] 캐시 미스: ${key}`);
       return null;
     }
 
     // TTL 확인
     if (Date.now() - entry.timestamp > entry.ttl) {
+      this.missCount++;
       console.log(`[Cache] 만료된 캐시 제거: ${key}`);
       this.cache.delete(key);
       return null;
     }
 
+    this.hitCount++;
     console.log(`[Cache] 캐시 힛: ${key}`);
     return entry.data as T;
   }
@@ -74,7 +80,14 @@ class CacheManager {
   /**
    * 패턴에 매칭되는 모든 키의 캐시 삭제
    */
-  deletePattern(pattern: string): number {
+  deleteByPattern(pattern: string): number {
+    return this.deletePattern(pattern);
+  }
+
+  /**
+   * 패턴에 매칭되는 모든 키의 캐시 삭제 (내부 구현)
+   */
+  private deletePattern(pattern: string): number {
     const regex = new RegExp(pattern);
     let deletedCount = 0;
 
@@ -114,6 +127,7 @@ class CacheManager {
       }
     }
 
+    this.lastCleanup = new Date().toISOString();
     if (cleanedCount > 0) {
       console.log(`[Cache] 만료된 ${cleanedCount}개 캐시 정리 완료`);
     }
@@ -125,13 +139,20 @@ class CacheManager {
    */
   getStats(): {
     size: number;
-    maxSize: number;
-    keys: string[];
+    hitCount: number;
+    missCount: number;
+    hitRate: string;
+    lastCleanup: string;
   } {
+    const total = this.hitCount + this.missCount;
+    const hitRate = total > 0 ? `${((this.hitCount / total) * 100).toFixed(1)}%` : '0%';
+    
     return {
       size: this.cache.size,
-      maxSize: this.maxSize,
-      keys: Array.from(this.cache.keys())
+      hitCount: this.hitCount,
+      missCount: this.missCount,
+      hitRate,
+      lastCleanup: this.lastCleanup
     };
   }
 
@@ -166,13 +187,13 @@ if (typeof window !== 'undefined') {
  * 캐시 키 생성 헬퍼
  */
 export const CacheKeys = {
-  research: (sessionId: string, ids?: string[]) => 
+  researchResults: (sessionId: string, ids?: string[]) => 
     `research:${sessionId}:${ids ? ids.sort().join(',') : 'all'}`,
   
-  session: (sessionId: string) => 
+  researchSession: (sessionId: string) => 
     `session:${sessionId}`,
     
-  sessions: (page = 1, limit = 10) => 
+  researchSessions: (page = 1, limit = 10) => 
     `sessions:${page}:${limit}`,
     
   jobStatus: (jobId: string) => 
@@ -185,10 +206,11 @@ export const CacheKeys = {
 export async function cachedCall<T>(
   key: string,
   fetcher: () => Promise<T>,
+  cache: CacheManager = researchCache,
   ttl = 5 * 60 * 1000
 ): Promise<T> {
   // 캐시에서 확인
-  const cached = researchCache.get<T>(key);
+  const cached = cache.get<T>(key);
   if (cached !== null) {
     return cached;
   }
@@ -196,7 +218,7 @@ export async function cachedCall<T>(
   // 캐시 미스 시 새로 요청
   try {
     const data = await fetcher();
-    researchCache.set(key, data, ttl);
+    cache.set(key, data, ttl);
     return data;
   } catch (error) {
     console.error(`[Cache] API 호출 실패 (${key}):`, error);
