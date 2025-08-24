@@ -76,6 +76,7 @@ export default function GalleryCard({
         clearInterval(autoSlideInterval);
         setAutoSlideInterval(null);
       }
+      return undefined;
     }
   }, [products.length, isHovered]);
 

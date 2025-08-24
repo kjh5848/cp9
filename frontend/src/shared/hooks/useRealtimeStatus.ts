@@ -12,7 +12,7 @@ export interface RealtimeStatusUpdate {
   currentNode?: string;
   progress?: number;
   completedNodes?: string[];
-  result?: any;
+  result?: unknown;
   error?: string;
   estimatedTimeLeft?: number;
   type?: 'update' | 'close';

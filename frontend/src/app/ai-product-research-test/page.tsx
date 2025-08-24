@@ -8,7 +8,7 @@ interface TestResult {
     productIds: string[];
     keyword: string;
   };
-  output?: any;
+  output?: unknown;
   error?: string;
   details?: string;
   timestamp?: string;
@@ -91,7 +91,7 @@ export default function AIProductResearchTestPage() {
     const enrichedData = aiResult.output?.scrapedData?.enrichedData || [];
     const seoContent = {
       title: `${keyword} 추천 TOP ${enrichedData.length} - 완벽 구매 가이드`,
-      content: `# ${keyword} 추천 상품\n\n${enrichedData.map((product: any, index: number) => 
+      content: `# ${keyword} 추천 상품\n\n${enrichedData.map((product: Record<string, unknown>, index: number) => 
         `## ${index + 1}. ${product.productName}\n\n**가격**: ${product.productPrice?.toLocaleString()}원\n**평점**: ${product.rating}/5\n\n${product.description || ''}`
       ).join('\n\n')}`,
       keywords: [keyword, '추천', '구매가이드'],

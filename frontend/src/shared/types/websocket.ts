@@ -3,12 +3,11 @@
  * API 가이드에서 제공하는 WebSocket 메시지 타입들
  */
 
-export interface WebSocketMessage {
-  type: "job_status" | "job_progress" | "job_complete" | "job_error";
-  job_id: string;
-  data: any;
-  timestamp: string;
-}
+export type WebSocketMessage = 
+  | { type: "job_status"; job_id: string; data: JobStatusData; timestamp: string; }
+  | { type: "job_progress"; job_id: string; data: JobProgressData; timestamp: string; }
+  | { type: "job_complete"; job_id: string; data: JobCompleteData; timestamp: string; }
+  | { type: "job_error"; job_id: string; data: JobErrorData; timestamp: string; };
 
 export interface JobStatusData {
   status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";

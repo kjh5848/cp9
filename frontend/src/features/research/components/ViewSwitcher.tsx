@@ -15,10 +15,7 @@ interface ViewSwitcherProps {
  */
 export default function ViewSwitcher({ current, onChange }: ViewSwitcherProps) {
   const views: { mode: ViewMode; icon: React.ReactNode; label: string }[] = [
-    { mode: 'gallery', icon: <Grid3x3 className="w-4 h-4" />, label: '갤러리' },
-    { mode: 'card', icon: <Layers className="w-4 h-4" />, label: '카드' },
-    { mode: 'table', icon: <Table className="w-4 h-4" />, label: '테이블' },
-    { mode: 'blog', icon: <FileText className="w-4 h-4" />, label: '블로그' }
+    { mode: 'gallery', icon: <Grid3x3 className="w-4 h-4" />, label: '갤러리' }
   ];
 
   return (

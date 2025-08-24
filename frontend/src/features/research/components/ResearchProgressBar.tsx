@@ -12,6 +12,7 @@ interface ResearchProgressBarProps {
     currentItem?: string;
   } | null;
   jobId?: string | null;
+  estimatedTime?: string;
 }
 
 /**
@@ -79,51 +80,93 @@ export default function ResearchProgressBar({
   const percentage = progressData?.percentage || 0;
 
   return (
-    <Card className={`p-4 ${config.bgColor} border ${config.borderColor} mb-6`}>
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-3">
-          <StatusIcon 
-            className={`w-5 h-5 ${config.color} ${config.animate ? 'animate-spin' : ''}`} 
-          />
-          <div>
-            <h3 className="font-medium text-white">{config.message}</h3>
-            {progressData?.currentItem && (
-              <p className="text-sm text-gray-400">현재: {progressData.currentItem}</p>
-            )}
+    <div className="mb-6">
+      <Card className={`p-6 ${config.bgColor} border ${config.borderColor} backdrop-blur-sm shadow-lg`}>
+        {/* 헤더 섹션 */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-4">
+            {/* 아이콘과 상태 메시지 */}
+            <div className={`p-3 rounded-full ${config.bgColor} border ${config.borderColor}`}>
+              <StatusIcon 
+                className={`w-6 h-6 ${config.color} ${config.animate ? 'animate-spin' : ''}`} 
+              />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-white">{config.message}</h3>
+              {progressData?.currentItem && (
+                <p className="text-sm text-gray-300 mt-1">
+                  <span className="inline-flex items-center gap-1">
+                    <span className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></span>
+                    현재 처리 중: <span className="font-medium">{progressData.currentItem}</span>
+                  </span>
+                </p>
+              )}
+            </div>
           </div>
+          
+          {/* 진행률 표시 */}
+          {progressData && (
+            <div className="text-right">
+              <div className={`text-2xl font-bold ${config.color}`}>
+                {Math.round(percentage)}%
+              </div>
+              <div className="text-sm text-gray-400">
+                {progressData.current} / {progressData.total} 완료
+              </div>
+            </div>
+          )}
         </div>
         
+        {/* 고급 진행률 바 */}
         {progressData && (
-          <div className="text-right">
-            <div className="text-lg font-bold text-white">
-              {Math.round(percentage)}%
+          <div className="space-y-2">
+            {/* 진행률 바 배경 */}
+            <div className="relative w-full bg-gray-700/50 rounded-full h-3 overflow-hidden border border-gray-600/30">
+              {/* 그라디언트 진행률 바 */}
+              <div 
+                className={`h-full rounded-full transition-all duration-700 ease-out relative overflow-hidden ${
+                  status === 'completed' ? 'bg-gradient-to-r from-green-500 to-green-400' :
+                  status === 'failed' ? 'bg-gradient-to-r from-red-500 to-red-400' : 
+                  'bg-gradient-to-r from-blue-500 to-purple-500'
+                }`}
+                style={{ width: `${Math.min(percentage, 100)}%` }}
+              >
+                {/* 진행률 바 애니메이션 효과 */}
+                {status === 'in_progress' && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
+                )}
+              </div>
             </div>
-            <div className="text-sm text-gray-400">
-              {progressData.current} / {progressData.total}
+            
+            {/* 진행률 세부 정보 */}
+            <div className="flex justify-between text-xs text-gray-400">
+              <span>시작</span>
+              <span className="flex items-center gap-1">
+                {status === 'in_progress' && (
+                  <span className="w-1 h-1 bg-blue-400 rounded-full animate-pulse"></span>
+                )}
+                {progressData.current}개 처리됨
+              </span>
+              <span>{progressData.total}개 목표</span>
             </div>
           </div>
         )}
-      </div>
-      
-      {/* 진행률 바 */}
-      {progressData && (
-        <div className="w-full bg-gray-700 rounded-full h-2">
-          <div 
-            className={`h-2 rounded-full transition-all duration-500 ease-out ${
-              status === 'completed' ? 'bg-green-500' :
-              status === 'failed' ? 'bg-red-500' : 'bg-blue-500'
-            }`}
-            style={{ width: `${Math.min(percentage, 100)}%` }}
-          />
+        
+        {/* 추가 정보 및 Job ID */}
+        <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-600/30">
+          <div className="text-xs text-gray-400">
+            {status === 'in_progress' && '예상 완료 시간: 약 2-3분'}
+            {status === 'completed' && '✨ 모든 리서치가 성공적으로 완료되었습니다'}
+            {status === 'failed' && '⚠️ 일부 항목에서 오류가 발생했습니다'}
+            {status === 'pending' && '🚀 곧 리서치가 시작됩니다'}
+          </div>
+          {jobId && (
+            <div className="text-xs text-gray-500 font-mono bg-gray-800/50 px-2 py-1 rounded">
+              ID: {jobId.slice(-8)}
+            </div>
+          )}
         </div>
-      )}
-      
-      {/* Job ID 표시 (디버그용) */}
-      {jobId && (
-        <div className="mt-2 text-xs text-gray-500">
-          Job ID: {jobId}
-        </div>
-      )}
-    </Card>
+      </Card>
+    </div>
   );
 }

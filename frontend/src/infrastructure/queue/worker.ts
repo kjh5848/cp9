@@ -10,7 +10,7 @@
 interface QueueJob {
   id: string;
   type: string;
-  data: any;
+  data: unknown;
   status: 'pending' | 'processing' | 'completed' | 'failed';
   priority?: 'low' | 'normal' | 'high';
   retries?: number;
@@ -18,7 +18,7 @@ interface QueueJob {
   scheduledAt?: number;
   createdAt: Date;
   updatedAt?: Date;
-  result?: any;
+  result?: unknown;
   error?: string;
 }
 
@@ -32,7 +32,7 @@ export type JobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancel
  */
 export interface JobResult {
   success: boolean;
-  data?: any;
+  data?: unknown;
   error?: string;
   executionTime: number;
   retries: number;
@@ -55,7 +55,7 @@ export interface QueueConfig {
  */
 export class QueueWorker {
   private config: QueueConfig;
-  private redis: any; // Redis 클라이언트
+  private redis: any; // Redis 클라이언트 - 외부 라이브러리
   private isRunning: boolean = false;
   private activeJobs: Map<string, Promise<void>> = new Map();
 

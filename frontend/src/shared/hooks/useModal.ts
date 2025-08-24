@@ -9,7 +9,7 @@ import { useState, useCallback } from 'react';
 
 export interface ModalState {
   isOpen: boolean;
-  data?: any; // 모달에 전달할 데이터
+  data?: unknown; // 모달에 전달할 데이터
 }
 
 export function useModal(initialState: boolean = false) {
@@ -21,7 +21,7 @@ export function useModal(initialState: boolean = false) {
   /**
    * 모달 열기
    */
-  const openModal = useCallback((data?: any) => {
+  const openModal = useCallback((data?: unknown) => {
     setModalState({ isOpen: true, data });
   }, []);
 
@@ -35,7 +35,7 @@ export function useModal(initialState: boolean = false) {
   /**
    * 모달 토글
    */
-  const toggleModal = useCallback((data?: any) => {
+  const toggleModal = useCallback((data?: unknown) => {
     setModalState(prev => ({
       isOpen: !prev.isOpen,
       data: prev.isOpen ? null : data,
@@ -45,7 +45,7 @@ export function useModal(initialState: boolean = false) {
   /**
    * 모달 데이터 업데이트 (열린 상태 유지)
    */
-  const updateModalData = useCallback((data: any) => {
+  const updateModalData = useCallback((data: unknown) => {
     setModalState(prev => ({ ...prev, data }));
   }, []);
 

@@ -4,6 +4,15 @@ import toast from 'react-hot-toast';
 import { useProductActions } from '../useProductActions';
 import { ProductItem, DeepLinkResponse } from '../../types';
 
+// API Client 모킹
+vi.mock('@/infrastructure/api', () => ({
+  apiClients: {
+    research: {
+      createResearchWithCoupangPreview: vi.fn(),
+    },
+  },
+}));
+
 // 모킹 설정
 vi.mock('react-hot-toast', () => ({
   default: {
@@ -11,9 +20,6 @@ vi.mock('react-hot-toast', () => ({
     error: vi.fn(),
   },
 }));
-
-const mockFetch = vi.fn();
-global.fetch = mockFetch;
 
 const mockWindowOpen = vi.fn();
 Object.defineProperty(window, 'open', {
@@ -61,6 +67,7 @@ describe('useProductActions', () => {
       deepLink: 'https://deep.example.com/link1',
       title: '딥링크 상품 1',
       price: 15000,
+      success: true,
     },
   ];
 
@@ -117,19 +124,17 @@ describe('useProductActions', () => {
   describe('handleResearch 테스트', () => {
     it('성공적으로 리서치를 시작하고 새 탭을 열어야 한다', async () => {
       const mockResponse = {
-        success: true,
-        data: {
-          job_id: 'test-job-123',
-          session_id: 'test-session-456',
-          results: [{ product_name: '테스트 상품 1' }],
-        },
+        job_id: 'test-job-123',
+        session_id: 'test-session-456',
+        results: [{ product_name: '테스트 상품 1' }],
+        status: 'pending',
         message: '리서치가 시작되었습니다',
+        created_at: new Date().toISOString(),
+        items_count: 2
       };
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse,
-      });
+      const { apiClients } = await import('@/infrastructure/api');
+      vi.mocked(apiClients.research.createResearchWithCoupangPreview).mockResolvedValueOnce(mockResponse);
 
       const { result } = renderHook(() =>
         useProductActions(mockProductItems, mockSelected)

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { ProductItem, DeepLinkResponse } from '../types';
+import { apiClients, isApiError, isNetworkError, isServerError } from '@/infrastructure/api';
 
 /**
  * 상품 액션 관련 로직을 관리하는 훅
@@ -108,38 +109,16 @@ export function useProductActions(
         return null;
       }).filter((item): item is NonNullable<typeof item> => item !== null);
 
-      // LangGraph API 호출
+      // 새로운 LangGraph API 클라이언트 사용
       console.log('SEO 생성 요청 시작:', {
         productsCount: productsData.length,
         products: productsData.map(p => ({ name: p.name, price: p.price }))
       });
 
-      const response = await fetch('/api/langgraph/seo-generation', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          products: productsData,
-          type: 'product_review'
-        }),
+      const result = await apiClients.langgraph.generateSEO({
+        products: productsData,
+        type: 'product_review'
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        const errorDetails = {
-          status: response.status,
-          statusText: response.statusText,
-          errorText
-        };
-        console.error('SEO 글 생성 API 오류:', errorDetails);
-        console.error('API 응답 상태:', response.status);
-        console.error('API 응답 메시지:', response.statusText);
-        console.error('API 에러 내용:', errorText);
-        throw new Error(`SEO 글 생성에 실패했습니다 (${response.status}: ${response.statusText})`);
-      }
-
-      const result = await response.json();
       
       // 결과를 새 탭에서 열기
       const newWindow = window.open('', '_blank');
@@ -177,7 +156,7 @@ export function useProductActions(
               
               <div class="seo-content">
                 <h3>📝 SEO 최적화 글</h3>
-                <div style="white-space: pre-wrap;">${result.content || 'SEO 글을 생성하는 중입니다...'}</div>
+                <div style="white-space: pre-wrap;">${result.data?.content || 'SEO 글을 생성하는 중입니다...'}</div>
               </div>
             </div>
           </body>
@@ -191,7 +170,9 @@ export function useProductActions(
     } catch (error: unknown) {
       console.error('SEO 글 생성 오류:', error);
       
-      if (error instanceof Error) {
+      if (isApiError(error)) {
+        toast.error(`SEO 글 생성에 실패했습니다: ${error.getUserMessage()}`);
+      } else if (error instanceof Error) {
         console.error('에러 메시지:', error.message);
         console.error('에러 스택:', error.stack);
         toast.error(`SEO 글 생성에 실패했습니다: ${error.message}`);
@@ -244,45 +225,18 @@ export function useProductActions(
         items: apiItems.map(i => ({ name: i.product_name, price: i.price_exact }))
       });
 
-      // 쿠팡 즉시 리턴 워크플로우로 API 호출
-      const response = await fetch('/api/research/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          items: apiItems,
-          return_coupang_preview: true,
-          priority: 5 // 높은 우선순위
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        const errorDetails = {
-          status: response.status,
-          statusText: response.statusText,
-          errorText
-        };
-        console.error('리서치 API 오류:', errorDetails);
-        throw new Error(`리서치 분석에 실패했습니다 (${response.status}: ${response.statusText})`);
-      }
-
-      const result = await response.json();
+      // 새로운 Research API 클라이언트 사용 (수정된 올바른 방식)
+      const result = await apiClients.research.createResearchWithCoupangPreview(apiItems);
       
-      if (!result.success || !result.data) {
-        throw new Error(result.message || '리서치 결과를 가져올 수 없습니다.');
-      }
-
       console.log('쿠팡 즉시 리턴 성공:', {
-        job_id: result.data.job_id,
-        coupangResults: result.data.results ? result.data.results.length : 0,
+        job_id: result.job_id,
+        coupangResults: result.results ? result.results.length : 0,
         message: result.message
       });
 
       // 리서치 관리 페이지를 새 탭에서 열기
-      const researchUrl = result.data.session_id 
-        ? `/research?session=${result.data.session_id}`
+      const researchUrl = result.session_id 
+        ? `/research?session=${result.session_id}`
         : '/research';
       
       window.open(researchUrl, '_blank');
@@ -292,7 +246,17 @@ export function useProductActions(
     } catch (error: unknown) {
       console.error('리서치 분석 오류:', error);
       
-      if (error instanceof Error) {
+      if (isApiError(error)) {
+        // API 에러의 경우 사용자 친화적 메시지 표시
+        toast.error(`리서치 분석에 실패했습니다: ${error.getUserMessage()}`);
+        
+        // 네트워크 오류나 서버 오류의 경우 추가 가이드 제공
+        if (isNetworkError(error)) {
+          toast.error('네트워크 연결을 확인하고 다시 시도해주세요.', { duration: 5000 });
+        } else if (isServerError(error)) {
+          toast.error('서버에 문제가 있습니다. 잠시 후 다시 시도해주세요.', { duration: 5000 });
+        }
+      } else if (error instanceof Error) {
         console.error('에러 메시지:', error.message);
         console.error('에러 스택:', error.stack);
         toast.error(`리서치 분석에 실패했습니다: ${error.message}`);

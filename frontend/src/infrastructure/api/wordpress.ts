@@ -17,7 +17,7 @@ interface WordPressPost {
   categories?: number[];
   tags?: number[];
   featured_media?: number;
-  meta?: any;
+  meta?: Record<string, unknown>;
 }
 
 interface WordPressResponse {

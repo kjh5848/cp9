@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     console.log('Scrapfly 테스트 시작:', url);
 
     // 동적으로 Scrapfly 모듈 import
-    let scrapflyCoupangScraper: any;
+    let scrapflyCoupangScraper: unknown;
     try {
       const scraperModule = await import('@/infrastructure/scraping/scrapfly-scraper');
       scrapflyCoupangScraper = scraperModule.scrapflyCoupangScraper;
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Scrapfly로 크롤링 실행
-    const result = await scrapflyCoupangScraper.scrapeProduct(url);
+    const result = await (scrapflyCoupangScraper as any).scrapeProduct(url);
     
     const totalDuration = Date.now() - startTime;
 

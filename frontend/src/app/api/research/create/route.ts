@@ -1,3 +1,12 @@
+/**
+ * @deprecated 이 API 라우트는 더 이상 사용되지 않습니다.
+ * 대신 백엔드 Python API를 직접 사용하세요: POST /api/v1/research/products
+ * 
+ * 이 파일은 레거시 호환성을 위해 유지되고 있으며, 향후 제거될 예정입니다.
+ * 
+ * @see https://localhost:8000/api/v1/research/products
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 
 interface CreateResearchRequest {
@@ -43,7 +52,7 @@ interface BackendCreateResponse {
     
     // 쿠팡 즉시 리턴 응답
     job_id?: string;
-    results?: any[]; // 쿠팡 데이터
+    results?: unknown[]; // 쿠팡 데이터
   };
   message?: string;
   error?: string;

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 interface BackendSessionsResponse {
   success: boolean;
   data?: {
-    sessions: any[];
+    sessions: unknown[];
     total: number;
   };
   message?: string;

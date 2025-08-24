@@ -8,7 +8,7 @@ interface ResearchResultsRequest {
 interface BackendApiResponse {
   success: boolean;
   data?: {
-    products: any[];
+    products: unknown[];
     total_products: number;
     created_at: string;
     category_focus: string;

@@ -42,7 +42,7 @@ class MockWebSocket {
   }
 
   // 테스트용 메시지 전송 헬퍼
-  simulateMessage(data: any): void {
+  simulateMessage(data: unknown): void {
     if (this.readyState === MockWebSocket.OPEN && this.onmessage) {
       this.onmessage(new MessageEvent('message', { data: JSON.stringify(data) }));
     }

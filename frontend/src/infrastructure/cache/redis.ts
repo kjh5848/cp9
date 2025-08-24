@@ -75,7 +75,7 @@ export class RedisCache {
   /**
    * 데이터 저장
    */
-  async set(key: string, data: any, ttl?: number): Promise<void> {
+  async set(key: string, data: unknown, ttl?: number): Promise<void> {
     try {
       const redis = await this.getRedisClient();
       const cacheKey = this.generateKey(key);
@@ -234,7 +234,7 @@ export class RedisCache {
  * 메모리 기반 폴백 캐시 (Redis 사용 불가능한 경우)
  */
 export class MemoryCache {
-  private cache = new Map<string, { data: any; timestamp: number; ttl: number }>();
+  private cache = new Map<string, { data: unknown; timestamp: number; ttl: number }>();
   private config: CacheConfig;
 
   constructor(config: Partial<CacheConfig> = {}) {
@@ -251,7 +251,7 @@ export class MemoryCache {
   /**
    * 데이터 저장
    */
-  async set(key: string, data: any, ttl?: number): Promise<void> {
+  async set(key: string, data: unknown, ttl?: number): Promise<void> {
     const cacheKey = this.generateKey(key);
     this.cache.set(cacheKey, {
       data,

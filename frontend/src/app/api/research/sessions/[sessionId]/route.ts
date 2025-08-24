@@ -6,7 +6,7 @@ interface BackendSessionResponse {
     id: string;
     title: string;
     description: string;
-    products: any[];
+    products: unknown[];
     total_products: number;
     created_at: string;
     category_focus: string;

@@ -96,7 +96,7 @@ export function useClipboard() {
    * 객체나 배열을 JSON 형태로 복사
    */
   const copyAsJSON = useCallback(async (
-    data: any, 
+    data: unknown, 
     pretty: boolean = true,
     successMessage?: string
   ): Promise<boolean> => {

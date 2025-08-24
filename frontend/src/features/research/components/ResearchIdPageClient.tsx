@@ -155,8 +155,25 @@ export default function ResearchIdPageClient({ sessionId }: ResearchIdPageClient
             })}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-gray-400">이 세션에는 분석된 제품이 없습니다.</p>
+          <div className="text-center py-16">
+            <div className="max-w-md mx-auto">
+              <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full flex items-center justify-center">
+                <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-3">아이템을 생성하고 리서치를 시작하세요</h3>
+              <p className="text-gray-400 mb-8">상품을 추가하여 AI 리서치 분석을 받아보세요.</p>
+              <button 
+                onClick={() => window.location.href = '/'}
+                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                아이템 생성하기
+              </button>
+            </div>
           </div>
         )}
       </div>

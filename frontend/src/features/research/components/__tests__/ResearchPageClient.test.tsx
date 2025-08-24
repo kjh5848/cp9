@@ -49,7 +49,7 @@ vi.mock('../ResearchProgressBar', () => ({
     jobId 
   }: { 
     status: string; 
-    progressData: any; 
+    progressData: unknown; 
     jobId: string | null; 
   }) => (
     <div data-testid="progress-bar">
@@ -66,13 +66,13 @@ vi.mock('../ResearchProgressBar', () => ({
 }));
 
 vi.mock('../views/GalleryView', () => ({
-  default: ({ products }: { products: any[] }) => (
+  default: ({ products }: { products: unknown[] }) => (
     <div data-testid="gallery-view">Gallery View ({products.length} products)</div>
   ),
 }));
 
 vi.mock('../views/CardView', () => ({
-  default: ({ data }: { data: any[] }) => (
+  default: ({ data }: { data: unknown[] }) => (
     <div data-testid="card-view">Card View ({data.length} items)</div>
   ),
 }));
@@ -141,7 +141,7 @@ describe('ResearchPageClient - WebSocket 메시지 처리', () => {
     });
 
     // WebSocket 핸들러 캡처
-    vi.mocked(require('@/shared/hooks/useJobStatusTracker').useJobStatusTracker).mockImplementation((jobId, onUpdate) => {
+    vi.mocked(require('@/shared/hooks/useJobStatusTracker').useJobStatusTracker).mockImplementation((jobId: string, onUpdate: unknown) => {
       capturedJobUpdateHandler = onUpdate;
       return {
         startTracking: vi.fn(),

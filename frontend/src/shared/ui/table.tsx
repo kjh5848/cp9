@@ -6,11 +6,11 @@ import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
  */
 interface TableProps {
   headers: TableHeader[];
-  data: any[][];
+  data: unknown[][];
   onSort?: (field: string) => void;
   sortField?: string;
   sortOrder?: 'asc' | 'desc';
-  onRowClick?: (rowIndex: number, rowData: any[]) => void;
+  onRowClick?: (rowIndex: number, rowData: unknown[]) => void;
   className?: string;
 }
 
@@ -97,7 +97,7 @@ export function Table({
                   key={cellIndex}
                   className={`px-4 py-3 text-gray-300 ${getAlignment(headers[cellIndex]?.align)}`}
                 >
-                  {cell}
+                  {cell as React.ReactNode}
                 </td>
               ))}
             </tr>
