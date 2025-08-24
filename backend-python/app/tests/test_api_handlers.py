@@ -9,12 +9,12 @@ from app.api.v1.handlers.response_formatter import ResponseFormatter
 from app.core.exceptions import ValidationException
 from app.domain.product_entities import ProductResearchItem, ProductResearchJob
 from app.schemas.error_responses import ErrorCode
-from app.schemas.request_schemas import (
-    ProductResearchItemRequest,
+from app.schemas.product_research_in import (
+    ProductItemRequest as ProductResearchItemRequest,
     ProductResearchRequest,
 )
-from app.schemas.response_schemas import (
-    ProductResearchItemResponse,
+from app.schemas.product_research_out import (
+    ProductResultResponse as ProductResearchItemResponse, 
     ProductResearchResponse,
 )
 

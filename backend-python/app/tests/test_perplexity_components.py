@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from aiohttp.client_exceptions import ClientError
-from aiohttp.client_exceptions import ClientTimeout as TimeoutError
+from asyncio import TimeoutError
 
 from app.core.exceptions import ExternalServiceException, RateLimitException
 from app.domain.product_entities import ProductResearchItem
@@ -24,7 +24,7 @@ class TestPerplexityApiClient:
         """Create Perplexity API client."""
         return PerplexityApiClient(
             api_key="test_api_key",
-            base_url="https://api.perplexity.ai",
+            api_url="https://api.perplexity.ai",
             timeout=30
         )
 

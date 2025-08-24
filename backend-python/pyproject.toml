@@ -66,8 +66,11 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ["app/tests"]
 python_files = ["test_*.py", "*_test.py"]
-addopts = "-v --cov=app --cov-report=html --cov-report=term-missing"
+addopts = "-v --cov=app --cov-report=term-missing --cov-report=html"
 asyncio_mode = "auto"
+markers = [
+    "asyncio: mark test as async"
+]
 
 [tool.poetry.scripts]
 # Docker 기반 스크립트 (주요 사용)
