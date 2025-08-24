@@ -63,58 +63,124 @@ backend-python/
 - Redis 7
 - Perplexity AI API 키
 
-## 🚀 빠른 시작
+## 🚀 빠른 시작 (Docker 기반)
 
-### 1단계: 초기 설정 (최초 1회)
+### 방법 1: Windows 배치 스크립트 (Windows 추천) 
+
+```cmd
+git clone <repository-url>
+cd backend-python
+
+# 초기 설정 (최초 1회)
+dev.bat setup
+
+# 개발 시작
+dev.bat start
+
+# 개발 완료
+dev.bat stop
+```
+
+### 방법 2: Makefile 사용 (Linux/Mac 추천)
 
 ```bash
 git clone <repository-url>
 cd backend-python
-poetry install
+
+# 초기 설정 (최초 1회)
+make setup
+
+# 개발 시작
+make start
+
+# 개발 완료
+make stop
+```
+
+### 방법 3: Poetry 스크립트 사용 (크로스 플랫폼)
+
+```bash
+git clone <repository-url>
+cd backend-python
+
+# 초기 설정 (최초 1회)
 poetry run setup
-```
 
-`setup` 명령어가 자동으로 처리:
-- 환경변수 파일 (.env.local) 생성 및 설정 가이드
-- Docker 서비스 (PostgreSQL, Redis) 시작
-- 데이터베이스 마이그레이션 실행
-- 필요한 디렉터리 및 권한 설정
-
-### 2단계: 개발 환경 시작
-
-```bash
+# 개발 시작  
 poetry run dev
-```
 
-`dev` 명령어가 자동으로 처리:
-- Docker 서비스 상태 확인 및 시작
-- 데이터베이스 연결 확인
-- Celery worker 백그라운드 시작
-- FastAPI 서버 시작 (--reload 모드)
-- 모든 서비스 헬스체크 및 상태 표시
-
-### 3단계: 개발 완료 후 정리
-
-```bash
+# 개발 완료
 poetry run stop
 ```
 
-`stop` 명령어가 자동으로 처리:
-- FastAPI 서버 종료
-- Celery worker 정리
-- Docker 서비스 정리 (선택적)
+### 방법 4: Dev Container 사용 (VS Code/Cursor)
+
+```bash
+git clone <repository-url>
+cd backend-python
+cursor .  # 또는 code .
+
+# Command Palette에서 "Dev Containers: Reopen in Container" 선택
+# 자동으로 모든 환경이 구성됩니다!
+```
+
+### 초기 설정이 자동으로 처리하는 작업:
+- ✅ Docker 이미지 빌드 (asyncpg 컴파일 문제 해결)
+- ✅ Python 의존성 설치 (Poetry)
+- ✅ 인프라 서비스 시작 (PostgreSQL, Redis)
+- ✅ 데이터베이스 마이그레이션 실행
+- ✅ 개발환경 준비 완료
 
 ## 📱 개발 중 사용법
 
+### Windows 배치 스크립트 (Windows 추천)
+```cmd
+dev.bat start       # 개발환경 시작
+dev.bat logs        # 로그 확인
+dev.bat shell       # 앱 컨테이너 접근
+dev.bat test        # 테스트 실행
+dev.bat stop        # 모든 서비스 정지
+
+# API 테스트
+curl http://localhost:8000/api/v1/health
+```
+
+### Makefile 명령어 (Linux/Mac 추천)
 ```bash
-# 개발 시작
-poetry run dev
+make start          # 개발환경 시작
+make logs           # 로그 확인
+make shell          # 앱 컨테이너 접근
+make test           # 테스트 실행
+make lint           # 코드 품질 검사
+make stop           # 모든 서비스 정지
 
 # API 테스트
 curl http://localhost:8000/api/v1/health
 
-# 개발 완료
-poetry run stop
+# 데이터베이스 관리
+make migrate        # 마이그레이션 실행
+make shell-postgres # PostgreSQL 접근
+```
+
+### Poetry 명령어 (크로스 플랫폼)
+```bash
+poetry run dev      # 개발환경 시작  
+poetry run test     # 테스트 실행
+poetry run lint     # 코드 품질 검사
+poetry run stop     # 서비스 정지
+```
+
+### 컨테이너 내부 작업
+```bash
+# 앱 컨테이너 접근
+make shell
+# 또는
+docker-compose exec app bash
+
+# 컨테이너 내부에서
+poetry run pytest
+poetry run alembic upgrade head
+poetry run uvicorn app.main:app --reload
 ```
 
 ## 🔗 접속 주소
@@ -294,44 +360,88 @@ pytest -v                               # 상세 출력
 
 ## 🔧 개발 명령어
 
-### Poetry Scripts (통합 명령어)
+### Windows 배치 스크립트 (Windows 추천)
+```cmd
+# 환경 관리
+dev.bat setup       # 프로젝트 초기 설정 (최초 1회)
+dev.bat start       # 개발환경 시작
+dev.bat stop        # 모든 서비스 정지
+dev.bat logs        # 실시간 로그 확인
+dev.bat shell       # 앱 컨테이너 쉘 접근
+dev.bat test        # 테스트 실행
+dev.bat clean       # 환경 정리 (주의!)
+dev.bat help        # 도움말 표시
+
+# 사용 예시
+dev.bat start && timeout 5 && curl http://localhost:8000/api/v1/health
+```
+
+### Makefile 명령어 (Linux/Mac 추천)
 ```bash
-# 개발 환경 관리
-poetry run setup     # 프로젝트 초기 설정
-poetry run dev       # 개발 서버 및 모든 서비스 시작
-poetry run stop      # 모든 서비스 정리 및 종료
+# 환경 관리
+make setup           # 프로젝트 초기 설정 (최초 1회)
+make start           # 개발환경 시작
+make stop            # 모든 서비스 정지
+make restart         # 서비스 재시작
+make status          # 컨테이너 상태 확인
 
 # 개발 도구
-poetry run test      # 테스트 실행
-poetry run lint      # 코드 품질 검사 및 수정
-poetry run format    # 코드 포맷팅
+make test            # 테스트 실행
+make test-cov        # 커버리지 테스트
+make lint            # 코드 품질 검사 및 수정
+make format          # 코드 포맷팅
+
+# 컨테이너 접근
+make shell           # 앱 컨테이너 쉘 접근
+make shell-postgres  # PostgreSQL 접근
+make shell-redis     # Redis CLI 접근
+
+# 데이터베이스
+make migrate         # 마이그레이션 실행
+make migrate-create name="설명"  # 새 마이그레이션 생성
+make migrate-rollback # 마이그레이션 롤백
+
+# 로그 및 모니터링
+make logs            # 모든 서비스 로그
+make logs-app        # 앱 로그만
+make health          # 서비스 헬스체크
+
+# 정리
+make clean           # 모든 Docker 리소스 제거 (주의!)
+make clean-data      # 데이터 볼륨만 제거
 ```
 
-### 데이터베이스 관리
+### Poetry Scripts (Docker 래핑됨)
 ```bash
-# 마이그레이션 관리 (alembic 직접 사용)
-alembic revision --autogenerate -m "마이그레이션 설명"
-alembic upgrade head
-alembic downgrade -1
-alembic current
+# 주요 명령어 (Makefile과 동일한 기능)
+poetry run setup     # make setup과 동일
+poetry run dev       # make start와 동일  
+poetry run stop      # make stop과 동일
+poetry run test      # make test와 동일
+poetry run lint      # make lint와 동일
+poetry run format    # make format과 동일
+
+# 로컬 개발 (백업용)
+poetry run setup-local   # 로컬 환경 설정
+poetry run dev-local     # 로컬 서버 시작
 ```
 
-### 상세 개발 도구 (필요시)
+### Docker Compose 직접 사용
 ```bash
-# 테스트
-pytest                                    # 모든 테스트
-pytest --cov=app --cov-report=html      # 커버리지 테스트
-pytest app/tests/test_product_research.py # 특정 테스트
+# 컨테이너 관리
+docker-compose up -d           # 모든 서비스 백그라운드 시작
+docker-compose down           # 모든 서비스 정지
+docker-compose build          # 이미지 빌드
+docker-compose ps             # 컨테이너 상태
+docker-compose logs -f        # 실시간 로그
 
-# 코드 품질
-black app/           # 포맷팅
-ruff --fix app/      # 린트 수정
-mypy app/            # 타입 체킹
+# 개별 서비스 관리
+docker-compose up -d postgres redis  # 인프라만 시작
+docker-compose exec app bash         # 앱 컨테이너 접근
+docker-compose run --rm app poetry run pytest  # 일회성 명령어
 
-# Docker 서비스 (수동 제어)
-docker-compose up -d postgres redis      # 인프라만 시작
-docker-compose down                       # 모든 컨테이너 중지
-docker-compose logs -f                    # 로그 확인
+# 데이터 관리
+docker-compose down -v        # 볼륨까지 삭제
 ```
 
 ## 📊 데이터베이스 스키마
@@ -435,6 +545,96 @@ SUPPORTED_CURRENCIES=KRW,USD,JPY,EUR
 DEFAULT_CURRENCY=KRW
 ```
 
+## 🐳 Docker 환경 정보
+
+### 컨테이너 구성
+- **app**: Python 애플리케이션 (FastAPI, Celery)
+- **postgres**: PostgreSQL 16 데이터베이스
+- **redis**: Redis 7 캐시 및 메시지 브로커  
+- **pgadmin**: PostgreSQL 관리 도구
+
+### 포트 매핑
+- **8000**: FastAPI API 서버
+- **5432**: PostgreSQL 데이터베이스
+- **6379**: Redis
+- **5050**: pgAdmin 웹 인터페이스
+- **5555**: Celery Flower (향후 추가 예정)
+
+### 볼륨 구성
+- **소스코드**: `.:/app` (hot reload 지원)
+- **가상환경**: `/app/.venv` (컨테이너 내부)
+- **PostgreSQL 데이터**: `postgres_data` 볼륨
+- **Redis 데이터**: `redis_data` 볼륨
+
+### IDE 지원
+- **Dev Containers**: `.devcontainer/` 설정으로 VS Code/Cursor 완벽 지원
+- **포트 포워딩**: 자동 포트 전달로 localhost 접근
+- **확장 프로그램**: Python 개발 도구 자동 설치
+- **디버깅**: 컨테이너 내부 디버깅 지원
+
+### 환경별 설정
+- **개발환경**: `target: development` (hot reload, dev 의존성)
+- **운영환경**: `target: production` (최적화, 헬스체크)
+
+## 🛠️ 문제 해결
+
+### 일반적인 문제들
+
+1. **"docker: command not found"**
+   ```bash
+   # Docker Desktop 설치 및 시작 확인
+   docker --version
+   # Windows: dev.bat help
+   # Linux/Mac: make info
+   ```
+
+2. **"poetry: command not found"**
+   ```bash
+   # Poetry 설치 후 PATH 설정
+   curl -sSL https://install.python-poetry.org | python3 -
+   
+   # Windows에서 PATH 설정
+   # 시스템 환경변수에 추가: C:\Users\{사용자명}\AppData\Roaming\Python\Scripts
+   ```
+
+3. **"make: command not found" (Windows)**
+   ```cmd
+   # Windows에서는 dev.bat 사용 (make 대신)
+   dev.bat help
+   
+   # 또는 Poetry 스크립트 사용
+   poetry run setup
+   ```
+
+4. **포트 충돌 오류**
+   ```bash
+   # 기존 서비스 확인 및 정지
+   docker-compose down
+   # Windows: netstat -ano | findstr :8000
+   # Linux/Mac: lsof -i :8000
+   ```
+
+5. **asyncpg 컴파일 오류 (해결됨)**
+   - Docker 환경에서 Linux 컨테이너 사용으로 해결
+   - Windows 의존성 문제 없음
+
+6. **데이터베이스 연결 오류**
+   ```bash
+   # Windows
+   dev.bat logs       # 로그 확인
+   dev.bat shell      # 컨테이너 접근
+   
+   # Linux/Mac  
+   make health        # 서비스 상태 확인
+   make logs-app      # 앱 로그 확인
+   make shell-postgres # DB 직접 접근
+   ```
+
+### 성능 최적화
+- **이미지 크기**: 멀티스테이지 빌드로 최적화
+- **빌드 속도**: .dockerignore로 불필요한 파일 제외
+- **개발 속도**: 볼륨 마운트로 hot reload 지원
+
 ## 🤝 기여하기
 
 1. Clean Architecture 원칙 준수
@@ -442,6 +642,9 @@ DEFAULT_CURRENCY=KRW
 3. 모든 곳에 타입 힌트 사용
 4. 컨벤션 커밋 메시지 사용
 5. 문서 업데이트
+6. **Docker 환경에서 개발 및 테스트**: 
+   - Windows: `dev.bat test`, `dev.bat start`
+   - Linux/Mac: `make test`, `make lint`
 
 ## 📄 라이선스
 

@@ -38,7 +38,12 @@ from app.core.exceptions.domain_exceptions import (
 )
 
 # Import from exceptions.py for backward compatibility
-from .exceptions import ErrorHandler, CoupangException
+try:
+    from ..exceptions import ErrorHandler, CoupangException
+except ImportError:
+    # Fallback if circular import occurs
+    ErrorHandler = None
+    CoupangException = None
 
 __all__ = [
     # Domain exceptions

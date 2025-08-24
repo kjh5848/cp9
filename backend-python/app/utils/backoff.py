@@ -52,20 +52,22 @@ class ExponentialBackoff(BackoffStrategy):
         """Calculate exponential backoff delay."""
         delay = self.base_delay * (self.multiplier ** (attempt - 1))
         delay = min(delay, self.max_delay)
-        
+
         if self.jitter:
             # Add random jitter (±25% of delay)
             jitter_range = delay * 0.25
             delay += random.uniform(-jitter_range, jitter_range)
             delay = max(0, delay)  # Ensure non-negative
-        
+
         return delay
 
 
 class LinearBackoff(BackoffStrategy):
     """Linear backoff strategy."""
 
-    def __init__(self, base_delay: float = 1.0, increment: float = 1.0, max_delay: float = 30.0):
+    def __init__(
+        self, base_delay: float = 1.0, increment: float = 1.0, max_delay: float = 30.0
+    ):
         """Initialize linear backoff.
 
         Args:
@@ -122,29 +124,32 @@ def retry_sync(
     def decorator(func: Callable) -> Callable:
         def wrapper(*args, **kwargs):
             attempt = 1
-            
+
             while attempt <= max_attempts:
                 try:
                     return func(*args, **kwargs)
                 except exceptions as e:
                     if attempt == max_attempts:
-                        logger.error(f"Function {func.__name__} failed after {max_attempts} attempts: {e}")
+                        logger.error(
+                            f"Function {func.__name__} failed after {max_attempts} attempts: {e}"
+                        )
                         raise
-                    
+
                     delay = backoff_strategy.calculate_delay(attempt)
-                    
+
                     if on_retry:
                         on_retry(attempt, e)
-                    
+
                     logger.warning(
                         f"Function {func.__name__} failed on attempt {attempt}/{max_attempts}: {e}. "
                         f"Retrying in {delay:.2f} seconds..."
                     )
-                    
+
                     time.sleep(delay)
                     attempt += 1
-        
+
         return wrapper
+
     return decorator
 
 
@@ -171,29 +176,32 @@ def retry_async(
     def decorator(func: Callable) -> Callable:
         async def wrapper(*args, **kwargs):
             attempt = 1
-            
+
             while attempt <= max_attempts:
                 try:
                     return await func(*args, **kwargs)
                 except exceptions as e:
                     if attempt == max_attempts:
-                        logger.error(f"Function {func.__name__} failed after {max_attempts} attempts: {e}")
+                        logger.error(
+                            f"Function {func.__name__} failed after {max_attempts} attempts: {e}"
+                        )
                         raise
-                    
+
                     delay = backoff_strategy.calculate_delay(attempt)
-                    
+
                     if on_retry:
                         on_retry(attempt, e)
-                    
+
                     logger.warning(
                         f"Function {func.__name__} failed on attempt {attempt}/{max_attempts}: {e}. "
                         f"Retrying in {delay:.2f} seconds..."
                     )
-                    
+
                     await asyncio.sleep(delay)
                     attempt += 1
-        
+
         return wrapper
+
     return decorator
 
 
@@ -203,7 +211,7 @@ async def retry_async_function(
     max_attempts: int = 3,
     backoff_strategy: Optional[BackoffStrategy] = None,
     exceptions: Union[Type[Exception], tuple] = Exception,
-    **kwargs
+    **kwargs,
 ) -> Any:
     """Retry an async function with backoff.
 
@@ -225,29 +233,30 @@ async def retry_async_function(
         backoff_strategy = ExponentialBackoff()
 
     attempt = 1
-    
+
     while attempt <= max_attempts:
         try:
             return await func(*args, **kwargs)
         except exceptions as e:
             if attempt == max_attempts:
-                logger.error(f"Function {func.__name__} failed after {max_attempts} attempts: {e}")
+                logger.error(
+                    f"Function {func.__name__} failed after {max_attempts} attempts: {e}"
+                )
                 raise
-            
+
             delay = backoff_strategy.calculate_delay(attempt)
-            
+
             logger.warning(
                 f"Function {func.__name__} failed on attempt {attempt}/{max_attempts}: {e}. "
                 f"Retrying in {delay:.2f} seconds..."
             )
-            
+
             await asyncio.sleep(delay)
             attempt += 1
 
 
 def calculate_total_backoff_time(
-    max_attempts: int,
-    backoff_strategy: BackoffStrategy
+    max_attempts: int, backoff_strategy: BackoffStrategy
 ) -> float:
     """Calculate total time for all backoff attempts.
 

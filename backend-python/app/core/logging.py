@@ -4,7 +4,6 @@ import logging
 import sys
 from typing import Any, Dict
 
-import uvicorn
 from pythonjsonlogger import jsonlogger
 
 from app.core.config import settings
@@ -48,9 +47,7 @@ def setup_logging() -> None:
 
     # Set formatter based on configuration
     if settings.log_format == "json":
-        formatter = CustomJsonFormatter(
-            "%(timestamp)s %(level)s %(name)s %(message)s"
-        )
+        formatter = CustomJsonFormatter("%(timestamp)s %(level)s %(name)s %(message)s")
     else:
         formatter = logging.Formatter(
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

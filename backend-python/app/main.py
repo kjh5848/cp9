@@ -1,6 +1,5 @@
 """FastAPI application entry point."""
 
-import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -20,16 +19,17 @@ async def lifespan(app: FastAPI):
     # Startup
     setup_logging()
     await init_db()
-    
+
     # Initialize Redis PubSub for WebSocket messaging
     from app.core.redis_pubsub import get_pubsub_manager
+
     pubsub_manager = get_pubsub_manager()
     pubsub_connected = await pubsub_manager.connect()
     if pubsub_connected:
         await pubsub_manager.start_listening()
-    
+
     yield
-    
+
     # Shutdown
     if pubsub_connected:
         await pubsub_manager.disconnect()
@@ -81,8 +81,8 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"] if settings.debug else [],
-    allow_credentials=True,
+    allow_origins=["*"] if settings.app_env == "development" else [],
+    allow_credentials=False,  # Must be False when using wildcard origins
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -92,6 +92,7 @@ setup_error_handlers(app)
 
 # Include API routers
 app.include_router(api_v1_router, prefix=settings.api_v1_prefix)
+
 
 # Root endpoint
 @app.get("/")
@@ -108,7 +109,7 @@ async def root() -> dict:
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     uvicorn.run(
         "app.main:app",
         host=settings.host,

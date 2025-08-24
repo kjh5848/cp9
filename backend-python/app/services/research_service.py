@@ -31,9 +31,7 @@ class ResearchService:
         self.result_repository = result_repository
 
     async def create_research_job(
-        self,
-        items: List[dict],
-        metadata: Optional[dict] = None
+        self, items: List[dict], metadata: Optional[dict] = None
     ) -> ResearchJob:
         """Create a new research job.
 
@@ -65,9 +63,11 @@ class ResearchService:
 
         # Remove duplicates
         unique_items = ResearchUseCases.merge_duplicate_items(domain_items)
-        
+
         if len(unique_items) != len(domain_items):
-            logger.info(f"Removed {len(domain_items) - len(unique_items)} duplicate items")
+            logger.info(
+                f"Removed {len(domain_items) - len(unique_items)} duplicate items"
+            )
 
         # Create research job entity
         job = ResearchJob(metadata=metadata or {})
@@ -79,7 +79,7 @@ class ResearchService:
 
         # Save job to database
         created_job = await self.job_repository.create(job)
-        
+
         logger.info(f"Created research job {job.id} with {len(unique_items)} items")
         return created_job
 
@@ -106,7 +106,7 @@ class ResearchService:
 
         # Start Celery task
         task = run_research.delay(str(job_id))
-        
+
         logger.info(f"Started research job {job_id} with task {task.id}")
         return task.id
 
@@ -122,9 +122,7 @@ class ResearchService:
         return await self.job_repository.get_by_id(job_id)
 
     async def list_research_jobs(
-        self,
-        status: Optional[JobStatus] = None,
-        limit: int = 50
+        self, status: Optional[JobStatus] = None, limit: int = 50
     ) -> List[ResearchJob]:
         """List research jobs.
 
@@ -164,9 +162,7 @@ class ResearchService:
 
         # Update job status
         success = await self.job_repository.update_status(
-            job_id,
-            JobStatus.CANCELLED,
-            completed_at=job.updated_at
+            job_id, JobStatus.CANCELLED, completed_at=job.updated_at
         )
 
         if success:
@@ -174,11 +170,7 @@ class ResearchService:
 
         return success
 
-    async def update_job_metadata(
-        self,
-        job_id: UUID,
-        metadata: dict
-    ) -> bool:
+    async def update_job_metadata(self, job_id: UUID, metadata: dict) -> bool:
         """Update job metadata.
 
         Args:

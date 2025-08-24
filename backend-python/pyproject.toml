@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Research Backend with Clean Architecture"
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
-python = "^3.11"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -70,9 +70,18 @@ addopts = "-v --cov=app --cov-report=html --cov-report=term-missing"
 asyncio_mode = "auto"
 
 [tool.poetry.scripts]
-setup = "scripts.runner:setup"
-dev = "scripts.runner:dev"
-stop = "scripts.runner:stop"
-test = "scripts.runner:test"
-lint = "scripts.runner:lint"
-format = "scripts.runner:format"
+# Docker 기반 스크립트 (주요 사용)
+setup = "scripts.docker_runner:setup"
+dev = "scripts.docker_runner:dev"
+stop = "scripts.docker_runner:stop"
+test = "scripts.docker_runner:test"
+lint = "scripts.docker_runner:lint"
+format = "scripts.docker_runner:format"
+
+# 로컬 개발 스크립트 (백업용)
+setup-local = "scripts.runner:setup"
+dev-local = "scripts.runner:dev"
+stop-local = "scripts.runner:stop"
+test-local = "scripts.runner:test"
+lint-local = "scripts.runner:lint"
+format-local = "scripts.runner:format"

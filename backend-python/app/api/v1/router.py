@@ -2,10 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import research
-from app.api.v1.endpoints import product_research
-from app.api.v1.endpoints import websocket
-from app.api.v1.endpoints import health
+from app.api.v1.endpoints import health, product_research, research, websocket
 
 router = APIRouter()
 

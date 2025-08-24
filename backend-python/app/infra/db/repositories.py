@@ -89,12 +89,7 @@ class ResearchJobRepository:
 
         return self._to_entity(job_model)
 
-    async def update_status(
-        self,
-        job_id: UUID,
-        status: JobStatus,
-        **kwargs
-    ) -> bool:
+    async def update_status(self, job_id: UUID, status: JobStatus, **kwargs) -> bool:
         """Update job status.
 
         Args:
@@ -116,7 +111,7 @@ class ResearchJobRepository:
         updated = result.rowcount > 0
         if updated:
             logger.info(f"Updated job {job_id} status to {status.value}")
-        
+
         return updated
 
     async def list_pending(self, limit: int = 10) -> List[ResearchJob]:
@@ -251,7 +246,7 @@ class ResultRepository:
         result_id: UUID,
         status: ResultStatus,
         data: Optional[dict] = None,
-        error: Optional[str] = None
+        error: Optional[str] = None,
     ) -> bool:
         """Update a result.
 
@@ -270,24 +265,18 @@ class ResultRepository:
         if error is not None:
             values["error"] = error
 
-        stmt = (
-            update(ResultModel)
-            .where(ResultModel.id == result_id)
-            .values(**values)
-        )
+        stmt = update(ResultModel).where(ResultModel.id == result_id).values(**values)
         result = await self.session.execute(stmt)
         await self.session.flush()
 
         updated = result.rowcount > 0
         if updated:
             logger.info(f"Updated result {result_id} status to {status.value}")
-        
+
         return updated
 
     async def get_by_job_and_hash(
-        self,
-        job_id: UUID,
-        item_hash: str
+        self, job_id: UUID, item_hash: str
     ) -> Optional[Result]:
         """Get a result by job ID and item hash.
 
@@ -299,8 +288,7 @@ class ResultRepository:
             Result entity or None if not found
         """
         stmt = select(ResultModel).where(
-            ResultModel.job_id == job_id,
-            ResultModel.item_hash == item_hash
+            ResultModel.job_id == job_id, ResultModel.item_hash == item_hash
         )
         result = await self.session.execute(stmt)
         result_model = result.scalar_one_or_none()

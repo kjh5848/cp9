@@ -1,7 +1,6 @@
 """SQLAlchemy ORM models."""
 
 from datetime import datetime
-from typing import Optional
 from uuid import uuid4
 
 from sqlalchemy import (
@@ -33,13 +32,19 @@ class ResearchJobModel(Base):
     failed_items = Column(Integer, nullable=False, default=0)
     meta_data = Column(JSON, nullable=False, default=dict)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(
+        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
 
     # Relationships
-    items = relationship("ItemModel", back_populates="job", cascade="all, delete-orphan")
-    results = relationship("ResultModel", back_populates="job", cascade="all, delete-orphan")
+    items = relationship(
+        "ItemModel", back_populates="job", cascade="all, delete-orphan"
+    )
+    results = relationship(
+        "ResultModel", back_populates="job", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<ResearchJob(id={self.id}, status={self.status})>"
@@ -49,12 +54,12 @@ class ItemModel(Base):
     """Research item database model."""
 
     __tablename__ = "items"
-    __table_args__ = (
-        UniqueConstraint("job_id", "hash", name="uq_job_item_hash"),
-    )
+    __table_args__ = (UniqueConstraint("job_id", "hash", name="uq_job_item_hash"),)
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    job_id = Column(UUID(as_uuid=True), ForeignKey("research_jobs.id"), nullable=False, index=True)
+    job_id = Column(
+        UUID(as_uuid=True), ForeignKey("research_jobs.id"), nullable=False, index=True
+    )
     name = Column(String(500), nullable=False)
     price = Column(Float, nullable=False)
     category = Column(String(255), nullable=True)
@@ -79,7 +84,9 @@ class ResultModel(Base):
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    job_id = Column(UUID(as_uuid=True), ForeignKey("research_jobs.id"), nullable=False, index=True)
+    job_id = Column(
+        UUID(as_uuid=True), ForeignKey("research_jobs.id"), nullable=False, index=True
+    )
     item_id = Column(UUID(as_uuid=True), ForeignKey("items.id"), nullable=True)
     item_hash = Column(String(64), nullable=False, index=True)
     item_name = Column(String(500), nullable=False)
@@ -87,11 +94,15 @@ class ResultModel(Base):
     data = Column(JSON, nullable=False, default=dict)
     error = Column(Text, nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(
+        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     # Relationships
     job = relationship("ResearchJobModel", back_populates="results")
     item = relationship("ItemModel", back_populates="result")
 
     def __repr__(self) -> str:
-        return f"<Result(id={self.id}, status={self.status}, item_name={self.item_name})>"
+        return (
+            f"<Result(id={self.id}, status={self.status}, item_name={self.item_name})>"
+        )

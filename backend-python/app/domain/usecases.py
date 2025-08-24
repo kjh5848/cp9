@@ -1,6 +1,6 @@
 """Domain use cases - Business rules and policies."""
 
-from typing import List, Optional
+from typing import List
 
 from app.domain.entities import Item, ResearchJob
 
@@ -54,7 +54,9 @@ class ResearchUseCases:
 
         # Validate price
         if item.price < ResearchUseCases.MIN_PRICE:
-            raise ValueError(f"Item price cannot be less than {ResearchUseCases.MIN_PRICE}")
+            raise ValueError(
+                f"Item price cannot be less than {ResearchUseCases.MIN_PRICE}"
+            )
         if item.price > ResearchUseCases.MAX_PRICE:
             raise ValueError(f"Item price cannot exceed {ResearchUseCases.MAX_PRICE}")
 
@@ -106,11 +108,7 @@ class ResearchUseCases:
         return True
 
     @staticmethod
-    def should_retry_item(
-        item: Item,
-        error_count: int,
-        max_retries: int = 3
-    ) -> bool:
+    def should_retry_item(item: Item, error_count: int, max_retries: int = 3) -> bool:
         """Determine if an item should be retried.
 
         Args:
@@ -182,7 +180,7 @@ class ResearchUseCases:
 
         batches = []
         for i in range(0, len(items), chunk_size):
-            batch = items[i:i + chunk_size]
+            batch = items[i : i + chunk_size]
             batches.append(batch)
 
         return batches

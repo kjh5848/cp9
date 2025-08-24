@@ -178,7 +178,11 @@ class ResearchJob:
     @property
     def is_complete(self) -> bool:
         """Check if job is complete."""
-        return self.status in [JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED]
+        return self.status in [
+            JobStatus.COMPLETED,
+            JobStatus.FAILED,
+            JobStatus.CANCELLED,
+        ]
 
     @property
     def is_active(self) -> bool:
@@ -205,7 +209,9 @@ class ResearchJob:
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
             "started_at": self.started_at.isoformat() if self.started_at else None,
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "completed_at": self.completed_at.isoformat()
+            if self.completed_at
+            else None,
             "items": [item.to_dict() for item in self.items],
             "results": [result.to_dict() for result in self.results],
         }

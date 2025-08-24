@@ -11,7 +11,9 @@ class ItemIn(BaseModel):
     name: str = Field(..., min_length=1, max_length=500, description="Item name")
     price: float = Field(..., ge=0, le=1000000, description="Item price")
     category: Optional[str] = Field(None, max_length=255, description="Item category")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional item metadata")
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict, description="Additional item metadata"
+    )
 
     @field_validator("name")
     @classmethod
@@ -36,10 +38,7 @@ class ItemIn(BaseModel):
                 "name": "iPhone 15 Pro",
                 "price": 999.99,
                 "category": "Electronics",
-                "metadata": {
-                    "brand": "Apple",
-                    "color": "Space Black"
-                }
+                "metadata": {"brand": "Apple", "color": "Space Black"},
             }
         }
 
@@ -48,15 +47,9 @@ class ResearchJobCreateIn(BaseModel):
     """Input schema for creating research jobs."""
 
     items: List[ItemIn] = Field(
-        ...,
-        min_length=1,
-        max_length=10,
-        description="List of items to research"
+        ..., min_length=1, max_length=10, description="List of items to research"
     )
-    metadata: Dict[str, Any] = Field(
-        default_factory=dict,
-        description="Job metadata"
-    )
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Job metadata")
 
     @field_validator("items")
     @classmethod
@@ -64,7 +57,7 @@ class ResearchJobCreateIn(BaseModel):
         """Validate items list."""
         if not v:
             raise ValueError("Items list cannot be empty")
-        
+
         # Check for duplicates based on name and price
         seen = set()
         for item in v:
@@ -72,7 +65,7 @@ class ResearchJobCreateIn(BaseModel):
             if key in seen:
                 raise ValueError(f"Duplicate item found: {item.name}")
             seen.add(key)
-        
+
         return v
 
     class Config:
@@ -82,18 +75,15 @@ class ResearchJobCreateIn(BaseModel):
                     {
                         "name": "iPhone 15 Pro",
                         "price": 999.99,
-                        "category": "Electronics"
+                        "category": "Electronics",
                     },
                     {
                         "name": "Samsung Galaxy S24",
                         "price": 899.99,
-                        "category": "Electronics"
-                    }
+                        "category": "Electronics",
+                    },
                 ],
-                "metadata": {
-                    "priority": "high",
-                    "user_id": "12345"
-                }
+                "metadata": {"priority": "high", "user_id": "12345"},
             }
         }
 
@@ -104,19 +94,14 @@ class ResearchJobUpdateIn(BaseModel):
     status: Optional[str] = Field(
         None,
         description="Job status",
-        pattern="^(pending|processing|completed|failed|cancelled)$"
+        pattern="^(pending|processing|completed|failed|cancelled)$",
     )
-    metadata: Optional[Dict[str, Any]] = Field(
-        None,
-        description="Updated job metadata"
-    )
+    metadata: Optional[Dict[str, Any]] = Field(None, description="Updated job metadata")
 
     class Config:
         json_schema_extra = {
             "example": {
                 "status": "cancelled",
-                "metadata": {
-                    "cancelled_reason": "User request"
-                }
+                "metadata": {"cancelled_reason": "User request"},
             }
         }
