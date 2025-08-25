@@ -105,6 +105,12 @@ class ValidationDomainException(DomainException):
             field_errors[error.field].append(error.message)
         return field_errors
 
+    def to_validation_error(self):
+        """Convert to validation error response."""
+        from app.core.exceptions.http_exception_mapper import get_http_exception_mapper
+        mapper = get_http_exception_mapper()
+        return mapper._create_validation_error(self)
+
 
 class ResearchDomainException(DomainException):
     """Exception for product research domain errors.
@@ -322,3 +328,15 @@ class ResourceDomainException(DomainException):
         """
         self.resource_id = resource_id
         self.metadata["resource_id"] = resource_id
+
+    def to_standard_error(self):
+        """Convert to standardized error response."""
+        from app.core.exceptions.http_exception_mapper import get_http_exception_mapper
+        mapper = get_http_exception_mapper()
+        return mapper._create_standard_error(self)
+
+    def to_http_exception(self):
+        """Convert to FastAPI HTTPException."""
+        from app.core.exceptions.http_exception_mapper import get_http_exception_mapper
+        mapper = get_http_exception_mapper()
+        return mapper.to_http_exception(self)

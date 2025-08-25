@@ -37,9 +37,10 @@ from app.core.exceptions.domain_exceptions import (
     RateLimitDomainException as RateLimitException,
 )
 
-# Import from exceptions.py for backward compatibility
+# Import from exceptions.py for backward compatibility and method injection
 try:
     from ..exceptions import ErrorHandler, CoupangException
+    # This import is crucial as it triggers _add_legacy_methods() execution
 except ImportError:
     # Fallback if circular import occurs
     ErrorHandler = None
