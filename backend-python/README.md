@@ -54,73 +54,87 @@ backend-python/
 
 ## 📋 필수 요구사항
 
+**기본 실행용**:
+- Git
+- Docker & Docker Compose 
+- Perplexity AI API 키 (선택사항)
+
+**로컬 개발용 (고급)**:
 - Python 3.11+
-- Poetry (의존성 관리)
-- Docker & Docker Compose (로컬 서비스)
-- Poetry (의존성 관리)
-- Docker & Docker Compose (로컬 서비스)
-- PostgreSQL 16
-- Redis 7
-- Perplexity AI API 키
+- Poetry (로컬에서 직접 개발 시)
 
-## 🚀 빠른 시작
+> ✅ **간단한 실행**: Docker만 있으면 PostgreSQL, Redis, Poetry 모두 자동 설치됩니다.
 
-### 1. 프로젝트 설정
+## 🚀 원스톱 실행 (추천)
 
+> **⚡ 3분 만에 실행**: Git clone부터 서버 실행까지 최소 명령어로 완성
+> 
+> **📖 자세한 가이드**: [QUICKSTART.md](QUICKSTART.md) 참고
+
+### 1️⃣ 프로젝트 클론 & 이동
 ```bash
-# 환경 변수 파일 생성
-cp .env.example .env
-# .env 파일을 열어 PERPLEXITY_API_KEY 설정 필요
+git clone <repository-url>
+cd cp9/backend-python
 ```
 
-### 2. 의존성 설치
+### 2️⃣ 원스톱 실행
 
+#### 🪟 Windows 사용자
 ```bash
-# Poetry 설치 (없는 경우)
+PowerSell
+
+# 통합
+.\dev.bat setup && .\dev.bat start
+
+# 초기 설정 (최초 1회)
+.\dev.bat setup
+
+# 개발 환경 시작
+.\dev.bat start
+```
+
+#### 🐧 Linux/Mac 사용자  
+```bash
+# 초기 설정 (최초 1회)
+makefile setup
+
+# 개발 환경 시작
+makefile start
+```
+
+### 3️⃣ 실행 확인 ✅
+- 🌐 **API 서버**: http://localhost:8000
+- 📚 **API 문서**: http://localhost:8000/docs  
+- 🏥 **헬스체크**: http://localhost:8000/api/v1/health
+
+## 🛠️ 고급 설정 (선택사항)
+
+Poetry를 사용한 세부 제어가 필요한 경우:
+
+### 환경 변수 설정
+```bash
+# .env 파일 생성 (Perplexity API 키 설정 시)
+cp .env.example .env
+# PERPLEXITY_API_KEY=your_key_here 수정
+```
+
+### Poetry를 통한 로컬 개발 (Docker 없이)
+```bash
+# Poetry 수동 설치 (최초 1회)
 pip install poetry
 
 # 프로젝트 의존성 설치
 poetry install
 poetry shell
+
+# 로컬에서 직접 실행
+poetry run setup    # 초기 설정 (DB, Redis 필요)
+poetry run dev      # 개발 서버 시작
+
+# 별도 서비스 필요: PostgreSQL, Redis 수동 설치/실행
 ```
 
-### 3. Docker 서비스 시작
-
-```bash
-# PostgreSQL과 Redis 시작
-docker-compose up -d
-
-# 서비스 상태 확인
-docker-compose ps
-```
-
-### 4. 데이터베이스 설정
-
-```bash
-# 마이그레이션 실행
-alembic upgrade head
-```
-
-### 5. 애플리케이션 시작
-
-```bash
-# 개발 서버 시작
-python app/main.py
-
-# 또는 uvicorn 사용
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-### 6. Celery 워커 시작
-
-```bash
-# 새 터미널에서
-celery -A app.infra.tasks.celery_app worker --loglevel=info
-```
-
-### 7. API 문서 확인
-
-브라우저에서 http://localhost:8000/docs 접속하여 대화형 API 문서 확인.
+> 💡 **추천**: 대부분의 경우 Docker 원스톱 실행이 더 간편합니다.
 
 ## 📖 API 사용 예제
 
@@ -135,15 +149,13 @@ curl -X POST "http://localhost:8000/api/v1/research/products" \
            "product_name": "베이직스 2024 베이직북 14 N-시리즈",
            "category": "가전디지털",
            "price_exact": 388000,
-           "currency": "KRW",
-           "seller_or_store": "베이직스",
            "metadata": {
              "source": "official_store"
            }
          },
          {
-           "name": "Samsung Galaxy S24",
-           "price": 899.99,
+           "product_name": "Samsung Galaxy S24",
+           "price_exact": 899.99,
            "category": "Electronics"
          }
        ],

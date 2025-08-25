@@ -8,7 +8,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.core.exceptions import BaseAPIException, ErrorHandler
+from app.core.exceptions import BaseAPIException
+from app.core.exceptions.exception_handler import ExceptionHandler, get_exception_handler
 from app.core.logging import get_logger
 from app.schemas.error_responses import ErrorCode
 
@@ -32,7 +33,8 @@ class GlobalExceptionHandler:
             JSON response with error details
         """
         # Log the error with context
-        ErrorHandler.log_error(
+        exception_handler = get_exception_handler()
+        exception_handler.log_error(
             exc,
             context={
                 "method": request.method,
@@ -90,8 +92,8 @@ class GlobalExceptionHandler:
 
         api_exc = BaseAPIException(
             error_code=error_code,
+            message=str(exc.detail),
             details=str(exc.detail),
-            http_status=exc.status_code,
             metadata={
                 "method": request.method,
                 "url": str(request.url),
@@ -100,7 +102,8 @@ class GlobalExceptionHandler:
         )
 
         # Log the error
-        ErrorHandler.log_error(api_exc)
+        exception_handler = get_exception_handler()
+        exception_handler.log_error(api_exc)
 
         # Create response
         error_response = api_exc.to_standard_error()
@@ -127,7 +130,8 @@ class GlobalExceptionHandler:
         Returns:
             JSON response with validation error details
         """
-        validation_exc = ErrorHandler.from_pydantic_validation_error(exc)
+        exception_handler = get_exception_handler()
+        validation_exc = exception_handler.from_pydantic_validation_error(exc)
         validation_exc.metadata = {
             "method": request.method,
             "url": str(request.url),
@@ -135,7 +139,7 @@ class GlobalExceptionHandler:
         }
 
         # Log the error
-        ErrorHandler.log_error(validation_exc)
+        exception_handler.log_error(validation_exc)
 
         # Create response
         error_response = validation_exc.to_validation_error()
@@ -161,7 +165,8 @@ class GlobalExceptionHandler:
             JSON response with error details
         """
         # Create API exception from generic exception
-        api_exc = ErrorHandler.from_generic_exception(exc)
+        exception_handler = get_exception_handler()
+        api_exc = exception_handler.from_generic_exception(exc)
         api_exc.metadata = {
             "method": request.method,
             "url": str(request.url),
@@ -172,7 +177,7 @@ class GlobalExceptionHandler:
         }
 
         # Log the error
-        ErrorHandler.log_error(api_exc)
+        exception_handler.log_error(api_exc)
 
         # Create response (hide internal details in production)
         error_response = api_exc.to_standard_error()

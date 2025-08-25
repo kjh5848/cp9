@@ -11,40 +11,68 @@ Clean Architecture 원칙으로 구축된 Python 리서치 백엔드 시스템:
 - **Perplexity AI** 통합 리서치 자동화
 - **Domain-Driven Design** 적용 Clean Architecture
 
-## 빠른 시작 가이드
+## 🚀 원스톱 실행 (개발자용)
 
-### 1. 초기 설정 (최초 1회)
+> **⚡ Git Clone 후 2분 내 실행**: 개발 환경을 빠르게 구축
+> 
+> **📖 자세한 가이드**: [QUICKSTART.md](QUICKSTART.md) 참고
+
+### 🏃‍♂️ 즉시 실행 (추천)
+
 ```bash
-# Poetry 설치 (없는 경우)
-pip install poetry
+# 1. 프로젝트 클론 & 이동
+git clone <repository-url>
+cd cp9/backend-python
 
-# 의존성 설치
+# 2. 원스톱 실행
+# Windows: 
+dev.bat setup && dev.bat start
+
+# Linux/Mac: 
+make setup && make start
+
+# 3. 실행 확인
+curl http://localhost:8000/api/v1/health
+```
+
+### 🛠️ 수동 설정 (세부 제어 필요시)
+
+#### 단계별 실행 (Docker 기반)
+```bash
+# 1단계: Docker 서비스 빌드 & 시작
+docker-compose build
+docker-compose up -d postgres redis
+
+# 2단계: 데이터베이스 마이그레이션
+docker-compose run --rm app poetry run alembic upgrade head
+
+# 3단계: 개발 서버 시작
+docker-compose up -d app
+
+# 4단계: Celery 워커 (별도 컨테이너)
+docker-compose run -d app poetry run celery -A app.infra.tasks.celery_app worker --loglevel=info
+```
+
+#### 로컬 개발 (Poetry 직접 사용)
+```bash
+# Poetry 설치 (최초 1회)
+pip install poetry
 poetry install
 poetry shell
 
-# 환경 변수 설정
-cp .env.example .env  # .env 파일 생성 후 수정 필요
+# 별도 PostgreSQL, Redis 필요 (수동 설치)
+# 환경변수 설정: DATABASE_URL, REDIS_URL
+
+# 마이그레이션 & 서버 시작
+poetry run alembic upgrade head
+poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### 2. 서비스 시작 순서
-```bash
-# 1단계: Docker 서비스 시작 (PostgreSQL, Redis)
-docker-compose up -d
-
-# 2단계: 데이터베이스 마이그레이션
-alembic upgrade head
-
-# 3단계: FastAPI 서버 시작
-python app/main.py
-# 또는
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-
-# 4단계: Celery 워커 시작 (별도 터미널)
-celery -A app.infra.tasks.celery_app worker --loglevel=info
-
-# 5단계: API 문서 확인
-# 브라우저에서 http://localhost:8000/docs 접속
-```
+### ✅ 실행 성공 확인
+- 🌐 **API**: http://localhost:8000
+- 📚 **문서**: http://localhost:8000/docs
+- 🏥 **헬스**: http://localhost:8000/api/v1/health
+- 🗄️ **pgAdmin**: http://localhost:5050 (admin@example.com / admin)
 
 ### 3. 데이터베이스 관리
 ```bash

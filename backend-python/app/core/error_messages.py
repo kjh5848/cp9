@@ -18,9 +18,9 @@ class ErrorMessages:
         ErrorCode.MISSING_REQUIRED_FIELDS: "필수 입력 항목이 누락되었습니다.",
         # Resource errors
         ErrorCode.RESOURCE_NOT_FOUND: "요청한 리소스를 찾을 수 없습니다.",
-        ErrorCode.JOB_NOT_FOUND: "요청한 작업을 찾을 수 없습니다.",
-        ErrorCode.TASK_NOT_FOUND: "요청한 태스크를 찾을 수 없습니다.",
-        ErrorCode.JOB_CANNOT_BE_CANCELLED: "작업이 이미 완료되었거나 취소할 수 없는 상태입니다.",
+        ErrorCode.JOB_NOT_FOUND: "요청하신 리서치 작업을 찾을 수 없습니다. 작업 ID를 다시 확인해 주세요.",
+        ErrorCode.TASK_NOT_FOUND: "요청하신 태스크를 찾을 수 없습니다. 태스크 ID를 다시 확인해 주세요.",
+        ErrorCode.JOB_CANNOT_BE_CANCELLED: "작업을 취소할 수 없습니다. 이미 완료되었거나 진행 중일 수 있습니다.",
         # Rate limiting
         ErrorCode.RATE_LIMIT_EXCEEDED: "요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.",
         ErrorCode.TOO_MANY_CONCURRENT_REQUESTS: "동시 요청 수가 너무 많습니다. 잠시 후 다시 시도해주세요.",
