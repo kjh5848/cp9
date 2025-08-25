@@ -52,8 +52,8 @@ class ResearchJobRepository:
         for item in job.items:
             item_model = ItemModel(
                 job_id=job.id,
-                name=item.name,
-                price=item.price,
+                name=item.product_name,
+                price=item.price_exact,
                 category=item.category,
                 hash=item.hash or "",
                 metadata=item.metadata,
@@ -177,8 +177,8 @@ class ResearchJobRepository:
         # Convert items
         for item_model in model.items:
             item = Item(
-                name=item_model.name,
-                price=item_model.price,
+                product_name=item_model.name,
+                price_exact=item_model.price,
                 category=item_model.category,
                 metadata=item_model.metadata or {},
                 hash=item_model.hash,

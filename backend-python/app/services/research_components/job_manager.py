@@ -197,7 +197,7 @@ class ResearchJobManager:
             
         # Validate individual items
         for item in items:
-            if not item.name or not item.name.strip():
+            if not item.product_name or not item.product_name.strip():
                 raise ValidationException(
                     error_code=ErrorCode.VALIDATION_ERROR,
                     message="Product name cannot be empty"

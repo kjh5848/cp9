@@ -31,24 +31,24 @@ class ResultStatus(str, Enum):
 class Item:
     """Research item entity."""
 
-    name: str
-    price: float
+    product_name: str
+    price_exact: float
     category: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
     hash: Optional[str] = None
 
     def __post_init__(self) -> None:
         """Validate item after initialization."""
-        if not self.name:
-            raise ValueError("Item name cannot be empty")
-        if self.price < 0:
-            raise ValueError("Item price cannot be negative")
+        if not self.product_name:
+            raise ValueError("Product name cannot be empty")
+        if self.price_exact < 0:
+            raise ValueError("Product price cannot be negative")
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert item to dictionary."""
         return {
-            "name": self.name,
-            "price": self.price,
+            "product_name": self.product_name,
+            "price_exact": self.price_exact,
             "category": self.category,
             "metadata": self.metadata,
             "hash": self.hash,

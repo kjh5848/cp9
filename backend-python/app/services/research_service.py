@@ -49,8 +49,8 @@ class ResearchService:
         domain_items = []
         for item_data in items:
             item = Item(
-                name=item_data["name"],
-                price=item_data["price"],
+                product_name=item_data["product_name"],
+                price_exact=item_data["price_exact"],
                 category=item_data.get("category"),
                 metadata=item_data.get("metadata", {}),
             )

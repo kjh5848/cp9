@@ -17,8 +17,8 @@ def calculate_item_hash(item: Item) -> str:
     """
     # Create a consistent string representation of the item
     hash_data = {
-        "name": item.name.lower().strip(),
-        "price": round(item.price, 2),  # Round to 2 decimal places for consistency
+        "name": item.product_name.lower().strip(),
+        "price": round(item.price_exact, 2),  # Round to 2 decimal places for consistency
         "category": item.category.lower().strip() if item.category else None,
     }
 

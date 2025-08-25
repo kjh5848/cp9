@@ -97,7 +97,7 @@ async def _run_research_async(job_id: UUID) -> Dict[str, Any]:
                         "job_id": str(job_id),
                         "processed": processed_count,
                         "total": total_items,
-                        "current_item": item.name,
+                        "current_item": item.product_name,
                     },
                 )
 
@@ -110,7 +110,7 @@ async def _run_research_async(job_id: UUID) -> Dict[str, Any]:
                     job_id, item.hash
                 )
                 if existing_result:
-                    logger.info(f"Skipping existing item: {item.name}")
+                    logger.info(f"Skipping existing item: {item.product_name}")
                     if existing_result.status == ResultStatus.SUCCESS:
                         processed_count += 1
                     else:
@@ -120,7 +120,7 @@ async def _run_research_async(job_id: UUID) -> Dict[str, Any]:
                 # Create pending result
                 result = Result(
                     item_hash=item.hash,
-                    item_name=item.name,
+                    item_name=item.product_name,
                     status=ResultStatus.PENDING,
                 )
                 await result_repo.create(job_id, result)
@@ -128,8 +128,8 @@ async def _run_research_async(job_id: UUID) -> Dict[str, Any]:
                 # Research the item
                 try:
                     research_data = await client.research_item(
-                        item_name=item.name,
-                        item_price=item.price,
+                        item_name=item.product_name,
+                        item_price=item.price_exact,
                         category=item.category,
                     )
 
@@ -138,7 +138,7 @@ async def _run_research_async(job_id: UUID) -> Dict[str, Any]:
                         result.id, ResultStatus.SUCCESS, data=research_data
                     )
                     processed_count += 1
-                    logger.info(f"Successfully researched: {item.name}")
+                    logger.info(f"Successfully researched: {item.product_name}")
 
                 except PerplexityAPIError as e:
                     # Update result with error
@@ -146,11 +146,11 @@ async def _run_research_async(job_id: UUID) -> Dict[str, Any]:
                         result.id, ResultStatus.ERROR, error=str(e)
                     )
                     failed_count += 1
-                    logger.error(f"Failed to research {item.name}: {e}")
+                    logger.error(f"Failed to research {item.product_name}: {e}")
 
             except Exception as e:
                 failed_count += 1
-                logger.error(f"Unexpected error processing {item.name}: {e}")
+                logger.error(f"Unexpected error processing {item.product_name}: {e}")
 
         # Update job status
         final_status = JobStatus.COMPLETED if failed_count == 0 else JobStatus.FAILED
@@ -189,18 +189,18 @@ def process_single_item(self, job_id: str, item_data: Dict[str, Any]) -> Dict[st
     job_uuid = UUID(job_id)
     item = Item(**item_data)
 
-    logger.info(f"Processing single item: {item.name} for job {job_uuid}")
+    logger.info(f"Processing single item: {item.product_name} for job {job_uuid}")
 
     try:
         result = asyncio.run(_process_single_item_async(job_uuid, item))
         return result
     except Exception as exc:
-        logger.error(f"Failed to process item {item.name}: {exc}")
+        logger.error(f"Failed to process item {item.product_name}: {exc}")
 
         # Retry if possible
         if self.request.retries < self.max_retries:
             logger.info(
-                f"Retrying item {item.name} (attempt {self.request.retries + 1})"
+                f"Retrying item {item.product_name} (attempt {self.request.retries + 1})"
             )
             raise self.retry(countdown=30, exc=exc)
 
@@ -227,7 +227,7 @@ async def _process_single_item_async(job_id: UUID, item: Item) -> Dict[str, Any]
         # Create pending result
         result = Result(
             item_hash=item.hash,
-            item_name=item.name,
+            item_name=item.product_name,
             status=ResultStatus.PENDING,
         )
         await result_repo.create(job_id, result)
@@ -236,8 +236,8 @@ async def _process_single_item_async(job_id: UUID, item: Item) -> Dict[str, Any]
             # Research the item
             client = get_perplexity_client()
             research_data = await client.research_item(
-                item_name=item.name,
-                item_price=item.price,
+                item_name=item.product_name,
+                item_price=item.price_exact,
                 category=item.category,
             )
 

@@ -45,19 +45,19 @@ class ResearchUseCases:
             ValueError: If item is invalid
         """
         # Validate name
-        if not item.name or not item.name.strip():
+        if not item.product_name or not item.product_name.strip():
             raise ValueError("Item name cannot be empty")
-        if len(item.name) > ResearchUseCases.MAX_ITEM_NAME_LENGTH:
+        if len(item.product_name) > ResearchUseCases.MAX_ITEM_NAME_LENGTH:
             raise ValueError(
                 f"Item name cannot exceed {ResearchUseCases.MAX_ITEM_NAME_LENGTH} characters"
             )
 
         # Validate price
-        if item.price < ResearchUseCases.MIN_PRICE:
+        if item.price_exact < ResearchUseCases.MIN_PRICE:
             raise ValueError(
                 f"Item price cannot be less than {ResearchUseCases.MIN_PRICE}"
             )
-        if item.price > ResearchUseCases.MAX_PRICE:
+        if item.price_exact > ResearchUseCases.MAX_PRICE:
             raise ValueError(f"Item price cannot exceed {ResearchUseCases.MAX_PRICE}")
 
     @staticmethod

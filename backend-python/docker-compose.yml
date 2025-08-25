@@ -4,7 +4,7 @@ services:
       context: .
       target: development
     container_name: cp9_backend_app
-    command: /usr/local/bin/poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: bash -c "cd /app && /usr/local/bin/poetry install && /usr/local/bin/poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
     ports:
       - "8000:8000"
       - "5555:5555"  # Celery Flower
@@ -16,6 +16,7 @@ services:
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/research_db
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/2
+      - PERPLEXITY_API_KEY=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
     depends_on:
       postgres:
         condition: service_healthy

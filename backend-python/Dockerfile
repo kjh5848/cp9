@@ -16,7 +16,8 @@ RUN pip install poetry==2.1.4
 # Configure Poetry
 ENV POETRY_NO_INTERACTION=1 \
     POETRY_VENV_IN_PROJECT=1 \
-    POETRY_CACHE_DIR=/tmp/poetry_cache
+    POETRY_CACHE_DIR=/tmp/poetry_cache \
+    PATH="/app/.venv/bin:$PATH"
 
 WORKDIR /app
 
