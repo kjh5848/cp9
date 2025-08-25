@@ -4,76 +4,78 @@
 
 ## 프로젝트 개요
 
-이 프로젝트는 Clean Architecture 원칙으로 구축된 Python 리서치 백엔드로, 다음 기능들을 포함합니다:
-- **FastAPI**를 사용한 REST API 엔드포인트
-- **SQLAlchemy 2.0**과 비동기 PostgreSQL 지원
-- **Celery**와 Redis를 사용한 백그라운드 작업 처리
-- 리서치 자동화를 위한 **Perplexity AI** 통합
-- 도메인 주도 설계를 적용한 **Clean Architecture**
+Clean Architecture 원칙으로 구축된 Python 리서치 백엔드 시스템:
+- **FastAPI** 기반 비동기 REST API (포트 8000)
+- **SQLAlchemy 2.0** + 비동기 PostgreSQL (포트 5432)
+- **Celery** + Redis 백그라운드 작업 처리 (포트 6379)
+- **Perplexity AI** 통합 리서치 자동화
+- **Domain-Driven Design** 적용 Clean Architecture
 
-## 개발 명령어
+## 빠른 시작 가이드
 
-### 환경 설정
+### 1. 초기 설정 (최초 1회)
 ```bash
-# Poetry로 의존성 설치
+# Poetry 설치 (없는 경우)
+pip install poetry
+
+# 의존성 설치
 poetry install
 poetry shell
 
-# 인프라 서비스 시작
+# 환경 변수 설정
+cp .env.example .env  # .env 파일 생성 후 수정 필요
+```
+
+### 2. 서비스 시작 순서
+```bash
+# 1단계: Docker 서비스 시작 (PostgreSQL, Redis)
 docker-compose up -d
 
-# 서비스 실행 상태 확인
-docker-compose ps
-```
-
-### 데이터베이스 관리
-```bash
-# 데이터베이스 마이그레이션 실행
+# 2단계: 데이터베이스 마이그레이션
 alembic upgrade head
 
-# 새 마이그레이션 생성
-alembic revision --autogenerate -m "마이그레이션 설명"
-
-# 마이그레이션 롤백
-alembic downgrade -1
-
-# 현재 마이그레이션 상태 확인
-alembic current
-```
-
-### 애플리케이션 명령어
-```bash
-# 개발 서버 시작
+# 3단계: FastAPI 서버 시작
 python app/main.py
 # 또는
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
-# Celery 워커 시작 (별도 터미널)
+# 4단계: Celery 워커 시작 (별도 터미널)
 celery -A app.infra.tasks.celery_app worker --loglevel=info
 
-# Celery flower 모니터링 시작 (선택사항)
-celery -A app.infra.tasks.celery_app flower
+# 5단계: API 문서 확인
+# 브라우저에서 http://localhost:8000/docs 접속
 ```
 
-### 코드 품질 및 테스트
+### 3. 데이터베이스 관리
 ```bash
-# 모든 테스트 실행
+# 마이그레이션 실행
+alembic upgrade head
+
+# 새 마이그레이션 생성
+alembic revision --autogenerate -m "설명"
+
+# 마이그레이션 롤백
+alembic downgrade -1
+
+# 현재 상태 확인
+alembic current
+```
+
+### 4. 개발 명령어
+```bash
+# 테스트 실행
 pytest
+pytest --cov=app --cov-report=html  # 커버리지 포함
+pytest app/tests/test_research.py   # 특정 파일
 
-# 커버리지와 함께 테스트 실행
-pytest --cov=app --cov-report=html
+# 코드 품질
+black app/        # 코드 포맷팅
+ruff --fix app/   # 린팅 및 자동 수정
+mypy app/         # 타입 체킹
 
-# 특정 테스트 파일 실행
-pytest app/tests/test_research.py
-
-# 코드 포맷팅
-black app/
-
-# 린트 및 코드 수정
-ruff --fix app/
-
-# 타입 체킹
-mypy app/
+# 서비스 상태 확인
+docker-compose ps          # Docker 서비스 상태
+docker-compose logs -f     # 로그 확인
 ```
 
 ## Clean Architecture 구조
@@ -129,24 +131,36 @@ mypy app/
 - Redis를 사용한 큐 기반 처리
 - 지수 백오프를 사용한 재시도 로직
 
-## 설정 관리
+## 환경 설정
 
-### 환경 변수
-`app/core/config.py`의 Pydantic Settings를 통한 모든 설정:
+### 필수 환경 변수 (.env 파일)
+```bash
+# 애플리케이션
+APP_ENV=development
+DEBUG=true
+API_V1_PREFIX=/api/v1
 
-```python
-# 주요 설정 카테고리:
-- Application: APP_ENV, DEBUG, API_V1_PREFIX
-- Database: DATABASE_URL, pool settings
-- Redis: REDIS_URL, CELERY_BROKER_URL
-- Perplexity: PERPLEXITY_API_KEY
-- Research: MAX_BATCH_SIZE, MAX_CONCURRENT_REQUESTS
+# 데이터베이스
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/research_db
+
+# Redis & Celery
+REDIS_URL=redis://localhost:6379/0
+CELERY_BROKER_URL=redis://localhost:6379/2
+CELERY_RESULT_BACKEND=redis://localhost:6379/3
+
+# Perplexity AI (필수)
+PERPLEXITY_API_KEY=pplx-xxxxxxxxxxxxx  # 실제 API 키로 교체 필요
+
+# 리서치 설정
+MAX_BATCH_SIZE=10
+MAX_CONCURRENT_REQUESTS=5
+REQUEST_TIMEOUT=30
 ```
 
-### 설정 검증
-- Pydantic이 모든 환경 변수 검증
-- 자동 URL 검증 및 변환
-- 개발/운영 모드 감지
+### 설정 관리 (`app/core/config.py`)
+- Pydantic Settings로 모든 환경 변수 자동 검증
+- 타입 안전성 보장 및 기본값 제공
+- 개발/운영 환경 자동 감지
 
 ## 데이터베이스 설계
 
@@ -205,14 +219,60 @@ mypy app/
 - 상관 ID를 포함한 구조화된 로깅
 - 우아한 성능 저하 패턴
 
-## 서비스 및 의존성
+## 서비스 의존성 및 포트
 
 ### 필수 서비스
-- **PostgreSQL 16**: 주 데이터베이스
-- **Redis 7**: 캐시 및 Celery 브로커
-- **Perplexity AI API**: 리서치 데이터 소스
+| 서비스 | 포트 | 용도 | Docker 명령 |
+|--------|------|------|-------------|
+| PostgreSQL 16 | 5432 | 주 데이터베이스 | `docker-compose up -d postgres` |
+| Redis 7 | 6379 | 캐시 & Celery 브로커 | `docker-compose up -d redis` |
+| FastAPI | 8000 | REST API 서버 | `python app/main.py` |
+| Celery Worker | - | 백그라운드 작업 | `celery -A app.infra.tasks.celery_app worker` |
 
 ### 선택적 서비스
-- **pgAdmin**: 데이터베이스 관리 (localhost:5050)
-- **Flower**: Celery 모니터링
-- **Monitoring**: 집계 준비가 완료된 구조화된 JSON 로깅
+| 서비스 | 포트 | 용도 | 시작 명령 |
+|--------|------|------|-----------|
+| pgAdmin | 5050 | DB 관리 UI | `docker-compose up -d pgadmin` |
+| Flower | 5555 | Celery 모니터링 | `celery -A app.infra.tasks.celery_app flower` |
+| Swagger UI | 8000/docs | API 문서 | 자동 제공 |
+
+### 외부 API
+- **Perplexity AI**: 리서치 데이터 소스 (API 키 필요)
+
+## 문제 해결 가이드
+
+### 서버 시작 실패
+```bash
+# Poetry 환경 확인
+poetry env info
+poetry install
+
+# Docker 서비스 재시작
+docker-compose down
+docker-compose up -d
+
+# 포트 충돌 확인
+netstat -an | findstr :8000  # Windows
+lsof -i :8000                # Linux/Mac
+```
+
+### 데이터베이스 연결 실패
+```bash
+# PostgreSQL 상태 확인
+docker-compose ps postgres
+docker-compose logs postgres
+
+# 데이터베이스 재생성
+docker-compose exec postgres psql -U postgres -c "CREATE DATABASE research_db;"
+alembic upgrade head
+```
+
+### Celery 작업 실패
+```bash
+# Redis 연결 확인
+docker-compose ps redis
+redis-cli ping
+
+# Celery 워커 로그 확인
+celery -A app.infra.tasks.celery_app worker --loglevel=debug
+```
