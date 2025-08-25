@@ -46,12 +46,45 @@
       "Bash(tasklist:*)",
       "Bash(curl:*)",
       "Bash(taskkill:*)",
-      "Bash(uvicorn:*)"
+      "Bash(uvicorn:*)",
+      "Bash(docker:*)",
+      "Bash(curl:*)",
+      "mcp__sequential-thinking__sequentialthinking",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs",
+      "Bash(poetry install:*)",
+      "Read(/D:\\workspace\\study\\cp9\\frontend\\src\\infrastructure\\api\\core/**)",
+      "Read(/D:\\workspace\\study\\cp9\\frontend\\src\\infrastructure\\api\\core/**)",
+      "Read(/D:\\workspace\\study\\cp9\\frontend\\src\\infrastructure\\api\\clients/**)",
+      "Read(/D:\\workspace\\study\\cp9\\frontend/**)",
+      "Read(/D:\\workspace\\study\\cp9\\frontend\\src/**)",
+      "Read(/D:\\workspace\\study\\cp9\\frontend\\src\\infrastructure\\api\\core/**)",
+      "Read(/D:\\workspace\\study\\cp9\\frontend/**)",
+      "Read(/D:\\workspace\\study\\cp9\\frontend\\src\\infrastructure\\api\\clients/**)",
+      "Read(/D:\\workspace\\study\\cp9\\frontend\\src\\features\\product\\hooks/**)",
+      "Read(/D:\\workspace\\study\\cp9\\frontend\\src\\features\\product\\hooks/**)",
+      "Read(/D:\\workspace\\study\\cp9\\frontend\\src\\infrastructure\\api\\clients/**)",
+      "Read(/D:\\workspace\\study\\cp9\\frontend/**)",
+      "Read(/D:\\workspace\\study\\cp9\\frontend\\src\\infrastructure\\api\\types/**)",
+      "mcp__browsermcp__browser_navigate",
+      "Read(/D:\\workspace\\study\\cp9\\frontend\\src\\infrastructure\\api\\core/**)",
+      "Read(/D:\\workspace\\study\\cp9\\frontend\\src\\infrastructure\\api\\clients/**)",
+      "Read(/D:\\workspace\\study\\cp9\\frontend/**)",
+      "Read(/D:\\workspace\\study\\cp9\\frontend\\src/**)",
+      "Read(/D:\\workspace\\study\\cp9\\frontend\\src\\infrastructure\\api\\core/**)",
+      "Read(/D:\\workspace\\study\\cp9\\frontend\\src\\infrastructure\\api\\core/**)",
+      "Read(/D:\\workspace\\study\\cp9\\frontend\\src\\features\\product\\hooks/**)",
+      "Read(/D:\\workspace\\study\\cp9\\frontend\\src\\infrastructure\\api\\core/**)",
+      "Read(/D:\\workspace\\study\\cp9\\frontend\\src\\infrastructure\\api\\clients/**)",
+      "Read(/D:\\workspace\\study\\cp9\\frontend\\src\\infrastructure\\api\\clients/**)",
+      "Read(/D:\\workspace\\study\\cp9\\frontend\\src\\infrastructure\\api\\core/**)",
+      "Read(/D:\\workspace\\study\\cp9\\frontend\\src\\infrastructure\\api\\core/**)"
     ],
     "deny": [],
     "ask": [],
     "additionalDirectories": [
-      "C:\\c\\Users\\kjh58\\문서\\GitHub\\cp9"
+      "C:\\c\\Users\\kjh58\\문서\\GitHub\\cp9",
+      "D:\\D\\workspace\\study\\cp9"
     ]
   }
 }

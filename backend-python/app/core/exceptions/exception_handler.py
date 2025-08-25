@@ -145,6 +145,20 @@ class ExceptionHandler:
         else:
             logger.error("Unhandled exception occurred", extra=log_data, exc_info=True)
 
+    def log_error(
+        self, exc: Exception, context: Optional[Dict[str, Any]] = None
+    ) -> None:
+        """Log error - alias for log_exception for backward compatibility.
+
+        Args:
+            exc: Exception to log
+            context: Additional context information
+        """
+        if isinstance(exc, DomainException):
+            self.log_domain_exception(exc, context)
+        else:
+            self.log_exception(exc, context)
+
     def log_domain_exception(
         self, exc: DomainException, context: Optional[Dict[str, Any]] = None
     ) -> None:
@@ -158,7 +172,7 @@ class ExceptionHandler:
 
         log_data = {
             "error_code": exc.error_code.value,
-            "message": exc.message,
+            "error_message": exc.message,
             "details": exc.details,
             "metadata": exc.metadata,
         }
