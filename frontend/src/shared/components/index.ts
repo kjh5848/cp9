@@ -15,3 +15,6 @@ export * from './custom-ui';
 
 // Advanced UI Components
 export * from './advanced-ui';
+
+// Design System
+export * from './design-system';
