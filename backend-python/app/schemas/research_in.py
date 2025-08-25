@@ -8,19 +8,19 @@ from pydantic import BaseModel, Field, field_validator
 class ItemIn(BaseModel):
     """Input schema for research items."""
 
-    name: str = Field(..., min_length=1, max_length=500, description="Item name")
-    price: float = Field(..., ge=0, le=1000000, description="Item price")
-    category: Optional[str] = Field(None, max_length=255, description="Item category")
+    product_name: str = Field(..., min_length=1, max_length=500, description="Product name")
+    price_exact: float = Field(..., ge=0, le=1000000, description="Product price")
+    category: Optional[str] = Field(None, max_length=255, description="Product category")
     metadata: Dict[str, Any] = Field(
         default_factory=dict, description="Additional item metadata"
     )
 
-    @field_validator("name")
+    @field_validator("product_name")
     @classmethod
-    def validate_name(cls, v: str) -> str:
-        """Validate item name."""
+    def validate_product_name(cls, v: str) -> str:
+        """Validate product name."""
         if not v.strip():
-            raise ValueError("Item name cannot be empty")
+            raise ValueError("Product name cannot be empty")
         return v.strip()
 
     @field_validator("metadata")
@@ -35,8 +35,8 @@ class ItemIn(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
-                "name": "iPhone 15 Pro",
-                "price": 999.99,
+                "product_name": "iPhone 15 Pro",
+                "price_exact": 999.99,
                 "category": "Electronics",
                 "metadata": {"brand": "Apple", "color": "Space Black"},
             }
@@ -61,9 +61,9 @@ class ResearchJobCreateIn(BaseModel):
         # Check for duplicates based on name and price
         seen = set()
         for item in v:
-            key = (item.name.lower(), item.price)
+            key = (item.product_name.lower(), item.price_exact)
             if key in seen:
-                raise ValueError(f"Duplicate item found: {item.name}")
+                raise ValueError(f"Duplicate item found: {item.product_name}")
             seen.add(key)
 
         return v
@@ -73,13 +73,13 @@ class ResearchJobCreateIn(BaseModel):
             "example": {
                 "items": [
                     {
-                        "name": "iPhone 15 Pro",
-                        "price": 999.99,
+                        "product_name": "iPhone 15 Pro",
+                        "price_exact": 999.99,
                         "category": "Electronics",
                     },
                     {
-                        "name": "Samsung Galaxy S24",
-                        "price": 899.99,
+                        "product_name": "Samsung Galaxy S24",
+                        "price_exact": 899.99,
                         "category": "Electronics",
                     },
                 ],

@@ -18,6 +18,7 @@ from app.schemas.research_out import (
     ResearchJobSummaryOut,
     TaskStatusOut,
 )
+from app.schemas.research_list_out import ResearchJobListResponse
 from app.services.research_service import ResearchService
 
 logger = get_logger(__name__)
@@ -153,11 +154,11 @@ async def get_research_job(
 
 @router.get(
     "/jobs",
-    response_model=List[ResearchJobSummaryOut],
+    response_model=ResearchJobListResponse,
     summary="List research jobs",
-    description="List research jobs with optional filtering",
+    description="List research jobs with optional filtering and user-friendly messages",
     responses={
-        200: {"description": "List of research jobs"},
+        200: {"description": "List of research jobs with metadata"},
     },
 )
 async def list_research_jobs(
@@ -170,7 +171,7 @@ async def list_research_jobs(
         50, ge=1, le=100, description="Maximum number of jobs to return"
     ),
     service: ResearchService = Depends(get_research_service),
-) -> List[ResearchJobSummaryOut]:
+) -> ResearchJobListResponse:
     """List research jobs."""
     try:
         # Convert string status to enum if provided
@@ -181,7 +182,7 @@ async def list_research_jobs(
         jobs = await service.list_research_jobs(status=status_enum, limit=limit)
 
         # Convert to summary format
-        return [
+        job_summaries = [
             ResearchJobSummaryOut(
                 id=job.id,
                 status=job.status.value,
@@ -196,6 +197,18 @@ async def list_research_jobs(
             )
             for job in jobs
         ]
+
+        # Prepare user-friendly response
+        message = None
+        if not job_summaries:
+            message = "아직 생성된 리서치 작업이 없습니다. 새로운 작업을 시작해 보세요."
+        
+        return ResearchJobListResponse(
+            data=job_summaries,
+            message=message,
+            total_count=len(job_summaries),
+            has_more=False  # TODO: Implement pagination for proper has_more logic
+        )
 
     except ValueError as e:
         logger.error(f"Failed to list research jobs: {e}")

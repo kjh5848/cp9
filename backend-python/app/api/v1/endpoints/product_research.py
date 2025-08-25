@@ -11,6 +11,7 @@ from app.core.exceptions import (
     ValidationException,
 )
 from app.core.exceptions import ErrorHandler, CoupangException
+from app.core.exceptions.exception_handler import get_exception_handler
 from app.core.logging import get_logger
 from app.domain.product_entities import ProductResearchItem
 from app.schemas.error_responses import ErrorCode, StandardError
@@ -230,8 +231,8 @@ async def create_product_research(
         raise
     except PydanticValidationError as e:
         # Handle Pydantic validation errors
-        validation_exc = ErrorHandler.from_pydantic_validation_error(e)
-        ErrorHandler.log_error(
+        validation_exc = get_exception_handler().from_pydantic_validation_error(e)
+        get_exception_handler().log_error(
             validation_exc, context={"endpoint": "create_product_research"}
         )
         raise validation_exc.to_http_exception()
@@ -243,13 +244,13 @@ async def create_product_research(
             details=str(e),
             metadata={"endpoint": "create_product_research"},
         )
-        ErrorHandler.log_error(exc)
+        get_exception_handler().log_error(exc)
         raise exc.to_http_exception()
     except Exception as e:
         # Handle any other unexpected errors
-        exc = ErrorHandler.from_generic_exception(e, ErrorCode.INTERNAL_SERVER_ERROR)
+        exc = get_exception_handler().from_generic_exception(e, ErrorCode.INTERNAL_SERVER_ERROR)
         exc.metadata = {"endpoint": "create_product_research"}
-        ErrorHandler.log_error(exc)
+        get_exception_handler().log_error(exc)
         raise exc.to_http_exception()
 
 
@@ -337,9 +338,9 @@ async def get_research_results(
         raise
     except Exception as e:
         # Handle any other unexpected errors
-        exc = ErrorHandler.from_generic_exception(e, ErrorCode.INTERNAL_SERVER_ERROR)
+        exc = get_exception_handler().from_generic_exception(e, ErrorCode.INTERNAL_SERVER_ERROR)
         exc.metadata = {"endpoint": "get_research_results", "job_id": str(job_id)}
-        ErrorHandler.log_error(exc)
+        get_exception_handler().log_error(exc)
         raise exc.to_http_exception()
 
 
@@ -432,9 +433,9 @@ async def get_job_status(
         raise
     except Exception as e:
         # Handle any other unexpected errors
-        exc = ErrorHandler.from_generic_exception(e, ErrorCode.INTERNAL_SERVER_ERROR)
+        exc = get_exception_handler().from_generic_exception(e, ErrorCode.INTERNAL_SERVER_ERROR)
         exc.metadata = {"endpoint": "get_job_status", "job_id": job_id}
-        ErrorHandler.log_error(exc)
+        get_exception_handler().log_error(exc)
         raise exc.to_http_exception()
 
 
@@ -487,7 +488,7 @@ async def cancel_research_job(job_id: UUID) -> None:
         raise
     except Exception as e:
         # Handle any other unexpected errors
-        exc = ErrorHandler.from_generic_exception(e, ErrorCode.INTERNAL_SERVER_ERROR)
+        exc = get_exception_handler().from_generic_exception(e, ErrorCode.INTERNAL_SERVER_ERROR)
         exc.metadata = {"endpoint": "cancel_research_job", "job_id": str(job_id)}
-        ErrorHandler.log_error(exc)
+        get_exception_handler().log_error(exc)
         raise exc.to_http_exception()

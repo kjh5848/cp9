@@ -10,8 +10,8 @@ from pydantic import BaseModel, Field
 class ItemOut(BaseModel):
     """Output schema for research items."""
 
-    name: str = Field(..., description="Item name")
-    price: float = Field(..., description="Item price")
+    product_name: str = Field(..., description="Product name")
+    price_exact: float = Field(..., description="Product price")
     category: Optional[str] = Field(None, description="Item category")
     hash: Optional[str] = Field(None, description="Item hash")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Item metadata")
@@ -19,8 +19,8 @@ class ItemOut(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
-                "name": "iPhone 15 Pro",
-                "price": 999.99,
+                "product_name": "iPhone 15 Pro",
+                "price_exact": 999.99,
                 "category": "Electronics",
                 "hash": "abc123...",
                 "metadata": {"brand": "Apple", "color": "Space Black"},
@@ -91,8 +91,8 @@ class ResearchJobOut(BaseModel):
                 "completed_at": "2024-01-01T12:10:00Z",
                 "items": [
                     {
-                        "name": "iPhone 15 Pro",
-                        "price": 999.99,
+                        "product_name": "iPhone 15 Pro",
+                        "price_exact": 999.99,
                         "category": "Electronics",
                         "hash": "abc123...",
                     }

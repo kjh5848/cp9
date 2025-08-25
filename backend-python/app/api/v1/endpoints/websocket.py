@@ -67,7 +67,7 @@ async def websocket_research_updates(
     try:
         job = await research_service.get_job_by_id(job_id)
         if not job:
-            await websocket.close(code=4004, reason="Job not found")
+            await websocket.close(code=4004, reason="연결하려는 작업을 찾을 수 없습니다. 작업 목록을 새로고침해 주세요.")
             return
     except Exception as e:
         logger.error(f"Failed to validate job {job_id}: {e}")
