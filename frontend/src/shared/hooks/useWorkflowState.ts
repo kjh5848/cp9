@@ -16,7 +16,7 @@ export interface WorkflowState {
   result?: {
     workflow: {
       extractIds: { productIds: string[]; urls: string[]; };
-      aiProductResearch: { enrichedData: any[]; researchSummary: any; };
+      aiProductResearch: { enrichedData: unknown[]; researchSummary: unknown; };
       seoAgent: { title: string; content: string; keywords: string[]; summary: string; };
       wordpressPublisher: { postId: string; postUrl: string; status: string; };
     };

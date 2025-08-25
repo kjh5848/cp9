@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { ProductItem, DeepLinkResponse } from '../types';
+import { apiClients, isApiError, isNetworkError, isServerError } from '@/infrastructure/api';
 
 /**
  * 상품 액션 관련 로직을 관리하는 훅
@@ -30,6 +31,7 @@ export function useProductActions(
 ) {
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
   const [isSeoLoading, setIsSeoLoading] = useState(false);
+  const [isResearchLoading, setIsResearchLoading] = useState(false);
 
   // 타입 가드: ProductItem인지 확인
   const isProductItem = (item: ProductItem | DeepLinkResponse): item is ProductItem => {
@@ -107,38 +109,16 @@ export function useProductActions(
         return null;
       }).filter((item): item is NonNullable<typeof item> => item !== null);
 
-      // LangGraph API 호출
+      // 새로운 LangGraph API 클라이언트 사용
       console.log('SEO 생성 요청 시작:', {
         productsCount: productsData.length,
         products: productsData.map(p => ({ name: p.name, price: p.price }))
       });
 
-      const response = await fetch('/api/langgraph/seo-generation', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          products: productsData,
-          type: 'product_review'
-        }),
+      const result = await apiClients.langgraph.generateSEO({
+        products: productsData,
+        type: 'product_review'
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        const errorDetails = {
-          status: response.status,
-          statusText: response.statusText,
-          errorText
-        };
-        console.error('SEO 글 생성 API 오류:', errorDetails);
-        console.error('API 응답 상태:', response.status);
-        console.error('API 응답 메시지:', response.statusText);
-        console.error('API 에러 내용:', errorText);
-        throw new Error(`SEO 글 생성에 실패했습니다 (${response.status}: ${response.statusText})`);
-      }
-
-      const result = await response.json();
       
       // 결과를 새 탭에서 열기
       const newWindow = window.open('', '_blank');
@@ -176,7 +156,7 @@ export function useProductActions(
               
               <div class="seo-content">
                 <h3>📝 SEO 최적화 글</h3>
-                <div style="white-space: pre-wrap;">${result.content || 'SEO 글을 생성하는 중입니다...'}</div>
+                <div style="white-space: pre-wrap;">${result.data?.content || 'SEO 글을 생성하는 중입니다...'}</div>
               </div>
             </div>
           </body>
@@ -190,7 +170,9 @@ export function useProductActions(
     } catch (error: unknown) {
       console.error('SEO 글 생성 오류:', error);
       
-      if (error instanceof Error) {
+      if (isApiError(error)) {
+        toast.error(`SEO 글 생성에 실패했습니다: ${error.getUserMessage()}`);
+      } else if (error instanceof Error) {
         console.error('에러 메시지:', error.message);
         console.error('에러 스택:', error.stack);
         toast.error(`SEO 글 생성에 실패했습니다: ${error.message}`);
@@ -201,6 +183,90 @@ export function useProductActions(
       }
     } finally {
       setIsSeoLoading(false);
+    }
+  };
+
+  // 리서치만 하기 (쿠팡 즉시 리턴 워크플로우)
+  const handleResearch = async () => {
+    setIsResearchLoading(true);
+    try {
+      const selectedItems = filteredResults.filter((_, index) => {
+        const itemId = isProductItem(filteredResults[index]) 
+          ? filteredResults[index].productId.toString()
+          : isDeepLinkResponse(filteredResults[index])
+          ? filteredResults[index].originalUrl || index.toString()
+          : index.toString();
+        return selected.includes(itemId);
+      });
+
+      // 선택된 상품 정보를 API 가이드 형식으로 변환
+      const apiItems = selectedItems.map(item => {
+        if (isProductItem(item)) {
+          return {
+            product_name: item.productName,
+            category: item.categoryName,
+            price_exact: item.productPrice,
+            currency: 'KRW',
+            // 쿠팡 API 필드들 (있는 경우)
+            product_id: item.productId,
+            product_url: item.productUrl,
+            product_image: item.productImage,
+            is_rocket: item.isRocket || false,
+            is_free_shipping: item.isFreeShipping || false,
+            category_name: item.categoryName,
+            seller_or_store: '쿠팡'
+          };
+        }
+        return null;
+      }).filter((item): item is NonNullable<typeof item> => item !== null);
+
+      console.log('쿠팡 즉시 리턴 리서치 요청:', {
+        itemsCount: apiItems.length,
+        items: apiItems.map(i => ({ name: i.product_name, price: i.price_exact }))
+      });
+
+      // 새로운 Research API 클라이언트 사용 (수정된 올바른 방식)
+      const result = await apiClients.research.createResearchWithCoupangPreview(apiItems);
+      
+      console.log('쿠팡 즉시 리턴 성공:', {
+        job_id: result.job_id,
+        coupangResults: result.results ? result.results.length : 0,
+        message: result.message
+      });
+
+      // 리서치 관리 페이지를 새 탭에서 열기
+      const researchUrl = result.session_id 
+        ? `/research?session=${result.session_id}`
+        : '/research';
+      
+      window.open(researchUrl, '_blank');
+
+      toast.success(`리서치가 시작되었습니다! (${apiItems.length}개 상품)`);
+      setIsActionModalOpen(false);
+    } catch (error: unknown) {
+      console.error('리서치 분석 오류:', error);
+      
+      if (isApiError(error)) {
+        // API 에러의 경우 사용자 친화적 메시지 표시
+        toast.error(`리서치 분석에 실패했습니다: ${error.getUserMessage()}`);
+        
+        // 네트워크 오류나 서버 오류의 경우 추가 가이드 제공
+        if (isNetworkError(error)) {
+          toast.error('네트워크 연결을 확인하고 다시 시도해주세요.', { duration: 5000 });
+        } else if (isServerError(error)) {
+          toast.error('서버에 문제가 있습니다. 잠시 후 다시 시도해주세요.', { duration: 5000 });
+        }
+      } else if (error instanceof Error) {
+        console.error('에러 메시지:', error.message);
+        console.error('에러 스택:', error.stack);
+        toast.error(`리서치 분석에 실패했습니다: ${error.message}`);
+      } else {
+        console.error('알 수 없는 에러 타입:', typeof error);
+        console.error('에러 내용:', JSON.stringify(error, null, 2));
+        toast.error('리서치 분석에 실패했습니다 (알 수 없는 오류)');
+      }
+    } finally {
+      setIsResearchLoading(false);
     }
   };
 
@@ -221,8 +287,10 @@ export function useProductActions(
   return {
     isActionModalOpen,
     isSeoLoading,
+    isResearchLoading,
     handleCopySelectedLinks,
     handleGenerateSeo,
+    handleResearch,
     handleActionButtonClick,
     closeActionModal,
     handleCopyToClipboard

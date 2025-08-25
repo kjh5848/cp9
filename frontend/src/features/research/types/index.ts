@@ -96,6 +96,8 @@ export interface ResearchSession {
   total_products: number;
   created_at: string;
   category_focus: string;
+  job_id?: string; // WebSocket 연결용 job_id
+  status?: 'pending' | 'in_progress' | 'completed' | 'failed' | 'cancelled';
 }
 
 /**
@@ -162,4 +164,125 @@ export interface FilterOptions {
 export interface SortOptions {
   field: 'name' | 'price' | 'rating' | 'date';
   order: 'asc' | 'desc';
+}
+
+/**
+ * 쿠팡 파트너스 상품 인터페이스
+ */
+export interface CoupangProduct {
+  productName: string;
+  productImage: string;
+  productPrice: number;
+  productUrl: string;
+  productId: number;
+  isRocket: boolean;
+  isFreeShipping: boolean;
+  categoryName: string;
+}
+
+/**
+ * 백엔드 리서치 API - 제품 속성
+ */
+export interface ProductAttribute {
+  name: string;
+  value: string;
+}
+
+/**
+ * 백엔드 리서치 API - 제품 스펙
+ */
+export interface ProductSpecs {
+  main: string[];
+  attributes: ProductAttribute[];
+  size_or_weight?: string;
+  options: string[];
+  included_items: string[];
+}
+
+/**
+ * 백엔드 리서치 API - 주목할 만한 리뷰
+ */
+export interface NotableReview {
+  source: string;
+  quote: string;
+  url?: string;
+}
+
+/**
+ * 백엔드 리서치 API - 제품 리뷰
+ */
+export interface ProductReviews {
+  rating_avg: number;
+  review_count: number;
+  summary_positive: string[];
+  summary_negative: string[];
+  notable_reviews: NotableReview[];
+}
+
+/**
+ * 백엔드 리서치 API - 제품 결과
+ */
+export interface ProductResult {
+  product_name: string;
+  brand: string;
+  category: string;
+  model_or_variant: string;
+  price_exact: number;
+  currency: string;
+  seller_or_store?: string;
+  deeplink_or_product_url?: string;
+  coupang_price?: number;
+  specs: ProductSpecs;
+  reviews: ProductReviews;
+  sources: string[];
+  captured_at: string;
+  status: 'success' | 'error' | 'insufficient_sources';
+  error_message?: string;
+  missing_fields?: string[];
+  suggested_queries?: string[];
+}
+
+/**
+ * 리서치 상태
+ */
+export interface ResearchState {
+  jobId: string | null;
+  status: 'idle' | 'requesting' | 'processing' | 'completed' | 'failed';
+  progress: number;
+  results: ProductResult[] | null;
+  error: string | null;
+}
+
+/**
+ * 갤러리 카드 상태
+ */
+export interface GalleryCardState {
+  coupangData: CoupangProduct;
+  researchStatus: 'pending' | 'processing' | 'completed' | 'failed';
+  researchProgress?: number;
+  researchResult?: ProductResult;
+}
+
+/**
+ * 통합 제품 데이터 (쿠팡 우선 + 리서치 보완)
+ */
+export interface IntegratedProductData {
+  // 쿠팡 우선 데이터
+  name: string; // coupang.productName 우선
+  price: number; // coupang.productPrice 우선  
+  image: string; // coupang.productImage 우선
+  url: string; // coupang.productUrl 우선
+  category: string; // coupang.categoryName 우선
+  productId: number; // coupang.productId
+  isRocket: boolean; // coupang.isRocket
+  isFreeShipping: boolean; // coupang.isFreeShipping
+  
+  // 리서치 전용 데이터 (있는 경우만)
+  brand?: string;
+  model?: string;
+  specs?: ProductSpecs;
+  reviews?: ProductReviews;
+  sources?: string[];
+  capturedAt?: string;
+  researchStatus?: 'success' | 'error' | 'insufficient_sources';
 }

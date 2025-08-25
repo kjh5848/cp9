@@ -63,7 +63,7 @@ class PerplexityClient:
         item_name: str,
         item_price: float,
         category: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ) -> Dict[str, Any]:
         """Research a single item using Perplexity API.
 
@@ -81,23 +81,20 @@ class PerplexityClient:
         """
         # Construct the research query
         query = self._build_query(item_name, item_price, category)
-        
+
         # Prepare request payload
         payload = {
             "model": "llama-3.1-sonar-small-128k-online",  # Fast model for research
             "messages": [
                 {
                     "role": "system",
-                    "content": "You are a helpful research assistant. Provide comprehensive information about products, including specifications, reviews, comparisons, and market analysis."
+                    "content": "You are a helpful research assistant. Provide comprehensive information about products, including specifications, reviews, comparisons, and market analysis.",
                 },
-                {
-                    "role": "user",
-                    "content": query
-                }
+                {"role": "user", "content": query},
             ],
             "temperature": 0.2,  # Lower temperature for more factual responses
             "max_tokens": 1000,
-            **kwargs
+            **kwargs,
         }
 
         try:
@@ -115,10 +112,10 @@ class PerplexityClient:
                     raise PerplexityAPIError(error_msg, response.status_code)
 
                 result = response.json()
-                
+
                 # Extract the research content
                 research_data = self._parse_response(result, item_name)
-                
+
                 logger.info(f"Successfully researched item: {item_name}")
                 return research_data
 
@@ -136,9 +133,7 @@ class PerplexityClient:
             raise PerplexityAPIError(error_msg) from e
 
     async def batch_research(
-        self,
-        items: list,
-        max_concurrent: int = 5
+        self, items: list, max_concurrent: int = 5
     ) -> Dict[str, Dict[str, Any]]:
         """Research multiple items concurrently.
 
@@ -150,7 +145,7 @@ class PerplexityClient:
             Dictionary mapping item names to research results
         """
         semaphore = asyncio.Semaphore(max_concurrent)
-        
+
         async def research_with_semaphore(item):
             async with semaphore:
                 try:
@@ -166,14 +161,11 @@ class PerplexityClient:
 
         tasks = [research_with_semaphore(item) for item in items]
         results = await asyncio.gather(*tasks)
-        
+
         return dict(results)
 
     def _build_query(
-        self,
-        item_name: str,
-        item_price: float,
-        category: Optional[str] = None
+        self, item_name: str, item_price: float, category: Optional[str] = None
     ) -> str:
         """Build research query for the item.
 
@@ -189,25 +181,25 @@ class PerplexityClient:
             f"Research the following product: {item_name}",
             f"Price point: ${item_price:.2f}",
         ]
-        
+
         if category:
             query_parts.append(f"Category: {category}")
-        
-        query_parts.extend([
-            "\nPlease provide:",
-            "1. Product specifications and features",
-            "2. Market comparison with similar products",
-            "3. User reviews and ratings summary",
-            "4. Price analysis and value proposition",
-            "5. Recommendations and alternatives",
-        ])
-        
+
+        query_parts.extend(
+            [
+                "\nPlease provide:",
+                "1. Product specifications and features",
+                "2. Market comparison with similar products",
+                "3. User reviews and ratings summary",
+                "4. Price analysis and value proposition",
+                "5. Recommendations and alternatives",
+            ]
+        )
+
         return "\n".join(query_parts)
 
     def _parse_response(
-        self,
-        response: Dict[str, Any],
-        item_name: str
+        self, response: Dict[str, Any], item_name: str
     ) -> Dict[str, Any]:
         """Parse Perplexity API response.
 
@@ -221,10 +213,10 @@ class PerplexityClient:
         try:
             # Extract the message content
             content = response["choices"][0]["message"]["content"]
-            
+
             # Get citations if available
             citations = response.get("citations", [])
-            
+
             return {
                 "item_name": item_name,
                 "research_content": content,

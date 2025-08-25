@@ -47,9 +47,13 @@ class Settings(BaseSettings):
     perplexity_api_key: str = Field(default="")
     perplexity_api_url: str = Field(default="https://api.perplexity.ai")
     perplexity_timeout: int = Field(default=30)
+    perplexity_model: str = Field(default="sonar-pro")
 
     # Research Configuration
     max_batch_size: int = Field(default=10)
+    max_research_batch_size: int = Field(default=10)
+    default_research_batch_size: int = Field(default=5)
+    min_research_batch_size: int = Field(default=1)
     max_concurrent_requests: int = Field(default=5)
     request_timeout: int = Field(default=60)
     retry_max_attempts: int = Field(default=3)

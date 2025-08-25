@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { ResearchSession } from '../types';
-import { getResearchSessionById } from '../data/mockSessions';
+// Mock data import removed - now using real API calls
 
 /**
  * 특정 리서치 세션의 상세 정보를 가져오는 훅
@@ -24,24 +24,28 @@ export function useResearchDetail(sessionId: string) {
         setLoading(true);
         setError(null);
 
-        // 실제로는 API 호출
-        // const response = await fetch(`/api/research/sessions/${sessionId}`);
-        // if (!response.ok) {
-        //   throw new Error('세션을 찾을 수 없습니다');
-        // }
-        // const data = await response.json();
+        // 실제 API 호출
+        const response = await fetch(`/api/research/sessions/${sessionId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
 
-        // 시뮬레이션된 지연
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        // 더미 데이터 사용
-        const mockSession = getResearchSessionById(sessionId);
-        
-        if (!mockSession) {
-          throw new Error('세션을 찾을 수 없습니다');
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error('세션을 찾을 수 없습니다');
+          }
+          throw new Error(`API Error: ${response.status} - ${response.statusText}`);
         }
 
-        setSession(mockSession);
+        const apiData = await response.json();
+        
+        if (!apiData.success || !apiData.data) {
+          throw new Error(apiData.message || '세션 데이터를 가져올 수 없습니다.');
+        }
+
+        setSession(apiData.data);
         
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : '리서치 세션을 불러오는데 실패했습니다';
@@ -62,13 +66,27 @@ export function useResearchDetail(sessionId: string) {
       setLoading(true);
       setError(null);
       
-      const mockSession = getResearchSessionById(sessionId);
-      
-      if (!mockSession) {
-        throw new Error('세션을 찾을 수 없습니다');
+      const response = await fetch(`/api/research/sessions/${sessionId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('세션을 찾을 수 없습니다');
+        }
+        throw new Error(`API Error: ${response.status} - ${response.statusText}`);
       }
 
-      setSession(mockSession);
+      const apiData = await response.json();
+      
+      if (!apiData.success || !apiData.data) {
+        throw new Error(apiData.message || '세션 데이터를 가져올 수 없습니다.');
+      }
+
+      setSession(apiData.data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '리서치 세션을 새로고침하는데 실패했습니다';
       setError(errorMessage);

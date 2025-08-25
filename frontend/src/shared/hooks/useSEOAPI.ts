@@ -22,7 +22,7 @@ export interface SEOAPIResponse {
   content: string;
   metadata: {
     type: string;
-    products: any[];
+    products: unknown[];
     generatedAt: string;
     wordCount: number;
     keywords: string[];

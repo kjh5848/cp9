@@ -44,6 +44,7 @@ export function Carousel({
       const timer = setInterval(goToNext, interval)
       return () => clearInterval(timer)
     }
+    return undefined
   }, [autoPlay, interval, isHovered, items.length, goToNext])
 
   if (items.length === 0) return null

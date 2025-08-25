@@ -2,16 +2,17 @@
 
 import { Button, Card } from '@/shared/ui';
 import { ScaleOnHover, FadeInSection } from '@/shared/components/advanced-ui';
-import { Copy, Edit, X } from 'lucide-react';
+import { Copy, Edit, X, Search } from 'lucide-react';
 
 /**
  * 액션 선택 모달 컴포넌트
- * 선택된 상품에 대한 액션(링크 복사, SEO 글 작성)을 선택할 수 있는 모달
+ * 선택된 상품에 대한 액션(링크 복사, SEO 글 작성, 리서치만 하기)을 선택할 수 있는 모달
  * 
  * @param isOpen - 모달 열림 상태
  * @param onClose - 모달 닫기 핸들러
  * @param onCopy - 링크 복사 핸들러
  * @param onSeo - SEO 글 작성 핸들러
+ * @param onResearch - 리서치만 하기 핸들러
  * @param selectedCount - 선택된 상품 개수
  * @returns JSX.Element
  * 
@@ -22,6 +23,7 @@ import { Copy, Edit, X } from 'lucide-react';
  *   onClose={() => setIsModalOpen(false)}
  *   onCopy={handleCopyLinks}
  *   onSeo={handleGenerateSeo}
+ *   onResearch={handleResearch}
  *   selectedCount={selected.length}
  * />
  * ```
@@ -31,6 +33,7 @@ interface ActionModalProps {
   onClose: () => void;
   onCopy: () => void;
   onSeo: () => void;
+  onResearch: () => void;
   selectedCount: number;
 }
 
@@ -39,6 +42,7 @@ export default function ActionModal({
   onClose, 
   onCopy, 
   onSeo, 
+  onResearch,
   selectedCount 
 }: ActionModalProps) {
   if (!isOpen) return null;
@@ -102,6 +106,20 @@ export default function ActionModal({
                 <div className="text-left">
                   <div className="font-medium">SEO 글 작성</div>
                   <div className="text-sm text-gray-400">AI가 상품을 분석하여 SEO 최적화 글을 생성</div>
+                </div>
+              </Button>
+            </ScaleOnHover>
+            
+            <ScaleOnHover scale={1.02}>
+              <Button
+                onClick={onResearch}
+                className="w-full justify-start bg-gray-800 hover:bg-gray-700 border-gray-700 text-white p-4 h-auto"
+                variant="outline"
+              >
+                <Search className="w-5 h-5 mr-3 text-purple-400" />
+                <div className="text-left">
+                  <div className="font-medium">리서치만 하기</div>
+                  <div className="text-sm text-gray-400">상품 정보를 수집하고 분석만 수행 (글 작성 없음)</div>
                 </div>
               </Button>
             </ScaleOnHover>

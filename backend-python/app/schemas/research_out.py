@@ -23,10 +23,7 @@ class ItemOut(BaseModel):
                 "price": 999.99,
                 "category": "Electronics",
                 "hash": "abc123...",
-                "metadata": {
-                    "brand": "Apple",
-                    "color": "Space Black"
-                }
+                "metadata": {"brand": "Apple", "color": "Space Black"},
             }
         }
 
@@ -52,11 +49,11 @@ class ResultOut(BaseModel):
                 "status": "success",
                 "data": {
                     "research_content": "Comprehensive research results...",
-                    "citations": ["source1.com", "source2.com"]
+                    "citations": ["source1.com", "source2.com"],
                 },
                 "error": None,
                 "created_at": "2024-01-01T12:00:00Z",
-                "updated_at": "2024-01-01T12:05:00Z"
+                "updated_at": "2024-01-01T12:05:00Z",
             }
         }
 
@@ -87,10 +84,7 @@ class ResearchJobOut(BaseModel):
                 "processed_items": 2,
                 "failed_items": 0,
                 "success_rate": 1.0,
-                "metadata": {
-                    "priority": "high",
-                    "user_id": "12345"
-                },
+                "metadata": {"priority": "high", "user_id": "12345"},
                 "created_at": "2024-01-01T12:00:00Z",
                 "updated_at": "2024-01-01T12:10:00Z",
                 "started_at": "2024-01-01T12:01:00Z",
@@ -100,7 +94,7 @@ class ResearchJobOut(BaseModel):
                         "name": "iPhone 15 Pro",
                         "price": 999.99,
                         "category": "Electronics",
-                        "hash": "abc123..."
+                        "hash": "abc123...",
                     }
                 ],
                 "results": [
@@ -111,9 +105,9 @@ class ResearchJobOut(BaseModel):
                         "status": "success",
                         "data": {"research_content": "..."},
                         "created_at": "2024-01-01T12:01:00Z",
-                        "updated_at": "2024-01-01T12:05:00Z"
+                        "updated_at": "2024-01-01T12:05:00Z",
                     }
-                ]
+                ],
             }
         }
 
@@ -144,7 +138,7 @@ class ResearchJobSummaryOut(BaseModel):
                 "created_at": "2024-01-01T12:00:00Z",
                 "updated_at": "2024-01-01T12:10:00Z",
                 "started_at": "2024-01-01T12:01:00Z",
-                "completed_at": "2024-01-01T12:10:00Z"
+                "completed_at": "2024-01-01T12:10:00Z",
             }
         }
 
@@ -167,8 +161,8 @@ class TaskStatusOut(BaseModel):
                     "job_id": "550e8400-e29b-41d4-a716-446655440000",
                     "processed": 1,
                     "total": 2,
-                    "current_item": "iPhone 15 Pro"
-                }
+                    "current_item": "iPhone 15 Pro",
+                },
             }
         }
 
@@ -178,13 +172,15 @@ class ErrorOut(BaseModel):
 
     detail: str = Field(..., description="Error message")
     error_code: Optional[str] = Field(None, description="Error code")
-    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Error timestamp")
+    timestamp: datetime = Field(
+        default_factory=datetime.utcnow, description="Error timestamp"
+    )
 
     class Config:
         json_schema_extra = {
             "example": {
                 "detail": "Job not found",
                 "error_code": "JOB_NOT_FOUND",
-                "timestamp": "2024-01-01T12:00:00Z"
+                "timestamp": "2024-01-01T12:00:00Z",
             }
         }

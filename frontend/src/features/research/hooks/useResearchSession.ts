@@ -63,19 +63,33 @@ export function useResearchSession(sessionId: string) {
 
 /**
  * 리서치 세션 데이터를 가져오는 API 함수
- * 현재는 mock 데이터를 사용하지만 실제 API 엔드포인트로 교체 예정
+ * 실제 백엔드 API와 통신하여 세션 데이터를 반환
  */
 async function getResearchSession(id: string): Promise<ResearchSession | null> {
-  // 실제 환경에서는 이런 형태로 API 호출
-  // const response = await fetch(`/api/research/${id}`);
-  // const data = await response.json();
-  // return data;
+  try {
+    const response = await fetch(`/api/research/sessions/${id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
 
-  // 현재는 동적 import로 mock 데이터 사용
-  const { getResearchSessionById } = await import('../data/mockSessions');
-  
-  // API 호출 지연 시뮬레이션
-  await new Promise(resolve => setTimeout(resolve, 300));
-  
-  return getResearchSessionById(id) || null;
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null; // 세션이 존재하지 않음
+      }
+      throw new Error(`API Error: ${response.status} - ${response.statusText}`);
+    }
+
+    const apiData = await response.json();
+    
+    if (!apiData.success || !apiData.data) {
+      throw new Error(apiData.message || '세션 데이터를 가져올 수 없습니다.');
+    }
+
+    return apiData.data;
+  } catch (error) {
+    console.error('Failed to fetch research session:', error);
+    throw error;
+  }
 }

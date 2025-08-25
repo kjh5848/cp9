@@ -9,8 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
 from app.domain.entities import JobStatus
-from app.infra.db.session import get_db
 from app.infra.db.repositories import ResearchJobRepository, ResultRepository
+from app.infra.db.session import get_db
 from app.schemas.research_in import ResearchJobCreateIn, ResearchJobUpdateIn
 from app.schemas.research_out import (
     ErrorOut,
@@ -61,16 +61,16 @@ async def create_research_job(
     try:
         # Convert Pydantic models to dictionaries
         items_data = [item.model_dump() for item in job_data.items]
-        
+
         # Create research job
         job = await service.create_research_job(
             items=items_data,
             metadata=job_data.metadata,
         )
-        
+
         # Convert domain entity to response model
         return ResearchJobOut(**job.to_dict())
-        
+
     except ValueError as e:
         logger.error(f"Failed to create research job: {e}")
         raise HTTPException(
@@ -103,14 +103,14 @@ async def start_research_job(
     """Start processing a research job."""
     try:
         task_id = await service.start_research_job(job_id)
-        
+
         return TaskStatusOut(
             task_id=task_id,
             status="PENDING",
             result=None,
             progress={"job_id": str(job_id), "status": "started"},
         )
-        
+
     except ValueError as e:
         logger.error(f"Failed to start research job {job_id}: {e}")
         raise HTTPException(
@@ -141,13 +141,13 @@ async def get_research_job(
 ) -> ResearchJobOut:
     """Get a research job by ID."""
     job = await service.get_research_job(job_id)
-    
+
     if not job:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Job not found",
         )
-    
+
     return ResearchJobOut(**job.to_dict())
 
 
@@ -166,7 +166,9 @@ async def list_research_jobs(
         description="Filter by job status",
         regex="^(pending|processing|completed|failed|cancelled)$",
     ),
-    limit: int = Query(50, ge=1, le=100, description="Maximum number of jobs to return"),
+    limit: int = Query(
+        50, ge=1, le=100, description="Maximum number of jobs to return"
+    ),
     service: ResearchService = Depends(get_research_service),
 ) -> List[ResearchJobSummaryOut]:
     """List research jobs."""
@@ -175,9 +177,9 @@ async def list_research_jobs(
         status_enum = None
         if status_filter:
             status_enum = JobStatus(status_filter)
-        
+
         jobs = await service.list_research_jobs(status=status_enum, limit=limit)
-        
+
         # Convert to summary format
         return [
             ResearchJobSummaryOut(
@@ -194,7 +196,7 @@ async def list_research_jobs(
             )
             for job in jobs
         ]
-        
+
     except ValueError as e:
         logger.error(f"Failed to list research jobs: {e}")
         raise HTTPException(
@@ -229,7 +231,7 @@ async def update_research_job(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Job not found or cannot be cancelled",
                 )
-        
+
         # Handle metadata update
         if job_update.metadata is not None:
             success = await service.update_job_metadata(job_id, job_update.metadata)
@@ -238,7 +240,7 @@ async def update_research_job(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Job not found",
                 )
-        
+
         # Get updated job
         job = await service.get_research_job(job_id)
         if not job:
@@ -246,9 +248,9 @@ async def update_research_job(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Job not found",
             )
-        
+
         return ResearchJobOut(**job.to_dict())
-        
+
     except ValueError as e:
         logger.error(f"Failed to update research job {job_id}: {e}")
         raise HTTPException(
@@ -272,7 +274,7 @@ async def get_task_status(task_id: str) -> TaskStatusOut:
     try:
         # Get task result from Celery
         task_result = celery_app.AsyncResult(task_id)
-        
+
         # Format response
         response = TaskStatusOut(
             task_id=task_id,
@@ -280,9 +282,9 @@ async def get_task_status(task_id: str) -> TaskStatusOut:
             result=task_result.result if task_result.ready() else None,
             progress=task_result.info if task_result.status == "PROGRESS" else None,
         )
-        
+
         return response
-        
+
     except Exception as e:
         logger.error(f"Failed to get task status for {task_id}: {e}")
         raise HTTPException(
@@ -306,7 +308,7 @@ async def get_research_statistics(
     try:
         stats = await service.get_job_statistics()
         return stats
-        
+
     except Exception as e:
         logger.error(f"Failed to get research statistics: {e}")
         raise HTTPException(

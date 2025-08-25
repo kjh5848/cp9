@@ -1,12 +1,13 @@
-# Research Backend
+# 🚀 제품 리서치 백엔드 API
 
 클린 아키텍처 기반의 Python 리서치 백엔드 시스템. FastAPI, SQLAlchemy, Celery, Perplexity AI를 통합하여 자동화된 리서치 처리를 제공합니다.
 
-## 🏗️ Architecture
+## 🏗️ 시스템 아키텍처
 
 Clean Architecture 원칙에 따른 명확한 관심사 분리:
 
 ```
+backend-python/
 backend-python/
 ├── app/
 │   ├── core/           # 🔧 설정 & 로깅
@@ -39,21 +40,23 @@ backend-python/
 - **API 문서화**: OpenAPI/Swagger 자동 생성 문서
 - **모니터링**: 구조화된 로깅 및 헬스 체크
 
-## 🛠️ Tech Stack
+## 🛠️ 기술 스택
 
-- **Framework**: FastAPI 0.109+
-- **Database**: PostgreSQL 16 with asyncpg
+- **프레임워크**: FastAPI 0.109+
+- **데이터베이스**: PostgreSQL 16 with asyncpg
 - **ORM**: SQLAlchemy 2.0 (async)
-- **Task Queue**: Celery with Redis
-- **AI Integration**: Perplexity AI API
-- **Validation**: Pydantic 2.0
-- **Migrations**: Alembic
-- **Testing**: pytest with async support
-- **Code Quality**: Black, Ruff, MyPy
+- **작업 큐**: Celery with Redis
+- **AI 통합**: Perplexity AI API
+- **검증**: Pydantic 2.0
+- **마이그레이션**: Alembic
+- **테스팅**: pytest with async support
+- **코드 품질**: Black, Ruff, MyPy
 
 ## 📋 필수 요구사항
 
 - Python 3.11+
+- Poetry (의존성 관리)
+- Docker & Docker Compose (로컬 서비스)
 - Poetry (의존성 관리)
 - Docker & Docker Compose (로컬 서비스)
 - PostgreSQL 16
@@ -124,14 +127,19 @@ celery -A app.infra.tasks.celery_app worker --loglevel=info
 ### 리서치 작업 생성
 
 ```bash
-curl -X POST "http://localhost:8000/api/v1/research/jobs" \
+curl -X POST "http://localhost:8000/api/v1/research/products" \
      -H "Content-Type: application/json" \
      -d '{
        "items": [
          {
-           "name": "iPhone 15 Pro",
-           "price": 999.99,
-           "category": "Electronics"
+           "product_name": "베이직스 2024 베이직북 14 N-시리즈",
+           "category": "가전디지털",
+           "price_exact": 388000,
+           "currency": "KRW",
+           "seller_or_store": "베이직스",
+           "metadata": {
+             "source": "official_store"
+           }
          },
          {
            "name": "Samsung Galaxy S24",
@@ -151,6 +159,7 @@ curl -X POST "http://localhost:8000/api/v1/research/jobs" \
 curl -X POST "http://localhost:8000/api/v1/research/jobs/{job_id}/start"
 ```
 
+### 작업 상태 확인
 ### 작업 상태 확인
 
 ```bash
@@ -185,9 +194,12 @@ pytest -v
 
 ```bash
 # 애플리케이션
+# 애플리케이션
 APP_ENV=development
 DEBUG=true
+API_V1_PREFIX=/api/v1
 
+# 데이터베이스
 # 데이터베이스
 DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/research_db
 

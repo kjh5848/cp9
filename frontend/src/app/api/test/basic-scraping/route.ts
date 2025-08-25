@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     console.log('기본 크롤링 테스트 시작:', url);
 
     // 동적으로 기존 크롤러 import
-    let coupangScraper: any;
+    let coupangScraper: unknown;
     try {
       const scraperModule = await import('@/infrastructure/scraping/coupang-scraper');
       coupangScraper = scraperModule.coupangScraper;
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 기존 크롤러로 크롤링 실행
-    const result = await coupangScraper.scrapeProduct(url);
+    const result = await (coupangScraper as any).scrapeProduct(url);
     
     const totalDuration = Date.now() - startTime;
 
