@@ -28,7 +28,7 @@ export async function GET(
     console.log('[research/sessions] 세션 데이터 요청:', { sessionId });
 
     // 백엔드 Python API 호출
-    const backendUrl = process.env.BACKEND_API_URL || 'http://localhost:8000';
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:8000';
     const response = await fetch(`${backendUrl}/api/v1/research/sessions/${sessionId}`, {
       method: 'GET',
       headers: {

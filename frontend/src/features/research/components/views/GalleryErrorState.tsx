@@ -20,7 +20,7 @@ export function GalleryErrorState({
   error, 
   errorCode,
   onRetry = () => window.location.reload(),
-  onStartNew = () => window.location.href = '/products',
+  onStartNew = () => window.location.href = '/product',
   onRefreshList = () => window.location.reload()
 }: GalleryErrorStateProps) {
   // 백엔드 표준 에러 코드 기반 메시지 및 UI 설정

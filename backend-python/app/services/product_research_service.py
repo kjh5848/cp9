@@ -14,6 +14,9 @@ from app.domain.product_entities import (
 )
 from app.infra.db.repositories import ResearchJobRepository
 from app.services.product_research_orchestrator import get_product_research_orchestrator
+from app.domain.entities import Result, ResultStatus
+from app.infra.db.repositories import ResultRepository
+from app.infra.db.session import get_db_context
 
 logger = get_logger(__name__)
 
@@ -97,11 +100,53 @@ class ProductResearchService:
         Returns:
             Research job with immediate Coupang info in results
         """
-        return await self.orchestrator.create_research_job_with_coupang_preview(
+        # Create job with Coupang preview through orchestrator
+        job = await self.orchestrator.create_research_job_with_coupang_preview(
             items=items,
             priority=priority,
             callback_url=callback_url,
         )
+        
+        # Persist Coupang preview results to database
+        if job.results:
+            try:
+                async with get_db_context() as session:
+                    result_repo = ResultRepository(session)
+                    
+                    # Create item hash mapping for results
+                    item_hash_map = {}
+                    for item in items:
+                        item_hash = item.metadata.get('hash', '')
+                        if not item_hash:
+                            # Generate hash if not available
+                            import hashlib
+                            item_data = f"{item.product_name}:{item.category}:{item.price_exact}"
+                            item_hash = hashlib.sha256(item_data.encode()).hexdigest()
+                        item_hash_map[item.product_name] = item_hash
+                    
+                    # Store each result
+                    for product_result in job.results:
+                        item_hash = item_hash_map.get(product_result.product_name, '')
+                        
+                        # Convert to database result entity
+                        db_result = Result(
+                            item_hash=item_hash,
+                            item_name=product_result.product_name,
+                            status=ResultStatus.COUPANG_PREVIEW,
+                            data=product_result.to_dict(),
+                            error=product_result.error_message,
+                        )
+                        
+                        await result_repo.create(job.id, db_result)
+                        logger.info(f"Stored Coupang preview result for {product_result.product_name} to database")
+                    
+                    logger.info(f"Successfully stored {len(job.results)} Coupang preview results to database")
+                    
+            except Exception as e:
+                logger.error(f"Failed to store Coupang preview results to database: {e}")
+                # Continue execution even if database storage fails
+        
+        return job
 
     async def cancel_job(self, job_id: UUID) -> bool:
         """Cancel a research job.

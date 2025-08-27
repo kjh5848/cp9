@@ -50,6 +50,18 @@ class DomainException(Exception):
         self.metadata[key] = value
         return self
 
+    def to_standard_error(self):
+        """Convert to standardized error response."""
+        from app.core.exceptions.http_exception_mapper import get_http_exception_mapper
+        mapper = get_http_exception_mapper()
+        return mapper._create_standard_error(self)
+
+    def to_http_exception(self):
+        """Convert to FastAPI HTTPException."""
+        from app.core.exceptions.http_exception_mapper import get_http_exception_mapper
+        mapper = get_http_exception_mapper()
+        return mapper.to_http_exception(self)
+
 
 class ValidationDomainException(DomainException):
     """Exception for domain validation errors.

@@ -36,7 +36,6 @@ router = APIRouter(
 
 @router.post(
     "",
-    response_model=ProductResearchResponse,
     status_code=status.HTTP_201_CREATED,
     summary="제품 리서치 요청",
     description="최대 10개의 제품을 동시에 리서치합니다. Perplexity AI를 활용하여 제품 정보, 리뷰, 가격 비교 등을 수집합니다.",
@@ -54,7 +53,7 @@ async def create_product_research(
     background_tasks: BackgroundTasks,
     use_celery: bool = Query(False, description="Celery 백그라운드 작업 사용 여부"),
     return_coupang_preview: bool = Query(False, description="쿠팡 정보 즉시 리턴 여부"),
-) -> ProductResearchResponse:
+) -> dict:
     """제품 리서치 작업을 생성합니다.
 
     Args:
@@ -69,6 +68,25 @@ async def create_product_research(
     Raises:
         BaseAPIException: 구조화된 API 에러
     """
+    logger.info(
+        f"📥 제품 리서치 요청 수신 - 제품 수: {len(request.items)}, "
+        f"Celery 사용: {use_celery}, 쿠팡 미리보기: {return_coupang_preview}",
+        extra={
+            "request_id": id(request),
+            "items_count": len(request.items),
+            "use_celery": use_celery,
+            "return_coupang_preview": return_coupang_preview,
+            "priority": request.priority
+        }
+    )
+    
+    # 요청된 제품 리스트 로깅
+    for i, item in enumerate(request.items):
+        logger.debug(
+            f"제품 {i+1}: {item.product_name} (카테고리: {item.category})",
+            extra={"item_index": i, "product_name": item.product_name, "category": item.category}
+        )
+    
     try:
         # Validate batch size
         if len(request.items) == 0:
@@ -94,6 +112,15 @@ async def create_product_research(
                 price_exact=item.price_exact,
                 currency=item.currency,
                 seller_or_store=item.seller_or_store,
+                # 쿠팡 API 필드들 추가
+                product_id=getattr(item, 'product_id', None),
+                product_image=getattr(item, 'product_image', None),
+                product_url=getattr(item, 'product_url', None),
+                is_rocket=getattr(item, 'is_rocket', None),
+                is_free_shipping=getattr(item, 'is_free_shipping', None),
+                category_name=getattr(item, 'category_name', None),
+                keyword=getattr(item, 'keyword', None),
+                rank=getattr(item, 'rank', None),
                 metadata=item.metadata or {},
             )
             for item in request.items
@@ -105,8 +132,8 @@ async def create_product_research(
                 items=[item.to_dict() for item in items], priority=request.priority
             )
 
-            # Return task ID as job_id
-            return ProductResearchResponse(
+            # Return task ID as job_id in API guide format
+            response_data = ProductResearchResponse(
                 job_id=task_id,
                 status="pending",
                 results=[],
@@ -119,6 +146,13 @@ async def create_product_research(
                     updated_at=datetime.utcnow(),
                 ),
             )
+
+            # API guide format으로 반환 (FastAPI 기본 JSON 직렬화 사용)
+            return {
+                "success": True,
+                "data": response_data,
+                "message": "백그라운드 리서치 작업이 시작되었습니다."
+            }
         else:
             # Check if Coupang preview is requested
             if return_coupang_preview:
@@ -191,8 +225,8 @@ async def create_product_research(
                             deeplink_or_product_url=result.deeplink_or_product_url,
                             coupang_price=result.coupang_price,
                             coupang_info=coupang_info,
-                            specs=result.specs,
-                            reviews=result.reviews,
+                            specs=result.specs.to_dict(),
+                            reviews=result.reviews.to_dict(),
                             sources=result.sources,
                             captured_at=result.captured_at,
                             status=result.status.value,
@@ -208,8 +242,8 @@ async def create_product_research(
                     f"Coupang data extraction failed for products: {coupang_errors}"
                 )
 
-            # Convert to response
-            return ProductResearchResponse(
+            # Convert to API guide format (success/data/message structure)
+            response_data = ProductResearchResponse(
                 job_id=job.id,
                 status=job.status.value,
                 results=results,
@@ -225,6 +259,13 @@ async def create_product_research(
                     completed_at=job.completed_at,
                 ),
             )
+
+            # API guide format으로 반환 (FastAPI 기본 JSON 직렬화 사용)
+            return {
+                "success": True,
+                "data": response_data,
+                "message": f"제품 리서치 작업이 성공적으로 {'완료' if job.status.value == 'completed' else '생성'}되었습니다."
+            }
 
     except BaseAPIException:
         # Re-raise our custom exceptions
@@ -256,7 +297,6 @@ async def create_product_research(
 
 @router.get(
     "/{job_id}",
-    response_model=ProductResearchResponse,
     summary="리서치 결과 조회",
     description="완료된 리서치 작업의 결과를 조회합니다.",
     responses={
@@ -268,7 +308,7 @@ async def create_product_research(
 )
 async def get_research_results(
     job_id: UUID, include_failed: bool = Query(True, description="실패한 아이템 포함 여부")
-) -> ProductResearchResponse:
+) -> dict:
     """리서치 작업 결과를 조회합니다.
 
     Args:
@@ -316,7 +356,8 @@ async def get_research_results(
             for result in job.results
         ]
 
-        return ProductResearchResponse(
+        # Convert to API guide format
+        response_data = ProductResearchResponse(
             job_id=job.id,
             status=job.status.value,
             results=results,
@@ -333,6 +374,13 @@ async def get_research_results(
             ),
         )
 
+        # API guide format으로 반환 (FastAPI 기본 JSON 직렬화 사용)
+        return {
+            "success": True,
+            "data": response_data,
+            "message": "리서치 결과를 성공적으로 조회했습니다."
+        }
+
     except BaseAPIException:
         # Re-raise our custom exceptions
         raise
@@ -346,7 +394,6 @@ async def get_research_results(
 
 @router.get(
     "/{job_id}/status",
-    response_model=JobStatusResponse,
     summary="작업 상태 조회",
     description="리서치 작업의 현재 상태를 조회합니다.",
     responses={
@@ -358,7 +405,7 @@ async def get_research_results(
 )
 async def get_job_status(
     job_id: str, is_celery: bool = Query(False, description="Celery 작업 여부")
-) -> JobStatusResponse:
+) -> dict:
     """리서치 작업 상태를 조회합니다.
 
     Args:
@@ -379,13 +426,19 @@ async def get_job_status(
             try:
                 status_dict = service.get_celery_task_status(job_id)
 
-                return JobStatusResponse(
-                    job_id=job_id,
-                    status=status_dict["status"],
-                    progress=status_dict["progress"],
-                    message=status_dict.get("message"),
-                    metadata=status_dict.get("result"),
-                )
+                status_response = {
+                    "job_id": job_id,
+                    "status": status_dict["status"],
+                    "progress": status_dict["progress"],
+                    "message": status_dict.get("message"),
+                    "metadata": status_dict.get("result"),
+                }
+                
+                return {
+                    "success": True,
+                    "data": status_response,
+                    "message": "Celery 작업 상태를 성공적으로 조회했습니다."
+                }
             except Exception as e:
                 raise BaseAPIException(
                     error_code=ErrorCode.TASK_NOT_FOUND,
@@ -416,17 +469,23 @@ async def get_job_status(
             if job.total_items > 0:
                 progress = (job.successful_items + job.failed_items) / job.total_items
 
-            return JobStatusResponse(
-                job_id=job_uuid,
-                status=job.status.value,
-                progress=progress,
-                message=f"{job.total_items}개 중 {job.successful_items + job.failed_items}개 처리 완료",
-                metadata={
+            status_response = {
+                "job_id": str(job_uuid),
+                "status": job.status.value,
+                "progress": progress,
+                "message": f"{job.total_items}개 중 {job.successful_items + job.failed_items}개 처리 완료",
+                "metadata": {
                     "total": job.total_items,
                     "successful": job.successful_items,
                     "failed": job.failed_items,
                 },
-            )
+            }
+            
+            return {
+                "success": True,
+                "data": status_response,
+                "message": "작업 상태를 성공적으로 조회했습니다."
+            }
 
     except BaseAPIException:
         # Re-raise our custom exceptions

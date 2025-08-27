@@ -18,8 +18,8 @@ export function useResearchSessions() {
         setLoading(true);
         setError(null);
 
-        // 실제 API 호출
-        const response = await fetch('/api/research/sessions', {
+        // jobs API로 변경
+        const response = await fetch('/api/research/jobs', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -54,7 +54,7 @@ export function useResearchSessions() {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('/api/research/sessions', {
+      const response = await fetch('/api/research/jobs', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

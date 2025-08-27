@@ -25,9 +25,9 @@ export async function GET(request: NextRequest) {
     const sort = searchParams.get('sort') || 'created_at';
     const order = searchParams.get('order') || 'desc';
 
-    // 백엔드 Python API 호출
-    const backendUrl = process.env.BACKEND_API_URL || 'http://localhost:8000';
-    const response = await fetch(`${backendUrl}/api/v1/research/sessions?page=${page}&limit=${limit}&sort=${sort}&order=${order}`, {
+    // 백엔드 Python API 호출 - jobs API로 변경
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:8000';
+    const response = await fetch(`${backendUrl}/api/v1/research/jobs?page=${page}&limit=${limit}&sort=${sort}&order=${order}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -58,12 +58,12 @@ export async function GET(request: NextRequest) {
       total: backendData.data?.total || 0
     });
 
-    // 프론트엔드 형식으로 응답 반환
+    // 프론트엔드 형식으로 응답 반환 - jobs 데이터로 변경
     return NextResponse.json({
       success: true,
-      data: backendData.data?.sessions || [],
-      total: backendData.data?.total || 0,
-      message: '세션 목록을 성공적으로 가져왔습니다.'
+      data: backendData.data || [],  // 백엔드에서 jobs 데이터 반환
+      total: backendData.data?.length || 0,
+      message: '작업 목록을 성공적으로 가져왔습니다.'
     });
 
   } catch (error) {
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       { 
         success: false,
-        error: '세션 목록을 가져오는데 실패했습니다.',
+        error: '작업 목록을 가져오는데 실패했습니다.',
         details: error instanceof Error ? error.message : '알 수 없는 오류'
       },
       { status: 500 }
@@ -89,9 +89,9 @@ export async function POST(request: NextRequest) {
     
     console.log('[research/sessions] 새 세션 생성 요청:', body);
 
-    // 백엔드 Python API 호출
-    const backendUrl = process.env.BACKEND_API_URL || 'http://localhost:8000';
-    const response = await fetch(`${backendUrl}/api/v1/research/sessions`, {
+    // 백엔드 Python API 호출 - jobs API로 변경
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:8000';
+    const response = await fetch(`${backendUrl}/api/v1/research/jobs`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: backendData.data,
-      message: '새 세션이 성공적으로 생성되었습니다.'
+      message: '새 작업이 성공적으로 생성되었습니다.'
     });
 
   } catch (error) {
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { 
         success: false,
-        error: '세션 생성에 실패했습니다.',
+        error: '작업 생성에 실패했습니다.',
         details: error instanceof Error ? error.message : '알 수 없는 오류'
       },
       { status: 500 }

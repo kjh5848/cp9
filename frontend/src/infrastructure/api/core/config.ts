@@ -20,7 +20,7 @@ export class ApiConfig {
       
       case 'backend':
         // 백엔드 Python API URL
-        return process.env.BACKEND_API_URL || 'http://localhost:8000';
+        return process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:8000';
       
       case 'supabase':
         // Supabase Edge Functions URL
@@ -169,12 +169,6 @@ export class ApiConfig {
       CREATE: '/api/v1/research/products', // 실제 백엔드 API 사용
     },
     
-    LANGGRAPH: {
-      SEO_GENERATION: '/api/langgraph/seo-generation',
-      WORKFLOW: '/api/workflow',
-      WORKFLOW_STREAM: '/api/workflow/stream',
-    },
-    
     // Backend Python API Endpoints
     BACKEND: {
       RESEARCH_PRODUCTS: '/api/v1/research/products',
@@ -218,12 +212,13 @@ export class ApiConfig {
   }
 
   /**
-   * Perplexity API 설정
+   * Perplexity API 설정 (프론트엔드에서 관리)
    */
   static getPerplexityConfig() {
     return {
-      apiKey: process.env.PERPLEXITY_API_KEY,
-      baseUrl: 'https://api.perplexity.ai',
+      apiKey: process.env.NEXT_PUBLIC_PERPLEXITY_API_KEY,
+      model: process.env.NEXT_PUBLIC_PERPLEXITY_MODEL || 'sonar-pro',
+      baseUrl: process.env.NEXT_PUBLIC_PERPLEXITY_API_URL || 'https://api.perplexity.ai',
       timeout: 60000,
     };
   }

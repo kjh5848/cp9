@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
       });
 
       // API 가이드에 따른 백엔드 호출
-      const backendUrl = process.env.BACKEND_API_URL || 'http://localhost:8000';
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:8000';
       const apiUrl = return_coupang_preview 
         ? `${backendUrl}/api/v1/research/products?return_coupang_preview=true`
         : `${backendUrl}/api/v1/research/products`;
@@ -89,6 +89,7 @@ export async function POST(request: NextRequest) {
         body: JSON.stringify({
           items,
           priority: priority || 5
+
         }),
       });
 
@@ -151,7 +152,7 @@ export async function POST(request: NextRequest) {
     });
 
     // 백엔드 Python API 호출 (기존 방식)
-    const backendUrl = process.env.BACKEND_API_URL || 'http://localhost:8000';
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:8000';
     const response = await fetch(`${backendUrl}/api/v1/research/create`, {
       method: 'POST',
       headers: {

@@ -82,108 +82,14 @@ export function useProductActions(
     setIsActionModalOpen(false);
   };
 
-  // SEO 글 작성 (LangGraph 연동)
+  // SEO 글 작성 (임시 비활성화 - LangGraph 도입 예정)
   const handleGenerateSeo = async () => {
-    setIsSeoLoading(true);
-    try {
-      const selectedItems = filteredResults.filter((_, index) => {
-        const itemId = isProductItem(filteredResults[index]) 
-          ? filteredResults[index].productId.toString()
-          : isDeepLinkResponse(filteredResults[index])
-          ? filteredResults[index].originalUrl || index.toString()
-          : index.toString();
-        return selected.includes(itemId);
-      });
-
-      // 선택된 상품 정보 수집
-      const productsData = selectedItems.map(item => {
-        if (isProductItem(item)) {
-          return {
-            name: item.productName,
-            price: item.productPrice,
-            category: item.categoryName,
-            url: item.productUrl,
-            image: item.productImage
-          };
-        }
-        return null;
-      }).filter((item): item is NonNullable<typeof item> => item !== null);
-
-      // 새로운 LangGraph API 클라이언트 사용
-      console.log('SEO 생성 요청 시작:', {
-        productsCount: productsData.length,
-        products: productsData.map(p => ({ name: p.name, price: p.price }))
-      });
-
-      const result = await apiClients.langgraph.generateSEO({
-        products: productsData,
-        type: 'product_review'
-      });
-      
-      // 결과를 새 탭에서 열기
-      const newWindow = window.open('', '_blank');
-      if (newWindow) {
-        newWindow.document.write(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>SEO 글 생성 결과</title>
-            <meta charset="utf-8">
-            <style>
-              body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
-              .header { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
-              .content { max-width: 800px; margin: 0 auto; }
-              .product-info { background: #e9ecef; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
-              .seo-content { background: white; padding: 20px; border: 1px solid #dee2e6; border-radius: 5px; }
-            </style>
-          </head>
-          <body>
-            <div class="content">
-              <div class="header">
-                <h1>🎯 AI SEO 글 생성 결과</h1>
-                <p>선택된 ${productsData.length}개 상품을 기반으로 생성된 SEO 최적화 글입니다.</p>
-              </div>
-              
-              <div class="product-info">
-                <h3>📦 분석된 상품 정보</h3>
-                ${productsData.map(product => `
-                  <div style="margin-bottom: 10px;">
-                    <strong>${product.name}</strong> - ${product.price.toLocaleString()}원
-                    <br><small>카테고리: ${product.category}</small>
-                  </div>
-                `).join('')}
-              </div>
-              
-              <div class="seo-content">
-                <h3>📝 SEO 최적화 글</h3>
-                <div style="white-space: pre-wrap;">${result.data?.content || 'SEO 글을 생성하는 중입니다...'}</div>
-              </div>
-            </div>
-          </body>
-          </html>
-        `);
-        newWindow.document.close();
-      }
-
-      toast.success('SEO 글이 새 탭에서 열렸습니다');
-      setIsActionModalOpen(false);
-    } catch (error: unknown) {
-      console.error('SEO 글 생성 오류:', error);
-      
-      if (isApiError(error)) {
-        toast.error(`SEO 글 생성에 실패했습니다: ${error.getUserMessage()}`);
-      } else if (error instanceof Error) {
-        console.error('에러 메시지:', error.message);
-        console.error('에러 스택:', error.stack);
-        toast.error(`SEO 글 생성에 실패했습니다: ${error.message}`);
-      } else {
-        console.error('알 수 없는 에러 타입:', typeof error);
-        console.error('에러 내용:', JSON.stringify(error, null, 2));
-        toast.error('SEO 글 생성에 실패했습니다 (알 수 없는 오류)');
-      }
-    } finally {
-      setIsSeoLoading(false);
-    }
+    // LangGraph 도입 전까지 임시 비활성화
+    toast('SEO 글 작성 기능은 현재 준비 중입니다. 곧 업데이트될 예정입니다!', { 
+      icon: 'ℹ️',
+      duration: 3000 
+    });
+    setIsActionModalOpen(false);
   };
 
   // 리서치만 하기 (쿠팡 즉시 리턴 워크플로우)

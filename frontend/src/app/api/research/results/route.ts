@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     console.log('[research/results] API 호출:', { sessionId, ids });
 
     // 백엔드 Python API 호출
-    const backendUrl = process.env.BACKEND_API_URL || 'http://localhost:8000';
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:8000';
     const response = await fetch(`${backendUrl}/api/v1/research/products`, {
       method: 'POST',
       headers: {

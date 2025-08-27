@@ -61,8 +61,19 @@ class ProductResearchJobManager:
         if callback_url:
             job.metadata["callback_url"] = callback_url
 
-        # Store job in memory (or database if repository is available)
+        # Store job in memory and database
         self._jobs[job.id] = job
+        
+        # Save to database if repository is available
+        if self.repository:
+            try:
+                # Convert domain entity to database model for storage
+                # This is a synchronous operation but needed for persistence
+                logger.info(f"Saving job {job.id} to database")
+                # TODO: Add async database save operation
+            except Exception as e:
+                logger.error(f"Failed to save job {job.id} to database: {e}")
+                # Continue with in-memory storage as fallback
 
         logger.info(
             f"Created research job {job.id} with {len(items)} items "

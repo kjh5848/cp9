@@ -10,7 +10,7 @@ from app.core.logging import get_logger
 from app.domain.entities import Item, JobStatus, Result, ResultStatus
 from app.infra.db.repositories import ResearchJobRepository, ResultRepository
 from app.infra.db.session import get_db_context
-from app.infra.llm.perplexity import PerplexityAPIError, get_perplexity_client
+# Perplexity API removed - will be handled by frontend
 from app.infra.tasks.celery_app import celery_app
 from app.utils.hashing import calculate_item_hash
 
@@ -80,8 +80,8 @@ async def _run_research_async(job_id: UUID) -> Dict[str, Any]:
 
         logger.info(f"Processing {len(job.items)} items for job {job_id}")
 
-        # Get Perplexity client
-        client = get_perplexity_client()
+        # Perplexity API removed - research data should come from frontend
+        logger.warning("Perplexity API calls removed from backend - frontend should provide research data")
 
         # Process items
         total_items = len(job.items)
@@ -125,28 +125,14 @@ async def _run_research_async(job_id: UUID) -> Dict[str, Any]:
                 )
                 await result_repo.create(job_id, result)
 
-                # Research the item
-                try:
-                    research_data = await client.research_item(
-                        item_name=item.product_name,
-                        item_price=item.price_exact,
-                        category=item.category,
-                    )
-
-                    # Update result with success
-                    await result_repo.update(
-                        result.id, ResultStatus.SUCCESS, data=research_data
-                    )
-                    processed_count += 1
-                    logger.info(f"Successfully researched: {item.product_name}")
-
-                except PerplexityAPIError as e:
-                    # Update result with error
-                    await result_repo.update(
-                        result.id, ResultStatus.ERROR, error=str(e)
-                    )
-                    failed_count += 1
-                    logger.error(f"Failed to research {item.product_name}: {e}")
+                # Research data should come from frontend - skip API call
+                logger.warning(f"Skipping research for {item.product_name} - backend no longer calls external APIs")
+                
+                # Mark as pending - frontend should provide research data
+                await result_repo.update(
+                    result.id, ResultStatus.PENDING, data={"message": "Research data should come from frontend"}
+                )
+                processed_count += 1
 
             except Exception as e:
                 failed_count += 1
@@ -233,34 +219,29 @@ async def _process_single_item_async(job_id: UUID, item: Item) -> Dict[str, Any]
         await result_repo.create(job_id, result)
 
         try:
-            # Research the item
-            client = get_perplexity_client()
-            research_data = await client.research_item(
-                item_name=item.product_name,
-                item_price=item.price_exact,
-                category=item.category,
-            )
-
-            # Update result with success
+            # Research data should come from frontend - skip API call
+            logger.warning(f"Skipping research for {item.product_name} - backend no longer calls external APIs")
+            
+            # Mark as pending - frontend should provide research data
             await result_repo.update(
-                result.id, ResultStatus.SUCCESS, data=research_data
+                result.id, ResultStatus.PENDING, data={"message": "Research data should come from frontend"}
             )
 
             return {
-                "item_name": item.name,
-                "status": "success",
+                "item_name": item.product_name,
+                "status": "pending",
+                "message": "Research data should come from frontend",
                 "result_id": str(result.id),
             }
 
-        except PerplexityAPIError as e:
-            # Update result with error
-            await result_repo.update(result.id, ResultStatus.ERROR, error=str(e))
-
+        except Exception as e:
+            # Handle any errors during result creation
+            logger.error(f"Error processing item {item.product_name}: {e}")
             return {
-                "item_name": item.name,
+                "item_name": item.product_name,
                 "status": "error",
                 "error": str(e),
-                "result_id": str(result.id),
+                "result_id": None,
             }
 
 

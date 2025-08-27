@@ -11,17 +11,14 @@ export * from './core/ApiError';
 // Types
 export type * from './types/product';
 export type * from './types/research';
-export type * from './types/langgraph';
 
 // Clients
 export { ProductApiClient } from './clients/ProductApiClient';
 export { ResearchApiClient } from './clients/ResearchApiClient';
-export { LangGraphApiClient } from './clients/LangGraphApiClient';
 
 // Import for use in class
 import { ProductApiClient } from './clients/ProductApiClient';
 import { ResearchApiClient } from './clients/ResearchApiClient';
-import { LangGraphApiClient } from './clients/LangGraphApiClient';
 
 /**
  * 통합 API 클라이언트 인스턴스
@@ -32,7 +29,6 @@ class ApiClients {
   
   private _product: ProductApiClient | null = null;
   private _research: ResearchApiClient | null = null;
-  private _langgraph: LangGraphApiClient | null = null;
 
   private constructor() {}
 
@@ -57,20 +53,12 @@ class ApiClients {
     return this._research;
   }
 
-  get langgraph(): LangGraphApiClient {
-    if (!this._langgraph) {
-      this._langgraph = new LangGraphApiClient();
-    }
-    return this._langgraph;
-  }
-
   /**
    * 모든 클라이언트 인스턴스 재설정
    */
   reset() {
     this._product = null;
     this._research = null;
-    this._langgraph = null;
   }
 }
 
@@ -87,4 +75,3 @@ export const apiClients = ApiClients.getInstance();
  */
 export const productApi = apiClients.product;
 export const researchApi = apiClients.research;
-export const langgraphApi = apiClients.langgraph;

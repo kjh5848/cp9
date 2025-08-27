@@ -16,6 +16,7 @@ class ResearchStatus(str, Enum):
     ERROR = "error"
     INSUFFICIENT_SOURCES = "insufficient_sources"
     TOO_MANY_ITEMS = "too_many_items"
+    COUPANG_PREVIEW = "coupang_preview"
 
 
 @dataclass

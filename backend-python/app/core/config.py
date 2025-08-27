@@ -43,11 +43,7 @@ class Settings(BaseSettings):
     celery_broker_url: RedisDsn = Field(default="redis://localhost:6379/2")
     celery_result_backend: RedisDsn = Field(default="redis://localhost:6379/3")
 
-    # Perplexity API
-    perplexity_api_key: str = Field(default="")
-    perplexity_api_url: str = Field(default="https://api.perplexity.ai")
-    perplexity_timeout: int = Field(default=30)
-    perplexity_model: str = Field(default="sonar-pro")
+    # Perplexity API 설정 제거 - 프론트엔드에서 관리
 
     # Research Configuration
     max_batch_size: int = Field(default=10)

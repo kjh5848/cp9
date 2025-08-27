@@ -69,6 +69,13 @@ export default function Navbar() {
                   </Button>
                 </ScaleOnHover>
               </Link>
+              <Link href="/seo-blog" onClick={() => setIsMobileMenuOpen(false)}>
+                <ScaleOnHover scale={1.02}>
+                  <Button variant="ghost" className="w-full justify-start text-gray-100 hover:text-white hover:bg-white/15">
+                    SEO 글 생성
+                  </Button>
+                </ScaleOnHover>
+              </Link>
               <Link href="/components">
                 <ScaleOnHover scale={1.05}>
                   <Button variant="ghost" size="sm" className="text-gray-100 hover:text-white hover:bg-white/15">
@@ -76,6 +83,8 @@ export default function Navbar() {
                   </Button>
                 </ScaleOnHover>
               </Link>
+
+              
             </nav>
 
             {/* User Menu & Mobile Toggle */}
@@ -151,6 +160,14 @@ export default function Navbar() {
                   </Button>
                 </ScaleOnHover>
               </Link>
+              <Link href="/seo-blog" onClick={() => setIsMobileMenuOpen(false)}>
+                <ScaleOnHover scale={1.02}>
+                  <Button variant="ghost" className="w-full justify-start text-gray-100 hover:text-white hover:bg-white/15">
+                    
+                    SEO 글 생성
+                  </Button>
+                </ScaleOnHover>
+              </Link>
               <Link href="/components" onClick={() => setIsMobileMenuOpen(false)}>
                 <ScaleOnHover scale={1.02}>
                   <Button variant="ghost" className="w-full justify-start text-gray-100 hover:text-white hover:bg-white/15">
@@ -159,6 +176,8 @@ export default function Navbar() {
                 </ScaleOnHover>
               </Link>
               
+              
+          
               <div className="border-t border-white/20 pt-2 mt-2">
                 {user ? (
                   <>

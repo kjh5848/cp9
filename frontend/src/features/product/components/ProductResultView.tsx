@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useEffect } from 'react';
 import { Button, Card } from '@/shared/ui';
-import { ScaleOnHover, FadeInSection, StaggeredList } from '@/shared/components/advanced-ui';
+import { ScaleOnHover, StaggeredList } from '@/shared/components/advanced-ui';
 import { useSearchStore } from '../store';
 import { ProductItem, DeepLinkResponse, ViewType, GroupedProductItem } from '../types';
 import { useProductActions } from '../hooks/useProductActions';
@@ -12,7 +12,7 @@ import ActionModal from './ActionModal';
 import SeoLoadingOverlay from './SeoLoadingOverlay';
 import FloatingActionButton from './FloatingActionButton';
 import GroupedProductCard from './GroupedProductCard';
-import { Grid, List, Copy, ExternalLink, Package, Zap, Loader2, Check, Circle } from 'lucide-react';
+import { Grid, List, Copy,  Package, Zap, Loader2, Check, Circle } from 'lucide-react';
 
 interface ProductResultViewProps {
   loading: boolean;

@@ -5,7 +5,7 @@ import { POST, GET } from '../create/route';
 // 환경변수 모킹
 vi.mock('process', () => ({
   env: {
-    BACKEND_API_URL: 'http://localhost:8000',
+    NEXT_PUBLIC_BACKEND_API_URL: 'http://localhost:8000',
   },
 }));
 
@@ -436,7 +436,7 @@ describe('/api/research/create', () => {
   describe('환경변수 처리', () => {
     it('환경변수가 없을 때 기본 URL을 사용해야 한다', async () => {
       // 환경변수 임시 제거
-      vi.stubEnv('BACKEND_API_URL', undefined);
+      vi.stubEnv('NEXT_PUBLIC_BACKEND_API_URL', undefined);
 
       const mockBackendResponse = {
         success: true,
@@ -474,7 +474,7 @@ describe('/api/research/create', () => {
       );
 
       // 환경변수 복원
-      vi.stubEnv('BACKEND_API_URL', 'http://localhost:8000');
+      vi.stubEnv('NEXT_PUBLIC_BACKEND_API_URL', 'http://localhost:8000');
     });
   });
 });

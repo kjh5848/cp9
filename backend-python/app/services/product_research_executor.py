@@ -9,7 +9,7 @@ from app.domain.product_entities import (
     ProductResearchJob,
     ResearchStatus,
 )
-from app.infra.llm.perplexity_research import get_research_client
+# Perplexity research client removed - frontend handles research
 
 logger = get_logger(__name__)
 
@@ -26,7 +26,8 @@ class ProductResearchExecutor:
 
     def __init__(self):
         """Initialize research executor."""
-        self.research_client = get_research_client()
+        # Research client removed - frontend provides research data
+        logger.warning("Research client removed - frontend should provide research data")
 
     async def execute_research_job(self, job: ProductResearchJob) -> None:
         """Execute research for a complete job.
@@ -42,10 +43,9 @@ class ProductResearchExecutor:
             # Convert job items to research format
             research_items = self._convert_job_items_to_research_items(job)
 
-            # Execute research
-            results = await self.research_client.research_products(
-                items=research_items, max_concurrent=5
-            )
+            # Research execution removed - frontend should provide research data
+            logger.warning("Research execution skipped - frontend should provide research data")
+            results = []
 
             # Add results to job
             for result in results:
@@ -69,27 +69,18 @@ class ProductResearchExecutor:
         self, items: List[ProductResearchItem], max_concurrent: int = 5
     ) -> List:
         """Execute research for a list of items.
+        
+        Note: Research execution removed - frontend should provide research data.
 
         Args:
             items: List of items to research
-            max_concurrent: Maximum concurrent requests
+            max_concurrent: Maximum concurrent requests (ignored)
 
         Returns:
-            List of research results
+            Empty list (research data should come from frontend)
         """
-        try:
-            logger.info(f"Executing research for {len(items)} items")
-
-            results = await self.research_client.research_products(
-                items=items, max_concurrent=max_concurrent
-            )
-
-            logger.info(f"Completed research for {len(results)} items")
-            return results
-
-        except Exception as e:
-            logger.error(f"Failed to execute research for items: {str(e)}")
-            raise
+        logger.warning(f"Skipping research execution for {len(items)} items - frontend should provide research data")
+        return []
 
     def _convert_job_items_to_research_items(
         self, job: ProductResearchJob
@@ -175,10 +166,9 @@ class ProductResearchExecutor:
             # Convert items to full research format
             research_items = self._convert_job_items_to_full_research_items(job)
 
-            # Call Perplexity API for full research
-            research_results = await self.research_client.research_products(
-                items=research_items, max_concurrent=5
-            )
+            # Research API calls removed - frontend should provide research data
+            logger.warning("Enhanced research execution skipped - frontend should provide research data")
+            research_results = []
 
             # Return results for merging (don't modify job directly here)
             logger.info(
@@ -208,9 +198,9 @@ class ProductResearchExecutor:
         try:
             logger.debug(f"Executing research for single item: {item.product_name}")
 
-            results = await self.research_client.research_products(
-                items=[item], max_concurrent=1
-            )
+            # Research API calls removed - frontend should provide research data
+            logger.warning(f"Single item research skipped for {item.product_name} - frontend should provide research data")
+            results = []
 
             logger.debug(f"Completed research for item: {item.product_name}")
             return results
@@ -227,6 +217,5 @@ class ProductResearchExecutor:
         Returns:
             Dictionary with client status information
         """
-        if hasattr(self.research_client, "get_status"):
-            return self.research_client.get_status()
-        return {"status": "unknown", "client": str(type(self.research_client))}
+        # Research client removed - frontend provides research data
+        return {"status": "inactive", "message": "Research client removed - frontend handles research"}

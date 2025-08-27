@@ -1,0 +1,18 @@
+{
+  "items": [
+    {
+      "product_name": "고려은단 비타민C 1000",
+      "category": "식품",
+      "price_exact": 17900,
+      "currency": "KRW",
+      "product_id": 7431508110,
+      "product_url": "https://link.coupang.com/re/test",
+      "product_image": "https://example.com/image.jpg",
+      "is_rocket": true,
+      "is_free_shipping": false,
+      "category_name": "식품",
+      "seller_or_store": "쿠팡"
+    }
+  ],
+  "priority": 5
+}

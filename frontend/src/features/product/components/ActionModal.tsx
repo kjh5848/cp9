@@ -1,5 +1,7 @@
 'use client';
 
+import { createPortal } from 'react-dom';
+import { useEffect, useState } from 'react';
 import { Button, Card } from '@/shared/ui';
 import { ScaleOnHover, FadeInSection } from '@/shared/components/advanced-ui';
 import { Copy, Edit, X, Search } from 'lucide-react';
@@ -45,7 +47,12 @@ export default function ActionModal({
   onResearch,
   selectedCount 
 }: ActionModalProps) {
-  if (!isOpen) return null;
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -53,9 +60,12 @@ export default function ActionModal({
     }
   };
 
-  return (
+  // 클라이언트 사이드에서만 렌더링, 모달이 열려있을 때만 표시
+  if (!mounted || !isOpen) return null;
+
+  return createPortal(
     <div 
-      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 px-4"
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] px-4"
       onClick={handleBackdropClick}
     >
       <FadeInSection>
@@ -139,6 +149,7 @@ export default function ActionModal({
           </div>
         </Card>
       </FadeInSection>
-    </div>
+    </div>,
+    document.body
   );
 } 
