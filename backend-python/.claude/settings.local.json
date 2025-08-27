@@ -78,7 +78,8 @@
       "Read(/D:\\workspace\\study\\cp9\\frontend\\src\\infrastructure\\api\\clients/**)",
       "Read(/D:\\workspace\\study\\cp9\\frontend\\src\\infrastructure\\api\\clients/**)",
       "Read(/D:\\workspace\\study\\cp9\\frontend\\src\\infrastructure\\api\\core/**)",
-      "Read(/D:\\workspace\\study\\cp9\\frontend\\src\\infrastructure\\api\\core/**)"
+      "Read(/D:\\workspace\\study\\cp9\\frontend\\src\\infrastructure\\api\\core/**)",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "ask": [],
