@@ -21,22 +21,14 @@ from uuid import uuid4
 def _get_now():
     """PostgreSQL 호환성을 위해 UTC 형태의 현재 시간을 반환합니다.
     
-    KST 시간을 UTC로 변환하여 PostgreSQL TIMESTAMP WITHOUT TIME ZONE과 호환되도록 합니다.
-    
     Returns:
-        datetime: 타임존 정보가 제거된 UTC 현재 시간
+        datetime: 타임존 정보가 없는 UTC 현재 시간
         
     Note:
-        - KST 시간을 UTC로 변환 후 tzinfo 제거
-        - ImportError 발생 시 UTC 시간 직접 반환
+        - PostgreSQL TIMESTAMP WITHOUT TIME ZONE과 직접 호환
+        - 안정적이고 단순한 UTC 시간 생성
     """
-    try:
-        # from app.utils.timezone import now_kst  # 사용 중지: timezone 호환성 문제
-        kst_time = now_kst()
-        # PostgreSQL TIMESTAMP WITHOUT TIME ZONE 호환성을 위해 UTC로 변환
-        return kst_time.astimezone(timezone.utc).replace(tzinfo=None)
-    except ImportError:
-        return datetime.utcnow()  # UTC로 폴백
+    return datetime.utcnow()
 
 from sqlalchemy import (
     JSON,
