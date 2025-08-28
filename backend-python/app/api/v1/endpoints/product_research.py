@@ -66,8 +66,10 @@ async def create_product_research(
     Raises:
         BaseAPIException: 구조화된 API 에러 발생시
     """
-    # 고유 요청 ID 생성
+    # 고유 요청 ID 생성 및 컨텍스트에 설정
+    from app.core.context import set_request_id
     request_id = str(uuid4())
+    set_request_id(request_id)
     
     # Step 1: API 요청 수신 로그
     logger.info(

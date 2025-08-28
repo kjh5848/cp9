@@ -90,14 +90,12 @@ class ProductResearchService:
         @throws {ValidationError} 입력 검증 실패시
         @throws {ServiceError} 서비스 처리 실패시
         """
-        # request_id는 extra 로그 컨텍스트에서 추출 또는 새로 생성
-        import contextvars
+        # request_id는 컨텍스트 변수에서 가져오기 또는 새로 생성
         from uuid import uuid4
+        from app.core.context import REQUEST_ID_VAR
         
         # 컨텍스트 변수에서 request_id 가져오기 (API에서 설정됨)
-        request_id = getattr(contextvars.copy_context().get('request_id', None), 'get', lambda: str(uuid4()))()
-        if not request_id:
-            request_id = str(uuid4())
+        request_id = REQUEST_ID_VAR.get(str(uuid4()))
             
         logger.info(
             f"[Step 5C-1] 🎯 오케스트레이터 작업 생성 호출 | request_id={request_id} | items_count={len(items)}",
@@ -198,13 +196,11 @@ class ProductResearchService:
         @throws {CoupangAPIError} 쿠팡 API 오류시
         @throws {ServiceError} 서비스 처리 실패시
         """
-        # request_id는 컨텍스트에서 가져오기
-        import contextvars
+        # request_id는 컨텍스트 변수에서 가져오기 또는 새로 생성
         from uuid import uuid4
+        from app.core.context import REQUEST_ID_VAR
         
-        request_id = getattr(contextvars.copy_context().get('request_id', None), 'get', lambda: str(uuid4()))()
-        if not request_id:
-            request_id = str(uuid4())
+        request_id = REQUEST_ID_VAR.get(str(uuid4()))
             
         logger.info(
             f"[Step 5B-1] 🛒 오케스트레이터 쿠팡 미리보기 작업 호출 | request_id={request_id} | items_count={len(items)}",

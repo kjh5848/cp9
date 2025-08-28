@@ -75,12 +75,10 @@ class ResearchJobRepository:
         @throws {DatabaseError} 데이터베이스 저장 실패시
         """
         # request_id 추출을 위한 컨텍스트 변수 사용
-        import contextvars
         from uuid import uuid4
+        from app.core.context import REQUEST_ID_VAR
         
-        request_id = getattr(contextvars.copy_context().get('request_id', None), 'get', lambda: str(uuid4()))()
-        if not request_id:
-            request_id = str(uuid4())
+        request_id = REQUEST_ID_VAR.get(str(uuid4()))
             
         logger.info(
             f"[Step 8] 💾 데이터베이스 작업 저장 시작 | request_id={request_id} | job_id={job.id} | items_count={len(job.items)}",
