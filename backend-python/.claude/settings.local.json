@@ -79,13 +79,19 @@
       "Read(/D:\\workspace\\study\\cp9\\frontend\\src\\infrastructure\\api\\clients/**)",
       "Read(/D:\\workspace\\study\\cp9\\frontend\\src\\infrastructure\\api\\core/**)",
       "Read(/D:\\workspace\\study\\cp9\\frontend\\src\\infrastructure\\api\\core/**)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(poetry run ruff check:*)",
+      "Bash(poetry run:*)",
+      "Bash(poetry add:*)",
+      "Bash(poetry show:*)",
+      "Bash(poetry env info:*)"
     ],
     "deny": [],
     "ask": [],
     "additionalDirectories": [
       "C:\\c\\Users\\kjh58\\문서\\GitHub\\cp9",
-      "D:\\D\\workspace\\study\\cp9"
+      "D:\\D\\workspace\\study\\cp9",
+      "D:\\d\\workspace\\study\\cp9"
     ]
   }
 }
