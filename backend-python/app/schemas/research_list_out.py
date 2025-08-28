@@ -1,6 +1,7 @@
 """Enhanced response schemas for research list endpoints with user-friendly messages."""
 
 from typing import List, Optional
+
 from pydantic import BaseModel, Field
 
 from .research_out import ResearchJobSummaryOut
@@ -8,7 +9,7 @@ from .research_out import ResearchJobSummaryOut
 
 class ResearchJobListResponse(BaseModel):
     """Enhanced response for research job list with metadata."""
-    
+
     data: List[ResearchJobSummaryOut] = Field(
         description="List of research job summaries"
     )
@@ -23,7 +24,7 @@ class ResearchJobListResponse(BaseModel):
         default=False,
         description="Whether more jobs are available beyond the current limit"
     )
-    
+
     class Config:
         json_schema_extra = {
             "example": {

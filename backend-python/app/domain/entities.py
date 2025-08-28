@@ -1,10 +1,21 @@
 """Domain entities - Pure business objects with no framework dependencies."""
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
+
+
+def _get_now() -> datetime:
+    """Get current datetime in UTC for database compatibility."""
+    try:
+        from app.utils.timezone import now_kst
+        kst_time = now_kst()
+        # Convert to UTC for PostgreSQL TIMESTAMP WITHOUT TIME ZONE compatibility
+        return kst_time.astimezone(timezone.utc).replace(tzinfo=None)
+    except ImportError:
+        return datetime.utcnow()  # Fallback to UTC
 
 
 class JobStatus(str, Enum):
@@ -38,11 +49,36 @@ class Item:
     hash: Optional[str] = None
 
     def __post_init__(self) -> None:
-        """Validate item after initialization."""
+        """Validate item after initialization and generate hash if missing."""
         if not self.product_name:
             raise ValueError("Product name cannot be empty")
         if self.price_exact < 0:
             raise ValueError("Product price cannot be negative")
+        
+        # Generate hash if not provided
+        if not self.hash:
+            self.hash = self._generate_hash()
+    
+    def _generate_hash(self) -> str:
+        """Generate a unique hash for this item."""
+        import hashlib
+        
+        # Create a consistent string representation of the item
+        hash_data = {
+            "name": self.product_name.lower().strip(),
+            "price": round(self.price_exact, 2),  # Round to 2 decimal places for consistency
+            "category": self.category.lower().strip() if self.category else None,
+        }
+        
+        # Convert to sorted string for consistent hashing
+        sorted_items = []
+        for key in sorted(hash_data.keys()):
+            value = hash_data[key]
+            if value is not None:
+                sorted_items.append(f"{key}:{value}")
+        
+        hash_string = "|".join(sorted_items)
+        return hashlib.sha256(hash_string.encode("utf-8")).hexdigest()
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert item to dictionary."""
@@ -65,27 +101,27 @@ class Result:
     status: ResultStatus = ResultStatus.PENDING
     data: Dict[str, Any] = field(default_factory=dict)
     error: Optional[str] = None
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=_get_now)
+    updated_at: datetime = field(default_factory=_get_now)
 
     def mark_success(self, data: Dict[str, Any]) -> None:
         """Mark result as successful."""
         self.status = ResultStatus.SUCCESS
         self.data = data
         self.error = None
-        self.updated_at = datetime.utcnow()
+        self.updated_at = _get_now()
 
     def mark_error(self, error: str) -> None:
         """Mark result as failed."""
         self.status = ResultStatus.ERROR
         self.error = error
-        self.updated_at = datetime.utcnow()
+        self.updated_at = _get_now()
 
     def mark_skipped(self, reason: str) -> None:
         """Mark result as skipped."""
         self.status = ResultStatus.SKIPPED
         self.error = reason
-        self.updated_at = datetime.utcnow()
+        self.updated_at = _get_now()
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert result to dictionary."""
@@ -113,8 +149,8 @@ class ResearchJob:
     processed_items: int = 0
     failed_items: int = 0
     metadata: Dict[str, Any] = field(default_factory=dict)
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=_get_now)
+    updated_at: datetime = field(default_factory=_get_now)
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
 
@@ -122,39 +158,39 @@ class ResearchJob:
         """Add an item to the research job."""
         self.items.append(item)
         self.total_items = len(self.items)
-        self.updated_at = datetime.utcnow()
+        self.updated_at = _get_now()
 
     def add_items(self, items: List[Item]) -> None:
         """Add multiple items to the research job."""
         self.items.extend(items)
         self.total_items = len(self.items)
-        self.updated_at = datetime.utcnow()
+        self.updated_at = _get_now()
 
     def start(self) -> None:
         """Mark job as started."""
         self.status = JobStatus.PROCESSING
-        self.started_at = datetime.utcnow()
-        self.updated_at = datetime.utcnow()
+        self.started_at = _get_now()
+        self.updated_at = _get_now()
 
     def complete(self) -> None:
         """Mark job as completed."""
         self.status = JobStatus.COMPLETED
-        self.completed_at = datetime.utcnow()
-        self.updated_at = datetime.utcnow()
+        self.completed_at = _get_now()
+        self.updated_at = _get_now()
 
     def fail(self, error: Optional[str] = None) -> None:
         """Mark job as failed."""
         self.status = JobStatus.FAILED
-        self.completed_at = datetime.utcnow()
-        self.updated_at = datetime.utcnow()
+        self.completed_at = _get_now()
+        self.updated_at = _get_now()
         if error:
             self.metadata["error"] = error
 
     def cancel(self) -> None:
         """Mark job as cancelled."""
         self.status = JobStatus.CANCELLED
-        self.completed_at = datetime.utcnow()
-        self.updated_at = datetime.utcnow()
+        self.completed_at = _get_now()
+        self.updated_at = _get_now()
 
     def add_result(self, result: Result) -> None:
         """Add a result to the job."""
@@ -163,7 +199,7 @@ class ResearchJob:
             self.processed_items += 1
         elif result.status == ResultStatus.ERROR:
             self.failed_items += 1
-        self.updated_at = datetime.utcnow()
+        self.updated_at = _get_now()
 
     def update_progress(self) -> None:
         """Update job progress based on results."""
@@ -173,7 +209,7 @@ class ResearchJob:
         self.failed_items = sum(
             1 for r in self.results if r.status == ResultStatus.ERROR
         )
-        self.updated_at = datetime.utcnow()
+        self.updated_at = _get_now()
 
     @property
     def is_complete(self) -> bool:

@@ -1,7 +1,18 @@
 """SQLAlchemy ORM models."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
+
+
+def _get_now():
+    """Get current datetime in UTC for PostgreSQL compatibility."""
+    try:
+        from app.utils.timezone import now_kst
+        kst_time = now_kst()
+        # Convert to UTC for PostgreSQL TIMESTAMP WITHOUT TIME ZONE compatibility
+        return kst_time.astimezone(timezone.utc).replace(tzinfo=None)
+    except ImportError:
+        return datetime.utcnow()  # Fallback to UTC
 
 from sqlalchemy import (
     JSON,
@@ -18,6 +29,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app.infra.db.session import Base
+from app.utils.timezone import now_kst
 
 
 class ResearchJobModel(Base):
@@ -31,9 +43,9 @@ class ResearchJobModel(Base):
     processed_items = Column(Integer, nullable=False, default=0)
     failed_items = Column(Integer, nullable=False, default=0)
     meta_data = Column(JSON, nullable=False, default=dict)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, nullable=False, default=now_kst, index=True)
     updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime, nullable=False, default=now_kst, onupdate=now_kst
     )
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
@@ -65,7 +77,7 @@ class ItemModel(Base):
     category = Column(String(255), nullable=True)
     hash = Column(String(64), nullable=False, index=True)
     meta_data = Column(JSON, nullable=False, default=dict)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=now_kst)
 
     # Relationships
     job = relationship("ResearchJobModel", back_populates="items")
@@ -93,9 +105,9 @@ class ResultModel(Base):
     status = Column(String(50), nullable=False, default="pending", index=True)
     data = Column(JSON, nullable=False, default=dict)
     error = Column(Text, nullable=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=now_kst)
     updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime, nullable=False, default=now_kst, onupdate=now_kst
     )
 
     # Relationships

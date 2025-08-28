@@ -11,6 +11,14 @@ class ItemIn(BaseModel):
     product_name: str = Field(..., min_length=1, max_length=500, description="Product name")
     price_exact: float = Field(..., ge=0, le=1000000, description="Product price")
     category: Optional[str] = Field(None, max_length=255, description="Product category")
+    currency: Optional[str] = Field(default="KRW", description="Currency code")
+    product_id: Optional[int] = Field(None, description="Product ID from Coupang")
+    product_url: Optional[str] = Field(None, description="Product URL")
+    product_image: Optional[str] = Field(None, description="Product image URL")
+    is_rocket: Optional[bool] = Field(default=False, description="Rocket shipping available")
+    is_free_shipping: Optional[bool] = Field(default=False, description="Free shipping available")
+    category_name: Optional[str] = Field(None, description="Category display name")
+    seller_or_store: Optional[str] = Field(None, description="Seller or store name")
     metadata: Dict[str, Any] = Field(
         default_factory=dict, description="Additional item metadata"
     )
@@ -35,10 +43,15 @@ class ItemIn(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
-                "product_name": "iPhone 15 Pro",
-                "price_exact": 999.99,
-                "category": "Electronics",
-                "metadata": {"brand": "Apple", "color": "Space Black"},
+                "product_name": "탐사 샘물",
+                "price_exact": 5720,
+                "category": "식품",
+                "currency": "KRW",
+                "product_id": 7689270513,
+                "product_url": "https://link.coupang.com/re/AFFSDP?lptag=AF7133746&pageKey=7689270513",
+                "is_rocket": True,
+                "seller_or_store": "쿠팡",
+                "metadata": {},
             }
         }
 
@@ -49,6 +62,8 @@ class ResearchJobCreateIn(BaseModel):
     items: List[ItemIn] = Field(
         ..., min_length=1, max_length=10, description="List of items to research"
     )
+    return_coupang_preview: Optional[bool] = Field(default=True, description="Return Coupang preview data")
+    priority: Optional[int] = Field(default=5, ge=1, le=10, description="Job priority (1-10)")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Job metadata")
 
     @field_validator("items")
@@ -73,17 +88,26 @@ class ResearchJobCreateIn(BaseModel):
             "example": {
                 "items": [
                     {
-                        "product_name": "iPhone 15 Pro",
-                        "price_exact": 999.99,
-                        "category": "Electronics",
+                        "product_name": "탐사 샘물",
+                        "price_exact": 5720,
+                        "category": "식품",
+                        "currency": "KRW",
+                        "product_id": 7689270513,
+                        "is_rocket": True,
+                        "seller_or_store": "쿠팡",
                     },
                     {
-                        "product_name": "Samsung Galaxy S24",
-                        "price_exact": 899.99,
-                        "category": "Electronics",
+                        "product_name": "돌 스위티오 바나나",
+                        "price_exact": 3300,
+                        "category": "로켓프레시",
+                        "currency": "KRW",
+                        "is_rocket": True,
+                        "seller_or_store": "쿠팡",
                     },
                 ],
-                "metadata": {"priority": "high", "user_id": "12345"},
+                "return_coupang_preview": True,
+                "priority": 5,
+                "metadata": {},
             }
         }
 
