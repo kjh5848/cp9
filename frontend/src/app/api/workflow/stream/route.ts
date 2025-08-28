@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
         const response = await fetch(edgeFunctionUrl, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json; charset=utf-8',
             'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
           },
           body: JSON.stringify({

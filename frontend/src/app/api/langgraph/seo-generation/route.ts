@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     const workflowResponse = await fetch(`${request.nextUrl.origin}/api/workflow`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json; charset=utf-8',
       },
       body: JSON.stringify({
         action: 'execute',

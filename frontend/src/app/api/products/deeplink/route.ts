@@ -15,14 +15,20 @@ export async function POST(req: NextRequest) {
     const { urls }: DeepLinkRequest = await req.json();
 
     if (!urls || !Array.isArray(urls) || urls.length === 0) {
-      return NextResponse.json({ error: 'URLs 배열이 필요합니다.' }, { status: 400 });
+      return NextResponse.json({ error: 'URLs 배열이 필요합니다.' }, { 
+        status: 400,
+        headers: { 'Content-Type': 'application/json; charset=utf-8' }
+      });
     }
 
     const ACCESS_KEY = process.env.COUPANG_ACCESS_KEY;
     const SECRET_KEY = process.env.COUPANG_SECRET_KEY;
 
     if (!ACCESS_KEY || !SECRET_KEY) {
-      return NextResponse.json({ error: '쿠팡 API 키가 설정되지 않았습니다.' }, { status: 500 });
+      return NextResponse.json({ error: '쿠팡 API 키가 설정되지 않았습니다.' }, { 
+        status: 500,
+        headers: { 'Content-Type': 'application/json; charset=utf-8' }
+      });
     }
 
     console.log('ACCESS_KEY 존재:', !!ACCESS_KEY);
@@ -54,7 +60,10 @@ export async function POST(req: NextRequest) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('쿠팡 API 오류:', errorText);
-      return NextResponse.json({ error: `쿠팡 API 오류: ${response.statusText} - ${errorText}` }, { status: response.status });
+      return NextResponse.json({ error: `쿠팡 API 오류: ${response.statusText} - ${errorText}` }, { 
+        status: response.status,
+        headers: { 'Content-Type': 'application/json; charset=utf-8' }
+      });
     }
 
     const data = await response.json();
@@ -69,13 +78,19 @@ export async function POST(req: NextRequest) {
     // 오류 응답 확인
     if (data?.error || data?.message) {
       console.error('쿠팡 API 오류 응답:', data);
-      return NextResponse.json({ error: `쿠팡 API 오류: ${data.error || data.message}` }, { status: 400 });
+      return NextResponse.json({ error: `쿠팡 API 오류: ${data.error || data.message}` }, { 
+        status: 400,
+        headers: { 'Content-Type': 'application/json; charset=utf-8' }
+      });
     }
 
     // rCode 확인 (쿠팡 API 응답 코드)
     if (data?.rCode !== '0') {
       console.error('쿠팡 API 오류 코드:', data?.rCode, data?.rMessage);
-      return NextResponse.json({ error: `쿠팡 API 오류: ${data?.rMessage || '알 수 없는 오류'}` }, { status: 400 });
+      return NextResponse.json({ error: `쿠팡 API 오류: ${data?.rMessage || '알 수 없는 오류'}` }, { 
+        status: 400,
+        headers: { 'Content-Type': 'application/json; charset=utf-8' }
+      });
     }
 
     // 딥링크 리스트 추출
@@ -89,16 +104,24 @@ export async function POST(req: NextRequest) {
       deeplinkList = data as CoupangRawDeepLink[];
     } else {
       console.error('쿠팡 API 응답 구조 오류:', data);
-      return NextResponse.json({ error: '쿠팡 API 응답 구조가 올바르지 않습니다.' }, { status: 500 });
+      return NextResponse.json({ error: '쿠팡 API 응답 구조가 올바르지 않습니다.' }, { 
+        status: 500,
+        headers: { 'Content-Type': 'application/json; charset=utf-8' }
+      });
     }
 
     // 일관된 응답 형식으로 변환
     const deeplinkResults: DeepLinkResponse[] = deeplinkList.map(normalizeDeepLinkResponse);
 
-    return NextResponse.json(deeplinkResults);
+    return NextResponse.json(deeplinkResults, {
+      headers: { 'Content-Type': 'application/json; charset=utf-8' }
+    });
   } catch (e: unknown) {
     const errorMessage = e instanceof Error ? e.message : '딥링크 변환 실패';
     console.error('딥링크 변환 실패:', errorMessage);
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return NextResponse.json({ error: errorMessage }, { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json; charset=utf-8' }
+    });
   }
 }

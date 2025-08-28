@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     const response = await fetch(`${backendUrl}/api/v1/research/products`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json; charset=utf-8',
         // 인증 헤더가 필요한 경우 추가
         // 'Authorization': `Bearer ${token}`
       },

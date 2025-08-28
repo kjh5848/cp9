@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     const response = await fetch(`${supabaseUrl}/functions/v1/${functionName}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json; charset=utf-8',
         'Authorization': `Bearer ${supabaseAnonKey}`,
       },
       body: JSON.stringify(data || {}),

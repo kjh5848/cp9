@@ -15,7 +15,10 @@ export async function POST(req: NextRequest) {
     const { keyword, limit = 10 }: ProductSearchRequest = await req.json();
     
     if (!keyword) {
-      return NextResponse.json({ error: '키워드를 입력하세요.' }, { status: 400 });
+      return NextResponse.json({ error: '키워드를 입력하세요.' }, { 
+      status: 400,
+      headers: { 'Content-Type': 'application/json; charset=utf-8' }
+    });
     }
     
     const products = await searchCoupangProducts(keyword, limit);
@@ -23,9 +26,14 @@ export async function POST(req: NextRequest) {
     // 일관된 응답 형식으로 변환
     const result: CoupangProductResponse[] = (products as CoupangRawProduct[]).map(normalizeCoupangProduct);
     
-    return NextResponse.json(result);
+    return NextResponse.json(result, {
+      headers: { 'Content-Type': 'application/json; charset=utf-8' }
+    });
   } catch (e: unknown) {
     const errorMessage = e instanceof Error ? e.message : '서버 오류';
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return NextResponse.json({ error: errorMessage }, { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json; charset=utf-8' }
+    });
   }
 } 

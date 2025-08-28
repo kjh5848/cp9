@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json; charset=utf-8',
         },
         body: JSON.stringify({
           items,
@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
     const response = await fetch(`${backendUrl}/api/v1/research/create`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json; charset=utf-8',
       },
       body: JSON.stringify({
         products: products.map(product => ({

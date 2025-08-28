@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     const response = await fetch(edgeFunctionUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json; charset=utf-8',
         'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
       },
       body: JSON.stringify(testData),
@@ -94,7 +94,10 @@ export async function POST(req: NextRequest) {
             `🕒 실행 시간: ${new Date().toISOString()}`
           ]
         },
-        { status: response.status }
+        { 
+          status: response.status,
+          headers: { 'Content-Type': 'application/json; charset=utf-8' }
+        }
       );
     }
 
@@ -135,6 +138,8 @@ export async function POST(req: NextRequest) {
         executedAt: new Date().toISOString(),
         logs
       }
+    }, {
+      headers: { 'Content-Type': 'application/json; charset=utf-8' }
     });
 
   } catch (error) {
@@ -150,7 +155,10 @@ export async function POST(req: NextRequest) {
           `🕒 실패 시간: ${new Date().toISOString()}`
         ]
       },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: { 'Content-Type': 'application/json; charset=utf-8' }
+      }
     );
   }
 }
@@ -172,5 +180,7 @@ export async function GET(req: NextRequest) {
       'full_workflow - 전체 워크플로우 테스트'
     ],
     timestamp: new Date().toISOString()
+  }, {
+    headers: { 'Content-Type': 'application/json; charset=utf-8' }
   });
 }
