@@ -12,6 +12,6 @@ from app.services.research_components.result_processor import ResearchResultProc
 
 __all__ = [
     "ResearchJobManager",
-    "ResearchExecutor", 
+    "ResearchExecutor",
     "ResearchResultProcessor",
 ]
