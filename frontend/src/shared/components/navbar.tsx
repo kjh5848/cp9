@@ -52,7 +52,7 @@ export default function Navbar() {
             </div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-2">
+            <nav className="hidden lg:flex items-center gap-2">
               <Link href="/product">
                 <ScaleOnHover scale={1.05}>
                   <Button variant="ghost" size="sm" className="text-gray-100 hover:text-white hover:bg-white/15">
@@ -90,7 +90,7 @@ export default function Navbar() {
             {/* User Menu & Mobile Toggle */}
             <div className="flex items-center gap-2">
               {/* Desktop User Menu */}
-              <div className="hidden md:flex items-center gap-2">
+              <div className="hidden lg:flex items-center gap-2">
                 {user ? (
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/20 border border-white/25">
@@ -126,7 +126,7 @@ export default function Navbar() {
                   variant="ghost"
                   size="sm"
                   onClick={toggleMobileMenu}
-                  className="md:hidden text-gray-100 hover:text-white hover:bg-white/15"
+                  className="lg:hidden text-gray-100 hover:text-white hover:bg-white/15"
                 >
                   {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                 </Button>
@@ -136,14 +136,10 @@ export default function Navbar() {
 
           {/* Mobile Menu */}
           {isMobileMenuOpen && (
-            <div className="absolute top-full left-0 right-0 mt-2 md:hidden">
-              <GlassCard variant="light" className="shadow-xl">
-                <div className={`transition-all duration-300 ease-in-out ${
-                  isMobileMenuOpen 
-                    ? 'opacity-100 pb-4' 
-                    : 'opacity-0'
-                }`}>
-            <nav className="flex flex-col gap-2 pt-4 border-t border-white/20">
+            <div className="absolute top-full left-0 right-0 mt-2 lg:hidden">
+              <div className="bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-800/50">
+                <div className="p-4">
+            <nav className="flex flex-col gap-2">
               <Link href="/product" onClick={() => setIsMobileMenuOpen(false)}>
                 <ScaleOnHover scale={1.02}>
                   <Button variant="ghost" className="w-full justify-start text-gray-100 hover:text-white hover:bg-white/15">
@@ -175,9 +171,6 @@ export default function Navbar() {
                   </Button>
                 </ScaleOnHover>
               </Link>
-              
-              
-          
               <div className="border-t border-white/20 pt-2 mt-2">
                 {user ? (
                   <>
@@ -211,7 +204,7 @@ export default function Navbar() {
               </div>
                 </nav>
               </div>
-            </GlassCard>
+            </div>
           </div>
         )}
         </div>
