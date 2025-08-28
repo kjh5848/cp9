@@ -1,10 +1,43 @@
-"""Product research domain entities."""
+"""제품 리서치 도메인 엔티티.
+
+주요 역할:
+- 비즈니스 로직의 핵심 데이터 구조 정의
+- 프레임워크에 의존하지 않는 순수 도메인 모델
+- 비즈니스 규칙 및 제약 조건 관리
+- 제품 리서치 작업 수명 주기 처리
+
+JSDoc:
+@module ProductEntities
+@description 제품 리서치 도메인의 핵심 비즈니스 엔티티
+@version 1.0.0
+@author Backend Team
+@since 2024-01-01
+"""
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
+
+
+def _get_now() -> datetime:
+    """데이터베이스 호환성을 위해 UTC 형태의 현재 시간을 반환합니다.
+    
+    Returns:
+        datetime: 타임존 정보가 제거된 UTC 현재 시간
+        
+    Note:
+        - KST 시간을 UTC로 변환하여 PostgreSQL 호환성 보장
+        - ImportError 발생시 UTC 시간 직접 반환
+    """
+    try:
+        from app.utils.timezone import now_kst
+        kst_time = now_kst()
+        # PostgreSQL TIMESTAMP WITHOUT TIME ZONE 호환성을 위해 UTC로 변환
+        return kst_time.astimezone(timezone.utc).replace(tzinfo=None)
+    except ImportError:
+        return datetime.utcnow()  # UTC로 폴백
 
 
 class ResearchStatus(str, Enum):
@@ -246,8 +279,8 @@ class ProductResearchJob:
     successful_items: int = 0
     failed_items: int = 0
     processing_time_ms: Optional[int] = None
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=_get_now)
+    updated_at: datetime = field(default_factory=_get_now)
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
