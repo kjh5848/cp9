@@ -3,7 +3,7 @@
 from typing import Any, Dict, List, Optional
 
 from app.core.circuit_breaker import CircuitBreakerConfig
-from app.core.constants import MAX_RESEARCH_BATCH_SIZE, ERROR_TOO_MANY_ITEMS
+from app.core.constants import ERROR_TOO_MANY_ITEMS, MAX_RESEARCH_BATCH_SIZE
 from app.core.logging import get_logger
 from app.domain.product_entities import (
     ProductResearchItem,

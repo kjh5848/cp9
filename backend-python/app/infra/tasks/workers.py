@@ -10,6 +10,7 @@ from app.core.logging import get_logger
 from app.domain.entities import Item, JobStatus, Result, ResultStatus
 from app.infra.db.repositories import ResearchJobRepository, ResultRepository
 from app.infra.db.session import get_db_context
+
 # Perplexity API removed - will be handled by frontend
 from app.infra.tasks.celery_app import celery_app
 from app.utils.hashing import calculate_item_hash
@@ -68,10 +69,22 @@ async def _run_research_async(job_id: UUID) -> Dict[str, Any]:
         job_repo = ResearchJobRepository(session)
         result_repo = ResultRepository(session)
 
-        # Get job details
-        job = await job_repo.get_by_id(job_id)
-        if not job:
-            raise ValueError(f"Job {job_id} not found")
+        # Get job details with retry for race condition
+        job = None
+        max_retries = 3
+        retry_delay = 1  # seconds
+
+        for attempt in range(max_retries):
+            job = await job_repo.get_by_id(job_id)
+            if job:
+                break
+
+            if attempt < max_retries - 1:
+                logger.warning(f"Job {job_id} not found, retrying in {retry_delay}s (attempt {attempt + 1}/{max_retries})")
+                await asyncio.sleep(retry_delay)
+                retry_delay *= 2  # exponential backoff
+            else:
+                raise ValueError(f"Job {job_id} not found after {max_retries} attempts")
 
         # Start job
         await job_repo.update_status(
@@ -123,11 +136,24 @@ async def _run_research_async(job_id: UUID) -> Dict[str, Any]:
                     item_name=item.product_name,
                     status=ResultStatus.PENDING,
                 )
-                await result_repo.create(job_id, result)
+                # Ensure job exists before creating result
+                try:
+                    await result_repo.create(job_id, result)
+                except Exception as e:
+                    if "foreign key constraint" in str(e).lower():
+                        logger.error(f"Job {job_id} not found when creating result for {item.product_name}")
+                        # Refresh job data to ensure it exists
+                        refreshed_job = await job_repo.get_by_id(job_id)
+                        if not refreshed_job:
+                            raise ValueError(f"Job {job_id} does not exist")
+                        # Retry result creation
+                        await result_repo.create(job_id, result)
+                    else:
+                        raise
 
                 # Research data should come from frontend - skip API call
                 logger.warning(f"Skipping research for {item.product_name} - backend no longer calls external APIs")
-                
+
                 # Mark as pending - frontend should provide research data
                 await result_repo.update(
                     result.id, ResultStatus.PENDING, data={"message": "Research data should come from frontend"}
@@ -216,12 +242,20 @@ async def _process_single_item_async(job_id: UUID, item: Item) -> Dict[str, Any]
             item_name=item.product_name,
             status=ResultStatus.PENDING,
         )
-        await result_repo.create(job_id, result)
+        # Ensure job exists before creating result
+        try:
+            await result_repo.create(job_id, result)
+        except Exception as e:
+            if "foreign key constraint" in str(e).lower():
+                logger.error(f"Job {job_id} not found when creating result for {item.product_name}")
+                raise ValueError(f"Job {job_id} does not exist or is not accessible")
+            else:
+                raise
 
         try:
             # Research data should come from frontend - skip API call
             logger.warning(f"Skipping research for {item.product_name} - backend no longer calls external APIs")
-            
+
             # Mark as pending - frontend should provide research data
             await result_repo.update(
                 result.id, ResultStatus.PENDING, data={"message": "Research data should come from frontend"}

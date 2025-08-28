@@ -5,7 +5,6 @@ from typing import Any, Dict, Optional
 import httpx
 
 from app.core.circuit_breaker import (
-    CircuitBreaker,
     CircuitBreakerConfig,
     CircuitBreakerRegistry,
 )
