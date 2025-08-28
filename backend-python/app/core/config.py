@@ -1,7 +1,7 @@
 """Application configuration using Pydantic Settings."""
 
 from functools import lru_cache
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic import Field, PostgresDsn, RedisDsn, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -43,7 +43,10 @@ class Settings(BaseSettings):
     celery_broker_url: RedisDsn = Field(default="redis://localhost:6379/2")
     celery_result_backend: RedisDsn = Field(default="redis://localhost:6379/3")
 
-    # Perplexity API 설정 제거 - 프론트엔드에서 관리
+    # Perplexity API Settings
+    perplexity_api_key: Optional[str] = Field(default=None)
+    perplexity_api_url: str = Field(default="https://api.perplexity.ai/chat/completions")
+    perplexity_timeout: int = Field(default=25)  # Optimized for better UX
 
     # Research Configuration
     max_batch_size: int = Field(default=10)
@@ -51,15 +54,18 @@ class Settings(BaseSettings):
     default_research_batch_size: int = Field(default=5)
     min_research_batch_size: int = Field(default=1)
     max_concurrent_requests: int = Field(default=5)
-    request_timeout: int = Field(default=60)
-    retry_max_attempts: int = Field(default=3)
-    retry_delay: float = Field(default=1.0)
+    request_timeout: int = Field(default=45)  # Reduced for faster feedback
+    retry_max_attempts: int = Field(default=2)  # Reduced for faster failure detection
+    retry_delay: float = Field(default=0.5)  # Faster retries
 
     # Logging
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(
         default="INFO"
     )
     log_format: Literal["json", "plain"] = Field(default="json")
+
+    # Timezone Settings
+    timezone: str = Field(default="Asia/Seoul")  # Korean timezone (KST)
 
     @field_validator("database_url")
     @classmethod

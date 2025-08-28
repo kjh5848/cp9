@@ -20,7 +20,6 @@ from app.core.exceptions.http_exception_mapper import get_http_exception_mapper
 from app.core.logging import get_logger
 from app.schemas.error_responses import (
     ErrorCode,
-    ValidationErrorDetail,
 )
 
 logger = get_logger(__name__)

@@ -18,6 +18,11 @@ async def lifespan(app: FastAPI):
     """Application lifespan context manager."""
     # Startup
     setup_logging()
+
+    # Setup timezone
+    from app.utils.timezone import setup_timezone
+    setup_timezone()
+
     await init_db()
 
     # Initialize Redis PubSub for WebSocket messaging
