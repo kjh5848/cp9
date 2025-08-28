@@ -4,12 +4,13 @@ import asyncio
 from typing import List
 
 from app.core.logging import get_logger
+from app.core.websocket_manager import get_connection_manager
 from app.domain.product_entities import (
     ProductResearchItem,
     ProductResearchJob,
     ResearchStatus,
 )
-# Perplexity research client removed - frontend handles research
+from app.infra.llm.perplexity_research import PerplexityResearchClient
 
 logger = get_logger(__name__)
 
@@ -26,8 +27,9 @@ class ProductResearchExecutor:
 
     def __init__(self):
         """Initialize research executor."""
-        # Research client removed - frontend provides research data
-        logger.warning("Research client removed - frontend should provide research data")
+        self.research_client = PerplexityResearchClient()
+        self.websocket_manager = get_connection_manager()
+        logger.info("Research executor initialized with Perplexity client and WebSocket manager")
 
     async def execute_research_job(self, job: ProductResearchJob) -> None:
         """Execute research for a complete job.
@@ -40,12 +42,30 @@ class ProductResearchExecutor:
             job.start()
             logger.info(f"Starting research execution for job {job.id}")
 
+            # Send WebSocket status update - job started
+            await self.websocket_manager.send_job_status_update(
+                job_id=job.id,
+                status="PROCESSING",
+                total_items=job.total_items,
+                successful_items=0,
+                failed_items=0,
+                success_rate=0.0
+            )
+
             # Convert job items to research format
             research_items = self._convert_job_items_to_research_items(job)
 
-            # Research execution removed - frontend should provide research data
-            logger.warning("Research execution skipped - frontend should provide research data")
-            results = []
+            # Send WebSocket progress update - starting research
+            await self.websocket_manager.send_job_progress_update(
+                job_id=job.id,
+                current_item=0,
+                total_items=len(research_items),
+                current_item_name="Starting Perplexity research..."
+            )
+
+            # Execute Perplexity research
+            logger.info(f"Executing Perplexity research for {len(research_items)} items")
+            results = await self.research_client.research_products(research_items)
 
             # Add results to job
             for result in results:
@@ -53,6 +73,14 @@ class ProductResearchExecutor:
 
             # Mark job as completed
             job.complete()
+
+            # Send WebSocket completion update
+            await self.websocket_manager.send_job_completion(
+                job_id=job.id,
+                status="COMPLETED",
+                results_count=len(results),
+                total_processing_time_ms=job.processing_time_ms or 0
+            )
 
             logger.info(
                 f"Completed research execution for job {job.id}: "
@@ -63,13 +91,22 @@ class ProductResearchExecutor:
             error_msg = f"Research execution failed: {str(e)}"
             logger.error(f"Failed to execute research for job {job.id}: {error_msg}")
             job.fail(error_msg)
+
+            # Send WebSocket error update
+            await self.websocket_manager.send_job_error(
+                job_id=job.id,
+                error_code="RESEARCH_FAILED",
+                error_message=error_msg,
+                error_details=str(e)
+            )
+
             raise
 
     async def execute_research_items(
         self, items: List[ProductResearchItem], max_concurrent: int = 5
     ) -> List:
         """Execute research for a list of items.
-        
+
         Note: Research execution removed - frontend should provide research data.
 
         Args:
@@ -77,10 +114,10 @@ class ProductResearchExecutor:
             max_concurrent: Maximum concurrent requests (ignored)
 
         Returns:
-            Empty list (research data should come from frontend)
+            List of research results
         """
-        logger.warning(f"Skipping research execution for {len(items)} items - frontend should provide research data")
-        return []
+        logger.info(f"Executing research for {len(items)} individual items")
+        return await self.research_client.research_products(items)
 
     def _convert_job_items_to_research_items(
         self, job: ProductResearchJob
@@ -166,9 +203,9 @@ class ProductResearchExecutor:
             # Convert items to full research format
             research_items = self._convert_job_items_to_full_research_items(job)
 
-            # Research API calls removed - frontend should provide research data
-            logger.warning("Enhanced research execution skipped - frontend should provide research data")
-            research_results = []
+            # Execute Perplexity research with enhanced data
+            logger.info(f"Executing enhanced Perplexity research for {len(research_items)} items")
+            research_results = await self.research_client.research_products(research_items)
 
             # Return results for merging (don't modify job directly here)
             logger.info(
@@ -198,9 +235,8 @@ class ProductResearchExecutor:
         try:
             logger.debug(f"Executing research for single item: {item.product_name}")
 
-            # Research API calls removed - frontend should provide research data
-            logger.warning(f"Single item research skipped for {item.product_name} - frontend should provide research data")
-            results = []
+            # Execute Perplexity research for single item
+            results = await self.research_client.research_products([item])
 
             logger.debug(f"Completed research for item: {item.product_name}")
             return results
@@ -217,5 +253,4 @@ class ProductResearchExecutor:
         Returns:
             Dictionary with client status information
         """
-        # Research client removed - frontend provides research data
-        return {"status": "inactive", "message": "Research client removed - frontend handles research"}
+        return self.research_client.get_status()

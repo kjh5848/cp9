@@ -5,12 +5,15 @@ from typing import Dict, List, Optional
 from uuid import UUID
 
 from app.core.logging import get_logger
+from app.domain.entities import Item, JobStatus
+from app.domain.entities import ResearchJob as DomainResearchJob
 from app.domain.product_entities import (
     ProductResearchItem,
     ProductResearchJob,
     ResearchStatus,
 )
 from app.infra.db.repositories import ResearchJobRepository
+from app.infra.db.session import get_db_context
 
 logger = get_logger(__name__)
 
@@ -34,7 +37,7 @@ class ProductResearchJobManager:
         self.repository = repository
         self._jobs: Dict[UUID, ProductResearchJob] = {}
 
-    def create_job(
+    async def create_job(
         self,
         items: List[ProductResearchItem],
         priority: int = 5,
@@ -61,19 +64,53 @@ class ProductResearchJobManager:
         if callback_url:
             job.metadata["callback_url"] = callback_url
 
-        # Store job in memory and database
+        # Store job in memory
         self._jobs[job.id] = job
-        
-        # Save to database if repository is available
-        if self.repository:
-            try:
-                # Convert domain entity to database model for storage
-                # This is a synchronous operation but needed for persistence
-                logger.info(f"Saving job {job.id} to database")
-                # TODO: Add async database save operation
-            except Exception as e:
-                logger.error(f"Failed to save job {job.id} to database: {e}")
-                # Continue with in-memory storage as fallback
+
+        # Save to database
+        try:
+            async with get_db_context() as session:
+                repo = ResearchJobRepository(session)
+
+                # Convert ProductResearchJob to domain ResearchJob for database
+                domain_job = DomainResearchJob(
+                    id=job.id,
+                    status=JobStatus.PENDING,
+                    total_items=len(items),
+                    processed_items=0,
+                    failed_items=0,
+                    metadata={
+                        "priority": priority,
+                        "coupang_preview": enable_coupang_preview,
+                        "callback_url": callback_url,
+                    },
+                    created_at=job.created_at,
+                    updated_at=job.updated_at,
+                )
+
+                # Add items to domain job
+                for item in items:
+                    domain_item = Item(
+                        product_name=item.product_name,
+                        price_exact=item.price_exact,
+                        category=item.category,
+                        metadata=item.metadata,
+                    )
+                    # Don't set empty hash - let Item.__post_init__ generate it
+                    hash_value = item.metadata.get('hash')
+                    if hash_value and hash_value.strip():
+                        domain_item.hash = hash_value
+                    # If hash is None or empty, Item.__post_init__ will generate it
+                    domain_job.items.append(domain_item)
+
+                # Save to database
+                await repo.create(domain_job)
+                await session.commit()
+                logger.info(f"Successfully saved job {job.id} to database")
+
+        except Exception as e:
+            logger.error(f"Failed to save job {job.id} to database: {e}")
+            # Continue with in-memory storage as fallback
 
         logger.info(
             f"Created research job {job.id} with {len(items)} items "

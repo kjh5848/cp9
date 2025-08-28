@@ -5,12 +5,13 @@ from typing import Dict, List, Optional
 from uuid import UUID
 
 from app.core.logging import get_logger
+from app.domain.entities import Result, ResultStatus
 from app.domain.product_entities import (
     ProductResearchItem,
     ProductResearchJob,
-    ProductResearchResult,
 )
-from app.infra.db.repositories import ResearchJobRepository
+from app.infra.db.repositories import ResearchJobRepository, ResultRepository
+from app.infra.db.session import get_db_context
 from app.infra.tasks.celery_app import celery_app
 from app.services.product_research_executor import ProductResearchExecutor
 from app.services.product_research_job_manager import ProductResearchJobManager
@@ -61,8 +62,8 @@ class ProductResearchOrchestrator:
         Returns:
             Created research job
         """
-        # Create job through job manager
-        job = self.job_manager.create_job(
+        # Create job through job manager (now async)
+        job = await self.job_manager.create_job(
             items=items,
             priority=priority,
             callback_url=callback_url,
@@ -93,8 +94,8 @@ class ProductResearchOrchestrator:
         Returns:
             Research job with immediate Coupang info in results
         """
-        # Create job through job manager
-        job = self.job_manager.create_job(
+        # Create job through job manager (now async)
+        job = await self.job_manager.create_job(
             items=items,
             priority=priority,
             callback_url=callback_url,
@@ -105,6 +106,9 @@ class ProductResearchOrchestrator:
         preview_results = self.result_processor.extract_coupang_preview_results(items)
         for result in preview_results:
             job.add_result(result)
+
+        # Save preview results to database
+        await self._save_preview_results_to_database(job, items)
 
         # Start full research in background
         asyncio.create_task(self._orchestrate_preview_enhanced_research(job))
@@ -350,6 +354,65 @@ class ProductResearchOrchestrator:
             )
 
         return health
+
+    async def _save_preview_results_to_database(
+        self, job: ProductResearchJob, items: List[ProductResearchItem]
+    ) -> None:
+        """Save Coupang preview results to database.
+
+        Args:
+            job: Research job with preview results
+            items: Original items for hash mapping
+        """
+        if not job.results:
+            return
+
+        try:
+            async with get_db_context() as session:
+                result_repo = ResultRepository(session)
+                
+                # First check if job exists in database
+                from app.infra.db.repositories import ResearchJobRepository
+                job_repo = ResearchJobRepository(session)
+                db_job = await job_repo.get_by_id(job.id)
+                
+                if not db_job:
+                    logger.warning(f"Job {job.id} not found in database, skipping preview results storage")
+                    return
+
+                # Create item hash mapping for results
+                item_hash_map = {}
+                for item in items:
+                    item_hash = item.metadata.get('hash', '')
+                    if not item_hash:
+                        # Generate hash if not available
+                        import hashlib
+                        item_data = f"{item.product_name}:{item.category}:{item.price_exact}"
+                        item_hash = hashlib.sha256(item_data.encode()).hexdigest()
+                    item_hash_map[item.product_name] = item_hash
+
+                # Store each result
+                for product_result in job.results:
+                    item_hash = item_hash_map.get(product_result.product_name, '')
+
+                    # Convert to database result entity
+                    db_result = Result(
+                        item_hash=item_hash,
+                        item_name=product_result.product_name,
+                        status=ResultStatus.COUPANG_PREVIEW,
+                        data=product_result.to_dict(),
+                        error=product_result.error_message,
+                    )
+
+                    await result_repo.create(job.id, db_result)
+                    logger.info(f"Stored Coupang preview result for {product_result.product_name} to database")
+
+                await session.commit()
+                logger.info(f"Successfully stored {len(job.results)} Coupang preview results to database")
+
+        except Exception as e:
+            logger.error(f"Failed to store Coupang preview results to database: {e}")
+            # Continue execution even if database storage fails
 
 
 # Singleton instance
