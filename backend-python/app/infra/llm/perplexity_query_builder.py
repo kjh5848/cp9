@@ -1,4 +1,18 @@
-"""Perplexity query and prompt builder."""
+"""Perplexity 쿼리 및 프롬프트 빌더.
+
+주요 역할:
+- Perplexity API용 쿼리 및 프롬프트 구성
+- 배치 리서치 쿼리 생성
+- API 소비용 제품 아이템 포맷팅
+- 프롬프트 템플릿 및 변수 관리
+
+JSDoc:
+@module PerplexityQueryBuilder
+@description Perplexity AI API용 쿼리 및 프롬프트 생성기
+@version 1.0.0
+@author Backend Team  
+@since 2024-01-01
+"""
 
 from typing import List
 
@@ -15,13 +29,18 @@ logger = get_logger(__name__)
 
 
 class PerplexityQueryBuilder:
-    """Builds queries and prompts for Perplexity API.
+    """Perplexity API용 쿼리 및 프롬프트 빌더.
 
-    Responsibilities:
-    - Construct system prompts with dynamic parameters
-    - Build batch research queries
-    - Format product items for API consumption
-    - Manage prompt templates and variables
+    책임:
+    - 동적 매개변수를 사용한 시스템 프롬프트 구성
+    - 배치 리서치 쿼리 생성
+    - API 소비용 제품 아이템 포맷팅
+    - 프롬프트 템플릿 및 변수 관리
+    
+    JSDoc:
+    @class PerplexityQueryBuilder
+    @description Perplexity AI API용 쿼리 및 프롬프트를 구성하는 빌더 클래스
+    @static
     """
 
     # System prompt template for product research

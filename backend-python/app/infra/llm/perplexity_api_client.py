@@ -1,4 +1,18 @@
-"""Perplexity API HTTP client focused on communication."""
+"""Perplexity API HTTP 클라이언트 - 통신에 특화.
+
+주요 역할:
+- Perplexity AI API와의 HTTP 통신 관리
+- 인증 및 헤더 관리
+- 서킷 브레이커를 통한 안정성 보장
+- 네트워크 레벨 오류 및 타임아웃 처리
+
+JSDoc:
+@module PerplexityApiClient
+@description Perplexity AI API와의 저수준 HTTP 통신 클라이언트
+@version 1.0.0
+@author Backend Team
+@since 2024-01-01
+"""
 
 from typing import Any, Dict, Optional
 
@@ -18,7 +32,13 @@ logger = get_logger(__name__)
 
 
 class PerplexityApiError(Exception):
-    """Perplexity API communication error."""
+    """Perplexity API 통신 에러.
+    
+    HTTP 통신 중 발생하는 에러를 표현하는 예외 클래스입니다.
+    
+    Attributes:
+        status_code: HTTP 상태 코드 (선택)
+    """
 
     def __init__(self, message: str, status_code: Optional[int] = None):
         super().__init__(message)
@@ -26,13 +46,22 @@ class PerplexityApiError(Exception):
 
 
 class PerplexityApiClient:
-    """HTTP client for Perplexity API communication.
+    """Perplexity API 통신을 위한 HTTP 클라이언트.
 
-    Responsibilities:
-    - Handle HTTP communication with Perplexity API
-    - Manage authentication and headers
-    - Implement circuit breaker for reliability
-    - Handle network-level errors and timeouts
+    책임:
+    - Perplexity API와의 HTTP 통신 처리
+    - 인증 및 헤더 관리
+    - 안정성을 위한 서킷 브레이커 구현
+    - 네트워크 레벨 오류 및 타임아웃 처리
+    
+    JSDoc:
+    @class PerplexityApiClient
+    @description Perplexity AI API와의 저수준 HTTP 통신을 담당하는 클라이언트
+    @param {string} api_key - API 인증 키
+    @param {string} api_url - API 베이스 URL
+    @param {number} timeout - 요청 타임아웃 시간
+    @param {string} model - 사용할 AI 모델명
+    @param {CircuitBreakerConfig} circuit_breaker_config - 서킷 브레이커 설정
     """
 
     def __init__(

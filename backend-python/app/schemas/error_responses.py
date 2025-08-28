@@ -1,4 +1,18 @@
-"""Standardized error response schemas for API endpoints."""
+"""API 엔드포인트용 표준화된 오류 응답 스키마.
+
+주요 역할:
+- API 오류 코드 및 메시지 표준화
+- 클라이언트 친화적인 오류 응답 포맷
+- 다국어 오류 메시지 지원
+- 오류 세부 정보 및 디버깅 정보 제공
+
+JSDoc:
+@module ErrorResponseSchemas
+@description API 오류 응답을 위한 표준화된 Pydantic 스키마
+@version 1.0.0
+@author Backend Team
+@since 2024-01-01
+"""
 
 from enum import Enum
 from typing import Any, Dict, List, Optional
@@ -7,26 +21,37 @@ from pydantic import BaseModel, Field
 
 
 class ErrorCode(str, Enum):
-    """Standardized error codes for API responses."""
+    """API 응답용 표준화된 오류 코드.
+    
+    HTTP 상태 코드와 함께 사용되어 클라이언트가 오류를 쉽게 식별할 수 있도록 합니다.
+    
+    Categories:
+        4xx: 클라이언트 오류 (검증, 리소스, 제한 등)
+        5xx: 서버 오류 (외부 API, 내부 시스템 등)
+        
+    JSDoc:
+    @enum {string} ErrorCode
+    @description API 오류를 분류하는 표준화된 오류 코드
+    """
 
-    # Validation errors (4xx)
+    # 검증 오류 (4xx)
     VALIDATION_ERROR = "VALIDATION_ERROR"
     INVALID_REQUEST = "INVALID_REQUEST"
     INVALID_UUID_FORMAT = "INVALID_UUID_FORMAT"
     BATCH_SIZE_EXCEEDED = "BATCH_SIZE_EXCEEDED"
     MISSING_REQUIRED_FIELDS = "MISSING_REQUIRED_FIELDS"
 
-    # Resource errors (4xx)
+    # 리소스 오류 (4xx)
     RESOURCE_NOT_FOUND = "RESOURCE_NOT_FOUND"
     JOB_NOT_FOUND = "JOB_NOT_FOUND"
     TASK_NOT_FOUND = "TASK_NOT_FOUND"
     JOB_CANNOT_BE_CANCELLED = "JOB_CANNOT_BE_CANCELLED"
 
-    # Rate limiting (4xx)
+    # 요청 제한 (4xx)
     RATE_LIMIT_EXCEEDED = "RATE_LIMIT_EXCEEDED"
     TOO_MANY_CONCURRENT_REQUESTS = "TOO_MANY_CONCURRENT_REQUESTS"
 
-    # Coupang specific errors (4xx)
+    # 쿠팡 관련 오류 (4xx)
     COUPANG_DATA_UNAVAILABLE = "COUPANG_DATA_UNAVAILABLE"
     COUPANG_PARTIAL_DATA = "COUPANG_PARTIAL_DATA"
     COUPANG_EXTRACTION_FAILED = "COUPANG_EXTRACTION_FAILED"

@@ -1,4 +1,18 @@
-"""Celery tasks for WebSocket integration."""
+"""WebSocket 통합을 위한 Celery 작업.
+
+주요 역할:
+- WebSocket을 통한 실시간 작업 상태 전송
+- Celery 작업과 WebSocket 클라이언트 간 브릿지
+- 비동기 이벤트 루프 관리
+- 작업 생명주기 이벤트 처리
+
+JSDoc:
+@module WebSocketCeleryTasks
+@description WebSocket 실시간 통신을 위한 Celery 작업 통합
+@version 1.0.0
+@author Backend Team
+@since 2024-01-01
+"""
 
 import asyncio
 from typing import Optional
@@ -11,18 +25,26 @@ from app.core.logging import get_logger
 logger = get_logger(__name__)
 
 
-# Store the asyncio event loop for async operations in Celery tasks
+# Celery 작업에서 비동기 작업을 위한 이벤트 루프 저장
 _event_loop = None
 
 
 def get_event_loop():
-    """Get or create event loop for async operations in Celery tasks."""
+    """Celery 작업에서 비동기 작업을 위한 이벤트 루프를 가져오거나 생성합니다.
+    
+    Returns:
+        asyncio.AbstractEventLoop: 사용할 이벤트 루프
+        
+    Note:
+        - 기존 이벤트 루프가 있으면 재사용
+        - 없으면 새로 생성하여 설정
+    """
     global _event_loop
     try:
-        # Try to get the current event loop
+        # 현재 이벤트 루프 가져오기 시도
         _event_loop = asyncio.get_event_loop()
     except RuntimeError:
-        # Create new event loop if none exists
+        # 존재하지 않으면 새 이벤트 루프 생성
         _event_loop = asyncio.new_event_loop()
         asyncio.set_event_loop(_event_loop)
     return _event_loop

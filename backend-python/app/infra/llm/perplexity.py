@@ -1,4 +1,18 @@
-"""Perplexity API client wrapper."""
+"""Perplexity API 클라이언트 래퍼.
+
+주요 역할:
+- Perplexity AI API와의 통신 처리
+- API 요청/응답 관리 및 에러 처리
+- 재시도 로직 및 타임아웃 처리
+- HTTP 클라이언트 라이프사이클 관리
+
+JSDoc:
+@module PerplexityClient
+@description Perplexity AI API와의 통신을 담당하는 클라이언트
+@version 1.0.0
+@author Backend Team
+@since 2024-01-01
+"""
 
 import asyncio
 from typing import Any, Dict, Optional
@@ -18,7 +32,13 @@ logger = get_logger(__name__)
 
 
 class PerplexityAPIError(Exception):
-    """Perplexity API error."""
+    """Perplexity API 에러.
+    
+    API 호출 중 발생하는 에러를 표현하는 커스텀 예외 클래스입니다.
+    
+    Attributes:
+        status_code: HTTP 상태 코드 (선택)
+    """
 
     def __init__(self, message: str, status_code: Optional[int] = None):
         super().__init__(message)
@@ -26,7 +46,23 @@ class PerplexityAPIError(Exception):
 
 
 class PerplexityClient:
-    """Client for Perplexity API."""
+    """Perplexity API 클라이언트.
+    
+    Perplexity AI API를 사용하여 제품 리서치를 수행하는 클라이언트입니다.
+    
+    Attributes:
+        api_key: 인증용 API 키
+        api_url: API 베이스 URL
+        timeout: 요청 타임아웃 (초)
+        headers: HTTP 요청 헤더
+        
+    JSDoc:
+    @class PerplexityClient
+    @description Perplexity AI API를 통한 제품 리서치 클라이언트
+    @param {string} api_key - API 인증 키
+    @param {string} api_url - API 베이스 URL
+    @param {number} timeout - 요청 타임아웃 시간
+    """
 
     def __init__(
         self,
@@ -34,19 +70,19 @@ class PerplexityClient:
         api_url: Optional[str] = None,
         timeout: Optional[int] = None,
     ):
-        """Initialize Perplexity client.
+        """Perplexity 클라이언트를 초기화합니다.
 
         Args:
-            api_key: API key for authentication
-            api_url: Base URL for API
-            timeout: Request timeout in seconds
+            api_key: 인증용 API 키
+            api_url: API 베이스 URL
+            timeout: 요청 타임아웃 (초)
         """
         self.api_key = api_key or settings.perplexity_api_key
         self.api_url = api_url or settings.perplexity_api_url
         self.timeout = timeout or settings.perplexity_timeout
 
         if not self.api_key:
-            raise ValueError("Perplexity API key is required")
+            raise ValueError("Perplexity API 키가 필요합니다")
 
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",

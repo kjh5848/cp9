@@ -1,4 +1,18 @@
-"""Output DTOs for research endpoints."""
+"""리서치 엔드포인트용 출력 DTO.
+
+주요 역할:
+- API 응답 데이터 직렬화
+- 클라이언트에게 보내는 데이터 구조 정의
+- 출력 데이터 타입 안전성 보장
+- 응답 필드 문서화 및 예제 제공
+
+JSDoc:
+@module ResearchOutputDTOs
+@description 리서치 응답을 위한 Pydantic 출력 스키마
+@version 1.0.0
+@author Backend Team
+@since 2024-01-01
+"""
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional

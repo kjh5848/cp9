@@ -1,4 +1,18 @@
-"""Celery worker tasks."""
+"""Celery 워커 작업.
+
+주요 역할:
+- 백그라운드 리서치 작업 실행
+- 비동기 아이템 처리 및 결과 저장
+- 작업 상태 관리 및 진행률 추적
+- 에러 처리 및 재시도 로직
+
+JSDoc:
+@module CeleryWorkerTasks
+@description 백그라운드 리서치 작업을 실행하는 Celery 워커 태스크
+@version 1.0.0
+@author Backend Team
+@since 2024-01-01
+"""
 
 import asyncio
 from typing import Any, Dict
@@ -20,13 +34,18 @@ logger = get_logger(__name__)
 
 @celery_app.task(bind=True, max_retries=3, default_retry_delay=60)
 def run_research(self, job_id: str) -> Dict[str, Any]:
-    """Execute research job with all items.
+    """모든 아이템을 포함한 리서치 작업을 실행합니다.
 
     Args:
-        job_id: Research job UUID as string
+        job_id: 리서치 작업 UUID (문자열 형태)
 
     Returns:
-        Job execution results
+        Dict[str, Any]: 작업 실행 결과
+        
+    Note:
+        - 최대 3회 재시도
+        - 재시도 간격: 60초
+        - 프론트엔드가 실제 리서치를 담당
     """
     job_uuid = UUID(job_id)
     logger.info(f"Starting research job: {job_uuid}")

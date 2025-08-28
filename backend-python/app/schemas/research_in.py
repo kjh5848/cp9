@@ -1,4 +1,18 @@
-"""Input DTOs for research endpoints."""
+"""리서치 엔드포인트용 입력 DTO.
+
+주요 역할:
+- API 요청 데이터 검증 및 파싱
+- 클라이언트로부터 받는 데이터 구조 정의
+- 입력 데이터 타입 안전성 보장
+- 요청 매개변수 문서화
+
+JSDoc:
+@module ResearchInputDTOs
+@description 리서치 요청을 위한 Pydantic 입력 스키마
+@version 1.0.0
+@author Backend Team
+@since 2024-01-01
+"""
 
 from typing import Any, Dict, List, Optional
 
