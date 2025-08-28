@@ -11,11 +11,15 @@ from app.domain.product_entities import ProductResearchItem, ProductResearchJob
 from app.schemas.error_responses import ErrorCode
 from app.schemas.product_research_in import (
     ProductItemRequest as ProductResearchItemRequest,
+)
+from app.schemas.product_research_in import (
     ProductResearchRequest,
 )
 from app.schemas.product_research_out import (
-    ProductResultResponse as ProductResearchItemResponse, 
     ProductResearchResponse,
+)
+from app.schemas.product_research_out import (
+    ProductResultResponse as ProductResearchItemResponse,
 )
 
 

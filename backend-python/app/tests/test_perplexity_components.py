@@ -1,11 +1,11 @@
 """Tests for Perplexity research client components."""
 
 import json
+from asyncio import TimeoutError
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from aiohttp.client_exceptions import ClientError
-from asyncio import TimeoutError
 
 from app.core.exceptions import ExternalServiceException, RateLimitException
 from app.domain.product_entities import ProductResearchItem
