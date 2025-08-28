@@ -1,4 +1,18 @@
-"""Repository implementations for database operations."""
+"""데이터베이스 작업을 위한 리포지토리 구현체.
+
+주요 역할:
+- 도메인 엔티티와 데이터베이스 모델 간의 변환 처리
+- CRUD 작업의 추상화 및 캡슐화
+- 트랜잭션 관리 및 데이터 일관성 보장
+- 비동기 데이터베이스 연산 지원
+
+JSDoc:
+@module Repositories
+@description Clean Architecture의 인프라 계층 - 데이터 영속성 담당
+@version 1.0.0
+@author Backend Team
+@since 2024-01-01
+"""
 
 from typing import List, Optional
 from uuid import UUID
@@ -15,26 +29,72 @@ logger = get_logger(__name__)
 
 
 class ResearchJobRepository:
-    """Repository for research job operations."""
+    """리서치 작업 관련 데이터베이스 작업을 처리하는 리포지토리.
+    
+    주요 책임:
+    - ResearchJob 도메인 엔티티의 CRUD 작업
+    - 데이터베이스 모델과 도메인 엔티티 간 변환
+    - 작업 상태 관리 및 업데이트
+    - 관련 Item 및 Result 엔티티 관리
+    
+    JSDoc:
+    @class ResearchJobRepository
+    @description 리서치 작업 데이터 영속성을 담당하는 리포지토리
+    @implements {Repository<ResearchJob>}
+    @uses {ResearchJobModel, ItemModel, ResultModel}
+    """
 
     def __init__(self, session: AsyncSession):
-        """Initialize repository with database session.
+        """데이터베이스 세션으로 리포지토리를 초기화합니다.
 
         Args:
-            session: AsyncSession instance
+            session: SQLAlchemy 비동기 세션 인스턴스
+            
+        JSDoc:
+        @constructor
+        @description 리포지토리 인스턴스 초기화 및 DB 세션 할당
+        @param {AsyncSession} session - 비동기 데이터베이스 세션
         """
         self.session = session
 
     async def create(self, job: ResearchJob) -> ResearchJob:
-        """Create a new research job.
+        """새로운 리서치 작업을 생성합니다.
 
         Args:
-            job: ResearchJob entity
+            job: ResearchJob 도메인 엔티티
 
         Returns:
-            Created ResearchJob entity
+            생성된 ResearchJob 엔티티
+            
+        JSDoc:
+        @async
+        @method create
+        @description 새로운 리서치 작업을 데이터베이스에 저장
+        @param {ResearchJob} job - 저장할 작업 도메인 엔티티
+        @returns {Promise<ResearchJob>} 저장된 작업 엔티티
+        @throws {DatabaseError} 데이터베이스 저장 실패시
         """
-        # Create job model
+        # request_id 추출을 위한 컨텍스트 변수 사용
+        import contextvars
+        from uuid import uuid4
+        
+        request_id = getattr(contextvars.copy_context().get('request_id', None), 'get', lambda: str(uuid4()))()
+        if not request_id:
+            request_id = str(uuid4())
+            
+        logger.info(
+            f"[Step 8] 💾 데이터베이스 작업 저장 시작 | request_id={request_id} | job_id={job.id} | items_count={len(job.items)}",
+            extra={
+                "step": 8,
+                "request_id": request_id,
+                "job_id": str(job.id),
+                "repository_method": "create",
+                "items_count": len(job.items),
+                "file_location": "app/infra/db/repositories.py:ResearchJobRepository.create"
+            }
+        )
+        
+        # 작업 모델 생성
         job_model = ResearchJobModel(
             id=job.id,
             status=job.status.value,
@@ -48,22 +108,48 @@ class ResearchJobRepository:
             completed_at=job.completed_at,
         )
 
-        # Create item models
+        # Create item models and store for later reference
+        item_models = []
         for item in job.items:
+            # Triple validation to ensure hash is never empty
+            if not item.hash or item.hash.strip() == "":
+                logger.error(f"Empty hash detected for item: {item.product_name}")
+                # Force regenerate hash using utility function as fallback
+                from app.utils.hashing import calculate_item_hash
+                item.hash = calculate_item_hash(item)
+                logger.info(f"Regenerated hash for {item.product_name}: {item.hash}")
+            
+            # Final validation before database insertion
+            if not item.hash or item.hash.strip() == "":
+                raise ValueError(f"Failed to generate valid hash for item: {item.product_name}")
+
             item_model = ItemModel(
                 job_id=job.id,
                 name=item.product_name,
                 price=item.price_exact,
                 category=item.category,
-                hash=item.hash or "",
+                hash=item.hash,
                 metadata=item.metadata,
             )
+            item_models.append(item_model)
             self.session.add(item_model)
 
         self.session.add(job_model)
-        await self.session.flush()
+        await self.session.flush()  # 이렇게 하면 item_models에 ID가 할당됩니다
 
-        logger.info(f"Created research job: {job.id}")
+        logger.info(
+            f"[Step 8] ✅ 데이터베이스 작업 저장 완료 | request_id={request_id} | job_id={job.id} | items_saved={len(item_models)}",
+            extra={
+                "step": 8,
+                "request_id": request_id,
+                "job_id": str(job.id),
+                "repository_method": "create",
+                "items_saved_count": len(item_models),
+                "database_operation": "completed",
+                "status": "success"
+            }
+        )
+        
         return job
 
     async def get_by_id(self, job_id: UUID) -> Optional[ResearchJob]:
@@ -213,19 +299,30 @@ class ResultRepository:
         """
         self.session = session
 
-    async def create(self, job_id: UUID, result: Result) -> Result:
+    async def create(self, job_id: UUID, result: Result, item_id: Optional[UUID] = None) -> Result:
         """Create a new result.
 
         Args:
             job_id: Job UUID
             result: Result entity
+            item_id: Optional item UUID for foreign key reference
 
         Returns:
             Created Result entity
         """
+        # If item_id is not provided, try to find it by hash
+        if item_id is None and result.item_hash:
+            item_stmt = select(ItemModel.id).where(
+                ItemModel.job_id == job_id,
+                ItemModel.hash == result.item_hash
+            )
+            item_result = await self.session.execute(item_stmt)
+            item_id = item_result.scalar_one_or_none()
+
         result_model = ResultModel(
             id=result.id,
             job_id=job_id,
+            item_id=item_id,
             item_hash=result.item_hash,
             item_name=result.item_name,
             status=result.status.value,

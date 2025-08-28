@@ -1,7 +1,7 @@
-"""Product research API endpoints with enhanced error handling."""
+"""제품 리서치 API 엔드포인트 - 향상된 에러 처리 및 요청 추적 시스템."""
 
 from datetime import datetime
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, BackgroundTasks, Query, status
 from pydantic import ValidationError as PydanticValidationError
@@ -10,7 +10,6 @@ from app.core.exceptions import (
     BaseAPIException,
     ValidationException,
 )
-from app.core.exceptions import ErrorHandler, CoupangException
 from app.core.exceptions.exception_handler import get_exception_handler
 from app.core.logging import get_logger
 from app.domain.product_entities import ProductResearchItem
@@ -19,7 +18,6 @@ from app.schemas.product_research_in import (
     ProductResearchRequest,
 )
 from app.schemas.product_research_out import (
-    JobStatusResponse,
     ProductResearchResponse,
     ProductResultResponse,
     ResearchMetadataResponse,
@@ -57,39 +55,63 @@ async def create_product_research(
     """제품 리서치 작업을 생성합니다.
 
     Args:
-        request: 제품 리서치 요청
-        background_tasks: FastAPI 백그라운드 작업
-        use_celery: Celery 사용 여부
+        request: 제품 리서치 요청 데이터
+        background_tasks: FastAPI 백그라운드 작업 관리자
+        use_celery: Celery 백그라운드 작업 사용 여부
         return_coupang_preview: 쿠팡 정보 즉시 리턴 여부
 
     Returns:
-        리서치 작업 응답
+        리서치 작업 응답 (API 가이드 형식)
 
     Raises:
-        BaseAPIException: 구조화된 API 에러
+        BaseAPIException: 구조화된 API 에러 발생시
     """
+    # 고유 요청 ID 생성
+    request_id = str(uuid4())
+    
+    # Step 1: API 요청 수신 로그
     logger.info(
-        f"📥 제품 리서치 요청 수신 - 제품 수: {len(request.items)}, "
-        f"Celery 사용: {use_celery}, 쿠팡 미리보기: {return_coupang_preview}",
+        f"[Step 1] 📥 API 요청 수신 | request_id={request_id} | endpoint=/research/products | "
+        f"items_count={len(request.items)} | celery={use_celery} | coupang_preview={return_coupang_preview} | priority={request.priority}",
         extra={
-            "request_id": id(request),
+            "step": 1,
+            "request_id": request_id,
+            "endpoint": "/research/products",
             "items_count": len(request.items),
             "use_celery": use_celery,
             "return_coupang_preview": return_coupang_preview,
-            "priority": request.priority
+            "priority": request.priority,
+            "file_location": "app/api/v1/endpoints/product_research.py:create_product_research"
         }
     )
-    
-    # 요청된 제품 리스트 로깅
+
+    # 요청된 제품 상세 정보 로깅 (디버그 레벨)
     for i, item in enumerate(request.items):
         logger.debug(
             f"제품 {i+1}: {item.product_name} (카테고리: {item.category})",
-            extra={"item_index": i, "product_name": item.product_name, "category": item.category}
+            extra={
+                "request_id": request_id,
+                "item_index": i, 
+                "product_name": item.product_name, 
+                "category": item.category
+            }
         )
-    
+
     try:
-        # Validate batch size
+        # Step 2: 요청 검증 시작
+        logger.info(
+            f"[Step 2] 🔍 요청 검증 시작 | request_id={request_id} | validating_items_count={len(request.items)}",
+            extra={
+                "step": 2,
+                "request_id": request_id,
+                "validating_items_count": len(request.items),
+                "file_location": "app/api/v1/endpoints/product_research.py:validation"
+            }
+        )
+        
+        # 배치 크기 검증
         if len(request.items) == 0:
+            logger.error(f"[Step 2] ❌ 검증 실패 | request_id={request_id} | error=empty_items_list")
             raise ValidationException(
                 validation_errors=[],
                 message="최소 1개 이상의 제품을 입력해야 합니다.",
@@ -97,14 +119,48 @@ async def create_product_research(
             )
 
         if len(request.items) > 10:
+            logger.error(f"[Step 2] ❌ 검증 실패 | request_id={request_id} | error=batch_size_exceeded | received={len(request.items)} | max_allowed=10")
             raise BaseAPIException(
                 error_code=ErrorCode.BATCH_SIZE_EXCEEDED,
                 details=f"Received {len(request.items)} items, maximum allowed is 10",
                 metadata={"received_count": len(request.items), "max_allowed": 10},
             )
+            
+        logger.info(
+            f"[Step 2] ✅ 요청 검증 완료 | request_id={request_id} | items_count={len(request.items)} | validation=passed",
+            extra={
+                "step": 2,
+                "request_id": request_id,
+                "items_count": len(request.items),
+                "validation_result": "passed"
+            }
+        )
+        
+        # Step 3: 서비스 인스턴스 생성
+        logger.info(
+            f"[Step 3] 🔧 서비스 인스턴스 생성 | request_id={request_id}",
+            extra={
+                "step": 3,
+                "request_id": request_id,
+                "service": "ProductResearchService",
+                "file_location": "app/services/product_research_service.py"
+            }
+        )
         service = get_product_research_service()
 
-        # Convert request items to domain entities
+        # Step 4: 도메인 엔티티 변환
+        logger.info(
+            f"[Step 4] 🔄 도메인 엔티티 변환 | request_id={request_id} | converting_items={len(request.items)}",
+            extra={
+                "step": 4,
+                "request_id": request_id,
+                "converting_items": len(request.items),
+                "entity_type": "ProductResearchItem",
+                "file_location": "app/domain/product_entities.py:ProductResearchItem"
+            }
+        )
+        
+        # 요청 아이템을 도메인 엔티티로 변환
         items = [
             ProductResearchItem(
                 product_name=item.product_name,
@@ -125,11 +181,44 @@ async def create_product_research(
             )
             for item in request.items
         ]
+        
+        logger.info(
+            f"[Step 4] ✅ 도메인 엔티티 변환 완료 | request_id={request_id} | converted_items={len(items)}",
+            extra={
+                "step": 4,
+                "request_id": request_id,
+                "converted_items": len(items)
+            }
+        )
 
         if use_celery:
-            # Create Celery task
+            # Step 5A: Celery 백그라운드 작업 생성
+            logger.info(
+                f"[Step 5A] ⚡ Celery 백그라운드 작업 생성 | request_id={request_id} | priority={request.priority}",
+                extra={
+                    "step": "5A",
+                    "request_id": request_id,
+                    "task_type": "celery",
+                    "priority": request.priority,
+                    "items_count": len(items),
+                    "file_location": "app/services/product_research_service.py:create_celery_task"
+                }
+            )
+            
+            # Celery 작업 생성
             task_id = service.create_celery_task(
                 items=[item.to_dict() for item in items], priority=request.priority
+            )
+            
+            logger.info(
+                f"[Step 5A] ✅ Celery 작업 생성 완료 | request_id={request_id} | task_id={task_id}",
+                extra={
+                    "step": "5A",
+                    "request_id": request_id,
+                    "task_id": task_id,
+                    "task_type": "celery",
+                    "status": "created"
+                }
             )
 
             # Return task ID as job_id in API guide format
@@ -154,34 +243,99 @@ async def create_product_research(
                 "message": "백그라운드 리서치 작업이 시작되었습니다."
             }
         else:
-            # Check if Coupang preview is requested
+            # Step 5B: 쿠팡 미리보기 요청 확인
             if return_coupang_preview:
+                logger.info(
+                    f"[Step 5B] 🛒 쿠팡 미리보기 작업 생성 | request_id={request_id} | preview=enabled",
+                    extra={
+                        "step": "5B",
+                        "request_id": request_id,
+                        "task_type": "coupang_preview",
+                        "priority": request.priority,
+                        "callback_url": request.callback_url,
+                        "file_location": "app/services/product_research_service.py:create_research_job_with_coupang_preview"
+                    }
+                )
                 try:
-                    # Create job with immediate Coupang preview
+                    # 쿠팡 미리보기 포함 작업 생성
                     job = await service.create_research_job_with_coupang_preview(
                         items=items,
                         priority=request.priority,
                         callback_url=request.callback_url,
                     )
+                    
+                    logger.info(
+                        f"[Step 5B] ✅ 쿠팡 미리보기 작업 생성 완료 | request_id={request_id} | job_id={job.id} | coupang_results={len(job.results)}",
+                        extra={
+                            "step": "5B",
+                            "request_id": request_id,
+                            "job_id": str(job.id),
+                            "task_type": "coupang_preview",
+                            "coupang_results_count": len(job.results),
+                            "status": "created"
+                        }
+                    )
                 except Exception as coupang_error:
                     logger.warning(
-                        f"Coupang preview failed, falling back to regular job: {coupang_error}"
+                        f"[Step 5B] ⚠️ 쿠팡 미리보기 실패, 일반 작업으로 전환 | request_id={request_id} | error={str(coupang_error)}",
+                        extra={
+                            "step": "5B",
+                            "request_id": request_id,
+                            "error": str(coupang_error),
+                            "fallback": "regular_job"
+                        }
                     )
-                    # Fall back to regular job if Coupang preview fails
+                    # 쿠팡 미리보기 실패시 일반 작업으로 대체
                     job = await service.create_research_job(
                         items=items,
                         priority=request.priority,
                         callback_url=request.callback_url,
                     )
             else:
-                # Create regular async job
+                # Step 5C: 일반 비동기 작업 생성
+                logger.info(
+                    f"[Step 5C] 🔄 일반 비동기 작업 생성 | request_id={request_id} | preview=disabled",
+                    extra={
+                        "step": "5C",
+                        "request_id": request_id,
+                        "task_type": "regular",
+                        "priority": request.priority,
+                        "callback_url": request.callback_url,
+                        "file_location": "app/services/product_research_service.py:create_research_job"
+                    }
+                )
+                
+                # 일반 비동기 작업 생성
                 job = await service.create_research_job(
                     items=items,
                     priority=request.priority,
                     callback_url=request.callback_url,
                 )
+                
+                logger.info(
+                    f"[Step 5C] ✅ 일반 비동기 작업 생성 완료 | request_id={request_id} | job_id={job.id}",
+                    extra={
+                        "step": "5C",
+                        "request_id": request_id,
+                        "job_id": str(job.id),
+                        "task_type": "regular",
+                        "status": "created"
+                    }
+                )
 
-            # Convert results to response format
+            # Step 6: 응답 데이터 변환 시작
+            logger.info(
+                f"[Step 6] 📦 응답 데이터 변환 시작 | request_id={request_id} | job_results={len(job.results)}",
+                extra={
+                    "step": 6,
+                    "request_id": request_id,
+                    "job_id": str(job.id),
+                    "job_results_count": len(job.results),
+                    "file_location": "app/api/v1/endpoints/product_research.py:response_conversion"
+                }
+            )
+            
+            # 결과를 응답 형식으로 변환
             results = []
             coupang_errors = []
 
@@ -260,11 +414,26 @@ async def create_product_research(
                 ),
             )
 
-            # API guide format으로 반환 (FastAPI 기본 JSON 직렬화 사용)
+            # Step 7: 최종 응답 생성
+            final_message = f"제품 리서치 작업이 성공적으로 {'완료' if job.status.value == 'completed' else '생성'}되었습니다."
+            logger.info(
+                f"[Step 7] ✅ 요청 처리 완료 | request_id={request_id} | job_id={job.id} | status={job.status.value} | results_count={len(results)}",
+                extra={
+                    "step": 7,
+                    "request_id": request_id,
+                    "job_id": str(job.id),
+                    "final_status": job.status.value,
+                    "results_count": len(results),
+                    "processing_completed": True,
+                    "message": final_message
+                }
+            )
+
+            # API 가이드 형식으로 최종 응답 반환 (FastAPI 기본 JSON 직렬화 사용)
             return {
                 "success": True,
                 "data": response_data,
-                "message": f"제품 리서치 작업이 성공적으로 {'완료' if job.status.value == 'completed' else '생성'}되었습니다."
+                "message": final_message
             }
 
     except BaseAPIException:
@@ -433,7 +602,7 @@ async def get_job_status(
                     "message": status_dict.get("message"),
                     "metadata": status_dict.get("result"),
                 }
-                
+
                 return {
                     "success": True,
                     "data": status_response,
@@ -480,7 +649,7 @@ async def get_job_status(
                     "failed": job.failed_items,
                 },
             }
-            
+
             return {
                 "success": True,
                 "data": status_response,
