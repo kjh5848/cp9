@@ -81,7 +81,7 @@ async def create_product_research(
         if use_celery:
             # Create Celery task
             task_id = service.create_celery_task(
-                items=[item.to_dict() for item in items], 
+                items=[item.to_dict() for item in items],
                 priority=request.priority
             )
 
@@ -136,7 +136,7 @@ async def create_product_research(
     },
 )
 async def get_research_results(
-    job_id: UUID, 
+    job_id: UUID,
     include_failed: bool = Query(True, description="실패한 아이템 포함 여부")
 ) -> ProductResearchResponse:
     """리서치 작업 결과를 조회합니다.
@@ -187,7 +187,7 @@ async def get_research_results(
     },
 )
 async def get_job_status(
-    job_id: str, 
+    job_id: str,
     is_celery: bool = Query(False, description="Celery 작업 여부")
 ) -> JobStatusResponse:
     """리서치 작업 상태를 조회합니다.
@@ -222,7 +222,7 @@ async def get_job_status(
         else:
             # Handle async job status
             job_uuid = validator.validate_uuid_parameter(job_id, "job_id")
-            
+
             job = await service.get_job_status(job_uuid)
             if not job:
                 raise error_handler.handle_resource_not_found(

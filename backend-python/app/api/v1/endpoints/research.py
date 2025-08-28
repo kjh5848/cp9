@@ -1,10 +1,10 @@
 """Research endpoints."""
 
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID
 
 from celery import current_app as celery_app
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
@@ -14,16 +14,62 @@ from app.infra.db.session import get_db
 from app.schemas.research_in import ResearchJobCreateIn, ResearchJobUpdateIn
 from app.schemas.research_out import (
     ErrorOut,
-    ResearchJobOut,
-    ResearchJobSummaryOut,
-    TaskStatusOut,
 )
-from app.schemas.research_list_out import ResearchJobListResponse
 from app.services.research_service import ResearchService
 
 logger = get_logger(__name__)
 
 router = APIRouter()
+
+
+@router.post("/debug")
+async def debug_endpoint(request: Request) -> dict:
+    """Debug endpoint to test request parsing."""
+    try:
+        body = await request.body()
+        logger.info(f"Debug endpoint called - Body length: {len(body)}")
+        logger.info(f"Content-Type: {request.headers.get('content-type')}")
+        logger.info(f"Body (first 500 chars): {body[:500].decode('utf-8', errors='ignore')}")
+        return {"status": "ok", "body_length": len(body), "content_type": request.headers.get('content-type')}
+    except Exception as e:
+        logger.error(f"Debug endpoint error: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+@router.post("/jobs/raw")
+async def create_research_job_raw(request: Request) -> dict:
+    """Raw endpoint to debug parsing issues."""
+    try:
+        # Get raw body
+        body = await request.body()
+        logger.info(f"Raw body: {body}")
+
+        # Get content type
+        content_type = request.headers.get("content-type")
+        logger.info(f"Content-Type: {content_type}")
+
+        # Try to parse JSON manually
+        import json
+        try:
+            data = json.loads(body)
+            logger.info(f"JSON parsed successfully: {data}")
+        except Exception as e:
+            logger.error(f"JSON parsing failed: {e}")
+            return {"error": f"JSON parsing failed: {e}"}
+
+        # Try to create Pydantic model
+        try:
+            from app.schemas.research_in import ResearchJobCreateIn
+            job_data = ResearchJobCreateIn(**data)
+            logger.info(f"Pydantic validation successful: {job_data}")
+            return {"status": "success", "data": job_data.dict()}
+        except Exception as e:
+            logger.error(f"Pydantic validation failed: {e}")
+            return {"error": f"Pydantic validation failed: {e}"}
+
+    except Exception as e:
+        logger.error(f"Raw endpoint error: {e}")
+        return {"error": str(e)}
 
 
 def get_research_service(
@@ -54,18 +100,35 @@ def get_research_service(
     },
 )
 async def create_research_job(
+    request: Request,
     job_data: ResearchJobCreateIn,
     service: ResearchService = Depends(get_research_service),
 ) -> dict:
     """Create a new research job."""
     try:
+        # Debug logging
+        logger.info("Received POST request to /research/jobs")
+        logger.info(f"Content-Type: {request.headers.get('content-type')}")
+        logger.info(f"Job data: {job_data}")
+        logger.info(f"Number of items: {len(job_data.items)}")
+
+        # Log first item for debugging
+        if job_data.items:
+            logger.info(f"First item: {job_data.items[0]}")
         # Convert Pydantic models to dictionaries
         items_data = [item.model_dump() for item in job_data.items]
 
-        # Create research job
+        # Add top-level fields to metadata
+        metadata = job_data.metadata.copy()
+        metadata.update({
+            "return_coupang_preview": job_data.return_coupang_preview,
+            "priority": job_data.priority,
+        })
+
+        # Create research job (only one method available in ResearchService)
         job = await service.create_research_job(
             items=items_data,
-            metadata=job_data.metadata,
+            metadata=metadata,
         )
 
         # API guide format으로 반환 (직접 딕셔너리 사용)
@@ -114,7 +177,7 @@ async def start_research_job(
             "result": None,
             "progress": {"job_id": str(job_id), "status": "started"},
         }
-        
+
         return {
             "success": True,
             "data": status_data,
@@ -195,7 +258,7 @@ async def list_research_jobs(
         # TODO: repository layer의 lazy loading 문제 해결 후 다시 활성화
         try:
             jobs = await service.list_research_jobs(status=status_enum, limit=limit)
-            
+
             # Convert to summary format (직접 딕셔너리 사용)
             job_summaries = [
                 {
@@ -222,7 +285,7 @@ async def list_research_jobs(
             message = "아직 생성된 리서치 작업이 없습니다. 새로운 작업을 시작해 보세요."
         else:
             message = f"{len(job_summaries)}개의 리서치 작업을 성공적으로 조회했습니다."
-        
+
         # API guide format으로 반환
         return {
             "success": True,
