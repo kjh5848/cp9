@@ -4,8 +4,7 @@ This module handles conversion from domain entities to API response schemas,
 following the Single Responsibility Principle by focusing solely on response formatting.
 """
 
-from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID
 
 from app.core.logging import get_logger
@@ -18,7 +17,11 @@ from app.schemas.product_research_out import (
     ProductResultResponse,
     ResearchMetadataResponse,
 )
-from app.schemas.research_out import ResearchJobOut, ResearchJobSummaryOut, TaskStatusOut
+from app.schemas.research_out import (
+    ResearchJobOut,
+    ResearchJobSummaryOut,
+    TaskStatusOut,
+)
 
 logger = get_logger(__name__)
 
@@ -290,7 +293,7 @@ class ResponseFormatter:
         """
         if job.total_items == 0:
             return 0.0
-        
+
         processed_items = job.successful_items + job.failed_items
         return processed_items / job.total_items
 

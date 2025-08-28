@@ -12,7 +12,7 @@ from pydantic import ValidationError as PydanticValidationError
 from app.core.exceptions import ValidationDomainException
 from app.core.logging import get_logger
 from app.domain.product_entities import ProductResearchItem
-from app.schemas.error_responses import ErrorCode, ValidationErrorDetail
+from app.schemas.error_responses import ValidationErrorDetail
 from app.schemas.product_research_in import ProductResearchRequest
 
 logger = get_logger(__name__)
@@ -169,7 +169,7 @@ class RequestValidator:
                     validated_params[param_name] = float(param_value)
                 else:
                     validated_params[param_name] = expected_type(param_value)
-            except (ValueError, TypeError) as e:
+            except (ValueError, TypeError):
                 validation_errors.append(
                     ValidationErrorDetail(
                         field=param_name,

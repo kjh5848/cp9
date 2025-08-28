@@ -2,7 +2,7 @@
 
 This module provides a restructured exception system following SRP:
 - Domain exceptions for business logic errors
-- HTTP mapping for web API responses  
+- HTTP mapping for web API responses
 - Exception handling for conversion and logging
 """
 
@@ -17,10 +17,18 @@ from app.core.exceptions.domain_exceptions import (
     ValidationDomainException,
 )
 
-# HTTP mapping
-from app.core.exceptions.http_exception_mapper import (
-    HttpExceptionMapper,
-    get_http_exception_mapper,
+# Backward compatibility - maintain original interface
+from app.core.exceptions.domain_exceptions import (
+    DomainException as BaseAPIException,
+)
+from app.core.exceptions.domain_exceptions import (
+    ExternalServiceDomainException as ExternalServiceException,
+)
+from app.core.exceptions.domain_exceptions import (
+    RateLimitDomainException as RateLimitException,
+)
+from app.core.exceptions.domain_exceptions import (
+    ValidationDomainException as ValidationException,
 )
 
 # Exception handling
@@ -29,17 +37,15 @@ from app.core.exceptions.exception_handler import (
     get_exception_handler,
 )
 
-# Backward compatibility - maintain original interface
-from app.core.exceptions.domain_exceptions import (
-    DomainException as BaseAPIException,
-    ValidationDomainException as ValidationException,
-    ExternalServiceDomainException as ExternalServiceException,
-    RateLimitDomainException as RateLimitException,
+# HTTP mapping
+from app.core.exceptions.http_exception_mapper import (
+    HttpExceptionMapper,
+    get_http_exception_mapper,
 )
 
 # Import from exceptions.py for backward compatibility and method injection
 try:
-    from ..exceptions import ErrorHandler, CoupangException
+    from ..exceptions import CoupangException, ErrorHandler
     # This import is crucial as it triggers _add_legacy_methods() execution
 except ImportError:
     # Fallback if circular import occurs

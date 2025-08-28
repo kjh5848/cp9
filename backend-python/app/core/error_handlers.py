@@ -9,7 +9,9 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core.exceptions import BaseAPIException
-from app.core.exceptions.exception_handler import ExceptionHandler, get_exception_handler
+from app.core.exceptions.exception_handler import (
+    get_exception_handler,
+)
 from app.core.logging import get_logger
 from app.schemas.error_responses import ErrorCode
 
@@ -269,8 +271,8 @@ class GlobalExceptionHandler:
         Returns:
             True if in debug mode
         """
-        # Would check actual debug setting
-        return False
+        # Temporarily enabled for debugging
+        return True
 
 
 def setup_error_handlers(app) -> None:

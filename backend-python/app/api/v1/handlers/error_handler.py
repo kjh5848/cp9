@@ -11,8 +11,6 @@ from pydantic import ValidationError as PydanticValidationError
 
 from app.core.exceptions import (
     BaseAPIException,
-    ErrorHandler as CoreErrorHandler,
-    ValidationException,
     get_exception_handler,
 )
 from app.core.logging import get_logger

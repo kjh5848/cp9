@@ -6,12 +6,9 @@ from fastapi import HTTPException, status
 
 from app.core.error_messages import ErrorMessages
 from app.core.exceptions.domain_exceptions import (
-    BusinessLogicDomainException,
     DomainException,
     ExternalServiceDomainException,
     RateLimitDomainException,
-    ResearchDomainException,
-    ResourceDomainException,
     ValidationDomainException,
 )
 from app.core.logging import get_logger
