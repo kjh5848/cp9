@@ -17,8 +17,21 @@
       "Bash(echo $env:USERPROFILE)",
       "Bash(where bash)",
       "Bash(git pull:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(python:*)",
+      "Bash(git commit:*)",
+      "Bash(java:*)",
+      "Bash(where java)"
     ],
     "deny": []
+  },
+ "hooks": {
+    "Notification": [
+      { "hooks": [ { "type": "command", "command": "notify-send 'Claude Code' '입력/권한 대기 중'" } ] }
+    ],
+    "Stop": [
+      { "hooks": [ { "type": "command", "command": "notify-send 'Claude Code' '작업 완료'" } ] }
+    ]
   }
+
 }

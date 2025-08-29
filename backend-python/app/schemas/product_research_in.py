@@ -11,9 +11,8 @@ from app.core.constants import (
     SUPPORTED_CURRENCIES,
 )
 
-
 class ProductItemRequest(BaseModel):
-    """Single product item request schema."""
+    """단일 제품 항목 요청 스키마."""
 
     product_name: str = Field(
         ...,
@@ -65,14 +64,17 @@ class ProductItemRequest(BaseModel):
 
     # 키워드 검색 전용 필드
     keyword: Optional[str] = Field(
-        None, description="키워드 검색어 (keyword)", examples=["갤럭시 버드3 프로"]
+        None,
+        description="키워드 검색어 (keyword)", examples=["갤럭시 버드3 프로"]
     )
     rank: Optional[int] = Field(
-        None, ge=1, description="키워드 검색 시 순위 (rank)", examples=[1]
+        None, 
+        ge=1, description="키워드 검색 시 순위 (rank)", examples=[1]
     )
 
     metadata: Optional[Dict[str, Any]] = Field(
-        default_factory=dict, description="추가 메타데이터"
+        default_factory=dict, 
+        description="추가 메타데이터"
     )
 
     @field_validator("currency")

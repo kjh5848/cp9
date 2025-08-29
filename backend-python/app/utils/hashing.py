@@ -1,4 +1,9 @@
-"""Utility functions for hashing items."""
+"""
+아이템 해싱 유틸리티 함수 모듈.
+
+이 모듈은 아이템 및 데이터의 고유한 해시값을 생성하는 함수들을 제공합니다.
+중복 검사, 데이터 무결성 확인, 캐싱 키 생성 등에 사용됩니다.
+"""
 
 import hashlib
 from typing import Any, Dict
@@ -7,13 +12,17 @@ from app.domain.entities import Item
 
 
 def calculate_item_hash(item: Item) -> str:
-    """Calculate a unique hash for an item.
+    """
+    아이템의 고유한 해시값을 계산합니다.
+
+    아이템의 제품명, 가격, 카테고리를 기반으로 SHA-256 해시를 생성합니다.
+    동일한 아이템은 항상 동일한 해시값을 가지도록 정규화를 수행합니다.
 
     Args:
-        item: Item entity
+        item: Item 엔티티 객체
 
     Returns:
-        SHA-256 hash of the item
+        str: 아이템의 SHA-256 해시값 (64자 16진수 문자열)
     """
     # Create a consistent string representation of the item
     hash_data = {
