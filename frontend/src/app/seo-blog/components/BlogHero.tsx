@@ -2,11 +2,11 @@
 
 import { FadeInSection, GradientBackground, FloatingElement } from '@/shared/components/advanced-ui'
 import { Button } from '@/shared/components/custom-ui'
-import { designTokens } from '@/shared/design-tokens'
+import { colors, typography, spacing, boxShadow } from '@/shared/design-tokens'
 
 export function BlogHero() {
   return (
-    <div className="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
+    <div className="relative min-h-[100vh] flex items-center justify-center overflow-hidden pt-10 pb-20">
       {/* Background Elements */}
       <GradientBackground />
       
@@ -31,75 +31,198 @@ export function BlogHero() {
       </FloatingElement>
 
       {/* Main Content */}
-      <div className="relative z-10 text-center max-w-4xl mx-auto px-6">
+      <div className="relative z-20 text-center max-w-4xl mx-auto px-6">
         <FadeInSection>
           <div className="mb-8">
             {/* Badge */}
-            <div className="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full border border-white/20 text-white/90 text-sm font-medium mb-6">
-              <span className="mr-2">✨</span>
-              CP9 기술 블로그
+            <div 
+              className="inline-flex items-center backdrop-blur-md rounded-full border text-sm font-medium mb-6"
+              style={{
+                padding: spacing.component.buttonPadding.sm,
+                backgroundColor: colors.glass.medium,
+                borderColor: colors.glass.light,
+                color: colors.neutral[0]
+              }}
+            >
+              <span className="mr-2">🛍️</span>
+              CP9 쿠팡 상품 분석
             </div>
 
             {/* Main Title */}
-            <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-white via-blue-100 to-purple-200 bg-clip-text text-transparent leading-tight mb-6">
-              최신 기술 인사이트
+            <h1 
+              className="font-bold leading-tight mb-6"
+              style={{
+                fontSize: typography.textStyles.displayLarge.fontSize,
+                fontWeight: typography.textStyles.displayLarge.fontWeight,
+                lineHeight: typography.textStyles.displayLarge.lineHeight,
+                letterSpacing: typography.textStyles.displayLarge.letterSpacing,
+                background: colors.gradients.hero,
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                textShadow: '0 0 40px rgba(255, 255, 255, 0.5)'
+              }}
+            >
+              쿠팡 상품 SEO 컨텐츠
             </h1>
 
             {/* Subtitle */}
-            <p className="text-xl md:text-2xl text-white/80 leading-relaxed mb-8 max-w-3xl mx-auto">
-              개발, 디자인, AI부터 성능 최적화까지 <br />
-              <span className="font-semibold text-white">실전 경험을 바탕으로 한 깊이 있는 기술 아티클</span>을 만나보세요
+            <p 
+              className="leading-relaxed mb-8 max-w-3xl mx-auto"
+              style={{
+                fontSize: typography.textStyles.headlineMedium.fontSize,
+                color: colors.neutral[200],
+                textShadow: '0 2px 10px rgba(0, 0, 0, 0.3)'
+              }}
+            >
+              AI 기반 상품 분석부터 SEO 최적화까지 <br />
+              <span 
+                className="font-semibold" 
+                style={{ color: colors.neutral[50] }}
+              >
+                데이터 중심의 상품 리뷰와 마케팅 인사이트
+              </span>를 제공합니다
             </p>
 
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+            <div 
+              className="grid grid-cols-1 md:grid-cols-3 mb-10"
+              style={{ gap: spacing.component.gridGap.lg }}
+            >
               <div className="text-center">
-                <div className="text-3xl font-bold text-white mb-2">50+</div>
-                <div className="text-white/70 text-sm">전문 아티클</div>
+                <div 
+                  className="font-bold mb-2"
+                  style={{
+                    fontSize: typography.textStyles.displaySmall.fontSize,
+                    fontWeight: typography.textStyles.displaySmall.fontWeight,
+                    color: colors.neutral[0],
+                    textShadow: '0 2px 10px rgba(0, 0, 0, 0.3)'
+                  }}
+                >
+                  200+
+                </div>
+                <div 
+                  style={{
+                    fontSize: typography.textStyles.bodySmall.fontSize,
+                    color: colors.neutral[300]
+                  }}
+                >
+                  분석된 상품
+                </div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-white mb-2">10+</div>
-                <div className="text-white/70 text-sm">기술 분야</div>
+                <div 
+                  className="font-bold mb-2"
+                  style={{
+                    fontSize: typography.textStyles.displaySmall.fontSize,
+                    fontWeight: typography.textStyles.displaySmall.fontWeight,
+                    color: colors.neutral[0],
+                    textShadow: '0 2px 10px rgba(0, 0, 0, 0.3)'
+                  }}
+                >
+                  15+
+                </div>
+                <div 
+                  style={{
+                    fontSize: typography.textStyles.bodySmall.fontSize,
+                    color: colors.neutral[300]
+                  }}
+                >
+                  상품 카테고리
+                </div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-white mb-2">1000+</div>
-                <div className="text-white/70 text-sm">월간 독자</div>
+                <div 
+                  className="font-bold mb-2"
+                  style={{
+                    fontSize: typography.textStyles.displaySmall.fontSize,
+                    fontWeight: typography.textStyles.displaySmall.fontWeight,
+                    color: colors.neutral[0],
+                    textShadow: '0 2px 10px rgba(0, 0, 0, 0.3)'
+                  }}
+                >
+                  95%
+                </div>
+                <div 
+                  style={{
+                    fontSize: typography.textStyles.bodySmall.fontSize,
+                    color: colors.neutral[300]
+                  }}
+                >
+                  SEO 최적화 점수
+                </div>
               </div>
             </div>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div 
+              className="flex flex-col sm:flex-row items-center justify-center"
+              style={{ gap: spacing[4] }}
+            >
               <Button 
                 size="lg"
-                className="bg-white text-gray-900 hover:bg-gray-100 shadow-xl hover:shadow-2xl transition-all duration-300 px-8 py-4 text-lg font-semibold"
+                className="shadow-xl hover:shadow-2xl transition-all duration-300 font-semibold"
+                style={{
+                  padding: spacing.component.buttonPadding.xl,
+                  backgroundColor: colors.neutral[0],
+                  color: colors.neutral[900],
+                  fontSize: typography.textStyles.labelLarge.fontSize,
+                  boxShadow: boxShadow.xl,
+                  border: 'none'
+                }}
               >
-                🚀 최신 글 둘러보기
+                🔍 상품 분석 둘러보기
               </Button>
               <Button 
                 variant="outline"
                 size="lg"
-                className="border-white/30 text-white hover:bg-white/10 backdrop-blur-sm px-8 py-4 text-lg"
+                className="backdrop-blur-sm transition-all duration-300"
+                style={{
+                  padding: spacing.component.buttonPadding.xl,
+                  borderColor: colors.glass.light,
+                  color: colors.neutral[0],
+                  fontSize: typography.textStyles.labelLarge.fontSize,
+                  backgroundColor: 'transparent'
+                }}
               >
-                📧 뉴스레터 구독
+                📊 분석 리포트 받기
               </Button>
             </div>
           </div>
         </FadeInSection>
 
-        {/* Popular Topics */}
+        {/* Popular Categories */}
         <FadeInSection delay={200}>
-          <div className="mt-12">
-            <p className="text-white/60 text-sm mb-4">인기 주제</p>
-            <div className="flex flex-wrap items-center justify-center gap-3">
+          <div style={{ marginTop: spacing[12] }}>
+            <p 
+              className="mb-4"
+              style={{
+                color: colors.neutral[200],
+                fontSize: typography.textStyles.bodySmall.fontSize
+              }}
+            >
+              인기 카테고리
+            </p>
+            <div 
+              className="flex flex-wrap items-center justify-center"
+              style={{ gap: spacing[3] }}
+            >
               {[
-                'React', 'Next.js', 'TypeScript', 'AI/ML', 
-                '성능최적화', '디자인시스템', 'Supabase', 'TailwindCSS'
-              ].map(topic => (
+                '생활용품', '전자제품', '패션의류', '뷰티', 
+                '식품', '스포츠', '도서', '반려용품'
+              ].map(category => (
                 <div 
-                  key={topic}
-                  className="px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full border border-white/20 text-white/90 text-sm hover:bg-white/20 transition-colors cursor-pointer"
+                  key={category}
+                  className="backdrop-blur-sm rounded-full border hover:bg-white/20 transition-colors cursor-pointer"
+                  style={{
+                    padding: `${spacing[2]} ${spacing[4]}`,
+                    backgroundColor: colors.glass.medium,
+                    borderColor: colors.glass.light,
+                    color: colors.neutral[0],
+                    fontSize: typography.textStyles.bodySmall.fontSize
+                  }}
                 >
-                  {topic}
+                  {category}
                 </div>
               ))}
             </div>
@@ -110,8 +233,8 @@ export function BlogHero() {
       {/* Scroll Indicator */}
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
         <div className="animate-bounce">
-          <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center">
-            <div className="w-1 h-3 bg-white/50 rounded-full mt-2 animate-pulse"></div>
+          <div className="w-6 h-10 border-2 border-white rounded-full flex justify-center">
+            <div className="w-1 h-3 bg-white rounded-full mt-2 animate-pulse"></div>
           </div>
         </div>
       </div>
