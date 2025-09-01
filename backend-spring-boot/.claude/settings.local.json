@@ -3,7 +3,13 @@
     "allow": [
       "Bash(del \"D:\\workspace\\study\\cp9\\backend-spring-boot\\src\\main\\resources\\application.properties\")",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git checkout:*)",
+      "Bash(.\\gradlew build:*)",
+      "Bash(./gradlew build:*)",
+      "Bash(echo $JAVA_HOME)",
+      "Bash(java:*)"
     ],
     "deny": [],
     "ask": []
