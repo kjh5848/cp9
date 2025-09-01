@@ -1,0 +1,127 @@
+# =====================================================
+# 공통 설정 (모든 환경에 적용)
+# =====================================================
+spring:
+  application:
+    name: cp9
+    
+  profiles:
+    active: dev  # 기본 활성 프로파일 (dev, prod로 변경 가능)
+    
+  # JPA 공통 설정
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        use_sql_comments: true
+        default_batch_fetch_size: 100
+        
+  # Jackson 설정
+  jackson:
+    time-zone: Asia/Seoul
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+      
+  # 파일 업로드 설정
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 25MB
+      
+  # 캐시 설정
+  cache:
+    type: redis
+    redis:
+      time-to-live: 3600000  # 1시간 (밀리초)
+      
+  # Redis 세션 설정
+  session:
+    store-type: redis
+    redis:
+      namespace: cp9:session
+      flush-mode: on_save
+    timeout: 30m
+    
+  # WebSocket 설정
+  websocket:
+    broker:
+      relay:
+        auto-startup: true
+        
+# =====================================================
+# 서버 설정
+# =====================================================
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: on_param
+    include-exception: false
+    
+# =====================================================
+# 액추에이터 설정
+# =====================================================
+management:
+  endpoints:
+    web:
+      base-path: /management
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+      show-components: when_authorized
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      
+# =====================================================
+# 로깅 설정
+# =====================================================
+logging:
+  level:
+    root: INFO
+    com.cp9: DEBUG
+    org.springframework.web: INFO
+    org.springframework.security: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    
+# =====================================================
+# Spring AI (OpenAI) 설정
+# =====================================================
+spring.ai:
+  openai:
+    api-key: ${OPENAI_API_KEY:your-api-key-here}
+    chat:
+      options:
+        model: gpt-3.5-turbo
+        temperature: 0.7
+        
+# =====================================================
+# Sentry 설정
+# =====================================================
+sentry:
+  dsn: ${SENTRY_DSN:}
+  environment: ${spring.profiles.active}
+  traces-sample-rate: 0.1
+  logging:
+    minimum-event-level: error
+    minimum-breadcrumb-level: info
