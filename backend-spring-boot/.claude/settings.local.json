@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(del \"D:\\workspace\\study\\cp9\\backend-spring-boot\\src\\main\\resources\\application.properties\")",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
