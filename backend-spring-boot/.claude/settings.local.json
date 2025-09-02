@@ -9,7 +9,9 @@
       "Bash(.\\gradlew build:*)",
       "Bash(./gradlew build:*)",
       "Bash(echo $JAVA_HOME)",
-      "Bash(java:*)"
+      "Bash(java:*)",
+      "Bash(gradlew.bat build:*)",
+      "Bash(./gradlew:*)"
     ],
     "deny": [],
     "ask": []

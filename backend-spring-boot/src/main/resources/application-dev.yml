@@ -108,6 +108,8 @@ logging:
     org.springframework.security: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.hibernate.engine.internal.StatisticalLoggingSessionEventListener: WARN  # Session Metrics 로그 억제
+    org.hibernate.stat: WARN  # Hibernate 통계 로그 억제
     org.springframework.data.redis: DEBUG
   file:
     name: logs/cp9-dev.log

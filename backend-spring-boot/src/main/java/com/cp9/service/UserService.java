@@ -40,8 +40,15 @@ public class UserService {
             throw new BusinessException("이미 존재하는 이메일입니다: " + request.getEmail());
         }
 
-        // Entity 생성 및 저장
-        User user = new User(request.getEmail(), request.getName());
+        // Entity 생성 및 저장 (Builder 패턴 사용)
+        User user = User.builder()
+                .email(request.getEmail())
+                .name(request.getName())
+                .username(request.getEmail()) // 이메일을 기본 사용자명으로 사용
+                .password("temp-password") // 임시 비밀번호 (실제로는 회원가입 시 암호화된 비밀번호 설정 필요)
+                .active(true)
+                .enabled(false) // 이메일 인증 후 활성화
+                .build();
         User savedUser = userRepository.save(user);
 
         return convertToResponse(savedUser);

@@ -116,6 +116,58 @@ spring.ai:
         temperature: 0.7
         
 # =====================================================
+# JWT 설정
+# =====================================================
+jwt:
+  secret: ${JWT_SECRET:mySecretKey-change-in-production-very-long-secret-key-for-jwt-token}
+  access-token-validity: 900000      # 15분 (밀리초)
+  refresh-token-validity: 604800000  # 7일 (밀리초)
+  issuer: cp9-backend
+  header-name: Authorization
+  token-prefix: "Bearer "
+  refresh-threshold: 300000          # 5분 (토큰 갱신 허용 시간)
+  max-sessions: 3                    # 동시 세션 수
+  remember-me-token-validity: 2592000000  # 30일 (Remember Me)
+
+# =====================================================
+# Spring Security 설정
+# =====================================================
+security:
+  # 회원가입 설정
+  registration:
+    email-verification: true
+    default-roles:
+      - ROLE_USER
+    admin-approval-required: false
+    
+  # 비밀번호 정책
+  password:
+    min-length: 8
+    require-uppercase: true
+    require-lowercase: true
+    require-digit: true
+    require-special: true
+    
+  # 역할 계층
+  role-hierarchy:
+    enabled: true
+    definition: "ROLE_SUPER_ADMIN > ROLE_ADMIN > ROLE_MANAGER > ROLE_USER > ROLE_GUEST"
+
+# =====================================================
+# Rate Limiting 설정
+# =====================================================
+rate-limit:
+  user:
+    default-limit: 100
+    window-duration: 3600  # 1시간
+  admin:
+    default-limit: 1000
+    window-duration: 3600
+  guest:
+    default-limit: 20
+    window-duration: 3600
+
+# =====================================================
 # Sentry 설정
 # =====================================================
 sentry:
@@ -125,3 +177,38 @@ sentry:
   logging:
     minimum-event-level: error
     minimum-breadcrumb-level: info
+
+# =====================================================
+# SpringDoc OpenAPI 설정
+# =====================================================
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    doc-expansion: none
+    disable-swagger-default-url: true
+    display-request-duration: true
+    show-extensions: true
+    show-common-extensions: true
+  packages-to-scan:
+    - com.cp9.infrastructure.web
+  paths-to-match:
+    - /api/**
+  cache:
+    disabled: false
+  show-actuator: false
+  group-configs:
+    - group: "Auth API"
+      paths-to-match: 
+        - /api/auth/**
+    - group: "User API"
+      paths-to-match:
+        - /api/user/**
+    - group: "Admin API" 
+      paths-to-match:
+        - /api/admin/**

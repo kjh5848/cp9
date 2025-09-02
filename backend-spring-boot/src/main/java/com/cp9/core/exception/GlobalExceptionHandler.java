@@ -1,6 +1,6 @@
 package com.cp9.core.exception;
 
-import com.cp9.domain.shared.exception.DomainException;
+import com.cp9.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,18 +23,18 @@ import java.util.Map;
 public class GlobalExceptionHandler {
     
     /**
-     * 도메인 예외 처리
+     * 비즈니스 예외 처리
      */
-    @ExceptionHandler(DomainException.class)
-    public ResponseEntity<ErrorResponse> handleDomainException(DomainException ex, WebRequest request) {
-        log.warn("도메인 예외 발생: {}", ex.getMessage(), ex);
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException ex, WebRequest request) {
+        log.warn("비즈니스 예외 발생: {}", ex.getMessage(), ex);
         
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
-                .error("Domain Error")
+                .error("Business Error")
                 .message(ex.getMessage())
-                .errorCode(ex.getErrorCode())
+                .errorCode("BUSINESS_ERROR")
                 .path(getPath(request))
                 .build();
                 
