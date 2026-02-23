@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Toaster } from "react-hot-toast";
-import { AuthProvider } from '@/features/auth/contexts/AuthContext'
-import Navbar from '@/components/common/navbar'
+import { AuthProvider } from '@/legacy/features/auth/contexts/AuthContext'
+import Navbar from '@/legacy/components/common/navbar'
 import './globals.css'
 
 const inter = Inter({ subsets: ["latin"] });
