@@ -18,7 +18,7 @@ import {
 import { cn } from "@/shared/lib/utils";
 import { CoupangProductResponse } from "@/shared/types/api";
 
-type SearchMode = "keyword" | "link" | "category";
+type SearchMode = "keyword" | "link" | "category" | "pl_brand" | "pl_all" | "goldbox";
 
 /** 가격 구간 프리셋 */
 const PRICE_PRESETS = [
@@ -51,6 +51,19 @@ const CATEGORIES = [
   { id: "1026", name: "해외여행" },
   { id: "1029", name: "반려동물용품" },
   { id: "1030", name: "유아동패션" },
+];
+
+/** PL 브랜드 목록 */
+const PL_BRANDS = [
+  { id: "1001", name: "탐사" },
+  { id: "1002", name: "코멧" },
+  { id: "1003", name: "Gomgom" },
+  { id: "1004", name: "줌" },
+  { id: "1006", name: "곰곰" },
+  { id: "1007", name: "꼬리별" },
+  { id: "1008", name: "베이스알파에센셜" },
+  { id: "1010", name: "비타할로" },
+  { id: "1011", name: "비지엔젤" },
 ];
 
 /**
@@ -113,6 +126,44 @@ export const ProductCreation = () => {
     return res.json();
   };
 
+  const handlePLBrandSearch = async (): Promise<CoupangProductResponse[]> => {
+    const res = await fetch("/api/products/coupang-pl-brand", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ brandId: value.trim(), limit: 100 }),
+    });
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      throw new Error(json.error ?? `PL 브랜드 검색 실패 (${res.status})`);
+    }
+    return res.json();
+  };
+
+  const handlePLAllSearch = async (): Promise<CoupangProductResponse[]> => {
+    const res = await fetch("/api/products/coupang-pl", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ limit: 100 }),
+    });
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      throw new Error(json.error ?? `PL 전체 상품 검색 실패 (${res.status})`);
+    }
+    return res.json();
+  };
+
+  const handleGoldboxSearch = async (): Promise<CoupangProductResponse[]> => {
+    const res = await fetch("/api/products/goldbox", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" }
+    });
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      throw new Error(json.error ?? `골드박스 상품 검색 실패 (${res.status})`);
+    }
+    return res.json();
+  };
+
   const handleDeepLink = async () => {
     const urls = value.split("\n").map((u) => u.trim()).filter(Boolean);
     if (urls.length === 0) throw new Error("URL을 입력해주세요.");
@@ -130,7 +181,7 @@ export const ProductCreation = () => {
   };
 
   const handleAction = async () => {
-    if (!value.trim()) return;
+    if (mode !== "pl_all" && mode !== "goldbox" && !value.trim()) return;
     setLoading(true);
     setError(null);
     setResults([]);
@@ -147,10 +198,22 @@ export const ProductCreation = () => {
         if (data.length === 0) setError("검색 결과가 없습니다. 다른 키워드를 시도해보세요.");
       } else if (mode === "link") {
         await handleDeepLink();
-      } else {
+      } else if (mode === "category") {
         const data = await handleCategorySearch();
         setResults(data);
         if (data.length === 0) setError("해당 카테고리에 상품이 없습니다.");
+      } else if (mode === "pl_brand") {
+        const data = await handlePLBrandSearch();
+        setResults(data);
+        if (data.length === 0) setError("해당 PL 브랜드에 상품이 없습니다.");
+      } else if (mode === "pl_all") {
+        const data = await handlePLAllSearch();
+        setResults(data);
+        if (data.length === 0) setError("쿠팡 PL 인기상품이 없습니다.");
+      } else if (mode === "goldbox") {
+        const data = await handleGoldboxSearch();
+        setResults(data);
+        if (data.length === 0) setError("골드박스 상품이 없습니다.");
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.");
@@ -164,8 +227,8 @@ export const ProductCreation = () => {
   return (
     <div className="w-full max-w-5xl mx-auto space-y-8 py-8">
       {/* 모드 선택 탭 */}
-      <div className="flex justify-center p-1 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 w-fit mx-auto">
-        {(["keyword", "link", "category"] as const).map((m) => (
+      <div className="flex flex-wrap justify-center p-1 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 w-fit mx-auto gap-1">
+        {(["keyword", "link", "category", "pl_brand", "pl_all", "goldbox"] as const).map((m) => (
           <button
             key={m}
             onClick={() => {
@@ -175,7 +238,7 @@ export const ProductCreation = () => {
               setValue("");
             }}
             className={cn(
-              "px-6 py-2.5 rounded-xl text-sm font-medium transition-all",
+              "px-5 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap",
               mode === m
                 ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
                 : "text-slate-400 hover:text-white hover:bg-white/5"
@@ -184,6 +247,9 @@ export const ProductCreation = () => {
             {m === "keyword" && "키워드 검색"}
             {m === "link" && "URL 변환"}
             {m === "category" && "카테고리"}
+            {m === "pl_brand" && "PL 브랜드"}
+            {m === "pl_all" && "PL 전체(베스트)"}
+            {m === "goldbox" && "골드박스(일일특가)"}
           </button>
         ))}
       </div>
@@ -194,9 +260,10 @@ export const ProductCreation = () => {
           <div className="flex items-center gap-3 mb-2">
             {mode === "keyword" && <Search className="w-5 h-5 text-blue-400" />}
             {mode === "link" && <LinkIcon className="w-5 h-5 text-emerald-400" />}
-            {mode === "category" && <Layers className="w-5 h-5 text-purple-400" />}
+            {(mode === "category" || mode === "pl_brand" || mode === "pl_all") && <Layers className="w-5 h-5 text-purple-400" />}
+            {mode === "goldbox" && <Package className="w-5 h-5 text-yellow-400" />}
             <h2 className="text-xl font-bold text-white uppercase tracking-tight">
-              {mode} Search &amp; Create
+              {mode.replace('_', ' ')} Search
             </h2>
           </div>
 
@@ -225,6 +292,32 @@ export const ProductCreation = () => {
                 <ChevronDown className="w-5 h-5" />
               </div>
             </div>
+          ) : mode === "pl_brand" ? (
+            <div className="relative">
+              <select
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-6 pr-12 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all appearance-none cursor-pointer"
+              >
+                <option value="" disabled className="text-slate-500">PL 브랜드를 선택하세요</option>
+                {PL_BRANDS.map((cat) => (
+                  <option key={cat.id} value={cat.id} className="text-black">
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+                <ChevronDown className="w-5 h-5" />
+              </div>
+            </div>
+          ) : mode === "pl_all" ? (
+            <div className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-6 flex items-center text-slate-400 cursor-not-allowed">
+              쿠팡 자체 브랜드(PL) 통합 인기 베스트 상품 리스트를 불러옵니다.
+            </div>
+          ) : mode === "goldbox" ? (
+            <div className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-6 flex items-center text-slate-400 cursor-not-allowed">
+              당일 한정 쿠팡 골드박스 특가 상품 리스트를 불러옵니다.
+            </div>
           ) : (
             <input
               type="text"
@@ -238,7 +331,7 @@ export const ProductCreation = () => {
 
           <Button
             onClick={handleAction}
-            disabled={loading || !value.trim()}
+            disabled={loading || (mode !== "pl_all" && mode !== "goldbox" && !value.trim())}
             className="w-full h-14 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold text-lg shadow-xl shadow-blue-500/20"
           >
             {loading ? (
