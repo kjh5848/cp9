@@ -441,9 +441,9 @@ export const ProductCreation = () => {
 
       {filtered.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((product) => (
+          {filtered.map((product, idx) => (
             <GlassCard
-              key={product.productId}
+              key={`${product.productId}-${idx}`}
               className="p-0 overflow-hidden hover:border-blue-500/40 transition-colors flex flex-col"
             >
               {/* 상품 이미지 */}
