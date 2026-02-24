@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/shared/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/shared/ui/card';
@@ -9,9 +9,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
 import { Textarea } from '@/shared/ui/textarea';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
-import { ResearchPack } from '@/shared/types/research';
+import { ResearchPack } from '@/entities/research/model/types';
+import { saveResearch } from '@/features/research-analysis/api/research-api';
 import { ArrowLeft, Save, Package, TrendingUp, FileText, Search, AlertCircle, Check, X } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from 'react-hot-toast';
 
 export default function ResearchDetailPage() {
   const params = useParams();
@@ -23,11 +24,7 @@ export default function ResearchDetailPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [editedResearch, setEditedResearch] = useState<ResearchPack | null>(null);
 
-  useEffect(() => {
-    fetchResearch();
-  }, [id]);
-
-  const fetchResearch = async () => {
+  const fetchResearch = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await fetch(`/api/research/${id}`);
@@ -42,33 +39,33 @@ export default function ResearchDetailPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchResearch();
+  }, [fetchResearch]);
 
   const handleSave = async () => {
     if (!editedResearch) return;
     
     try {
       setIsSaving(true);
-      const response = await fetch(`/api/research/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editedResearch),
-      });
-
-      if (!response.ok) throw new Error('Failed to update research');
-      
-      const updated = await response.json();
-      setResearch(updated);
-      toast.success('리서치 데이터가 저장되었습니다');
+      const result = await saveResearch(id as string, editedResearch);
+      if (result.success) {
+        toast.success('리서치가 성공적으로 저장되었습니다.');
+        setResearch(editedResearch); // Update the main research state with the saved data
+      } else {
+        toast.error(`저장 실패: ${result.error}`);
+      }
     } catch (error) {
       console.error('Error saving research:', error);
-      toast.error('저장에 실패했습니다');
+      toast.error('저장 중 예측하지 못한 에러가 발생했습니다.');
     } finally {
       setIsSaving(false);
     }
   };
 
-  const updateField = (field: keyof ResearchPack, value: any) => {
+  const updateField = <K extends keyof ResearchPack>(field: K, value: ResearchPack[K]) => {
     if (!editedResearch) return;
     setEditedResearch({ ...editedResearch, [field]: value });
   };
@@ -82,7 +79,7 @@ export default function ResearchDetailPage() {
   const removeArrayItem = (field: 'features' | 'pros' | 'cons' | 'keywords', index: number) => {
     if (!editedResearch) return;
     const current = editedResearch[field] || [];
-    updateField(field, current.filter((_, i) => i !== index));
+    updateField(field, current.filter((_: unknown, i: number) => i !== index));
   };
 
   if (isLoading) {
@@ -179,7 +176,7 @@ export default function ResearchDetailPage() {
                 <Input
                   id="title"
                   value={editedResearch.title || ''}
-                  onChange={(e) => updateField('title', e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField('title', e.target.value)}
                   placeholder="제품명을 입력하세요"
                 />
               </div>
@@ -190,7 +187,7 @@ export default function ResearchDetailPage() {
                   id="price"
                   type="number"
                   value={editedResearch.priceKRW || ''}
-                  onChange={(e) => updateField('priceKRW', parseInt(e.target.value) || null)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField('priceKRW', parseInt(e.target.value) || null)}
                   placeholder="가격을 입력하세요"
                 />
               </div>
@@ -200,7 +197,7 @@ export default function ResearchDetailPage() {
                 <Input
                   id="slug"
                   value={editedResearch.slug || ''}
-                  onChange={(e) => updateField('slug', e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField('slug', e.target.value)}
                   placeholder="url-slug"
                 />
               </div>
@@ -210,7 +207,7 @@ export default function ResearchDetailPage() {
                   type="checkbox"
                   id="isRocket"
                   checked={editedResearch.isRocket || false}
-                  onChange={(e) => updateField('isRocket', e.target.checked)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField('isRocket', e.target.checked)}
                   className="rounded border-gray-300"
                 />
                 <Label htmlFor="isRocket" className="cursor-pointer">
@@ -234,7 +231,7 @@ export default function ResearchDetailPage() {
                 <Input
                   id="metaTitle"
                   value={editedResearch.metaTitle || ''}
-                  onChange={(e) => updateField('metaTitle', e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField('metaTitle', e.target.value)}
                   placeholder="SEO 제목"
                 />
               </div>
@@ -244,7 +241,7 @@ export default function ResearchDetailPage() {
                 <Textarea
                   id="metaDescription"
                   value={editedResearch.metaDescription || ''}
-                  onChange={(e) => updateField('metaDescription', e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => updateField('metaDescription', e.target.value)}
                   placeholder="SEO 설명"
                   rows={3}
                 />
@@ -273,7 +270,7 @@ export default function ResearchDetailPage() {
 
                 <TabsContent value="features" className="space-y-4">
                   <div className="space-y-2">
-                    {editedResearch.features?.map((feature, index) => (
+                    {editedResearch.features?.map((feature: string, index: number) => (
                       <div key={index} className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
                         <Check className="h-4 w-4 text-primary flex-shrink-0" />
                         <span className="flex-1">{feature}</span>
@@ -289,7 +286,7 @@ export default function ResearchDetailPage() {
                     <div className="flex gap-2 mt-3">
                       <Input
                         placeholder="새 특징 추가"
-                        onKeyPress={(e) => {
+                        onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => {
                           if (e.key === 'Enter') {
                             addArrayItem('features', (e.target as HTMLInputElement).value);
                             (e.target as HTMLInputElement).value = '';
@@ -298,7 +295,7 @@ export default function ResearchDetailPage() {
                       />
                       <Button
                         variant="outline"
-                        onClick={(e) => {
+                        onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                           const input = (e.currentTarget.previousElementSibling as HTMLInputElement);
                           addArrayItem('features', input.value);
                           input.value = '';
@@ -312,7 +309,7 @@ export default function ResearchDetailPage() {
 
                 <TabsContent value="pros" className="space-y-4">
                   <div className="space-y-2">
-                    {editedResearch.pros?.map((pro, index) => (
+                    {editedResearch.pros?.map((pro: string, index: number) => (
                       <div key={index} className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-950/20 rounded-lg">
                         <TrendingUp className="h-4 w-4 text-green-600 flex-shrink-0" />
                         <span className="flex-1">{pro}</span>
@@ -328,7 +325,7 @@ export default function ResearchDetailPage() {
                     <div className="flex gap-2 mt-3">
                       <Input
                         placeholder="새 장점 추가"
-                        onKeyPress={(e) => {
+                        onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => {
                           if (e.key === 'Enter') {
                             addArrayItem('pros', (e.target as HTMLInputElement).value);
                             (e.target as HTMLInputElement).value = '';
@@ -337,7 +334,7 @@ export default function ResearchDetailPage() {
                       />
                       <Button
                         variant="outline"
-                        onClick={(e) => {
+                        onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                           const input = (e.currentTarget.previousElementSibling as HTMLInputElement);
                           addArrayItem('pros', input.value);
                           input.value = '';
@@ -351,7 +348,7 @@ export default function ResearchDetailPage() {
 
                 <TabsContent value="cons" className="space-y-4">
                   <div className="space-y-2">
-                    {editedResearch.cons?.map((con, index) => (
+                    {editedResearch.cons?.map((con: string, index: number) => (
                       <div key={index} className="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-950/20 rounded-lg">
                         <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
                         <span className="flex-1">{con}</span>
@@ -367,7 +364,7 @@ export default function ResearchDetailPage() {
                     <div className="flex gap-2 mt-3">
                       <Input
                         placeholder="새 단점 추가"
-                        onKeyPress={(e) => {
+                        onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => {
                           if (e.key === 'Enter') {
                             addArrayItem('cons', (e.target as HTMLInputElement).value);
                             (e.target as HTMLInputElement).value = '';
@@ -376,7 +373,7 @@ export default function ResearchDetailPage() {
                       />
                       <Button
                         variant="outline"
-                        onClick={(e) => {
+                        onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                           const input = (e.currentTarget.previousElementSibling as HTMLInputElement);
                           addArrayItem('cons', input.value);
                           input.value = '';
@@ -390,7 +387,7 @@ export default function ResearchDetailPage() {
 
                 <TabsContent value="keywords" className="space-y-4">
                   <div className="flex flex-wrap gap-2">
-                    {editedResearch.keywords?.map((keyword, index) => (
+                    {editedResearch.keywords?.map((keyword: string, index: number) => (
                       <Badge key={index} variant="secondary" className="px-3 py-1">
                         {keyword}
                         <Button
@@ -407,7 +404,7 @@ export default function ResearchDetailPage() {
                   <div className="flex gap-2 mt-3">
                     <Input
                       placeholder="새 키워드 추가"
-                      onKeyPress={(e) => {
+                      onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => {
                         if (e.key === 'Enter') {
                           addArrayItem('keywords', (e.target as HTMLInputElement).value);
                           (e.target as HTMLInputElement).value = '';
@@ -416,7 +413,7 @@ export default function ResearchDetailPage() {
                     />
                     <Button
                       variant="outline"
-                      onClick={(e) => {
+                      onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                         const input = (e.currentTarget.previousElementSibling as HTMLInputElement);
                         addArrayItem('keywords', input.value);
                         input.value = '';

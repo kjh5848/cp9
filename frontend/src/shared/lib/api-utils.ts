@@ -22,6 +22,19 @@ export function normalizeCoupangProduct(product: CoupangRawProduct): CoupangProd
 }
 
 /**
+ * 이미지 URL 리다이렉트를 추적하여 실제 CDN 주소 반환 (애드블록 우회용)
+ */
+export async function resolveImageRedirectUrl(url: string): Promise<string> {
+  if (!url || !url.includes('ads-partners.coupang.com')) return url;
+  try {
+    const res = await fetch(url, { method: 'HEAD', redirect: 'follow' });
+    return res.url || url;
+  } catch (e) {
+    return url;
+  }
+}
+
+/**
  * 딥링크 응답을 일관된 형식으로 변환
  */
 export function normalizeDeepLinkResponse(item: CoupangRawDeepLink): DeepLinkResponse {

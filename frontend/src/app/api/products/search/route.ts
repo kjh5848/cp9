@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { searchCoupangProducts } from '@/infrastructure/api/coupang';
 import { CoupangProductResponse, ProductSearchRequest, CoupangRawProduct } from '@/shared/types/api';
-import { normalizeCoupangProduct } from '@/shared/lib/api-utils';
+import { normalizeCoupangProduct, resolveImageRedirectUrl } from '@/shared/lib/api-utils';
 
 /**
  * 쿠팡 파트너스 상품 검색 API 라우트
@@ -20,8 +20,14 @@ export async function POST(req: NextRequest) {
     
     const products = await searchCoupangProducts(keyword, limit);
     
-    // 일관된 응답 형식으로 변환
-    const result: CoupangProductResponse[] = (products as CoupangRawProduct[]).map(normalizeCoupangProduct);
+    // 일관된 응답 형식으로 변환 및 이미지 리다이렉트 처리(애드블록 우회)
+    const result: CoupangProductResponse[] = await Promise.all(
+      (products as CoupangRawProduct[]).map(async (raw) => {
+        const item = normalizeCoupangProduct(raw);
+        item.productImage = await resolveImageRedirectUrl(item.productImage);
+        return item;
+      })
+    );
     
     return NextResponse.json(result);
   } catch (e: unknown) {
