@@ -36,7 +36,7 @@ export const ProductCard = ({ product, onClick, className }: ProductCardProps) =
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-slate-500 text-sm">
+          <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
             이미지 없음
           </div>
         )}
@@ -50,16 +50,16 @@ export const ProductCard = ({ product, onClick, className }: ProductCardProps) =
       </div>
 
       <div className="flex flex-col flex-grow">
-        <h3 className="text-sm font-medium text-slate-200 line-clamp-2 mb-2 leading-tight">
+        <h3 className="text-sm font-medium text-foreground line-clamp-2 mb-2 leading-tight">
           {product.productName}
         </h3>
         
         <div className="mt-auto pt-2 flex items-end justify-between">
-          <span className="text-lg font-bold text-white">
+          <span className="text-lg font-bold text-foreground">
             {product.productPrice.toLocaleString()}원
           </span>
           {product.brandName && (
-            <span className="text-xs text-slate-400 truncate max-w-[40%]">
+            <span className="text-xs text-muted-foreground truncate max-w-[40%]">
               {product.brandName}
             </span>
           )}

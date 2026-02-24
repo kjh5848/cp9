@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { supabase } from '@/infrastructure/api/supabase';
+import { supabase } from '@/infrastructure/clients/supabase';
 
-export default function AuthCallback() {
+function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -16,9 +16,6 @@ export default function AuthCallback() {
         const accessToken = hashParams.get('access_token');
         
         console.log('콜백 처리 시작');
-        console.log('URL:', window.location.href);
-        console.log('Hash params:', Object.fromEntries(hashParams));
-        console.log('Search params:', Object.fromEntries(searchParams));
         
         // OAuth 토큰이 있으면 Supabase 세션 설정
         if (accessToken) {
@@ -34,8 +31,6 @@ export default function AuthCallback() {
               router.push('/login?error=session_failed');
               return;
             }
-            
-            console.log('세션 설정 성공:', data);
           }
         }
         
@@ -49,21 +44,16 @@ export default function AuthCallback() {
         }
 
         if (data.session) {
-          console.log('세션 확인됨:', data.session.user.email);
-          
           // returnTo 파라미터 확인 (여러 방법으로)
           let returnTo = searchParams.get('returnTo');
-          console.log('URL returnTo:', returnTo);
           
           // OAuth state에서 returnTo 정보 확인
           if (!returnTo) {
             try {
               const state = searchParams.get('state') || hashParams.get('state');
-              console.log('State 값:', state);
               if (state) {
                 const stateData = JSON.parse(state);
                 returnTo = stateData.returnTo;
-                console.log('State에서 추출한 returnTo:', returnTo);
               }
             } catch (e) {
               console.log('State 파싱 실패:', e);
@@ -73,22 +63,18 @@ export default function AuthCallback() {
           // localStorage에서 확인 (fallback)
           if (!returnTo) {
             returnTo = localStorage.getItem('auth_returnTo');
-            console.log('localStorage returnTo:', returnTo);
             if (returnTo) {
               localStorage.removeItem('auth_returnTo');
             }
           }
           
           const redirectPath = returnTo || '/product';
-          console.log('최종 리디렉트 경로:', redirectPath);
           
           // AuthContext가 세션 변경을 감지할 시간을 주기 위해 조금 더 긴 지연
           setTimeout(() => {
-            console.log('리디렉트 실행:', redirectPath);
             router.push(redirectPath);
           }, 500);
         } else {
-          console.log('세션 없음 - 로그인 페이지로 이동');
           router.push('/login');
         }
       } catch (error) {
@@ -113,4 +99,13 @@ export default function AuthCallback() {
       </div>
     </div>
   );
-} 
+}
+
+export default function AuthCallback() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center">인증 처리 준비 중...</div>}>
+      <AuthCallbackContent />
+    </Suspense>
+  );
+}
+ 

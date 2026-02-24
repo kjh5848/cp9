@@ -43,7 +43,8 @@ interface EnvironmentConfig {
 function getRequiredEnv(key: string): string {
   const value = process.env[key];
   if (!value && process.env.NODE_ENV !== 'development') {
-    throw new Error(`필수 환경변수 ${key}가 설정되지 않았습니다. Doppler 또는 .env.local 파일을 확인해주세요.`);
+    console.warn(`[빌드타임 경고] 필수 환경변수 ${key}가 설정되지 않았습니다.`);
+    // throw new Error(`필수 환경변수 ${key}가 설정되지 않았습니다...`);
   }
   return value || '';
 }

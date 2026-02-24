@@ -71,8 +71,8 @@ export const Dashboard = () => {
     <div className="flex flex-col items-center gap-12 w-full max-w-5xl mx-auto py-12 px-4 md:px-8">
       {/* 검색 및 헤더 영역 */}
       <div className="w-full flex flex-col items-center">
-        <h2 className="text-4xl font-bold text-white mb-2 tracking-tight">Main Dashboard</h2>
-        <p className="text-slate-400 mb-8 border-b border-white/10 pb-4 w-full text-center">
+        <h2 className="text-4xl font-bold text-foreground mb-2 tracking-tight">Main Dashboard</h2>
+        <p className="text-muted-foreground mb-8 border-b border-border pb-4 w-full text-center">
           모든 도메인 통합 관리 및 엔진 컨트롤
         </p>
         <SearchBar className="w-full shadow-blue-900/20 shadow-2xl" />
@@ -81,7 +81,7 @@ export const Dashboard = () => {
       <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* 상품 영역 */}
         <div className="lg:col-span-1 space-y-6">
-          <h3 className="text-xl font-semibold text-slate-200 flex items-center gap-2">
+          <h3 className="text-xl font-semibold text-foreground flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
             Product Data
           </h3>
@@ -100,7 +100,7 @@ export const Dashboard = () => {
 
         {/* 리서치 및 워크플로우 영역 */}
         <div className="lg:col-span-2 space-y-6">
-          <h3 className="text-xl font-semibold text-slate-200 flex items-center gap-2">
+          <h3 className="text-xl font-semibold text-foreground flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             Analysis & Engine
           </h3>
@@ -123,7 +123,7 @@ export const Dashboard = () => {
                   <WorkflowProgressBar state={workflowState} />
                   
                   <GlassCard className="p-5 flex flex-col gap-4">
-                    <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Engine Control</h4>
+                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Engine Control</h4>
                     <Button 
                       className="w-full bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
                       disabled={workflowState.status === "running"}
@@ -132,7 +132,7 @@ export const Dashboard = () => {
                       <Play className="w-4 h-4 mr-2" />
                       Run SEO Workflow
                     </Button>
-                    <p className="text-[10px] text-slate-500 text-center italic">
+                    <p className="text-[10px] text-muted-foreground text-center italic">
                       Powered by AI Content Engine v1.0
                     </p>
                   </GlassCard>

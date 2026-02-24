@@ -1,43 +1,55 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
-:root {
-  --background: #f5f6fa;
-  --foreground: #171717;
-  --action: #ededed;
-  
-  /* UI 컴포넌트를 위한 CSS 변수들 */
-  --card: #ffffff;
-  --card-foreground: #171717;
-  --popover: #ffffff;
-  --popover-foreground: #171717;
-  --primary: #171717;
-  --primary-foreground: #ffffff;
-  --secondary: #f5f5f5;
-  --secondary-foreground: #171717;
-  --muted: #f5f5f5;
-  --muted-foreground: #737373;
-  --accent: #f5f5f5;
-  --accent-foreground: #171717;
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
-  --border: #e5e5e5;
-  --input: #e5e5e5;
-  --ring: #171717;
-  --radius: 0.5rem;
+/* TailwindCSS v4 Custom Theme Mapping */
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
 }
 
-/* Remove @theme inline as it's not needed for Tailwind v3/v4 */
-
-@media (prefers-color-scheme: dark) {
-  :root {
-  --background: #f5f6fa;
-  --foreground: #171717;
+:root {
+  /* LIGHT THEME (기본) */
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --border: #e2e8f0;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
   --action: #ededed;
-  }
+}
+
+.dark {
+  /* DARK THEME */
+  --background: #0f172a;
+  --foreground: #f8fafc;
+  --card: #1e293b;
+  --card-foreground: #f8fafc;
+  --border: #334155;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --action: #334155;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
@@ -131,4 +143,37 @@ body {
 
 .animation-delay-4000 {
   animation-delay: 4s;
+}
+
+/* 티스토리 풍 커스텀 Typography 스타일 */
+.prose-tistory {
+  @apply text-slate-800 dark:text-slate-200 leading-relaxed font-sans text-base sm:text-[17px];
+}
+.prose-tistory p {
+  @apply my-6;
+}
+.prose-tistory h1, .prose-tistory h2, .prose-tistory h3 {
+  @apply text-slate-900 dark:text-slate-100 font-bold mb-4 mt-10 tracking-tight;
+}
+.prose-tistory h1 { @apply text-3xl sm:text-4xl border-b border-slate-200 dark:border-slate-800 pb-2 mb-6; }
+.prose-tistory h2 { @apply text-2xl sm:text-3xl; }
+.prose-tistory h3 { @apply text-xl sm:text-2xl; }
+.prose-tistory strong { @apply font-bold text-slate-900 dark:text-slate-100; }
+.prose-tistory ul { @apply list-disc list-outside ml-6 my-6 space-y-2; }
+.prose-tistory ol { @apply list-decimal list-outside ml-6 my-6 space-y-2; }
+.prose-tistory li { @apply pl-1; }
+.prose-tistory blockquote {
+  @apply border-l-4 border-slate-300 dark:border-slate-600 pl-4 py-1 my-6 italic text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 rounded-r-lg;
+}
+.prose-tistory code.inline-code {
+  @apply px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-pink-600 dark:text-pink-400 font-mono text-[0.9em];
+}
+.prose-tistory img {
+  @apply rounded-xl w-full my-8 shadow-sm;
+}
+.prose-tistory hr {
+  @apply border-slate-200 dark:border-slate-800 my-10;
+}
+.prose-tistory a {
+  @apply text-blue-600 dark:text-blue-400 hover:underline hover:text-blue-800 dark:hover:text-blue-300 transition-colors;
 }

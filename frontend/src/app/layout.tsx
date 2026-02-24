@@ -18,7 +18,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" className="dark">
-      <body className={`${inter.className} bg-gray-950 text-slate-200 antialiased`}>
+      <body className={`${inter.className} bg-background text-foreground antialiased`}>
         {/* AuthProvider는 Entities/User Layer 완성 후 복구 예정 */}
         <Navbar />
         <main>

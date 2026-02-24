@@ -16,11 +16,9 @@ cp9/
 │   │   │   ├── research-results/  # 리서치 결과 페이지
 │   │   │   ├── auth/              # 인증 페이지
 │   │   │   ├── test/              # 테스트 페이지들
-│   │   │   └── api/               # API 라우트
-│   │   │       ├── item-research/ # 아이템 리서치 API
-│   │   │       ├── research/      # 리서치 관리 API
-│   │   │       ├── drafts/        # 초안 관리 API
-│   │   │       └── write/         # SEO 글 생성 API
+│   │   │       ├── item-research/ # 아이템 리서치 및 SEO 파이프라인
+│   │   │       ├── research/      # 리서치 데이터 조회
+│   │   │       └── drafts/        # 초안 데이터 조회
 │   │   │
 │   │   ├── features/         # 기능별 모듈
 │   │   │   ├── auth/          # 인증 기능
@@ -59,26 +57,12 @@ cp9/
     ├── common/            # navbar.tsx
     └── ui/                # 기존 UI 컴포넌트 (shared/ui/ 와 중복)
 
-backend/
-├── docs/                  # 백엔드 문서
-│   ├── 01.md ~ 04.md     # 레이어별 구현 가이드
-│   ├── supabase-edge-functions.md
-│   └── write-test-examples.md
-│
-├── supabase/
-│   ├── functions/         # Edge Functions
-│   │   ├── _shared/       # 공통 유틸리티
-│   │   │   ├── cors.ts, coupang.ts, response.ts, type.ts
-│   │   ├── item-research/ # 아이템 리서치 함수
-│   │   ├── write/         # 🆕 SEO 글 생성 함수 (5장)
-│   │   ├── cache-gateway/ # 캐시 게이트웨이
-│   │   ├── queue-worker/  # 큐 워커
-│   │   └── langgraph-api/ # LangGraph API
-│   │
-│   └── migrations/        # 데이터베이스 마이그레이션
-│       └── 20250110_create_drafts_table.sql # 🆕 drafts 테이블
-│
-└── package.json           # 백엔드 의존성
+supabase/                  # Supabase 환경설정 및 DB 스키마
+├── functions/             # (삭제 예정) 기존 Edge Functions
+└── migrations/            # 데이터베이스 마이그레이션
+    └── 20250110_create_drafts_table.sql # 🆕 drafts 테이블
+
+package.json               # 글로벌 의존성 관리
 ```
 
 ## 🎯 주요 기능
@@ -133,8 +117,30 @@ backend/
 - **projects**: 프로젝트 관리
 - **items**: 상품 아이템
 
-## 🚀 시작하기
+## 📸 핵심 로직 실행 가이드 (SEO 파이프라인)
 
+본 플랫폼의 주 무기인 **쿠팡 파트너스 연동 및 AI SEO 자동화**의 실행 순서는 다음과 같습니다.
+
+### 1단계: 쿠팡 파트너스 상품 검색 및 선택
+사용자가 원하는 쿠팡 상품(PL 혹은 일반 상품)을 검색한 뒤 목록에서 상품을 여러 개 선택합니다. 클릭할 때마다 하단 Sticky Bar에 "선택된 아이템 통계"가 노출됩니다.
+
+![상품 검색 화면](./frontend/public/docs/images/landing_page.png)
+
+![여러 상품 검색 결과](./frontend/public/docs/images/search_results.png)
+
+### 2단계: SEO 페르소나 및 톤앤매너 설정
+선택한 상품을 가지고 `[SEO 글 작성]` 버튼을 누르면 설정 모달이 뜹니다.
+여기서 **단일 딥다이브 / 다중 비교 분석 / 다수 큐레이션** 등 목적에 맞는 '페르소나'와 **전문적 / 친근한 / 유머러스한** 등 대상 고객층에 맞는 '톤앤매너'를 설정할 수 있습니다.
+
+![SEO 설정 모달 화면](./frontend/public/docs/images/seo_modal.png)
+
+### 3단계: AI 파이프라인 구동 및 저장
+설정을 마치면 백엔드에서 `Perplexity(Sonar-Pro)`를 통해 최신 시장 반응을 조사하고, `GPT-4o`가 이를 취합해 SEO 최적화된 마크다운 본문을 작성하며, 마지막으로 `DALL-E 3`를 호출해 대표 썸네일을 생성합니다. 
+생성된 데이터는 즉시 Supabase의 `ResearchItem` 테이블에 백업됩니다.
+
+---
+
+## 🚀 시작하기
 ### 1. 환경 설정
 ```bash
 # 프론트엔드
@@ -150,19 +156,25 @@ npm run dev
 
 ### 2. 환경 변수 설정
 ```bash
-# .env.local
+# .env.local 혹은 .env 파일 구성
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# AI Provider Keys
 OPENAI_API_KEY=your_openai_key
 PERPLEXITY_API_KEY=your_perplexity_key
+
+# Coupang API Keys
+COUPANG_ACCESS_KEY=your_coupang_access_key
+COUPANG_SECRET_KEY=your_coupang_secret_key
 ```
 
 ### 3. Supabase 설정
 ```bash
-cd backend/supabase
+cd supabase
 supabase start
-supabase functions serve
+# supabase functions serve (Node API 마이그레이션으로 생략 가능)
 ```
 
 ## 📈 개발 진행도
@@ -226,15 +238,13 @@ npm run test        # Edge Functions 테스트
 
 ## 📚 API 문서
 
-### Edge Functions
-- **개발 환경**: http://localhost:54321/functions/v1/docs
-- **Swagger UI**: http://localhost:54321/functions/v1/docs
+### Edge Functions (사용 해제)
+- 기존 DB 프로시저/클라우드 함수 대신 현재 Node API Route(`api/item-research`)로 기능 통폐합이 완료되었습니다.
 
 ### 주요 API 엔드포인트
-- `POST /api/item-research` - 아이템 리서치
-- `POST /api/write` - SEO 글 생성
-- `GET /api/research` - 리서치 데이터 조회
-- `POST /api/drafts` - 초안 저장
+- `POST /api/item-research` - 통합 파이프라인 (상품 리서치, SEO 글 작성, 이미지 자동 생성)
+- `GET  /api/research` - 생성된 리서치(뷰티/가전/등) 데이터 조회
+- `GET  /api/drafts` - 최종 생성된 글 초안 데이터 가져오기
 
 ## 🤝 기여하기
 

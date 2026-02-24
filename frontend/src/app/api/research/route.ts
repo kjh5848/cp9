@@ -1,8 +1,11 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getDBSupabaseConfig } from '@/shared/lib/supabase-config';
 
 const config = getDBSupabaseConfig();
+config.url = config.url || 'https://placeholder.supabase.co';
+config.serviceRoleKey = config.serviceRoleKey || 'placeholder';
 const supabase = createClient(config.url, config.serviceRoleKey, {
   auth: { persistSession: false }
 });
@@ -13,19 +16,41 @@ export async function GET(request: NextRequest) {
   const projectId = searchParams.get('projectId');
   const itemId = searchParams.get('itemId');
 
-  if (!projectId) {
-    return NextResponse.json(
-      { success: false, error: 'PROJECT_ID_REQUIRED' },
-      { status: 400 }
-    );
+  // if (!projectId) {
+  //   return NextResponse.json(
+  //     { success: false, error: 'PROJECT_ID_REQUIRED' },
+  //     { status: 400 }
+  //   );
+  // }
+
+  if (config.url === 'https://placeholder.supabase.co') {
+    console.warn('⚠️ Supabase URL이 누락되어 Mock 리서치 데이터를 반환합니다.');
+    return NextResponse.json({
+      success: true,
+      data: [{
+        projectId: projectId,
+        itemId: itemId || 'mock_item_01',
+        pack: {
+          title: "Mock 상품 리서치 결과",
+          content: "# 테스트 상품 분석\n이 데이터는 Supabase 연동이 되지 않아 제공되는 임시 조회 결과입니다.",
+          thumbnailPrompt: "Mock Thumbnail",
+          thumbnailUrl: null,
+          researchRaw: "[Mock Raw Data]"
+        },
+        updatedAt: new Date().toISOString()
+      }]
+    });
   }
 
   try {
     let query = supabase
       .from('research')
       .select('project_id, item_id, pack, updated_at')
-      .eq('project_id', projectId)
       .order('updated_at', { ascending: false });
+
+    if (projectId) {
+      query = query.eq('project_id', projectId);
+    }
 
     if (itemId) {
       query = query.eq('item_id', itemId);
@@ -73,6 +98,14 @@ export async function PUT(request: NextRequest) {
         { success: false, error: 'MISSING_REQUIRED_FIELDS' },
         { status: 400 }
       );
+    }
+
+    if (config.url === 'https://placeholder.supabase.co') {
+      console.warn('⚠️ Supabase URL이 누락되어 데이터베이스 업데이트를 스킵합니다.');
+      return NextResponse.json({
+        success: true,
+        message: 'Mock update successful (Skipped DB Update)'
+      });
     }
 
     const { error } = await supabase

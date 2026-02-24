@@ -1,18 +1,13 @@
 import React from "react";
 import { ResearchItem } from "../model/types";
-import { GlassCard } from "@/shared/ui/GlassCard";
 import { Badge } from "@/shared/ui/badge";
-import { Separator } from "@/shared/ui/separator";
 import { Button } from "@/shared/ui/button";
 import { 
-  Check, 
-  Star, 
-  AlertTriangle, 
-  Tag, 
-  DollarSign, 
-  Truck,
-  ExternalLink,
-  Edit
+  CalendarPlus,
+  PenTool,
+  Image as ImageIcon,
+  CheckCircle2,
+  Clock
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 
@@ -22,13 +17,13 @@ interface ResearchCardProps {
   onDetailClick?: (itemId: string) => void;
   onEditClick?: (itemId: string) => void;
   onGenerateSEO?: (itemId: string) => void;
+  onScheduleClick?: (itemId: string) => void;
   className?: string;
 }
 
 /**
  * [Entities Layer]
- * 리서치 데이터(ResearchItem)를 시각화하는 순수 UI 컴포넌트입니다.
- * 비즈니스 로직이나 수정 상태를 직접 관리하지 않습니다.
+ * 리서치 데이터를 티스토리 블로그 리스트 스타일로 보여주는 컴포넌트입니다.
  */
 export const ResearchCard = ({ 
   research, 
@@ -36,146 +31,120 @@ export const ResearchCard = ({
   onDetailClick, 
   onEditClick, 
   onGenerateSEO,
+  onScheduleClick,
   className 
 }: ResearchCardProps) => {
   const { pack, itemId, updatedAt } = research;
 
   const formatPrice = (price?: number | null) => {
-    if (!price) return "가격 정보 없음";
+    if (!price) return "가격 미상";
     return `${price.toLocaleString()}원`;
   };
 
+  // 본문 요약 생성 (특징이나 장점을 결합하여 텍스트로 표시)
+  const summaryText = [
+    ...(pack.features || []),
+    ...(pack.pros || [])
+  ].join(" ").slice(0, 150) + "...";
+
   return (
-    <GlassCard className={cn("flex flex-col gap-4", className)}>
-      <div className="flex flex-row items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h3 className="text-lg font-bold text-white line-clamp-1">
-            {pack.title || itemId}
-          </h3>
-          {hasDraft && (
-            <Badge variant="secondary" className="bg-blue-500/20 text-blue-300 border-blue-500/30">
-              초안 생성됨
-            </Badge>
-          )}
-        </div>
-        <div className="flex gap-2">
-          {onDetailClick && (
-            <Button 
-              size="sm" 
-              variant="outline" 
-              className="h-8 border-white/10 hover:bg-white/5"
-              onClick={() => onDetailClick(itemId)}
-            >
-              <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
-              상세
-            </Button>
-          )}
-          {onEditClick && (
-            <Button 
-              size="sm" 
-              variant="outline" 
-              className="h-8 border-white/10 hover:bg-white/5"
-              onClick={() => onEditClick(itemId)}
-            >
-              <Edit className="w-3.5 h-3.5 mr-1.5" />
-              수정
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* 기본 메타 정보 */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="flex items-center gap-2 text-slate-300">
-          <DollarSign className="w-4 h-4 text-emerald-400" />
-          <span className="text-sm font-medium">{formatPrice(pack.priceKRW)}</span>
-        </div>
-        {pack.isRocket !== null && (
-          <div className="flex items-center gap-2 text-slate-300">
-            <Truck className={cn("w-4 h-4", pack.isRocket ? "text-blue-400" : "text-slate-500")} />
-            <span className="text-sm">
-              로켓배송 {pack.isRocket ? "가능" : "불가능"}
-            </span>
+    <div className={cn(
+      "group flex flex-col sm:flex-row gap-5 p-5 bg-card border border-border rounded-2xl hover:border-border/80 hover:bg-muted/50 transition-all duration-300",
+      className
+    )}>
+      {/* 좌측: 썸네일 영역 */}
+      <div className="w-full sm:w-48 h-36 shrink-0 bg-muted rounded-xl border border-border flex flex-col items-center justify-center text-muted-foreground overflow-hidden relative">
+        {pack.thumbnailUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={pack.thumbnailUrl} alt={pack.title || "상품 이미지"} className="w-full h-full object-cover" />
+        ) : (
+          <>
+            <ImageIcon className="w-8 h-8 mb-2 opacity-50" />
+            <span className="text-xs">No Image</span>
+          </>
+        )}
+        {hasDraft && (
+          <div className="absolute top-2 left-2 bg-blue-500/90 text-white text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1 shadow-sm">
+            <CheckCircle2 className="w-3 h-3" />
+            초안있음
           </div>
         )}
       </div>
 
-      <Separator className="bg-white/5" />
+      {/* 우측: 콘텐츠 및 액션 영역 */}
+      <div className="flex flex-col flex-1 min-w-0">
+        
+        {/* 헤더: 카테고리/프로젝트ID 및 작성일 */}
+        <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+          <span className="font-medium hover:text-primary cursor-pointer transition-colors" onClick={() => onEditClick?.(itemId)}>
+            {research.projectId || "카테고리"}
+          </span>
+          <span className="flex items-center gap-1">
+            <Clock className="w-3 h-3" />
+            {new Date(updatedAt).toLocaleDateString("ko-KR")}
+          </span>
+        </div>
 
-      {/* 특징 및 요약 정보 */}
-      <div className="space-y-4 flex-grow">
-        {pack.features && pack.features.length > 0 && (
-          <div>
-            <h4 className="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-              <Star className="w-3.5 h-3.5 text-amber-400" />
-              주요 특징
-            </h4>
-            <ul className="text-sm text-slate-300 space-y-1.5 pl-1">
-              {pack.features.slice(0, 3).map((feature, index) => (
-                <li key={index} className="flex items-start gap-2">
-                  <span className="text-slate-500 mt-1.5 w-1 h-1 rounded-full bg-slate-500 shrink-0" />
-                  <span className="line-clamp-1">{feature}</span>
-                </li>
-              ))}
-            </ul>
+        {/* 제목 */}
+        <h3 className="text-lg sm:text-xl font-bold text-foreground mb-2 line-clamp-1 group-hover:text-primary transition-colors cursor-pointer" onClick={() => onEditClick?.(itemId)}>
+          {pack.title || itemId}
+        </h3>
+
+        {/* 메타 정보 (가격배송 등) */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground mb-3">
+          <span className="text-emerald-500 font-medium">{formatPrice(pack.priceKRW)}</span>
+          {pack.isRocket !== null && (
+            <>
+              <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+              <span className={pack.isRocket ? "text-blue-500" : "text-muted-foreground"}>
+                로켓배송 {pack.isRocket ? "가능" : "불가"}
+              </span>
+            </>
+          )}
+        </div>
+
+        {/* 본문 요약 */}
+        <p className="text-sm text-muted-foreground line-clamp-2 mb-4 leading-relaxed">
+          {summaryText.length > 3 ? summaryText : "분석된 상품 특징 정보가 부족합니다."}
+        </p>
+
+        {/* 태그 영역 */}
+        {pack.keywords && pack.keywords.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-5 mt-auto">
+            {pack.keywords.slice(0, 5).map((keyword, index) => (
+              <Badge 
+                key={index} 
+                variant="secondary" 
+                className="bg-muted text-muted-foreground hover:bg-muted/80 px-2.5 py-0.5 text-xs font-normal border-none"
+              >
+                #{keyword}
+              </Badge>
+            ))}
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {pack.pros && pack.pros.length > 0 && (
-            <div>
-              <h4 className="flex items-center gap-2 text-xs font-semibold text-emerald-400/80 uppercase tracking-wider mb-2">
-                <Check className="w-3.5 h-3.5" />
-                장점
-              </h4>
-              <ul className="text-xs text-slate-300 space-y-1 pl-1">
-                {pack.pros.slice(0, 2).map((pro, index) => (
-                  <li key={index} className="flex items-start gap-2">
-                    <span className="text-emerald-500 font-bold">+</span>
-                    <span className="line-clamp-1">{pro}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {pack.cons && pack.cons.length > 0 && (
-            <div>
-              <h4 className="flex items-center gap-2 text-xs font-semibold text-rose-400/80 uppercase tracking-wider mb-2">
-                <AlertTriangle className="w-3.5 h-3.5" />
-                단점
-              </h4>
-              <ul className="text-xs text-slate-300 space-y-1 pl-1">
-                {pack.cons.slice(0, 2).map((con, index) => (
-                  <li key={index} className="flex items-start gap-2">
-                    <span className="text-rose-500 font-bold">-</span>
-                    <span className="line-clamp-1">{con}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+        {/* 하단 액션 버튼 그룹 */}
+        <div className="flex items-center gap-2 mt-auto pt-4 border-t border-border">
+          <Button 
+            size="sm" 
+            className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg h-9"
+            onClick={(e) => { e.stopPropagation(); onGenerateSEO?.(itemId); }}
+          >
+            <PenTool className="w-4 h-4 mr-2" />
+            즉시 글쓰기
+          </Button>
+          <Button 
+            size="sm" 
+            variant="outline"
+            className="flex-1 border-border text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg h-9"
+            onClick={(e) => { e.stopPropagation(); onScheduleClick?.(itemId); }}
+          >
+            <CalendarPlus className="w-4 h-4 mr-2" />
+            스케줄 등록
+          </Button>
         </div>
-      </div>
 
-      {pack.keywords && pack.keywords.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 pt-2">
-          {pack.keywords.slice(0, 4).map((keyword, index) => (
-            <Badge 
-              key={index} 
-              variant="outline" 
-              className="text-[10px] bg-white/5 border-white/5 text-slate-400"
-            >
-              #{keyword}
-            </Badge>
-          ))}
-        </div>
-      )}
-
-      <div className="pt-2 text-[10px] text-slate-500 flex justify-between items-center">
-        <span>ID: {itemId}</span>
-        <span>최근 업데이트: {new Date(updatedAt).toLocaleDateString("ko-KR")}</span>
       </div>
-    </GlassCard>
+    </div>
   );
 };

@@ -6,7 +6,7 @@ interface UseResearchViewModelReturn {
   researchList: ResearchItem[];
   loading: boolean;
   error: string | null;
-  fetchResearch: (projectId: string) => Promise<void>;
+  fetchResearch: (projectId?: string) => Promise<void>;
   updateResearch: (projectId: string, itemId: string, pack: ResearchPack) => Promise<void>;
   generateSEO: (request: WriteRequest) => Promise<WriteResponse | null>;
 }
@@ -20,14 +20,13 @@ export const useResearchViewModel = (): UseResearchViewModelReturn => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchResearch = useCallback(async (projectId: string) => {
-    if (!projectId) return;
-    
+  const fetchResearch = useCallback(async (projectId?: string) => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(`/api/research?projectId=${projectId}`);
+      const url = projectId ? `/api/research?projectId=${projectId}` : `/api/research`;
+      const response = await fetch(url);
       const result = await response.json();
 
       if (result.success) {

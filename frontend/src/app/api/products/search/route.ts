@@ -1,10 +1,10 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
-import { searchCoupangProducts } from '@/infrastructure/api/coupang';
+import { searchCoupangProducts } from '@/infrastructure/clients/coupang';
 import { CoupangProductResponse, ProductSearchRequest, CoupangRawProduct } from '@/shared/types/api';
 import { normalizeCoupangProduct, resolveImageRedirectUrl } from '@/shared/lib/api-utils';
 
 /**
- * 쿠팡 파트너스 상품 검색 API 라우트
  * @param req - NextRequest (POST, { keyword: string, limit?: number })
  * @returns 상품 리스트
  * @example

@@ -1,5 +1,6 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchCoupangBestCategory } from '@/infrastructure/api/coupang-best-category';
+import { fetchCoupangBestCategory } from '@/infrastructure/clients/coupang-best-category';
 import { CoupangProductResponse, CategorySearchRequest, CoupangRawProduct } from '@/shared/types/api';
 import { normalizeCoupangProduct, resolveImageRedirectUrl } from '@/shared/lib/api-utils';
 

@@ -1,5 +1,6 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchCoupangPLBrand } from '@/infrastructure/api/coupang-extended';
+import { fetchCoupangPLBrand } from '@/infrastructure/clients/coupang-extended';
 import { CoupangProductResponse, CoupangRawProduct } from '@/shared/types/api';
 import { normalizeCoupangProduct, resolveImageRedirectUrl } from '@/shared/lib/api-utils';
 

@@ -15,9 +15,9 @@ interface SupabaseConfig {
  */
 export function getAuthSupabaseConfig(): SupabaseConfig {
   return {
-    url: process.env.NEXT_PUBLIC_SUPABASE_URL_PRODUCTION!,
-    anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION!,
-    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY_PRODUCTION!,
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL_PRODUCTION || 'https://placeholder.supabase.co',
+    anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION || 'placeholder',
+    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY_PRODUCTION || 'placeholder',
   };
 }
 
@@ -30,16 +30,16 @@ export function getFunctionsSupabaseConfig(): SupabaseConfig {
   
   if (isLocal) {
     return {
-      url: process.env.NEXT_PUBLIC_SUPABASE_URL_LOCAL!,
-      anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_LOCAL!,
-      serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY_LOCAL!,
+      url: process.env.NEXT_PUBLIC_SUPABASE_URL_LOCAL || 'https://placeholder.supabase.co',
+      anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_LOCAL || 'placeholder',
+      serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY_LOCAL || 'placeholder',
     };
   }
   
   return {
-    url: process.env.NEXT_PUBLIC_SUPABASE_URL_PRODUCTION!,
-    anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION!,
-    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY_PRODUCTION!,
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL_PRODUCTION || 'https://placeholder.supabase.co',
+    anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION || 'placeholder',
+    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY_PRODUCTION || 'placeholder',
   };
 }
 
@@ -49,22 +49,22 @@ export function getFunctionsSupabaseConfig(): SupabaseConfig {
  */
 export function getDBSupabaseConfig(): SupabaseConfig {
   return {
-    url: process.env.NEXT_PUBLIC_SUPABASE_URL_PRODUCTION!,
-    anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION!,
-    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY_PRODUCTION!,
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL_PRODUCTION || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+    anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder',
+    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY_PRODUCTION || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder',
   };
 }
 
 /**
- * 클라이언트용 Supabase 설정 (환경 변수 사용)
+ * 클라이언트용 Supabase 설정 (환경 변 사용)
  */
 export function getClientSupabaseConfig(): Pick<SupabaseConfig, 'url' | 'anonKey'> {
   return {
-    url: process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+    anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder',
   };
 }
 
 // Supabase 클라이언트 인스턴스를 위한 re-export
-// infrastructure/api/supabase.ts의 인스턴스를 사용
-export { supabase } from '@/infrastructure/api/supabase';
+// infrastructure/clients/supabase.ts의 인스턴스를 사용
+export { supabase } from '@/infrastructure/clients/supabase';

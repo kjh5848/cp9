@@ -38,12 +38,12 @@ export const ResearchEditForm = ({
   return (
     <GlassCard className={cn("p-6 flex flex-col gap-5", className)}>
       <div className="flex items-center justify-between">
-        <h3 className="text-white font-bold">리서치 분석 정보 편집</h3>
+        <h3 className="text-foreground font-bold">리서치 분석 정보 편집</h3>
         <div className="flex gap-2">
           <Button 
             size="sm" 
             variant="outline" 
-            className="border-white/10 hover:bg-white/5"
+            className="border-border hover:bg-muted"
             onClick={onCancel}
           >
             <X className="w-4 h-4 mr-1" />
@@ -62,10 +62,10 @@ export const ResearchEditForm = ({
 
       <div className="space-y-4">
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-slate-400 uppercase">제품 제목</label>
+          <label className="text-xs font-semibold text-muted-foreground uppercase">제품 제목</label>
           <input
             type="text"
-            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full bg-background/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
             value={pack.title || ""}
             onChange={(e) => handleChange("title", e.target.value)}
           />
@@ -73,32 +73,32 @@ export const ResearchEditForm = ({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-400 uppercase">가격 (KRW)</label>
+            <label className="text-xs font-semibold text-muted-foreground uppercase">가격 (KRW)</label>
             <input
               type="number"
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full bg-background/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
               value={pack.priceKRW || ""}
               onChange={(e) => handleChange("priceKRW", Number(e.target.value))}
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-400 uppercase">로켓배송 여부</label>
+            <label className="text-xs font-semibold text-muted-foreground uppercase">로켓배송 여부</label>
             <select
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full bg-background/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
               value={pack.isRocket === null ? "" : pack.isRocket ? "true" : "false"}
               onChange={(e) => handleChange("isRocket", e.target.value === "" ? null : e.target.value === "true")}
             >
-              <option value="" className="bg-slate-900">선택 안함</option>
-              <option value="true" className="bg-slate-900">로켓배송 가능</option>
-              <option value="false" className="bg-slate-900">일반배송</option>
+              <option value="" className="bg-card">선택 안함</option>
+              <option value="true" className="bg-card">로켓배송 가능</option>
+              <option value="false" className="bg-card">일반배송</option>
             </select>
           </div>
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-slate-400 uppercase">주요 특징 (줄바꿈으로 구분)</label>
+          <label className="text-xs font-semibold text-muted-foreground uppercase">주요 특징 (줄바꿈으로 구분)</label>
           <textarea
-            className="w-full h-24 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+            className="w-full h-24 bg-background/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
             value={pack.features?.join("\n") || ""}
             onChange={(e) => handleListChange("features", e.target.value)}
           />
@@ -106,17 +106,17 @@ export const ResearchEditForm = ({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-emerald-400/80 uppercase">장점</label>
+            <label className="text-xs font-semibold text-emerald-500 uppercase">장점</label>
             <textarea
-              className="w-full h-24 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-emerald-500/50 resize-none"
+              className="w-full h-24 bg-background/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-emerald-500/50 resize-none"
               value={pack.pros?.join("\n") || ""}
               onChange={(e) => handleListChange("pros", e.target.value)}
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-rose-400/80 uppercase">단점</label>
+            <label className="text-xs font-semibold text-rose-500 uppercase">단점</label>
             <textarea
-              className="w-full h-24 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-rose-500/50 resize-none"
+              className="w-full h-24 bg-background/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-rose-500/50 resize-none"
               value={pack.cons?.join("\n") || ""}
               onChange={(e) => handleListChange("cons", e.target.value)}
             />

@@ -14,6 +14,9 @@ export interface ResearchPack {
   metaTitle?: string;
   metaDescription?: string;
   slug?: string;
+  thumbnailUrl?: string | null;
+  thumbnailPrompt?: string | null;
+  researchRaw?: string | null;
 }
 
 export interface ResearchItem {
@@ -48,6 +51,9 @@ export interface WriteRequest {
   promptVersion?: string;
   force?: boolean;
   maxWords?: number;
+  persona?: string; // 예: 'IT', 'BEAUTY', 'LIVING'
+  actionType?: 'NOW' | 'SCHEDULE'; // 즉시 실행 또는 예약 등록
+  scheduledAt?: string; // 예약 시간 (ISO 형식)
 }
 
 /**

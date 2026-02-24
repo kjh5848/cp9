@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { generateCoupangSignature } from '@/infrastructure/utils/coupang-hmac';
 import { DeepLinkResponse, DeepLinkRequest, CoupangRawDeepLink } from '@/shared/types/api';
