@@ -14,7 +14,9 @@ import {
   SlidersHorizontal,
   X,
   ChevronDown,
+  CheckCircle2,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/shared/lib/utils";
 import { CoupangProductResponse } from "@/shared/types/api";
 
@@ -77,6 +79,11 @@ export const ProductCreation = () => {
   const [value, setValue] = useState("");
   const [results, setResults] = useState<CoupangProductResponse[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  /* ── 상품 선택 및 SEO 분석 상태 ── */
+  const router = useRouter();
+  const [selectedProductIds, setSelectedProductIds] = useState<Set<number>>(new Set());
+  const [isResearching, setIsResearching] = useState(false);
 
   /* ── 필터 상태 ── */
   const [pricePresetIdx, setPricePresetIdx] = useState(0);
@@ -185,6 +192,7 @@ export const ProductCreation = () => {
     setLoading(true);
     setError(null);
     setResults([]);
+    setSelectedProductIds(new Set());
     /* 필터 초기화 */
     setPricePresetIdx(0);
     setRocketOnly(false);
@@ -222,10 +230,70 @@ export const ProductCreation = () => {
     }
   };
 
+  const toggleSelection = (productId: number) => {
+    setSelectedProductIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(productId)) {
+        next.delete(productId);
+      } else {
+        next.add(productId);
+      }
+      return next;
+    });
+  };
+
+  const handleStartResearch = async () => {
+    if (selectedProductIds.size === 0) return;
+    setIsResearching(true);
+    setError(null);
+    
+    // 프로젝트 ID 생성 (임의)
+    const newProjectId = crypto.randomUUID();
+    
+    try {
+      // 선택된 상품만 필터링
+      const selectedProducts = results.filter(p => selectedProductIds.has(p.productId));
+      
+      // 병렬로 리서치 데이터 전송
+      await Promise.all(
+        selectedProducts.map(async (product) => {
+          const res = await fetch("/api/item-research", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              itemName: product.productName,
+              projectId: newProjectId,
+              itemId: String(product.productId),
+              productData: {
+                productName: product.productName,
+                productPrice: product.productPrice,
+                productImage: product.productImage,
+                productUrl: product.productUrl,
+                categoryName: product.categoryName || "",
+                isRocket: product.isRocket,
+                isFreeShipping: product.isFreeShipping,
+              }
+            }),
+          });
+          
+          if (!res.ok) {
+            console.error(`리서치 생성 실패 (상품 ID: ${product.productId})`);
+          }
+        })
+      );
+      
+      // 전송 완료 후 리서치 페이지로 라우팅
+      router.push(`/research?projectId=${newProjectId}`);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "SEO 리서치 전환 중 오류가 발생했습니다.");
+      setIsResearching(false);
+    }
+  };
+
   const hasResults = results.length > 0;
 
   return (
-    <div className="w-full max-w-5xl mx-auto space-y-8 py-8">
+    <div className="w-full max-w-5xl mx-auto space-y-8 py-8 pb-32">
       {/* 모드 선택 탭 */}
       <div className="flex flex-wrap justify-center p-1 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 w-fit mx-auto gap-1">
         {(["keyword", "link", "category", "pl_brand", "pl_all", "goldbox"] as const).map((m) => (
@@ -441,14 +509,28 @@ export const ProductCreation = () => {
 
       {filtered.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((product, idx) => (
-            <GlassCard
-              key={`${product.productId}-${idx}`}
-              className="p-0 overflow-hidden hover:border-blue-500/40 transition-colors flex flex-col"
-            >
-              {/* 상품 이미지 */}
-              <div className="relative w-full aspect-square bg-white/5">
-                {product.productImage ? (
+          {filtered.map((product, idx) => {
+            const isSelected = selectedProductIds.has(product.productId);
+            
+            return (
+              <GlassCard
+                key={`${product.productId}-${idx}`}
+                onClick={() => toggleSelection(product.productId)}
+                className={cn(
+                  "p-0 overflow-hidden flex flex-col cursor-pointer transition-all duration-200",
+                  isSelected 
+                    ? "border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)] bg-blue-500/10 ring-2 ring-blue-500 ring-inset" 
+                    : "hover:border-blue-500/40"
+                )}
+              >
+                {/* 상품 이미지 */}
+                <div className="relative w-full aspect-square bg-white/5">
+                  {isSelected && (
+                    <div className="absolute top-2 right-2 z-10">
+                      <CheckCircle2 className="w-6 h-6 text-blue-500 fill-blue-500/20" />
+                    </div>
+                  )}
+                  {product.productImage ? (
                   <Image
                     src={product.productImage}
                     alt={product.productName}
@@ -491,11 +573,12 @@ export const ProductCreation = () => {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-[11px] text-slate-500 hover:text-blue-400 transition-colors"
                 >
-                  쿠팡에서 보기 <ExternalLink className="w-3 h-3" />
-                </a>
-              </div>
-            </GlassCard>
-          ))}
+                   쿠팡에서 보기 <ExternalLink className="w-3 h-3" />
+                 </a>
+               </div>
+             </GlassCard>
+            );
+          })}
         </div>
       )}
 
@@ -512,6 +595,49 @@ export const ProductCreation = () => {
               <p className="text-[10px] text-slate-500">{item.desc}</p>
             </GlassCard>
           ))}
+        </div>
+      )}
+
+      {/* ── 선택 상품 액션 (Sticky) ── */}
+      {selectedProductIds.size > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 p-4 animate-in slide-in-from-bottom-5">
+          <div className="max-w-3xl mx-auto">
+            <GlassCard className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-blue-500/30 bg-gray-900/90 backdrop-blur-xl shadow-2xl">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                  <span className="text-blue-400 font-bold">{selectedProductIds.size}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-white font-bold">개의 상품 선택됨</span>
+                  <span className="text-xs text-slate-400">클릭하여 선택/해제</span>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedProductIds(new Set())}
+                  className="border-white/10 text-slate-300 hover:text-white"
+                >
+                  선택 취소
+                </Button>
+                <Button
+                  onClick={handleStartResearch}
+                  disabled={isResearching}
+                  className="bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-500/20"
+                >
+                  {isResearching ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      처리 중...
+                    </>
+                  ) : (
+                    "SEO 글 작성 완료 및 리서치 대시보드로 이동"
+                  )}
+                </Button>
+              </div>
+            </GlassCard>
+          </div>
         </div>
       )}
     </div>
