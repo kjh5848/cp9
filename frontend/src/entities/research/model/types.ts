@@ -20,6 +20,7 @@ export interface ResearchPack {
   productUrl?: string | null;     // 쿠팡 상품 링크 (CTA용)
   researchRaw?: string | null;
   content?: string | null;
+  contentType?: 'html' | 'markdown'; // 콘텐츠 형식 (html: write API 생성, markdown: 레거시)
   status?: 'DRAFT' | 'SCHEDULED' | 'PUBLISHED';
   scheduledAt?: string | null;
   // 글 생성 메타데이터

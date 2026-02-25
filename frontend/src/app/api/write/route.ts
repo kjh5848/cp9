@@ -5,6 +5,10 @@ import { createClaudeModel } from '@/infrastructure/clients/claude';
 import { createGeminiModel, generateNanoBananaImage } from '@/infrastructure/clients/gemini';
 import { perplexityModel } from '@/infrastructure/clients/perplexity';
 import { getSeoSkillTemplate } from '../item-research/seo-skill-parser';
+import { marked } from 'marked';
+
+// marked 설정: GitHub Flavored Markdown 스타일
+marked.setOptions({ gfm: true, breaks: true });
 
 // 페르소나 ID → Perplexity 프롬프트에서 치환할 섹션 키 매핑
 const PERSONA_PERPLEXITY_KEY: Record<string, string> = {
@@ -169,31 +173,61 @@ ${researchRaw}
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ]);
-        seoContent = aiResponse.content.toString();
+        const markdownRaw = aiResponse.content.toString();
 
-        // 이미지 삽입 처리
+        // ── 이미지 URL 결정 ──────────────────────────────────────
+        let headerImageUrl: string | null = null;
         if (imageModel === 'nano-banana') {
-          // nano-banana: 동적 생성 이미지 삽입
-          console.log(`🎨 [WriteAPI] 이미지 모델(Nano Banana) 생성 연동...`);
-          const generatedImageUrl = await generateNanoBananaImage(`${pack.title} 전문 스튜디오 조명 고해상도 제품 연출 샷`);
-          seoContent = `![${pack.title}](${generatedImageUrl})\n\n` + seoContent;
-        } else {
-          // 그 외: pack에 저장된 썸네일 또는 상품 이미지를 글 최상단에 삽입
-          const headerImageUrl = pack.thumbnailUrl || pack.productImage || null;
-          if (headerImageUrl && imageModel !== 'none') {
-            console.log(`🖼️ [WriteAPI] 썸네일 이미지 삽입 완료`);
-            seoContent = `![${pack.title}](${headerImageUrl})\n\n` + seoContent;
-          }
+          console.log(`🎨 [WriteAPI] Nano Banana 이미지 생성 중...`);
+          headerImageUrl = await generateNanoBananaImage(`${pack.title} professional product studio shot`);
+        } else if (imageModel !== 'none') {
+          headerImageUrl = pack.thumbnailUrl || pack.productImage || null;
         }
+
+        // ── MD → HTML 변환 (marked) ───────────────────────────────
+        console.log(`🔄 [WriteAPI] 마크다운 → HTML 변환 중...`);
+        let htmlBody = await marked.parse(markdownRaw);
+
+        // ── 쿠팡 상품 이미지 + 구매 버튼 HTML 블록 생성 ────────────
+        const productImageUrl = headerImageUrl || pack.productImage || pack.thumbnailUrl || '';
+        const buyUrl = pack.productUrl || `https://www.coupang.com/vp/products/${itemId}`;
+
+        const coupangHeaderHtml = productImageUrl ? `
+<div class="coupang-product-block" style="text-align:center; margin: 24px 0;">
+  <img src="${productImageUrl}" alt="${pack.title}" style="max-width:100%; border-radius:12px; margin-bottom:16px;" />
+  <a href="${buyUrl}" target="_blank" rel="noopener sponsored" 
+     style="display:inline-block; background:#E4003B; color:#fff; font-weight:bold; padding:14px 32px; border-radius:8px; text-decoration:none; font-size:1rem;">
+    🛒 쿠팡에서 최저가 확인하기
+  </a>
+  <p style="font-size:0.75rem; color:#888; margin-top:8px;">※ 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.</p>
+</div>
+` : '';
+
+        const coupangCtaHtml = `
+<div class="coupang-cta-block" style="text-align:center; margin: 40px 0; padding: 24px; background:#fff5f7; border-radius:12px; border:1px solid #fdd;">
+  <p style="font-weight:bold; font-size:1.1rem; margin-bottom:12px;">지금 바로 구매하세요!</p>
+  <a href="${buyUrl}" target="_blank" rel="noopener sponsored"
+     style="display:inline-block; background:#E4003B; color:#fff; font-weight:bold; padding:16px 40px; border-radius:8px; text-decoration:none; font-size:1.1rem;">
+    🛒 쿠팡 최저가 바로가기
+  </a>
+  <p style="font-size:0.75rem; color:#888; margin-top:8px;">※ 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.</p>
+</div>
+`;
+
+        // 최종 HTML: 상품 이미지 블록 + 본문 + CTA 버튼
+        seoContent = coupangHeaderHtml + htmlBody + coupangCtaHtml;
+        console.log(`✅ [WriteAPI] HTML 변환 완료 (${seoContent.length}자)`);
+
       } catch (err) {
         console.error(`[WriteAPI] LLM API Error:`, err);
-        seoContent = `# 작성 실패\n\n모델 API 호출 오류로 인해 글 생성을 실패했습니다. (Selected Model: ${textModel})`;
+        seoContent = `<h1>작성 실패</h1><p>모델 API 호출 오류로 인해 글 생성을 실패했습니다. (Selected Model: ${textModel})</p>`;
       }
 
       // 8. DB 업데이트
       const updatedPack = {
         ...pack,
         content: seoContent,
+        contentType: 'html',   // 변환된 HTML 콘텐츠임을 명시
         status: 'PUBLISHED',
         scheduledAt: null,
         // 글 생성 메타데이터 저장

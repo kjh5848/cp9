@@ -190,13 +190,22 @@ export default function ArticleDetailPage() {
                </TabsList>
              </div>
 
-             <TabsContent value="content" className="mt-0 focus-visible:outline-none">
-                <article className="prose-tistory bg-card/30 p-8 md:p-12 rounded-3xl border border-border/40 shadow-xl">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {pack.content || '# 본문이 생성되지 않았습니다.\n재생성 버튼을 눌러주세요.'}
-                  </ReactMarkdown>
-                </article>
-             </TabsContent>
+              <TabsContent value="content" className="mt-0 focus-visible:outline-none">
+                 <article className="prose-tistory bg-card/30 p-8 md:p-12 rounded-3xl border border-border/40 shadow-xl">
+                   {pack.contentType === 'html' ? (
+                     // HTML 콘텐츠: dangerouslySetInnerHTML로 렌더링 (write API에서 생성한 안전한 HTML)
+                     <div
+                       className="article-html-content"
+                       dangerouslySetInnerHTML={{ __html: pack.content || '<p>본문이 생성되지 않았습니다.</p>' }}
+                     />
+                   ) : (
+                     // 레거시 마크다운 콘텐츠: ReactMarkdown으로 렌더링
+                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                       {pack.content || '# 본문이 생성되지 않았습니다.\n재생성 버튼을 눌러주세요.'}
+                     </ReactMarkdown>
+                   )}
+                 </article>
+              </TabsContent>
 
              <TabsContent value="research" className="mt-0">
                 <GlassCard className="p-8 md:p-12 border-border/40 min-h-[500px]">
