@@ -104,7 +104,13 @@ export async function POST(request: NextRequest) {
       try {
         const perplexityPromptStr = await getSeoSkillTemplate('perplexity-prompts.md');
         const perplexityKey = PERSONA_PERPLEXITY_KEY[persona] || PERSONA_PERPLEXITY_KEY['IT'];
-        const itemsJson = JSON.stringify([{ name: pack.title, features: '쿠팡 인기 파트너스 상품' }], null, 2);
+        // 상품 이름과 쿠팡 URL을 구체적으로 전달하여 카테고리 트렌드가 아닌 해당 상품 리서치 유도
+        const coupangProductUrl = pack.productUrl || `https://www.coupang.com/vp/products/${itemId}`;
+        const itemsJson = JSON.stringify([{
+          name: pack.title,
+          url: coupangProductUrl,
+          features: `선택된 특정 상품. 반드시 "${pack.title}" 이 제품 하나에 대한 정보만 수집.`
+        }], null, 2);
 
         const pPrompt = perplexityPromptStr
           .replace('{{persona}}', perplexityKey)
@@ -131,19 +137,25 @@ export async function POST(request: NextRequest) {
 ${personaTemplate}
 
 [공통 절대 규칙]
-1. 글은 반드시 H1(#) 제목으로 시작하라.
+1. 글은 반드시 반드시 H1(#) 제목으로 시작하라.
 2. 가이드라인의 [필수 섹션 목차]를 반드시 순서대로 모두 포함하라.
-3. 아이콘(이모지)을 글 본문에 삽입하지 마라. (제목 이모지 제외)
+3. 이모지와 아이콘을 제목 포함 어디에도 절대 삽입하지 마라. 위반 시 실패로 간주한다.
 4. 마크다운 테이블은 반드시 올바른 문법으로 작성하라.
 5. 목표 글자수를 채운 후에도 [자유 확장 영역]의 주제를 활용해 창의적으로 분량을 확보하라.
 6. CTA 2줄은 글 마지막에 반드시 포함하라.
+7. 반드시 아래 [대상 상품] 하나만을 주제로 작성하라. 다른 제품이나 카테고리 트렌드 기사로 변질되는 것을 절대 금지한다.
 `;
+
 
       // 6. User Prompt 구성 - 실제 데이터와 작성 지시
       // 쿠팡 상품 URL: pack에 저장된 값 우선, 없으면 itemId 기반으로 구성
       const coupangUrl = pack.productUrl || `https://www.coupang.com/vp/products/${itemId}`;
 
       const userPrompt = `
+## 핵심 지시 (반드시 준수)
+이 글은 반드시 아래 [대상 상품] 하나에 대한 리뷰/분석 글이어야 한다.
+다른 상품들을 나열하거나 카테고리 트렌드 기사로 작성하는 것을 절대 금지한다.
+
 [대상 상품]: ${pack.title}
 [쿠팡 구매 링크]: ${coupangUrl}
 
@@ -155,11 +167,13 @@ ${researchRaw}
 
 [목표 글자수]: 공백 포함 약 ${charLimit}자 이상.
 [강제 지침]:
+- 반드시 "${pack.title}" 이 제품만을 주제로 작성하라.
 - 필수 섹션을 모두 채운 뒤, 글자수가 남는다면 [자유 확장 영역]에 명시된 주제로 창의적인 심화 콘텐츠를 추가하여 반드시 ${charLimit}자를 채우세요.
 - 단순 반복 절대 금지. 딥다이브 분석, 실사용 팁, 비교 분석 등 깊이 있는 정보로 분량을 확보하세요.
 - Perplexity 리서치 데이터의 최신 정보를 최우선으로 활용하세요.
 - 글 본문 중 구매를 유도하는 CTA는 반드시 아래 마크다운 링크 형식으로 작성하세요:
   [쿠팡에서 최저가 확인하기](${coupangUrl})
+- 이모지와 아이콘은 어디에도 사용하지 마라.
 
 위 지침에 따라 지금 바로 마크다운 블로그 포스팅 전문을 작성하라.
 `;
