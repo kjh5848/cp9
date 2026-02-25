@@ -1,13 +1,6 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder';
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: { persistSession: false }
-});
+import { prisma } from '@/infrastructure/clients/prisma';
 
 // GET - 프로젝트의 초안 조회
 export async function GET(request: NextRequest) {
@@ -23,34 +16,41 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    let query = supabase
-      .from('drafts')
-      .select('project_id, item_id, meta, markdown, version, updated_at')
-      .eq('project_id', projectId)
-      .order('updated_at', { ascending: false });
-
+    const whereClause: any = { projectId };
     if (itemId) {
-      query = query.eq('item_id', itemId);
+      whereClause.itemId = itemId;
     }
 
-    const { data, error } = await query;
-    
-    if (error) {
-      console.error('Drafts fetch error:', error);
-      return NextResponse.json(
-        { success: false, error: 'DATABASE_ERROR', detail: error.message },
-        { status: 500 }
-      );
-    }
+    const data = await prisma.draft.findMany({
+      where: whereClause,
+      select: {
+        projectId: true,
+        itemId: true,
+        meta: true,
+        markdown: true,
+        version: true,
+        updatedAt: true
+      },
+      orderBy: { updatedAt: 'desc' }
+    });
 
-    const drafts = data?.map(item => ({
-      projectId: item.project_id,
-      itemId: item.item_id,
-      meta: item.meta,
-      markdown: item.markdown,
-      version: item.version,
-      updatedAt: item.updated_at
-    })) || [];
+    const drafts = data.map((item: any) => {
+      let parsedMeta = null;
+      try {
+        parsedMeta = JSON.parse(item.meta || '{}');
+      } catch (e) {
+        console.warn(`[Draft] JSON parse error for ${item.itemId}:`, item.meta);
+        parsedMeta = {};
+      }
+      return {
+        projectId: item.projectId,
+        itemId: item.itemId,
+        meta: parsedMeta,
+        markdown: item.markdown,
+        version: item.version,
+        updatedAt: item.updatedAt
+      };
+    });
 
     return NextResponse.json({
       success: true,
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Drafts API error:', error);
     return NextResponse.json(
-      { success: false, error: 'INTERNAL_ERROR' },
+      { success: false, error: 'INTERNAL_ERROR', detail: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }

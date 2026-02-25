@@ -351,7 +351,7 @@ export function LandingPage() {
           </Link>
           <Link href="/research">
             <button className="cta-btn-outline">
-              리서치 관리 →
+              글 목록 관리 →
             </button>
           </Link>
         </div>

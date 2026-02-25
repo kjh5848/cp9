@@ -147,18 +147,23 @@ body {
 
 /* 티스토리 풍 커스텀 Typography 스타일 */
 .prose-tistory {
-  @apply text-slate-800 dark:text-slate-200 leading-relaxed font-sans text-base sm:text-[17px];
+  @apply leading-relaxed font-sans text-base sm:text-[17px];
+  color: var(--foreground);
 }
 .prose-tistory p {
   @apply my-6;
+  color: var(--muted-foreground);
 }
-.prose-tistory h1, .prose-tistory h2, .prose-tistory h3 {
-  @apply text-slate-900 dark:text-slate-100 font-bold mb-4 mt-10 tracking-tight;
+.prose-tistory h1, .prose-tistory h2, .prose-tistory h3, .prose-tistory h4, .prose-tistory h5, .prose-tistory h6 {
+  @apply font-bold mb-4 mt-10 tracking-tight;
+  color: var(--foreground) !important;
 }
-.prose-tistory h1 { @apply text-3xl sm:text-4xl border-b border-slate-200 dark:border-slate-800 pb-2 mb-6; }
+.prose-tistory h1 { @apply text-3xl sm:text-4xl border-b pb-2 mb-6; border-color: var(--border); }
 .prose-tistory h2 { @apply text-2xl sm:text-3xl; }
 .prose-tistory h3 { @apply text-xl sm:text-2xl; }
-.prose-tistory strong { @apply font-bold text-slate-900 dark:text-slate-100; }
+.prose-tistory h4 { @apply text-lg sm:text-xl; }
+
+.prose-tistory strong { @apply font-bold; color: var(--foreground); }
 .prose-tistory ul { @apply list-disc list-outside ml-6 my-6 space-y-2; }
 .prose-tistory ol { @apply list-decimal list-outside ml-6 my-6 space-y-2; }
 .prose-tistory li { @apply pl-1; }
@@ -176,4 +181,25 @@ body {
 }
 .prose-tistory a {
   @apply text-blue-600 dark:text-blue-400 hover:underline hover:text-blue-800 dark:hover:text-blue-300 transition-colors;
+}
+.prose-tistory li {
+  color: var(--muted-foreground);
+}
+/* 마크다운 테이블 스타일 */
+.prose-tistory table {
+  @apply w-full my-8 text-sm border-collapse;
+}
+.prose-tistory thead {
+  @apply bg-blue-500/10;
+}
+.prose-tistory th {
+  @apply px-4 py-3 text-left font-bold border border-border;
+  color: var(--foreground) !important;
+}
+.prose-tistory td {
+  @apply px-4 py-3 border border-border align-top;
+  color: var(--muted-foreground);
+}
+.prose-tistory tr:nth-child(even) td {
+  @apply bg-white/5;
 }

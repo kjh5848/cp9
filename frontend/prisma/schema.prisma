@@ -1,0 +1,30 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Research {
+  projectId String   @map("project_id")
+  itemId    String   @map("item_id")
+  pack      String   // Stored as JSON string
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@id([projectId, itemId])
+  @@map("research")
+}
+
+model Draft {
+  projectId String   @map("project_id")
+  itemId    String   @map("item_id")
+  meta      String   // Stored as JSON string
+  markdown  String
+  version   Int
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@id([projectId, itemId])
+  @@map("drafts")
+}

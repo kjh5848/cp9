@@ -41,7 +41,7 @@ export const Navbar = ({ className }: NavbarProps) => {
             아이템 생성
           </Link>
           <Link href="/research" className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors">
-            리서치 관리
+            글 목록 관리
           </Link>
           <Link href="/schedule" className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors">
             스케줄 관리

@@ -16,7 +16,20 @@ export interface ResearchPack {
   slug?: string;
   thumbnailUrl?: string | null;
   thumbnailPrompt?: string | null;
+  productImage?: string | null;   // 쿠팡 상품 원본 이미지
+  productUrl?: string | null;     // 쿠팡 상품 링크 (CTA용)
   researchRaw?: string | null;
+  content?: string | null;
+  status?: 'DRAFT' | 'SCHEDULED' | 'PUBLISHED';
+  scheduledAt?: string | null;
+  // 글 생성 메타데이터
+  persona?: string;               // 예: 'IT', 'BEAUTY', 'MASTER_CURATOR_H'
+  personaName?: string;           // 예: 'IT/테크 전문가 블로거'
+  textModel?: string;             // 예: 'gpt-4o', 'claude-sonnet-4-6'
+  seoConfig?: {
+    persona?: string;
+    [key: string]: any;
+  };
 }
 
 export interface ResearchItem {
@@ -52,8 +65,11 @@ export interface WriteRequest {
   force?: boolean;
   maxWords?: number;
   persona?: string; // 예: 'IT', 'BEAUTY', 'LIVING'
+  textModel?: string; // 예: 'gpt-4o', 'claude-3-5-sonnet', 'gemini-1.5-pro'
+  imageModel?: string; // 예: 'dall-e-3', 'gemini-nano'
   actionType?: 'NOW' | 'SCHEDULE'; // 즉시 실행 또는 예약 등록
   scheduledAt?: string; // 예약 시간 (ISO 형식)
+  charLimit?: number; // 목표 글자수
 }
 
 /**

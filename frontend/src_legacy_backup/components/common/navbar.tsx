@@ -22,7 +22,7 @@ export default function Navbar() {
           <Button variant="outline">아이템 생성</Button>
         </Link>
         <Link href="/research">
-          <Button variant="outline">리서치 관리</Button>
+          <Button variant="outline">글 목록 관리</Button>
         </Link>
         {user ? (
           <>

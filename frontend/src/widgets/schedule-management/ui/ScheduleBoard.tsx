@@ -1,26 +1,41 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { GlassCard } from "@/shared/ui/GlassCard";
 import { Button } from "@/shared/ui/button";
-import { Calendar as CalendarIcon, Clock, PenTool, CheckCircle2 } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, PenTool, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
 import { DraftDetailModal } from "@/features/research-analysis/ui/DraftDetailModal";
+import { useResearchViewModel } from "@/features/research-analysis/model/useResearchViewModel";
 
 /**
  * [Widgets Layer]
  * 스케줄링 목록(예약된 포스팅, 완료된 포스팅 등)을 글로벌로 관리하고 확인하는 보드입니다.
  */
 export const ScheduleBoard = () => {
-  // TODO: 이후 스케줄 DB/API 연동
-  const scheduledItems = [
-    { id: "1", title: "삼성전자 건조기 BESPOKE 그랑데 AI", persona: "LIVING", date: "2024-05-10T14:00:00Z", status: "PENDING" },
-    { id: "2", title: "Apple 2023 맥북 프로 14 M3", persona: "IT", date: "2024-05-11T09:30:00Z", status: "PENDING" },
-  ];
+  const { researchList, loading, error, fetchResearch } = useResearchViewModel();
 
-  const completedItems = [
-    { id: "3", title: "나이키 에어 포스 1 '07", persona: "BEAUTY", date: "2024-05-01T10:00:00Z", status: "COMPLETED" },
-    { id: "4", title: "LG전자 스탠바이미 Go", persona: "IT", date: "2024-04-28T16:00:00Z", status: "COMPLETED" },
-  ];
+  useEffect(() => {
+    fetchResearch();
+  }, [fetchResearch]);
+
+  // DB에서 가져온 데이터로 목록 분리
+  const scheduledItems = researchList.filter(item => item.pack.status === 'SCHEDULED').map(item => ({
+    id: item.itemId,
+    title: item.pack.title || '제목 없음',
+    persona: item.pack.seoConfig?.persona || 'IT',
+    date: item.pack.scheduledAt || item.updatedAt,
+    status: 'PENDING',
+    rawItem: item
+  }));
+
+  const completedItems = researchList.filter(item => item.pack.status === 'PUBLISHED' || item.pack.content).map(item => ({
+    id: item.itemId,
+    title: item.pack.title || '제목 없음',
+    persona: item.pack.seoConfig?.persona || 'IT',
+    date: item.pack.scheduledAt || item.updatedAt,
+    status: 'COMPLETED',
+    content: item.pack.content || ''
+  }));
 
   const [previewItem, setPreviewItem] = useState<{ isOpen: boolean; title: string; markdown: string }>({
     isOpen: false,
@@ -94,15 +109,29 @@ export const ScheduleBoard = () => {
   return (
     <div className="flex flex-col gap-8 w-full max-w-5xl mx-auto py-8 px-4 md:px-8">
       {/* 헤더 영역 */}
-      <div className="flex flex-col gap-2 border-b border-border pb-6">
-        <h2 className="text-3xl font-bold text-foreground flex items-center gap-3">
-          <CalendarIcon className="w-8 h-8 text-blue-500" />
-          발행 스케줄 관리
-        </h2>
-        <p className="text-muted-foreground">
-          예약된 SEO 포스트 발행 일정을 한눈에 확인하고 관리합니다.
-        </p>
+      <div className="flex justify-between items-end border-b border-border pb-6">
+        <div className="flex flex-col gap-2">
+          <h2 className="text-3xl font-bold text-foreground flex items-center gap-3">
+            <CalendarIcon className="w-8 h-8 text-blue-500" />
+            발행 스케줄 관리
+          </h2>
+          <p className="text-muted-foreground">
+            예약된 SEO 포스트 발행 일정을 한눈에 확인하고 관리합니다.
+          </p>
+        </div>
+        <Button onClick={() => fetchResearch()} variant="outline" className="gap-2" disabled={loading}>
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "새로고침"}
+        </Button>
       </div>
+
+      {error && (
+        <GlassCard className="p-4 border-red-500/20 bg-red-500/5 mb-4">
+          <div className="flex items-center gap-3 text-red-500 text-sm font-semibold">
+            <AlertCircle className="w-5 h-5" />
+            <p>{error}</p>
+          </div>
+        </GlassCard>
+      )}
 
       {/* 보드 영역 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -187,10 +216,10 @@ export const ScheduleBoard = () => {
                     variant="outline" 
                     className="h-7 text-xs border-blue-500/30 text-blue-500 hover:bg-blue-500/10"
                     onClick={() => {
-                      setPreviewItem({
+                        setPreviewItem({
                         isOpen: true,
                         title: item.title,
-                        markdown: generateMockMarkdown(item.title, item.persona)
+                        markdown: item.content || '생성된 본문이 없습니다.'
                       });
                     }}
                   >

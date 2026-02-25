@@ -74,6 +74,8 @@ export const useResearchViewModel = (): UseResearchViewModelReturn => {
   }, []);
 
   const generateSEO = useCallback(async (request: WriteRequest): Promise<WriteResponse | null> => {
+    // 글 생성 중 로딩 Toat 표시
+    const loadingToastId = toast.loading('AI가 글을 작성 중입니다... (30초~2분 소요)');
     try {
       const response = await fetch("/api/write", {
         method: "POST",
@@ -83,19 +85,24 @@ export const useResearchViewModel = (): UseResearchViewModelReturn => {
 
       const result = await response.json();
 
+      toast.dismiss(loadingToastId);
+
       if (result.success) {
-        toast.success(`SEO 글 생성 작업이 시작되었습니다. (${result.data?.written || 0}개 진행 중)`);
+        toast.success(`글 생성 완료! (${result.data?.written || 0}개)`);
+        // 글 생성 완료 후 목록 자동 갱신
+        await fetchResearch();
         return result;
       } else {
         toast.error(`SEO 글 생성 실패: ${result.error}`);
         return result;
       }
     } catch (err) {
+      toast.dismiss(loadingToastId);
       const errorMsg = err instanceof Error ? err.message : "Generation error";
       toast.error(`SEO 생성 오류: ${errorMsg}`);
       return null;
     }
-  }, []);
+  }, [fetchResearch]);
 
   return {
     researchList,

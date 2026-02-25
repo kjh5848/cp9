@@ -14,8 +14,8 @@ export default function ResearchPage() {
     <div className="min-h-screen bg-gray-950 pt-20">
       <div className="container mx-auto px-4 py-8">
         <header className="mb-10">
-          <h1 className="text-3xl font-bold text-white mb-2">Research Management</h1>
-          <p className="text-slate-400">분석 결과를 검토하고 최적화된 SEO 콘텐츠를 생성합니다.</p>
+          <h1 className="text-3xl font-bold text-white mb-2">글 목록 (Article List)</h1>
+          <p className="text-slate-400">작성된 블로그 포스팅 및 리서치 결과를 확인합니다.</p>
         </header>
 
         <Suspense fallback={

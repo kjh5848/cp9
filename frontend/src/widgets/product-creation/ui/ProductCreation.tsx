@@ -20,6 +20,8 @@ import {
 import { useRouter } from "next/navigation";
 import { cn } from "@/shared/lib/utils";
 import { CoupangProductResponse } from "@/shared/types/api";
+import { WriteActionModal } from "@/features/research-analysis/ui/WriteActionModal";
+import ReactMarkdown from "react-markdown";
 
 type SearchMode = "keyword" | "link" | "category" | "pl_brand";
 type PersonaType = "Single_Expert" | "Compare_Master" | "Curation_Blogger";
@@ -127,11 +129,9 @@ export const ProductCreation = () => {
       isMounted = false;
     };
   }, []);
-  const [persona, setPersona] = useState<PersonaType>("Single_Expert");
-  const [tone, setTone] = useState<ToneType>("Professional");
   
-  /* ── 결과 화면 상태 ── */
-  const [generatedSEO, setGeneratedSEO] = useState<any | null>(null);
+  /* ── 결과 화면 상태 (제거됨 - 상세 페이지로 이동) ── */
+  // generatedSEO 상태는 완전히 제거하고 라우팅으로 대체
 
   /* ── 필터 상태 ── */
   const [pricePresetIdx, setPricePresetIdx] = useState(0);
@@ -257,23 +257,25 @@ export const ProductCreation = () => {
     });
   };
 
-  const handleStartResearch = async () => {
+  const handleStartResearch = async (params: { persona: string; textModel: string; imageModel: string; actionType: 'NOW' | 'SCHEDULE'; scheduledAt?: string; charLimit?: number }) => {
     if (selectedProductIds.size === 0) return;
     setIsResearching(true);
+    setIsModalOpen(false);
     setError(null);
-    setGeneratedSEO(null); // 초기화
     
     // 프로젝트 ID 생성 (임의 - 브라우저 비보안 환경 호환성 대응)
     const newProjectId = `proj_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 9)}`;
     
     try {
-      // 선택된 상품만 필터링
-      const selectedProducts = results.filter(p => selectedProductIds.has(p.productId));
+      // 선택된 상품만 필터링 (검색 결과 및 기본 추천 상품 포함)
+      const allAvailableProducts = [...results, ...defaultPlAll, ...defaultGoldbox];
+      const selectedProducts = allAvailableProducts.filter(p => selectedProductIds.has(p.productId));
+      const uniqueSelectedProducts = Array.from(new Map(selectedProducts.map(p => [p.productId, p])).values());
       const resultsQueue: any[] = [];
       
       // 병렬로 리서치 데이터 전송
       await Promise.all(
-        selectedProducts.map(async (product) => {
+        uniqueSelectedProducts.map(async (product) => {
           const res = await fetch("/api/item-research", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -291,8 +293,12 @@ export const ProductCreation = () => {
                 isFreeShipping: product.isFreeShipping,
               },
               seoConfig: {
-                persona,
-                toneAndManner: tone,
+                persona: params.persona,
+                textModel: params.textModel,
+                imageModel: params.imageModel,
+                actionType: params.actionType,
+                scheduledAt: params.scheduledAt,
+                charLimit: params.charLimit
               }
             }),
           });
@@ -306,8 +312,14 @@ export const ProductCreation = () => {
         })
       );
       
-      // 전송 완료 후 라우팅 대신 상태 업데이트하여 바로 보여주게 끔 수정
-      setGeneratedSEO(resultsQueue);
+      // 생성 완료 후 결과 페이지 대신 상세 페이지로 이동
+      if (uniqueSelectedProducts.length === 1) {
+        // 단일 상품: 바로 해당 상세 페이지로 이동
+        router.push(`/research/${uniqueSelectedProducts[0].productId}`);
+      } else {
+        // 복수 상품: 글 목록 페이지로 이동
+        router.push('/research');
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "SEO 리서치 전환 중 오류가 발생했습니다.");
     } finally {
@@ -388,43 +400,22 @@ export const ProductCreation = () => {
 
   const hasResults = results.length > 0;
 
-  // 생성 완료 화면 렌더링
-  if (generatedSEO && generatedSEO.length > 0) {
-    return (
-      <div className="w-full max-w-5xl mx-auto space-y-8 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl text-white font-bold">생성된 SEO 콘텐츠</h2>
-          <Button onClick={() => setGeneratedSEO(null)} variant="outline">
-            다른 상품 검색하기
-          </Button>
-        </div>
-        <div className="space-y-8">
-          {generatedSEO.map((seo: any, idx: number) => (
-            <GlassCard key={idx} className="p-6">
-              <h3 className="text-xl font-bold text-blue-400 mb-4">{seo.itemName}</h3>
-              <div className="space-y-4">
-                <div className="p-4 bg-white/5 rounded-lg">
-                  <h4 className="font-semibold text-slate-300 mb-2">리서치 결과</h4>
-                  <pre className="text-sm text-slate-400 whitespace-pre-wrap font-sans">
-                    {seo.researchData?.researchRaw}
-                  </pre>
-                </div>
-                <div className="p-4 bg-blue-500/10 rounded-lg">
-                  <h4 className="font-semibold text-blue-300 mb-2">작성된 블로그 원문</h4>
-                  <pre className="text-sm text-slate-200 whitespace-pre-wrap font-sans">
-                    {seo.researchData?.content}
-                  </pre>
-                </div>
-              </div>
-            </GlassCard>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="w-full max-w-5xl mx-auto space-y-8 py-8 pb-32">
+    <div className="w-full max-w-5xl mx-auto space-y-8 py-8 pb-32 relative">
+      {/* ── 로딩 오버레이 ── */}
+      {isResearching && (
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
+          <GlassCard className="p-8 flex flex-col items-center gap-4 max-w-sm w-full text-center border-blue-500/50">
+            <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
+            <h3 className="text-xl font-bold text-white">SEO 콘텐츠 생성 중...</h3>
+            <p className="text-sm text-slate-400">
+              AI가 설정된 조건에 맞게 글을 작성 중입니다.<br/>
+              약 30초~1분 정도 소요될 수 있습니다.
+            </p>
+          </GlassCard>
+        </div>
+      )}
+
       {/* 모드 선택 탭 */}
       <div className="flex flex-wrap justify-center p-1 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 w-fit mx-auto gap-1">
         {(["keyword", "link", "category", "pl_brand"] as const).map((m) => (
@@ -785,109 +776,12 @@ export const ProductCreation = () => {
       )}
 
       {/* ── SEO 설정 옵션 모달 ── */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-lg">
-            <GlassCard className="p-6 sm:p-8 flex flex-col gap-6 border-white/20 bg-gray-900/95 shadow-2xl">
-              <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-500/20 rounded-xl">
-                    <Settings2 className="w-5 h-5 text-blue-400" />
-                  </div>
-                  <h3 className="text-xl font-bold text-white">SEO 파이프라인 설정</h3>
-                </div>
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-full transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="space-y-5">
-                {/* 페르소나 선택 */}
-                <div className="space-y-3">
-                  <label className="text-sm font-semibold text-slate-300 block">
-                    작성자 페르소나 (Persona)
-                  </label>
-                  <div className="grid grid-cols-1 space-y-2">
-                    {[
-                      { id: "Single_Expert", label: "단일 상품 딥다이브 전문가", desc: "한 제품에 대한 깊이 있는 완벽 분석" },
-                      { id: "Compare_Master", label: "다중 상품 비교 분석가", desc: "여러 제품의 장단점 및 가성비 비교 평가" },
-                      { id: "Curation_Blogger", label: "다수 추천 큐레이터", desc: "트렌디하고 가벼운 탑 10 추천 블로거" }
-                    ].map((item) => (
-                      <button
-                        key={item.id}
-                        onClick={() => setPersona(item.id as PersonaType)}
-                        className={cn(
-                          "w-full text-left p-3 rounded-xl border transition-all flex flex-col gap-1",
-                          persona === item.id
-                            ? "bg-blue-600/20 border-blue-500 shadow-inner"
-                            : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10"
-                        )}
-                      >
-                        <span className={cn("font-bold text-sm", persona === item.id ? "text-blue-400" : "text-slate-200")}>
-                          {item.label}
-                        </span>
-                        <span className="text-xs text-slate-500">{item.desc}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* 톤앤매너 선택 */}
-                <div className="space-y-3">
-                  <label className="text-sm font-semibold text-slate-300 block">
-                    글쓰기 톤앤매너 (Tone & Manner)
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { id: "Professional", label: "전문적인", icon: "👔" },
-                      { id: "Friendly", label: "친근한", icon: "😊" },
-                      { id: "Humorous", label: "유머러스한", icon: "🤣" },
-                      { id: "Informative", label: "정보 위주의", icon: "💡" }
-                    ].map((item) => (
-                      <button
-                        key={item.id}
-                        onClick={() => setTone(item.id as ToneType)}
-                        className={cn(
-                          "p-3 rounded-xl border transition-all flex items-center justify-center gap-2",
-                          tone === item.id
-                            ? "bg-purple-600/20 border-purple-500 text-purple-300"
-                            : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-white"
-                        )}
-                      >
-                        <span>{item.icon}</span>
-                        <span className="font-semibold text-sm">{item.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* 하단 액션 버튼 */}
-              <div className="pt-4 border-t border-white/10 flex gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsModalOpen(false)}
-                  className="flex-1 bg-transparent border-white/10 text-slate-300 hover:bg-white/5 hover:text-white"
-                >
-                  취소
-                </Button>
-                <Button
-                  onClick={() => {
-                    setIsModalOpen(false);
-                    handleStartResearch();
-                  }}
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold shadow-[0_0_20px_rgba(59,130,246,0.3)]"
-                >
-                  선택한 페르소나로 글짓기 시작
-                </Button>
-              </div>
-            </GlassCard>
-          </div>
-        </div>
-      )}
+      <WriteActionModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={`${selectedProductIds.size}개 상품`}
+        onExecute={handleStartResearch}
+      />
     </div>
   );
 };

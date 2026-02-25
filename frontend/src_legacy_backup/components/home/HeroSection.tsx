@@ -58,7 +58,7 @@ export function HeroSection() {
               </Link>
               <Link href="/research">
                 <AnimatedButton variant="outline" size="lg" className="min-w-[200px]">
-                  리서치 관리
+                  글 목록 관리
                 </AnimatedButton>
               </Link>
             </>

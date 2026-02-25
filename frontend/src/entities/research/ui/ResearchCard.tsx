@@ -3,18 +3,19 @@ import { ResearchItem } from "../model/types";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { 
-  CalendarPlus,
+  Clock,
+  ChevronRight,
+  ImageIcon,
+  FileText,
   PenTool,
-  Image as ImageIcon,
-  CheckCircle2,
-  Clock
+  RefreshCw
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { useRouter } from "next/navigation";
 
 interface ResearchCardProps {
   research: ResearchItem;
   hasDraft?: boolean;
-  onDetailClick?: (itemId: string) => void;
   onEditClick?: (itemId: string) => void;
   onGenerateSEO?: (itemId: string) => void;
   onScheduleClick?: (itemId: string) => void;
@@ -23,128 +24,125 @@ interface ResearchCardProps {
 
 /**
  * [Entities Layer]
- * 리서치 데이터를 티스토리 블로그 리스트 스타일로 보여주는 컴포넌트입니다.
+ * 리서치 데이터를 슬림한 리스트 스타일로 보여주는 컴포넌트입니다.
  */
 export const ResearchCard = ({ 
   research, 
-  hasDraft, 
-  onDetailClick, 
   onEditClick, 
   onGenerateSEO,
-  onScheduleClick,
   className 
 }: ResearchCardProps) => {
+  const router = useRouter();
   const { pack, itemId, updatedAt } = research;
 
-  const formatPrice = (price?: number | null) => {
-    if (!price) return "가격 미상";
-    return `${price.toLocaleString()}원`;
+  const handleCardClick = (e: React.MouseEvent) => {
+    // 버튼 클릭 시에는 상세 이동 방지
+    if ((e.target as HTMLElement).closest('button')) return;
+    // projectId를 쿼리파라미터로 전달하여 동일 itemId의 다른 프로젝트 글 구분
+    router.push(`/research/${itemId}?projectId=${research.projectId}`);
   };
 
-  // 본문 요약 생성 (특징이나 장점을 결합하여 텍스트로 표시)
-  const summaryText = [
-    ...(pack.features || []),
-    ...(pack.pros || [])
-  ].join(" ").slice(0, 150) + "...";
-
   return (
-    <div className={cn(
-      "group flex flex-col sm:flex-row gap-5 p-5 bg-card border border-border rounded-2xl hover:border-border/80 hover:bg-muted/50 transition-all duration-300",
-      className
-    )}>
-      {/* 좌측: 썸네일 영역 */}
-      <div className="w-full sm:w-48 h-36 shrink-0 bg-muted rounded-xl border border-border flex flex-col items-center justify-center text-muted-foreground overflow-hidden relative">
+    <div 
+      onClick={handleCardClick}
+      className={cn(
+        "group relative flex items-center gap-4 p-4 bg-card/50 backdrop-blur-sm border border-border rounded-xl transition-all duration-300 hover:border-blue-500/50 hover:bg-muted/30 cursor-pointer shadow-sm",
+        className
+      )}
+    >
+      {/* 1. 썸네일 (더 작게) */}
+      <div className="w-20 h-20 shrink-0 bg-muted rounded-lg border border-border overflow-hidden relative shadow-inner">
         {pack.thumbnailUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={pack.thumbnailUrl} alt={pack.title || "상품 이미지"} className="w-full h-full object-cover" />
+          <img 
+            src={pack.thumbnailUrl} 
+            alt={pack.title || "상품 이미지"} 
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+          />
         ) : (
-          <>
-            <ImageIcon className="w-8 h-8 mb-2 opacity-50" />
-            <span className="text-xs">No Image</span>
-          </>
-        )}
-        {hasDraft && (
-          <div className="absolute top-2 left-2 bg-blue-500/90 text-white text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1 shadow-sm">
-            <CheckCircle2 className="w-3 h-3" />
-            초안있음
+          <div className="w-full h-full flex items-center justify-center text-muted-foreground/30">
+            <ImageIcon className="w-6 h-6" />
           </div>
         )}
       </div>
 
-      {/* 우측: 콘텐츠 및 액션 영역 */}
-      <div className="flex flex-col flex-1 min-w-0">
-        
-        {/* 헤더: 카테고리/프로젝트ID 및 작성일 */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-          <span className="font-medium hover:text-primary cursor-pointer transition-colors" onClick={() => onEditClick?.(itemId)}>
-            {research.projectId || "카테고리"}
-          </span>
-          <span className="flex items-center gap-1">
+      {/* 2. 정보 영역 (가로형) */}
+      <div className="flex-1 min-w-0 flex flex-col justify-center">
+        <div className="flex items-center gap-2 mb-1 flex-wrap">
+          <Badge variant="outline" className="text-[9px] h-4 border-blue-500/30 text-blue-400 bg-blue-500/5 py-0">
+            {research.projectId || "General"}
+          </Badge>
+          {/* 페르소나 배지 */}
+          {pack.persona && (
+            <Badge variant="outline" className={`text-[9px] h-4 py-0 ${
+              pack.persona === 'IT' ? 'border-cyan-500/30 text-cyan-400 bg-cyan-500/5' :
+              pack.persona === 'BEAUTY' ? 'border-pink-500/30 text-pink-400 bg-pink-500/5' :
+              pack.persona === 'LIVING' ? 'border-green-500/30 text-green-400 bg-green-500/5' :
+              pack.persona === 'HUNTER' ? 'border-orange-500/30 text-orange-400 bg-orange-500/5' :
+              'border-yellow-500/30 text-yellow-400 bg-yellow-500/5'
+            }`}>
+              {pack.persona === 'IT' ? '💻 IT' :
+               pack.persona === 'BEAUTY' ? '✨ 뷰티' :
+               pack.persona === 'LIVING' ? '🏠 리빙' :
+               pack.persona === 'HUNTER' ? '🔥 헌터' :
+               '⭐ 큐레이터'}
+            </Badge>
+          )}
+          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
             <Clock className="w-3 h-3" />
             {new Date(updatedAt).toLocaleDateString("ko-KR")}
-          </span>
-        </div>
-
-        {/* 제목 */}
-        <h3 className="text-lg sm:text-xl font-bold text-foreground mb-2 line-clamp-1 group-hover:text-primary transition-colors cursor-pointer" onClick={() => onEditClick?.(itemId)}>
-          {pack.title || itemId}
-        </h3>
-
-        {/* 메타 정보 (가격배송 등) */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground mb-3">
-          <span className="text-emerald-500 font-medium">{formatPrice(pack.priceKRW)}</span>
-          {pack.isRocket !== null && (
-            <>
-              <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
-              <span className={pack.isRocket ? "text-blue-500" : "text-muted-foreground"}>
-                로켓배송 {pack.isRocket ? "가능" : "불가"}
-              </span>
-            </>
+          </div>
+          {pack.content && (
+            <Badge variant="outline" className="text-[9px] h-4 border-emerald-500/30 text-emerald-400 bg-emerald-500/5 py-0">
+              작성완료
+            </Badge>
           )}
         </div>
-
-        {/* 본문 요약 */}
-        <p className="text-sm text-muted-foreground line-clamp-2 mb-4 leading-relaxed">
-          {summaryText.length > 3 ? summaryText : "분석된 상품 특징 정보가 부족합니다."}
-        </p>
-
-        {/* 태그 영역 */}
-        {pack.keywords && pack.keywords.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-5 mt-auto">
-            {pack.keywords.slice(0, 5).map((keyword, index) => (
-              <Badge 
-                key={index} 
-                variant="secondary" 
-                className="bg-muted text-muted-foreground hover:bg-muted/80 px-2.5 py-0.5 text-xs font-normal border-none"
-              >
-                #{keyword}
-              </Badge>
-            ))}
-          </div>
-        )}
-
-        {/* 하단 액션 버튼 그룹 */}
-        <div className="flex items-center gap-2 mt-auto pt-4 border-t border-border">
-          <Button 
-            size="sm" 
-            className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg h-9"
-            onClick={(e) => { e.stopPropagation(); onGenerateSEO?.(itemId); }}
-          >
-            <PenTool className="w-4 h-4 mr-2" />
-            즉시 글쓰기
-          </Button>
-          <Button 
-            size="sm" 
-            variant="outline"
-            className="flex-1 border-border text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg h-9"
-            onClick={(e) => { e.stopPropagation(); onScheduleClick?.(itemId); }}
-          >
-            <CalendarPlus className="w-4 h-4 mr-2" />
-            스케줄 등록
-          </Button>
+        
+        <h3 className="text-base font-semibold text-foreground truncate group-hover:text-blue-400 transition-colors">
+          {pack.title || itemId}
+        </h3>
+        
+        <div className="flex items-center gap-3 mt-1">
+          {pack.priceKRW && (
+            <span className="text-xs font-medium text-emerald-500">
+              {pack.priceKRW.toLocaleString()}원
+            </span>
+          )}
+          {pack.content && (
+            <div className="flex items-center gap-1 text-[11px] text-muted-foreground line-clamp-1">
+              <FileText className="w-3 h-3" />
+              본문 있음
+            </div>
+          )}
         </div>
+      </div>
 
+      {/* 3. 액션 버튼 (호버 시 선명하게) */}
+      <div className="flex items-center gap-1 opacity-40 group-hover:opacity-100 transition-opacity">
+        <Button 
+          size="icon" 
+          variant="ghost"
+          className="h-8 w-8 rounded-full hover:bg-blue-500/10 hover:text-blue-400"
+          onClick={() => onEditClick?.(itemId)}
+          title="수정"
+        >
+          <PenTool className="w-4 h-4" />
+        </Button>
+        <Button 
+          size="icon" 
+          variant="ghost" 
+          className="h-8 w-8 rounded-full hover:bg-amber-500/10 hover:text-amber-400"
+          onClick={() => onGenerateSEO?.(itemId)}
+          title="재생성"
+        >
+          <RefreshCw className="w-4 h-4" />
+        </Button>
+        <div className="w-8 h-8 flex items-center justify-center text-muted-foreground">
+          <ChevronRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
+        </div>
       </div>
     </div>
   );
 };
+

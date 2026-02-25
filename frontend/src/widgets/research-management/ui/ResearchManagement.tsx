@@ -39,6 +39,14 @@ export const ResearchManagement = () => {
     fetchResearch();
   }, [fetchResearch]);
 
+  // 명칭 변경 및 전체 목록으로 확장 (작성 중인 것도 포함)
+  const displayList = [...researchList].sort((a, b) => {
+    // 본문이 있는 것을 우선순위로 정렬
+    if (a.pack.content && !b.pack.content) return -1;
+    if (!a.pack.content && b.pack.content) return 1;
+    return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+  });
+
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6 py-4">
       <div className="flex items-center gap-3 mb-6">
@@ -46,8 +54,8 @@ export const ResearchManagement = () => {
           <List className="w-6 h-6 text-blue-400" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-foreground">리서치 목록 전체</h2>
-          <p className="text-sm text-muted-foreground mt-1">수집된 상품 아이템 포스팅 후보들을 확인하세요.</p>
+          <h2 className="text-2xl font-bold text-foreground">작성 완료된 글 목록</h2>
+          <p className="text-sm text-muted-foreground mt-1">AI가 생성한 고품질 SEO 포스팅과 기초 데이터들을 관리하세요.</p>
         </div>
       </div>
 
@@ -69,18 +77,18 @@ export const ResearchManagement = () => {
       )}
 
       {/* 전체 건수 안내 */}
-      {!loading && !error && researchList.length > 0 && (
+      {!loading && !error && displayList.length > 0 && (
         <div className="flex items-center justify-between px-2">
           <p className="text-sm text-muted-foreground">
-            총 <span className="text-foreground font-bold">{researchList.length}</span>개의 분석 결과가 있습니다.
+            총 <span className="text-foreground font-bold">{displayList.length}</span>개의 포스팅이 있습니다.
           </p>
         </div>
       )}
 
       {/* 리스트 영역 */}
       <div className="space-y-4">
-        {researchList.map((item) => (
-          <div key={item.itemId}>
+        {displayList.map((item: any) => (
+          <div key={`${item.projectId}_${item.itemId}`}>
             {editingItemId === item.itemId ? (
               <ResearchEditForm
                 initialPack={item.pack}
@@ -102,9 +110,9 @@ export const ResearchManagement = () => {
           </div>
         ))}
 
-        {!loading && researchList.length === 0 && !error && (
+        {!loading && displayList.length === 0 && !error && (
           <div className="text-center py-20 bg-muted/50 rounded-2xl border border-border">
-            <p className="text-muted-foreground">수집된 데이터가 없습니다.</p>
+            <p className="text-muted-foreground">작성된 글이 없습니다.</p>
           </div>
         )}
       </div>
@@ -113,7 +121,7 @@ export const ResearchManagement = () => {
         <WriteActionModal
           isOpen={actionModalState.isOpen}
           onClose={() => setActionModalState(prev => ({ ...prev, isOpen: false }))}
-          research={actionModalState.research}
+          title={actionModalState.research.pack.title || actionModalState.research.itemId}
           defaultAction={actionModalState.defaultAction}
           onExecute={(params) => {
             generateSEO({ 
@@ -121,8 +129,11 @@ export const ResearchManagement = () => {
               itemIds: [actionModalState.research!.itemId], 
               force: false,
               persona: params.persona,
+              textModel: params.textModel,
+              imageModel: params.imageModel,
               actionType: params.actionType,
-              scheduledAt: params.scheduledAt
+              scheduledAt: params.scheduledAt,
+              charLimit: params.charLimit
             });
             setActionModalState(prev => ({ ...prev, isOpen: false }));
           }}

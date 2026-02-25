@@ -1,18 +1,11 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { prisma } from '@/infrastructure/clients/prisma'
 import { getSeoSkillTemplate } from './seo-skill-parser'
 import { gptModel, openAiSdk } from '@/infrastructure/clients/openai'
 import { perplexityModel } from '@/infrastructure/clients/perplexity'
-
-// 환경변수
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-
-// Supabase 인스턴스는 키가 있을 때만 생성하여 런타임/빌드 에러 방지
-const supabase = (supabaseUrl && supabaseKey) 
-  ? createClient(supabaseUrl, supabaseKey) 
-  : null;
+import fs from 'fs/promises'
+import path from 'path'
 
 interface ItemResearchRequest {
   itemName: string
@@ -29,7 +22,12 @@ interface ItemResearchRequest {
   }
   seoConfig?: {
     persona: string
-    toneAndManner: string
+    toneAndManner?: string
+    textModel?: string
+    imageModel?: string
+    actionType?: 'NOW' | 'SCHEDULE'
+    scheduledAt?: string
+    charLimit?: number
   }
 }
 
@@ -55,12 +53,66 @@ export async function POST(request: NextRequest) {
 
     const persona = body.seoConfig?.persona || "Single_Expert"
     const tone = body.seoConfig?.toneAndManner || "Professional"
+    const actionType = body.seoConfig?.actionType || "NOW"
+    const scheduledAt = body.seoConfig?.scheduledAt || null
+    const charLimit = body.seoConfig?.charLimit || 2000
 
     console.log('🚀 [SEO-Pipeline] 작업을 시작합니다:', {
       itemName: body.itemName,
       persona,
-      tone
+      tone,
+      actionType,
+      scheduledAt,
+      charLimit
     });
+
+    if (actionType === 'SCHEDULE') {
+      console.log(`⏰ [SEO-Pipeline] 스케줄 모드로 텍스트 생성 생략 후 스케줄 등록 - ${scheduledAt}`);
+      
+      const finalResearchPack = {
+        itemId: body.itemId,
+        title: body.itemName,
+        content: null,
+        thumbnailPrompt: null,
+        thumbnailUrl: null,
+        researchRaw: null,
+        status: 'SCHEDULED',
+        scheduledAt,
+      };
+
+      try {
+        await prisma.research.upsert({
+          where: {
+            projectId_itemId: {
+              projectId: body.projectId,
+              itemId: body.itemId
+            }
+          },
+          update: {
+            pack: JSON.stringify(finalResearchPack)
+          },
+          create: {
+            projectId: body.projectId,
+            itemId: body.itemId,
+            pack: JSON.stringify(finalResearchPack)
+          }
+        });
+      } catch (dbError) {
+        console.warn('DB Upsert Error:', dbError);
+      }
+
+      return NextResponse.json({
+        projectId: body.projectId,
+        itemId: body.itemId,
+        itemName: body.itemName,
+        success: true,
+        researchData: {
+          content: null,
+          thumbnailPrompt: null,
+          researchRaw: null
+        }
+      });
+    }
 
     // 1. LLM 클라이언트 준비 (Infrastructure 분리)
     // 상단에서 import하여 사용합니다.
@@ -78,18 +130,11 @@ export async function POST(request: NextRequest) {
       price: body.productData?.productPrice,
       url: body.productData?.productUrl,
       features: "쿠팡 인기 파트너스 상품"
-    }]);
+    }], null, 2);
     
-    // 임시 시스템+유저 프롬프트 조합
-    const perplexityChainInput = `
-      ${perplexityPromptStr}
-      
-[요청 페르소나]: ${persona}
-      
-[상품 데이터]: ${itemsJson}
-      
-위 지침에 맞추어 최신 리서치 데이터를 작성하라.
-    `;
+    const perplexityChainInput = perplexityPromptStr
+      .replace('{{persona}}', persona)
+      .replace('{{items_json}}', itemsJson);
     let researchData = "";
     try {
       const perplexityRes = await perplexityModel.invoke(perplexityChainInput);
@@ -110,6 +155,22 @@ export async function POST(request: NextRequest) {
       
 [리서치 데이터]: ${researchData}
       
+[목표 글자수]: 공백 포함 최소 ${charLimit}자 이상으로 작성. (분량이 품질입니다. 이 분량 기준은 반드시, 그리고 가장 최우선으로 준수되어야 합니다.)
+
+[작성 구조 지침 - 반드시 준수]:
+1. **오프닝**: 독자를 사로잡는 권위 있는 도입부 (500자 이상)
+2. **## 💡 제품 구매/사용 전 반드시 체크해야 할 사항**: 실생활 활용 가이드 및 주의사항 (1,500자 이상)
+3. **## 📊 스펙 및 장단점 비교**: 상세한 마크다운 테이블과 장/단점 요점 정리 (2,000자 이상)
+4. **## 💬 실제 사용자 후기 분석**: 리서치 데이터 기반 후기 요약 및 패턴 분석 (1,500자 이상)
+5. **## 🛒 가격 및 구매 가이드**: 현재 가격, 할인 시즌, 최저가 구매 팁 (1,000자 이상)
+6. **## 🎯 최종 추천 코멘트**: 추천 대상/비추천 대상 명확히 구분 (1,000자 이상)
+7. **CTA**: 관련 상품 리뷰로 유도하는 문구
+
+[강제 지침]:
+- 각 섹션 글자수 기준을 반드시 채우세요. 부족하면 더 깊은 분석과 사례를 추가하세요.
+- 단순 반복은 절대 피하고 딥다이브 분석, 활용 팁, 비교 분석, 사용자 관점 등 깊이 있는 정보를 꾸준히 추가하세요.
+- 전체 글이 ${charLimit}자 미만이면 아직 작성이 끝나지 않은 것입니다. 각 섹션을 더 상세히 확장하세요.
+
 위 리서치 데이터를 바탕으로 완벽한 SEO 마크다운 포스트를 작성하라.
     `;
     let seoContent = "";
@@ -138,7 +199,7 @@ export async function POST(request: NextRequest) {
     }
     
     // 실제 DALL-E 3 이미지 API 연동
-    let actualImageUrl = null;
+    let actualImageUrl = body.productData?.productImage || null; // 기본적으로 쿠팡 상품 이미지를 사용
     try {
       console.log('🖼️ DALL-E API 호출 시작...', { prompt: imagePrompt.substring(0, 50) + '...' });
       const imageResponse = await openAiSdk.images.generate({
@@ -147,15 +208,41 @@ export async function POST(request: NextRequest) {
         n: 1,
         size: "1024x1024"
       });
-      actualImageUrl = imageResponse.data?.[0]?.url || null;
-      if (actualImageUrl) {
-        console.log('✅ DALL-E 이미지 생성 성공:', actualImageUrl);
+      const generatedUrl = imageResponse.data?.[0]?.url;
+      if (generatedUrl) {
+        try {
+          // 1. 이미지 데이터 페치
+          const imgRes = await fetch(generatedUrl);
+          const arrayBuffer = await imgRes.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+          
+          // 2. 저장 경로 및 파일명 생성
+          const fileName = `${body.itemId}_${Date.now()}.png`;
+          const publicDir = path.join(process.cwd(), 'public/uploads/generated-images');
+          const fullPath = path.join(publicDir, fileName);
+          
+          // 3. 디렉토리 존재 확인 (혹시 모르니 다시 한번)
+          await fs.mkdir(publicDir, { recursive: true });
+          
+          // 4. 파일 쓰기
+          await fs.writeFile(fullPath, buffer);
+          
+          // 5. 실제 노출할 URL 설정 (public 폴더 기준 상대 경로)
+          actualImageUrl = `/uploads/generated-images/${fileName}`;
+          console.log('✅ DALL-E 이미지 로컬 저장 성공:', actualImageUrl);
+        } catch (downloadError) {
+          console.error('❌ DALL-E 이미지 로컬 저장 실패 (임시 URL 사용):', downloadError);
+          actualImageUrl = generatedUrl;
+        }
       } else {
-        throw new Error('No URL returned from DALL-E');
+        console.warn('⚠️ DALL-E로부터 URL을 받지 못했습니다. 기존 상품 이미지를 유지합니다.');
       }
     } catch (dalleError) {
-      console.error('❌ DALL-E 이미지 생성 실패 (Mock으로 폴백):', dalleError);
-      actualImageUrl = "https://via.placeholder.com/1024x1024?text=DALL-E+Generation+Failed";
+      console.error('❌ DALL-E 이미지 생성 실패 (기존 이미지 유지):', dalleError);
+      // fallback to original productImage if DALL-E fails, which is already set in actualImageUrl
+      if (!actualImageUrl) {
+        actualImageUrl = "https://via.placeholder.com/1024x1024?text=No+Image+Available";
+      }
     }
 
     console.log('✅ [SEO-Pipeline] 파이프라인 생성 완료!');
@@ -168,24 +255,33 @@ export async function POST(request: NextRequest) {
       content: seoContent,
       thumbnailPrompt: imagePrompt,
       thumbnailUrl: actualImageUrl,
+      // 쿠팡 상품 원본 URL 및 이미지 저장 (write API CTA 연동용)
+      productUrl: body.productData?.productUrl || `https://www.coupang.com/vp/products/${body.itemId}`,
+      productImage: body.productData?.productImage || null,
       researchRaw: researchData,
+      status: 'PUBLISHED',
+      scheduledAt: null
     };
 
-    if (supabase) {
-      const { error: dbError } = await supabase
-        .from('ResearchItem')
-        .upsert({
+    try {
+      await prisma.research.upsert({
+        where: {
+          projectId_itemId: {
+            projectId: body.projectId,
+            itemId: body.itemId
+          }
+        },
+        update: {
+          pack: JSON.stringify(finalResearchPack)
+        },
+        create: {
           projectId: body.projectId,
           itemId: body.itemId,
-          pack: finalResearchPack,
-          updatedAt: new Date().toISOString()
-        }, { onConflict: 'projectId, itemId' });
-
-      if (dbError) {
-        console.warn('DB Upsert Error:', dbError);
-      }
-    } else {
-      console.warn('⚠️ Supabase 클라이언트가 초기화되지 않았습니다. DB 저장을 스킵합니다.');
+          pack: JSON.stringify(finalResearchPack)
+        }
+      });
+    } catch (dbError) {
+      console.warn('DB Upsert Error (Prisma):', dbError);
     }
 
     return NextResponse.json({
