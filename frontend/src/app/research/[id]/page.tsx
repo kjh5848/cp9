@@ -24,7 +24,9 @@ import {
   Activity,
   DollarSign,
   Clock,
-  Zap
+  Zap,
+  Layers,
+  Link2
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -163,6 +165,17 @@ export default function ArticleDetailPage() {
             <Calendar className="w-4 h-4" />
             작성일: {new Date(updatedAt).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}
           </div>
+          {pack.articleType && pack.articleType !== 'single' && (
+            <Badge className={cn(
+              'px-3 py-1',
+              pack.articleType === 'compare'
+                ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+            )}>
+              <Layers className="w-3 h-3 mr-1" />
+              {pack.articleType === 'compare' ? '비교 분석' : '큐레이션'}
+            </Badge>
+          )}
           {pack.isRocket && (
             <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/20 px-3 py-1">
               로켓배송 상품
@@ -177,9 +190,9 @@ export default function ArticleDetailPage() {
         <div className="flex items-center gap-4 py-2">
           <div className="flex items-center gap-2">
              <div className="w-8 h-8 rounded-full bg-blue-500/30 flex items-center justify-center font-bold text-blue-400">
-               H
+               {(pack.personaName || 'H')[0]}
              </div>
-             <span className="font-medium">Master Curator H</span>
+             <span className="font-medium">{pack.personaName || 'Master Curator H'}</span>
           </div>
           <div className="w-1 h-1 rounded-full bg-muted" />
           <span className="text-muted-foreground">AI Research & Writing</span>
@@ -324,6 +337,40 @@ export default function ArticleDetailPage() {
                 </div>
               </div>
            </GlassCard>
+
+            {/* 비교/큐레이션 — 관련 상품 목록 */}
+            {(pack.relatedItems && pack.relatedItems.length > 0) && (
+              <GlassCard className="p-6 space-y-4">
+                <h3 className="font-bold flex items-center gap-2">
+                  <Link2 className="w-4 h-4 text-purple-400" />
+                  {pack.articleType === 'compare' ? '비교 상품' : '큐레이션 상품'} ({pack.relatedItems?.length})
+                </h3>
+                <div className="space-y-2">
+                  {pack.relatedItems?.map((ri: any, i: number) => (
+                    <a
+                      key={i}
+                      href={ri.productUrl}
+                      target="_blank"
+                      rel="noopener sponsored"
+                      className="flex items-center gap-3 p-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group"
+                    >
+                      {ri.productImage && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={ri.productImage} alt={ri.productName} className="w-10 h-10 rounded-lg object-cover shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-slate-300 line-clamp-1 group-hover:text-blue-400 transition-colors">{ri.productName}</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {ri.productPrice?.toLocaleString()}원
+                          {ri.isRocket && <span className="ml-1 text-cyan-400">로켓</span>}
+                        </p>
+                      </div>
+                      <ExternalLink className="w-3 h-3 text-muted-foreground group-hover:text-blue-400 shrink-0" />
+                    </a>
+                  ))}
+                </div>
+              </GlassCard>
+            )}
 
             {/* 모니터링 카드 */}
             <GlassCard className="p-6 space-y-4">

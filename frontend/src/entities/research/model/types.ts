@@ -20,13 +20,22 @@ export interface ResearchPack {
   productUrl?: string | null;     // 쿠팡 상품 링크 (CTA용)
   researchRaw?: string | null;
   content?: string | null;
-  contentType?: 'html' | 'markdown'; // 콘텐츠 형식 (html: write API 생성, markdown: 레거시)
+  contentType?: 'html' | 'markdown'; // 콘텐츠 형식
   status?: 'DRAFT' | 'SCHEDULED' | 'PUBLISHED';
   scheduledAt?: string | null;
   // 글 생성 메타데이터
   persona?: string;               // 예: 'IT', 'BEAUTY', 'MASTER_CURATOR_H'
   personaName?: string;           // 예: 'IT/테크 전문가 블로거'
   textModel?: string;             // 예: 'gpt-4o', 'claude-sonnet-4-6'
+  // 글 유형 메타데이터
+  articleType?: 'single' | 'compare' | 'curation';
+  relatedItems?: Array<{
+    productName: string;
+    productPrice: number;
+    productUrl: string;
+    productImage?: string;
+    isRocket?: boolean;
+  }>;
   seoConfig?: {
     persona?: string;
     [key: string]: any;

@@ -112,6 +112,18 @@ export async function runSeoPipeline(body: ItemResearchRequest, config: Pipeline
       textModel,
       imageModel,
       langfuseTraceId: trace?.id || null,
+      // 글 유형 메타데이터
+      articleType,
+      // 비교/큐레이션 시 관련 아이템 정보 저장
+      relatedItems: (articleType !== 'single' && body.items)
+        ? body.items.map(item => ({
+            productName: item.productName,
+            productPrice: item.productPrice,
+            productUrl: item.productUrl,
+            productImage: item.productImage,
+            isRocket: item.isRocket,
+          }))
+        : null,
       // 기초 데이터 (상세 페이지용)
       priceKRW: body.productData?.productPrice || null,
       isRocket: body.productData?.isRocket || false,

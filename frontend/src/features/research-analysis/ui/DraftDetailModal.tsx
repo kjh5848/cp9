@@ -14,10 +14,14 @@ interface DraftDetailModalProps {
 
 /**
  * [Features/ResearchAnalysis Layer]
- * AI가 생성한 마크다운 초안(Draft) 또는 최종 결과를 
- * 티스토리 블로그 스타일(.prose-tistory)로 가독성 있게 보여주는 상세 뷰 모달입니다.
+ * AI가 생성한 HTML 또는 마크다운 초안(Draft)을 
+ * 가독성 있게 보여주는 상세 뷰 모달입니다.
+ * HTML 콘텐츠는 dangerouslySetInnerHTML로, 마크다운은 ReactMarkdown으로 렌더링합니다.
  */
 export const DraftDetailModal = ({ isOpen, onClose, title, markdown }: DraftDetailModalProps) => {
+  // HTML 태그가 포함된 콘텐츠인지 판별
+  const isHtmlContent = markdown && /<[a-z][\s\S]*>/i.test(markdown);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-0 bg-white dark:bg-[#23272f] border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
@@ -40,12 +44,21 @@ export const DraftDetailModal = ({ isOpen, onClose, title, markdown }: DraftDeta
           </Button>
         </div>
 
-        {/* 본문 영역 (스크롤) */}
+        {/* 본문 영역 (스크롤) - 텍스트 색상 명시적 지정 */}
         <div className="flex-1 overflow-y-auto p-6 sm:p-10">
-          <div className="max-w-3xl mx-auto prose-tistory">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {markdown || "*내용이 없습니다.*"}
-            </ReactMarkdown>
+          <div className="max-w-3xl mx-auto prose-tistory text-slate-800 dark:text-slate-200">
+            {isHtmlContent ? (
+              // HTML 콘텐츠: dangerouslySetInnerHTML로 렌더링
+              <div 
+                className="article-html-content"
+                dangerouslySetInnerHTML={{ __html: markdown }} 
+              />
+            ) : (
+              // 마크다운 콘텐츠: ReactMarkdown으로 렌더링
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {markdown || "*내용이 없습니다.*"}
+              </ReactMarkdown>
+            )}
           </div>
         </div>
         
