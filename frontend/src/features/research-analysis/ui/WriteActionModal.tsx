@@ -1,18 +1,40 @@
-import React, { useState } from "react";
-import { ResearchItem } from "@/entities/research/model/types";
+import React, { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/shared/ui/dialog";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
-import { Calendar, Clock, PenTool, CalendarPlus } from "lucide-react";
+import {
+  Calendar, Clock, PenTool, CalendarPlus,
+  FileText, GitCompare, LayoutList, ChevronLeft, ChevronRight, Check, Info,
+} from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { CoupangProductResponse } from "@/shared/types/api";
+
+/* ──────────────────────────── 타입 정의 ──────────────────────────── */
+
+type ArticleType = "single" | "compare" | "curation";
+
+export interface WriteActionExecuteParams {
+  persona: string;
+  personaName: string;
+  textModel: string;
+  imageModel: string;
+  actionType: "NOW" | "SCHEDULE";
+  scheduledAt?: string;
+  charLimit?: number;
+  articleType: ArticleType;
+}
 
 interface WriteActionModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
-  defaultAction?: 'NOW' | 'SCHEDULE';
-  onExecute: (params: { persona: string; personaName: string; textModel: string; imageModel: string; actionType: 'NOW' | 'SCHEDULE'; scheduledAt?: string; charLimit?: number }) => void;
+  /** 선택된 상품 목록 — 글 유형 제한/미리보기에 사용 */
+  selectedItems?: CoupangProductResponse[];
+  defaultAction?: "NOW" | "SCHEDULE";
+  onExecute: (params: WriteActionExecuteParams) => void;
 }
+
+/* ──────────────────────────── 상수 ──────────────────────────── */
 
 const PERSONA_OPTIONS = [
   { id: "IT", label: "💻 IT/테크 전문가", desc: "스펙 비교표 · 벤치마크 · 호환성 분석" },
@@ -22,243 +44,584 @@ const PERSONA_OPTIONS = [
   { id: "MASTER_CURATOR_H", label: "⭐ 마스터 큐레이터", desc: "렌탈 딥다이브 · 하이엔드 비교 · SEO 구조화" },
 ];
 
-export const WriteActionModal = ({ isOpen, onClose, title, defaultAction = 'NOW', onExecute }: WriteActionModalProps) => {
-  const [selectedPersona, setSelectedPersona] = useState<string>("IT");
-  // 커스텀 닉네임 (MASTER_CURATOR_H 전용, 기본값: '마스터 큐레이터 H')
-  const [personaName, setPersonaName] = useState<string>("마스터 큐레이터 H");
-  const [selectedTextModel, setSelectedTextModel] = useState<string>("claude-sonnet-4-6");
-  const [selectedImageModel, setSelectedImageModel] = useState<string>("dall-e-3");
-  const [actionType, setActionType] = useState<'NOW' | 'SCHEDULE'>(defaultAction);
-  const [scheduleDate, setScheduleDate] = useState<string>("");
-  const [scheduleTime, setScheduleTime] = useState<string>("");
-  const [charLimit, setCharLimit] = useState<number>(2000);
-  // 'custom' 선택 시 직접 입력 모드 활성화
-  const [charLimitMode, setCharLimitMode] = useState<string>('2000');
+const CHAR_LIMIT_PRESETS = [
+  { value: "2000", label: "2,000자", desc: "간결 요약" },
+  { value: "5000", label: "5,000자", desc: "표준 리뷰" },
+  { value: "8000", label: "8,000자", desc: "심층 분석" },
+  { value: "10000", label: "10,000자", desc: "하이엔드 딥다이브" },
+  { value: "custom", label: "직접 입력", desc: "원하는 글자수" },
+];
 
-  // 프리셋 글자수 옵션
-  const CHAR_LIMIT_PRESETS = [
-    { value: '2000', label: '2,000자', desc: '간결 요약' },
-    { value: '5000', label: '5,000자', desc: '표준 리뷰' },
-    { value: '8000', label: '8,000자', desc: '심층 분석' },
-    { value: '10000', label: '10,000자', desc: '하이엔드 딥다이브' },
-    { value: 'custom', label: '직접 입력', desc: '원하는 글자수' },
-  ];
+/** 큐레이션 아이템 수별 권장 글자수 가이드 */
+const CURATION_GUIDE = [
+  { min: 3, max: 10, perItem: 300, desc: "상세 소개", label: "TOP 10 추천 — SEO 최적 포맷" },
+  { min: 11, max: 20, perItem: 200, desc: "핵심 요약", label: "TOP 20 리스트 — 표준 큐레이션" },
+  { min: 21, max: 30, perItem: 150, desc: "간략 소개", label: "대량 추천 — 빠른 탐색용" },
+  { min: 31, max: 40, perItem: 120, desc: "한줄 소개", label: "카탈로그형 — 가격/특징 중심" },
+  { min: 41, max: 50, perItem: 100, desc: "초간략", label: "대형 리스트 — 이름+가격+한줄평" },
+];
 
+/** 아이템 수에 따라 큐레이션 추천 글자수 산정 */
+function getCurationCharLimit(count: number): number {
+  const guide = CURATION_GUIDE.find((g) => count >= g.min && count <= g.max);
+  if (!guide) return 5000;
+  // 도입+결론 약 1000자 + (아이템당 권장 글자수 × 개수)
+  return 1000 + guide.perItem * count;
+}
+
+/** 현재 아이템 수에 해당하는 큐레이션 가이드 */
+function getCurationGuideForCount(count: number) {
+  return CURATION_GUIDE.find((g) => count >= g.min && count <= g.max) ?? CURATION_GUIDE[0];
+}
+
+/* ──────────────────────────── 글 유형 정의 ──────────────────────────── */
+
+interface ArticleTypeOption {
+  id: ArticleType;
+  icon: React.ReactNode;
+  label: string;
+  desc: string;
+  minItems: number;
+  maxItems: number;
+}
+
+const ARTICLE_TYPES: ArticleTypeOption[] = [
+  { id: "single", icon: <FileText className="w-5 h-5" />, label: "📄 개별 발행", desc: "아이템 1개당 독립 글 1편", minItems: 1, maxItems: 100 },
+  { id: "compare", icon: <GitCompare className="w-5 h-5" />, label: "⚔️ 비교 분석", desc: "선택한 아이템을 하나의 글에서 비교", minItems: 2, maxItems: 5 },
+  { id: "curation", icon: <LayoutList className="w-5 h-5" />, label: "📋 큐레이션", desc: "간략 소개형 리스트로 소개", minItems: 3, maxItems: 50 },
+];
+
+/* ──────────────────────────── Step 인디케이터 ──────────────────────────── */
+
+const STEP_LABELS = ["글 유형", "발행 예시", "페르소나 & 모델", "발행 방식"];
+
+function StepIndicator({ current, total }: { current: number; total: number }) {
+  return (
+    <div className="flex items-center gap-1 mb-4">
+      {Array.from({ length: total }, (_, i) => (
+        <React.Fragment key={i}>
+          <div className={cn(
+            "flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold transition-all",
+            i < current ? "bg-blue-600 text-white" :
+            i === current ? "bg-blue-600 text-white ring-2 ring-blue-400 ring-offset-1 ring-offset-gray-900" :
+            "bg-slate-800 text-slate-500"
+          )}>
+            {i < current ? <Check className="w-3.5 h-3.5" /> : i + 1}
+          </div>
+          {i < total - 1 && (
+            <div className={cn(
+              "flex-1 h-0.5 rounded-full transition-all",
+              i < current ? "bg-blue-600" : "bg-slate-800"
+            )} />
+          )}
+        </React.Fragment>
+      ))}
+    </div>
+  );
+}
+
+/* ──────────────────────────── 메인 컴포넌트 ──────────────────────────── */
+
+export const WriteActionModal = ({
+  isOpen, onClose, title, selectedItems = [], defaultAction = "NOW", onExecute,
+}: WriteActionModalProps) => {
+  const itemCount = selectedItems.length;
+
+  // ── Step 관리 ──
+  const [step, setStep] = useState(0);
+
+  // ── Step 1: 글 유형 ──
+  const [articleType, setArticleType] = useState<ArticleType>("single");
+
+  // ── Step 3: 페르소나 & 모델 ──
+  const [selectedPersona, setSelectedPersona] = useState("IT");
+  const [personaName, setPersonaName] = useState("마스터 큐레이터 H");
+  const [selectedTextModel, setSelectedTextModel] = useState("claude-sonnet-4-6");
+  const [selectedImageModel, setSelectedImageModel] = useState("dall-e-3");
+  const [charLimit, setCharLimit] = useState(2000);
+  const [charLimitMode, setCharLimitMode] = useState("2000");
+
+  // ── Step 4: 발행 방식 ──
+  const [actionType, setActionType] = useState<"NOW" | "SCHEDULE">(defaultAction);
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [scheduleTime, setScheduleTime] = useState("");
+
+  // ── 유형별 활성/비활성 판단 ──
+  const articleTypeAvailability = useMemo(() => {
+    return ARTICLE_TYPES.map((t) => ({
+      ...t,
+      enabled: itemCount >= t.minItems && itemCount <= t.maxItems,
+      reason: itemCount < t.minItems
+        ? `최소 ${t.minItems}개 필요`
+        : itemCount > t.maxItems
+          ? `최대 ${t.maxItems}개 초과`
+          : "",
+    }));
+  }, [itemCount]);
+
+  // 모달 열릴 때 스텝 초기화
+  React.useEffect(() => {
+    if (isOpen) {
+      setStep(0);
+      // 유효한 기본 타입 설정
+      const defaultType = articleTypeAvailability.find((t) => t.enabled);
+      if (defaultType) setArticleType(defaultType.id);
+    }
+  }, [isOpen, articleTypeAvailability]);
+
+  // 글 유형에 따라 기본 글자수 설정
+  React.useEffect(() => {
+    if (articleType === "compare") {
+      setCharLimit(5000);
+      setCharLimitMode("5000");
+    } else if (articleType === "curation") {
+      const autoLimit = getCurationCharLimit(itemCount);
+      setCharLimit(autoLimit);
+      setCharLimitMode("custom");
+    } else {
+      setCharLimit(2000);
+      setCharLimitMode("2000");
+    }
+  }, [articleType, itemCount]);
+
+  // ── 발행 예시 계산 ──
+  const publishPreview = useMemo(() => {
+    if (articleType === "single") {
+      const costPerItem = 0.12; // GPT + 이미지 예상
+      return {
+        totalArticles: itemCount,
+        estimatedMinutes: itemCount * 3,
+        estimatedCost: (itemCount * costPerItem).toFixed(2),
+        articles: selectedItems.slice(0, 5).map((item, i) => ({
+          label: `📄 글 ${i + 1}`,
+          title: `${item.productName} 완전 분석 리뷰`,
+        })),
+        hasMore: itemCount > 5,
+      };
+    } else if (articleType === "compare") {
+      const names = selectedItems.map((i) => i.productName.slice(0, 15));
+      return {
+        totalArticles: 1,
+        estimatedMinutes: 5,
+        estimatedCost: "0.15",
+        articles: [{ label: "⚔️ 글 1", title: names.join(" vs ") + " 비교 분석" }],
+        hasMore: false,
+      };
+    } else {
+      return {
+        totalArticles: 1,
+        estimatedMinutes: Math.ceil(itemCount * 0.3) + 3,
+        estimatedCost: (0.08 + itemCount * 0.003).toFixed(2),
+        articles: [{ label: "📋 글 1", title: `2026년 추천 TOP ${itemCount} 큐레이션` }],
+        hasMore: false,
+      };
+    }
+  }, [articleType, itemCount, selectedItems]);
+
+  // ── 제출 ──
   const handleConfirm = () => {
-    // 최종 사용할 닉네임: 비어있으면 기본값 사용
-    const finalPersonaName = personaName.trim() || '마스터 큐레이터 H';
-    if (actionType === 'SCHEDULE') {
+    const finalPersonaName = personaName.trim() || "마스터 큐레이터 H";
+    const baseParams = {
+      persona: selectedPersona,
+      personaName: finalPersonaName,
+      textModel: selectedTextModel,
+      imageModel: selectedImageModel,
+      charLimit,
+      articleType,
+    };
+
+    if (actionType === "SCHEDULE") {
       if (!scheduleDate || !scheduleTime) {
         alert("예약 날짜와 시간을 선택해주세요.");
         return;
       }
       const dateObj = new Date(`${scheduleDate}T${scheduleTime}:00`);
-      onExecute({ persona: selectedPersona, personaName: finalPersonaName, textModel: selectedTextModel, imageModel: selectedImageModel, actionType, scheduledAt: dateObj.toISOString(), charLimit });
+      onExecute({ ...baseParams, actionType, scheduledAt: dateObj.toISOString() });
     } else {
-      onExecute({ persona: selectedPersona, personaName: finalPersonaName, textModel: selectedTextModel, imageModel: selectedImageModel, actionType, charLimit });
+      onExecute({ ...baseParams, actionType });
     }
   };
 
+  const canGoNext = () => {
+    if (step === 0) return articleTypeAvailability.some((t) => t.id === articleType && t.enabled);
+    if (step === 3 && actionType === "SCHEDULE") return scheduleDate && scheduleTime;
+    return true;
+  };
+
+  /* ════════════════════ 렌더링 ════════════════════ */
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] bg-gray-900 border-gray-800 text-slate-200">
+      <DialogContent className="sm:max-w-[560px] bg-gray-900 border-gray-800 text-slate-200 max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-white">포스팅 생성 설정</DialogTitle>
           <DialogDescription className="text-slate-400">
-            [{title}] 아이템의 포스팅 페르소나와 작성 방식을 선택하세요.
+            [{title}] — {itemCount}개 상품 선택됨
           </DialogDescription>
         </DialogHeader>
 
-        <div className="py-4 space-y-6">
-          {/* 페르소나 선택 */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-slate-300">작성자 페르소나 선택</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {PERSONA_OPTIONS.map((opt) => (
-                <div 
-                  key={opt.id}
-                  onClick={() => setSelectedPersona(opt.id)}
-                  className={cn(
-                    "p-3 rounded-lg border cursor-pointer transition-all duration-200 flex flex-col gap-1",
-                    selectedPersona === opt.id 
-                      ? "bg-blue-600/20 border-blue-500 text-blue-100" 
-                      : "bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-500"
-                  )}
-                >
-                  <span className="font-bold text-sm">{opt.label}</span>
-                  <span className="text-[10px] opacity-80">{opt.desc}</span>
-                </div>
-              ))}
-            </div>
-            {/* MASTER_CURATOR_H 선택 시 닉네임 입력 필드 노출 */}
-            {selectedPersona === 'MASTER_CURATOR_H' && (
-              <div className="pt-1">
-                <label className="text-xs text-slate-500 mb-1 block">작성자 닉네임 (글 본문에 반영됩니다)</label>
-                <input
-                  type="text"
-                  placeholder="예: 마스터 큐레이터 H"
-                  value={personaName}
-                  onChange={(e) => setPersonaName(e.target.value)}
-                  className="w-full bg-slate-900 border border-blue-500/50 text-slate-200 text-sm rounded-md px-3 py-2 outline-none focus:border-blue-400 placeholder:text-slate-600"
-                />
-                <p className="text-[10px] text-slate-500 mt-1">비워두면 기본값 &apos;마스터 큐레이터 H&apos; 로 작성됩니다.</p>
-              </div>
-            )}
-          </div>
+        <StepIndicator current={step} total={4} />
 
-          {/* AI 모델 선택 */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-slate-300">사용할 AI 모델 선택</h4>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label className="text-xs text-slate-500">텍스트 작성 모델</label>
-                <select 
-                  className="w-full bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-md px-3 py-2 outline-none focus:border-blue-500"
-                  value={selectedTextModel}
-                  onChange={(e) => setSelectedTextModel(e.target.value)}
-                >
-                  <optgroup label="— OpenAI —">
-                    <option value="gpt-4o">GPT-4o</option>
-                    <option value="gpt-4o-mini">GPT-4o mini</option>
-                    <option value="o4-mini-2025-04-16">o4-mini</option>
-                    <option value="gpt-5-pro-2025-10-06">GPT-5 Pro</option>
-                  </optgroup>
-                  <optgroup label="— Anthropic (Claude) —">
-                    <option value="claude-sonnet-4-6">Claude Sonnet 4.6 ⭐</option>
-                    <option value="claude-opus-4-6">Claude Opus 4.6</option>
-                    <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
-                  </optgroup>
-                  <optgroup label="— Google (Gemini) —">
-                    <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-                    <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-                    <option value="gemini-3-pro-preview">Gemini 3 Pro Preview</option>
-                  </optgroup>
-                </select>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs text-slate-500">이미지 생성 모델</label>
-                <select 
-                  className="w-full bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-md px-3 py-2 outline-none focus:border-blue-500"
-                  value={selectedImageModel}
-                  onChange={(e) => setSelectedImageModel(e.target.value)}
-                >
-                  <option value="dall-e-3">DALL-E 3 (OpenAI)</option>
-                  <option value="nano-banana">Nano Banana (Gemini 2.5 Flash Image) ⭐</option>
-                  <option value="none">사용 안 함</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="pt-2 space-y-2">
-              <label className="text-xs text-slate-500 block">목표 글자수 (공백 포함)</label>
-              {/* 프리셋 버튼 그리드 */}
-              <div className="grid grid-cols-5 gap-1.5">
-                {CHAR_LIMIT_PRESETS.map((preset) => (
-                  <button
-                    key={preset.value}
-                    type="button"
-                    onClick={() => {
-                      setCharLimitMode(preset.value);
-                      if (preset.value !== 'custom') setCharLimit(Number(preset.value));
-                    }}
+        <div className="py-2 space-y-5 min-h-[280px]">
+          {/* ════════ Step 1: 글 유형 선택 ════════ */}
+          {step === 0 && (
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-slate-300">글 유형 선택</h4>
+              <div className="grid grid-cols-1 gap-3">
+                {articleTypeAvailability.map((type) => (
+                  <div
+                    key={type.id}
+                    onClick={() => type.enabled && setArticleType(type.id)}
                     className={cn(
-                      "flex flex-col items-center py-2 px-1 rounded-md border text-center transition-all duration-200 cursor-pointer",
-                      charLimitMode === preset.value
+                      "p-4 rounded-xl border cursor-pointer transition-all duration-200 flex items-start gap-3",
+                      !type.enabled && "opacity-40 cursor-not-allowed",
+                      type.enabled && articleType === type.id
                         ? "bg-blue-600/20 border-blue-500 text-blue-100"
-                        : "bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-500"
+                        : type.enabled
+                          ? "bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-500"
+                          : "bg-slate-900/50 border-slate-800 text-slate-600",
                     )}
                   >
-                    <span className="text-xs font-bold leading-tight">{preset.label}</span>
-                    <span className="text-[9px] opacity-70 mt-0.5 leading-tight">{preset.desc}</span>
-                  </button>
+                    <div className="mt-0.5">{type.icon}</div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-sm">{type.label}</span>
+                        <span className="text-[10px] text-slate-500">
+                          {type.minItems}~{type.maxItems}개
+                        </span>
+                      </div>
+                      <span className="text-xs opacity-80">{type.desc}</span>
+                      {!type.enabled && type.reason && (
+                        <span className="block text-[10px] text-red-400 mt-1">{type.reason}</span>
+                      )}
+                    </div>
+                  </div>
                 ))}
               </div>
-              {/* 직접 입력 모드일 때만 숫자 필드 표시 */}
-              {charLimitMode === 'custom' && (
-                <div className="flex items-center gap-2 pt-1">
-                  <input
-                    type="number"
-                    className="w-full bg-slate-900 border border-blue-500/50 text-slate-200 text-sm rounded-md px-3 py-2 outline-none focus:border-blue-400"
-                    value={charLimit}
-                    onChange={(e) => setCharLimit(Number(e.target.value) || 2000)}
-                    min={500}
-                    step={500}
-                    placeholder="글자수 직접 입력"
-                  />
-                  <span className="text-sm text-slate-400 whitespace-nowrap">자 내외</span>
+
+              {/* 큐레이션 가이드 */}
+              {articleType === "curation" && (
+                <div className="mt-3 p-3 rounded-lg bg-purple-500/10 border border-purple-500/30">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Info className="w-4 h-4 text-purple-400" />
+                    <span className="text-xs font-semibold text-purple-300">큐레이션 글자수 가이드</span>
+                  </div>
+                  <div className="space-y-1">
+                    {CURATION_GUIDE.map((guide) => {
+                      const isCurrent = itemCount >= guide.min && itemCount <= guide.max;
+                      return (
+                        <div
+                          key={guide.min}
+                          className={cn(
+                            "flex items-center justify-between text-[11px] px-2 py-1 rounded",
+                            isCurrent ? "bg-purple-500/20 text-purple-200 font-semibold" : "text-slate-500",
+                          )}
+                        >
+                          <span>{guide.min}~{guide.max}개</span>
+                          <span>~{guide.perItem}자/아이템 ({guide.desc})</span>
+                          <span>{guide.label.split("—")[0].trim()}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[10px] text-purple-400/80 mt-2">
+                    현재 {itemCount}개 선택 → 아이템당 ~{getCurationGuideForCount(itemCount).perItem}자,
+                    총 ~{getCurationCharLimit(itemCount).toLocaleString()}자 예상
+                  </p>
                 </div>
               )}
             </div>
-          </div>
+          )}
 
-          {/* 실행 액션 탭 선택 */}
-          <div className="flex bg-slate-800 rounded-lg p-1 gap-1">
-            <button
-              onClick={() => setActionType('NOW')}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-md transition-colors",
-                actionType === 'NOW' ? "bg-slate-700 text-white shadow-sm" : "text-slate-400 hover:text-slate-200"
-              )}
-            >
-              <PenTool className="w-4 h-4" />
-              즉시 작성
-            </button>
-            <button
-              onClick={() => setActionType('SCHEDULE')}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-md transition-colors",
-                actionType === 'SCHEDULE' ? "bg-slate-700 text-white shadow-sm" : "text-slate-400 hover:text-slate-200"
-              )}
-            >
-              <CalendarPlus className="w-4 h-4" />
-              스케줄 예약
-            </button>
-          </div>
-
-          {/* 스케줄 선택 폼 */}
-          {actionType === 'SCHEDULE' && (
-            <div className="space-y-4 pt-2 border-t border-slate-800 animate-in fade-in slide-in-from-top-2">
-              <h4 className="text-sm font-semibold text-slate-300">발행 예정 일시</h4>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs text-slate-500">날짜</label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
-                    <Input 
-                      type="date"
-                      value={scheduleDate}
-                      onChange={(e) => setScheduleDate(e.target.value)}
-                      className="pl-9 bg-slate-900 border-slate-700 text-slate-200"
-                    />
+          {/* ════════ Step 2: 발행 예시 미리보기 ════════ */}
+          {step === 1 && (
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-slate-300">발행 예시 미리보기</h4>
+              <div className="space-y-2">
+                {publishPreview.articles.map((article, i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 bg-slate-800/60 rounded-lg border border-slate-700/50">
+                    <span className="text-sm font-mono text-blue-400 whitespace-nowrap">{article.label}</span>
+                    <span className="text-sm text-slate-300 truncate">{article.title}</span>
                   </div>
+                ))}
+                {publishPreview.hasMore && (
+                  <p className="text-xs text-slate-500 text-center py-1">
+                    ... 외 {itemCount - 5}개
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center justify-between px-3 py-3 rounded-lg bg-slate-800/40 border border-slate-700/30">
+                <div className="text-center">
+                  <p className="text-lg font-bold text-white">{publishPreview.totalArticles}편</p>
+                  <p className="text-[10px] text-slate-500">생성 예정</p>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs text-slate-500">시간</label>
-                  <div className="relative">
-                    <Clock className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
-                    <Input 
-                      type="time"
-                      value={scheduleTime}
-                      onChange={(e) => setScheduleTime(e.target.value)}
-                      className="pl-9 bg-slate-900 border-slate-700 text-slate-200"
-                    />
-                  </div>
+                <div className="text-center">
+                  <p className="text-lg font-bold text-white">~{publishPreview.estimatedMinutes}분</p>
+                  <p className="text-[10px] text-slate-500">예상 소요</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-bold text-white">~${publishPreview.estimatedCost}</p>
+                  <p className="text-[10px] text-slate-500">예상 비용</p>
                 </div>
               </div>
             </div>
           )}
+
+          {/* ════════ Step 3: 페르소나 & AI 모델 ════════ */}
+          {step === 2 && (
+            <div className="space-y-5">
+              {/* 페르소나 */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-slate-300">작성자 페르소나 선택</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {PERSONA_OPTIONS.map((opt) => (
+                    <div
+                      key={opt.id}
+                      onClick={() => setSelectedPersona(opt.id)}
+                      className={cn(
+                        "p-3 rounded-lg border cursor-pointer transition-all duration-200 flex flex-col gap-1",
+                        selectedPersona === opt.id
+                          ? "bg-blue-600/20 border-blue-500 text-blue-100"
+                          : "bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-500",
+                      )}
+                    >
+                      <span className="font-bold text-sm">{opt.label}</span>
+                      <span className="text-[10px] opacity-80">{opt.desc}</span>
+                    </div>
+                  ))}
+                </div>
+                {selectedPersona === "MASTER_CURATOR_H" && (
+                  <div className="pt-1">
+                    <label className="text-xs text-slate-500 mb-1 block">작성자 닉네임 (글 본문에 반영됩니다)</label>
+                    <input
+                      type="text"
+                      placeholder="예: 마스터 큐레이터 H"
+                      value={personaName}
+                      onChange={(e) => setPersonaName(e.target.value)}
+                      className="w-full bg-slate-900 border border-blue-500/50 text-slate-200 text-sm rounded-md px-3 py-2 outline-none focus:border-blue-400 placeholder:text-slate-600"
+                    />
+                    <p className="text-[10px] text-slate-500 mt-1">비워두면 기본값 &apos;마스터 큐레이터 H&apos; 로 작성됩니다.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* AI 모델 */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-slate-300">사용할 AI 모델 선택</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-slate-500">텍스트 작성 모델</label>
+                    <select
+                      className="w-full bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-md px-3 py-2 outline-none focus:border-blue-500"
+                      value={selectedTextModel}
+                      onChange={(e) => setSelectedTextModel(e.target.value)}
+                    >
+                      <optgroup label="— OpenAI —">
+                        <option value="gpt-4o">GPT-4o</option>
+                        <option value="gpt-4o-mini">GPT-4o mini</option>
+                        <option value="o4-mini-2025-04-16">o4-mini</option>
+                        <option value="gpt-5-pro-2025-10-06">GPT-5 Pro</option>
+                      </optgroup>
+                      <optgroup label="— Anthropic (Claude) —">
+                        <option value="claude-sonnet-4-6">Claude Sonnet 4.6 ⭐</option>
+                        <option value="claude-opus-4-6">Claude Opus 4.6</option>
+                        <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
+                      </optgroup>
+                      <optgroup label="— Google (Gemini) —">
+                        <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                        <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                        <option value="gemini-3-pro-preview">Gemini 3 Pro Preview</option>
+                      </optgroup>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-slate-500">이미지 생성 모델</label>
+                    <select
+                      className="w-full bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-md px-3 py-2 outline-none focus:border-blue-500"
+                      value={selectedImageModel}
+                      onChange={(e) => setSelectedImageModel(e.target.value)}
+                    >
+                      <option value="dall-e-3">DALL-E 3 (OpenAI)</option>
+                      <option value="nano-banana">Nano Banana (Gemini 2.5 Flash Image) ⭐</option>
+                      <option value="none">사용 안 함</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* 글자수 — 큐레이션은 자동 계산이므로 표시만 */}
+                <div className="pt-2 space-y-2">
+                  <label className="text-xs text-slate-500 block">목표 글자수 (공백 포함)</label>
+                  {articleType === "curation" ? (
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-purple-500/10 border border-purple-500/30">
+                      <Info className="w-4 h-4 text-purple-400 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm text-purple-200 font-semibold">
+                          ~{charLimit.toLocaleString()}자 (자동 계산)
+                        </p>
+                        <p className="text-[10px] text-purple-400">
+                          {itemCount}개 아이템 × ~{getCurationGuideForCount(itemCount).perItem}자/아이템
+                          + 도입/결론 ~1,000자
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-5 gap-1.5">
+                        {CHAR_LIMIT_PRESETS.map((preset) => (
+                          <button
+                            key={preset.value}
+                            type="button"
+                            onClick={() => {
+                              setCharLimitMode(preset.value);
+                              if (preset.value !== "custom") setCharLimit(Number(preset.value));
+                            }}
+                            className={cn(
+                              "flex flex-col items-center py-2 px-1 rounded-md border text-center transition-all duration-200 cursor-pointer",
+                              charLimitMode === preset.value
+                                ? "bg-blue-600/20 border-blue-500 text-blue-100"
+                                : "bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-500",
+                            )}
+                          >
+                            <span className="text-xs font-bold leading-tight">{preset.label}</span>
+                            <span className="text-[9px] opacity-70 mt-0.5 leading-tight">{preset.desc}</span>
+                          </button>
+                        ))}
+                      </div>
+                      {charLimitMode === "custom" && (
+                        <div className="flex items-center gap-2 pt-1">
+                          <input
+                            type="number"
+                            className="w-full bg-slate-900 border border-blue-500/50 text-slate-200 text-sm rounded-md px-3 py-2 outline-none focus:border-blue-400"
+                            value={charLimit}
+                            onChange={(e) => setCharLimit(Number(e.target.value) || 2000)}
+                            min={500}
+                            step={500}
+                            placeholder="글자수 직접 입력"
+                          />
+                          <span className="text-sm text-slate-400 whitespace-nowrap">자 내외</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ════════ Step 4: 발행 방식 & 주기 ════════ */}
+          {step === 3 && (
+            <div className="space-y-5">
+              <h4 className="text-sm font-semibold text-slate-300">발행 방식</h4>
+              {/* 즉시/예약 탭 */}
+              <div className="flex bg-slate-800 rounded-lg p-1 gap-1">
+                <button
+                  onClick={() => setActionType("NOW")}
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-md transition-colors",
+                    actionType === "NOW" ? "bg-slate-700 text-white shadow-sm" : "text-slate-400 hover:text-slate-200",
+                  )}
+                >
+                  <PenTool className="w-4 h-4" />
+                  즉시 작성
+                </button>
+                <button
+                  onClick={() => setActionType("SCHEDULE")}
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-md transition-colors",
+                    actionType === "SCHEDULE" ? "bg-slate-700 text-white shadow-sm" : "text-slate-400 hover:text-slate-200",
+                  )}
+                >
+                  <CalendarPlus className="w-4 h-4" />
+                  스케줄 예약
+                </button>
+              </div>
+
+              {/* 예약 일시 설정 */}
+              {actionType === "SCHEDULE" && (
+                <div className="space-y-4 pt-2 border-t border-slate-800 animate-in fade-in slide-in-from-top-2">
+                  <h4 className="text-sm font-semibold text-slate-300">발행 예정 일시</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs text-slate-500">날짜</label>
+                      <div className="relative">
+                        <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
+                        <Input
+                          type="date"
+                          value={scheduleDate}
+                          onChange={(e) => setScheduleDate(e.target.value)}
+                          className="pl-9 bg-slate-900 border-slate-700 text-slate-200"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs text-slate-500">시간</label>
+                      <div className="relative">
+                        <Clock className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
+                        <Input
+                          type="time"
+                          value={scheduleTime}
+                          onChange={(e) => setScheduleTime(e.target.value)}
+                          className="pl-9 bg-slate-900 border-slate-700 text-slate-200"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 즉시 발행 시 요약 */}
+              {actionType === "NOW" && (
+                <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
+                  <p className="text-sm text-emerald-200">
+                    {publishPreview.totalArticles}편의 글을 즉시 생성합니다.
+                    {publishPreview.totalArticles > 1 && " 모든 글이 동시에 병렬 처리됩니다."}
+                  </p>
+                  <p className="text-[10px] text-emerald-400 mt-1">
+                    예상 소요: ~{publishPreview.estimatedMinutes}분 | 예상 비용: ~${publishPreview.estimatedCost}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        <DialogFooter className="mt-4 border-t border-slate-800 pt-4">
-          <Button variant="outline" onClick={onClose} className="border-slate-700 text-slate-300 hover:bg-slate-800">
-            취소
-          </Button>
-          <Button 
-            className="bg-blue-600 hover:bg-blue-500 text-white"
-            onClick={handleConfirm}
-          >
-            {actionType === 'NOW' ? '지금 글쓰기 시작' : '스케줄 보드에 등록'}
-          </Button>
+        {/* ════════ 하단 네비게이션 ════════ */}
+        <DialogFooter className="mt-2 border-t border-slate-800 pt-4 flex items-center justify-between">
+          <div>
+            {step > 0 && (
+              <Button
+                variant="outline"
+                onClick={() => setStep((s) => s - 1)}
+                className="border-slate-700 text-slate-300 hover:bg-slate-800"
+              >
+                <ChevronLeft className="w-4 h-4 mr-1" />
+                이전
+              </Button>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onClose} className="border-slate-700 text-slate-300 hover:bg-slate-800">
+              취소
+            </Button>
+            {step < 3 ? (
+              <Button
+                onClick={() => setStep((s) => s + 1)}
+                disabled={!canGoNext()}
+                className="bg-blue-600 hover:bg-blue-500 text-white"
+              >
+                다음
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            ) : (
+              <Button
+                className="bg-blue-600 hover:bg-blue-500 text-white"
+                onClick={handleConfirm}
+                disabled={!canGoNext()}
+              >
+                {actionType === "NOW" ? "지금 글쓰기 시작" : "스케줄 보드에 등록"}
+              </Button>
+            )}
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

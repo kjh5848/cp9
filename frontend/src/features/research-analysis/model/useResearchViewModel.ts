@@ -73,36 +73,69 @@ export const useResearchViewModel = (): UseResearchViewModelReturn => {
     }
   }, []);
 
+  /**
+   * SEO 글 생성/재생성 — /api/item-research 통합 파이프라인 호출
+   * 기존 리서치 데이터에서 상품 정보를 추출하여 동일한 파이프라인으로 재실행합니다.
+   */
   const generateSEO = useCallback(async (request: WriteRequest): Promise<WriteResponse | null> => {
-    // 글 생성 중 로딩 Toat 표시
-    const loadingToastId = toast.loading('AI가 글을 작성 중입니다... (30초~2분 소요)');
     try {
-      const response = await fetch("/api/write", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(request),
-      });
+      const itemIds = request.itemIds || [];
+      let successCount = 0;
 
-      const result = await response.json();
+      for (const itemId of itemIds) {
+        // 기존 리서치 데이터에서 상품 정보 조회
+        const existing = researchList.find(
+          (r) => r.itemId === itemId && r.projectId === request.projectId
+        );
+        const pack = existing?.pack;
 
-      toast.dismiss(loadingToastId);
+        const response = await fetch("/api/item-research", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            itemName: pack?.title || itemId,
+            projectId: request.projectId,
+            itemId,
+            productData: {
+              productName: pack?.title || itemId,
+              productPrice: pack?.priceKRW || 0,
+              productImage: pack?.productImage || '',
+              productUrl: pack?.productUrl || '',
+              categoryName: '',
+              isRocket: pack?.isRocket || false,
+              isFreeShipping: false,
+            },
+            seoConfig: {
+              persona: request.persona,
+              textModel: request.textModel,
+              imageModel: request.imageModel,
+              actionType: request.actionType,
+              scheduledAt: request.scheduledAt,
+              charLimit: request.charLimit,
+            }
+          }),
+        });
 
-      if (result.success) {
-        toast.success(`글 생성 완료! (${result.data?.written || 0}개)`);
-        // 글 생성 완료 후 목록 자동 갱신
-        await fetchResearch();
-        return result;
+        if (response.ok) {
+          successCount++;
+        } else {
+          console.error(`리서치 재생성 실패 (상품 ID: ${itemId})`);
+        }
+      }
+
+      if (successCount > 0) {
+        toast.success(`글 생성이 시작되었습니다! (${successCount}개)\n완료 시 알림을 보내드립니다.`);
+        return { success: true, data: { written: successCount, failed: [] } };
       } else {
-        toast.error(`SEO 글 생성 실패: ${result.error}`);
-        return result;
+        toast.error('SEO 글 생성 요청에 실패했습니다.');
+        return { success: false, error: '모든 항목 생성 실패' };
       }
     } catch (err) {
-      toast.dismiss(loadingToastId);
       const errorMsg = err instanceof Error ? err.message : "Generation error";
       toast.error(`SEO 생성 오류: ${errorMsg}`);
       return null;
     }
-  }, [fetchResearch]);
+  }, [fetchResearch, researchList]);
 
   return {
     researchList,

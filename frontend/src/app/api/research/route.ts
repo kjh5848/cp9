@@ -99,3 +99,37 @@ export async function PUT(request: NextRequest) {
     );
   }
 }
+
+// DELETE - 리서치/스케줄 데이터 삭제
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const projectId = searchParams.get('projectId');
+    const itemId = searchParams.get('itemId');
+
+    if (!projectId || !itemId) {
+      return NextResponse.json(
+        { success: false, error: 'projectId and itemId are required' },
+        { status: 400 }
+      );
+    }
+
+    await prisma.research.delete({
+      where: {
+        projectId_itemId: { projectId, itemId }
+      }
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Research deleted successfully'
+    });
+
+  } catch (error: any) {
+    console.error('Research delete API error:', error);
+    return NextResponse.json(
+      { success: false, error: 'DELETE_FAILED', detail: error.message },
+      { status: 500 }
+    );
+  }
+}

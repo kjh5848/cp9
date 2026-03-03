@@ -29,6 +29,8 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.3.1",
+    "langfuse": "^3.38.6",
+    "langfuse-langchain": "^3.38.6",
     "lucide-react": "^0.539.0",
     "marked": "^17.0.3",
     "moment": "^2.30.1",

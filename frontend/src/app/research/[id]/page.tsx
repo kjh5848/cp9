@@ -20,7 +20,11 @@ import {
   Calendar,
   PenTool,
   Loader2,
-  ImageIcon
+  ImageIcon,
+  Activity,
+  DollarSign,
+  Clock,
+  Zap
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -37,6 +41,9 @@ export default function ArticleDetailPage() {
   const projectId = searchParams.get('projectId');
   const [item, setItem] = useState<ResearchItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // 모니터링 데이터 (Langfuse trace)
+  const [monitoring, setMonitoring] = useState<any>(null);
+  const [monitoringLoading, setMonitoringLoading] = useState(false);
 
   const fetchItem = useCallback(async () => {
     try {
@@ -70,6 +77,26 @@ export default function ArticleDetailPage() {
     fetchItem();
   }, [fetchItem]);
 
+  // 모니터링 데이터 조회
+  useEffect(() => {
+    if (!item || !projectId) return;
+    const fetchMonitoring = async () => {
+      setMonitoringLoading(true);
+      try {
+        const res = await fetch(`/api/monitoring/trace?projectId=${projectId}&itemId=${id}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) setMonitoring(data);
+        }
+      } catch (e) {
+        console.warn('모니터링 데이터 조회 실패:', e);
+      } finally {
+        setMonitoringLoading(false);
+      }
+    };
+    fetchMonitoring();
+  }, [item, projectId, id]);
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[80vh] gap-4">
@@ -99,7 +126,7 @@ export default function ArticleDetailPage() {
   const { pack, updatedAt } = item;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 space-y-8 animate-in fade-in duration-500">
+    <div className="max-w-5xl mx-auto px-4 pt-24 pb-8 space-y-8 animate-in fade-in duration-500">
       {/* 1. 상단 내비게이션 및 액션 */}
       <div className="flex items-center justify-between">
         <Button 
@@ -264,8 +291,9 @@ export default function ArticleDetailPage() {
         </div>
 
         {/* 사이드바 (오른쪽 1칸) */}
-        <div className="lg:col-span-1 space-y-6">
-           <GlassCard className="p-6 sticky top-24">
+        <div className="lg:col-span-1">
+          <div className="sticky top-24 space-y-6">
+           <GlassCard className="p-6">
               <h3 className="font-bold mb-4 flex items-center gap-2">
                 <PenTool className="w-4 h-4 text-blue-400" />
                 Quick Actions
@@ -296,6 +324,88 @@ export default function ArticleDetailPage() {
                 </div>
               </div>
            </GlassCard>
+
+            {/* 모니터링 카드 */}
+            <GlassCard className="p-6 space-y-4">
+              <h3 className="font-bold flex items-center gap-2">
+                <Activity className="w-4 h-4 text-emerald-400" />
+                생성 모니터링
+              </h3>
+              {monitoringLoading ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  로딩 중...
+                </div>
+              ) : monitoring?.hasMonitoring ? (
+                <div className="space-y-3 text-sm">
+                  {/* 총 소요시간 */}
+                  {monitoring.monitoring.totalLatencyMs != null && monitoring.monitoring.totalLatencyMs > 0 && (
+                    <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl">
+                      <span className="flex items-center gap-1.5 text-muted-foreground">
+                        <Clock className="w-3.5 h-3.5" />
+                        총 소요시간
+                      </span>
+                      <span className="text-blue-400 font-bold">
+                        {monitoring.monitoring.totalLatencyMs > 60000
+                          ? `${Math.floor(monitoring.monitoring.totalLatencyMs / 60000)}분 ${Math.round((monitoring.monitoring.totalLatencyMs % 60000) / 1000)}초`
+                          : `${Math.round(monitoring.monitoring.totalLatencyMs / 1000)}초`}
+                      </span>
+                    </div>
+                  )}
+                  {/* 이미지 비용 */}
+                  {monitoring.monitoring.estimatedImageCost != null && monitoring.monitoring.estimatedImageCost > 0 && (
+                    <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl">
+                      <span className="flex items-center gap-1.5 text-muted-foreground">
+                        <DollarSign className="w-3.5 h-3.5" />
+                        이미지 비용
+                      </span>
+                      <span className="text-emerald-400 font-bold">
+                        ${monitoring.monitoring.estimatedImageCost.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  {/* Phase별 상세 */}
+                  {monitoring.monitoring.phases?.length > 0 && (
+                    <div className="space-y-2 pt-2 border-t border-white/5">
+                      <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Phase 상세</span>
+                      {monitoring.monitoring.phases.map((phase: any, i: number) => (
+                        <div key={i} className="flex justify-between items-center text-xs bg-white/5 p-2 rounded-lg">
+                          <span className="flex items-center gap-1.5 text-slate-400">
+                            <Zap className="w-3 h-3 text-yellow-500" />
+                            {phase.name
+                              .replace('phase1-perplexity-research', 'P1 리서치')
+                              .replace('phase2-llm-article', 'P2 본문 생성')
+                              .replace('phase3-image-generation', 'P3 이미지')
+                              .replace('phase4-html-transform', 'P4 HTML 변환')}
+                          </span>
+                          <span className="text-slate-300">
+                            {phase.latencyMs ? `${(phase.latencyMs / 1000).toFixed(1)}s` : '-'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {/* 모델 정보 */}
+                  <div className="space-y-2 pt-2 border-t border-white/5">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">텍스트 모델</span>
+                      <span className="text-slate-300 font-mono text-[11px]">{monitoring.monitoring.textModel || '-'}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">이미지 모델</span>
+                      <span className="text-slate-300 font-mono text-[11px]">{monitoring.monitoring.imageModel || '-'}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">페르소나</span>
+                      <span className="text-slate-300">{monitoring.monitoring.persona || '-'}</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">모니터링 데이터가 없습니다.</p>
+              )}
+            </GlassCard>
+          </div>
         </div>
       </div>
     </div>

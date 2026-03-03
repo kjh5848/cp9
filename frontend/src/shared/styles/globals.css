@@ -149,6 +149,26 @@ body {
 .prose-tistory {
   @apply leading-relaxed font-sans text-base sm:text-[17px];
   color: var(--foreground);
+  text-align: left;
+}
+
+/* HTML 콘텐츠 본문: 명시적 왼쪽 정렬 */
+.article-html-content {
+  text-align: left;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+.article-html-content h1,
+.article-html-content h2,
+.article-html-content h3,
+.article-html-content h4,
+.article-html-content p,
+.article-html-content ul,
+.article-html-content ol,
+.article-html-content li,
+.article-html-content blockquote,
+.article-html-content table {
+  text-align: left !important;
 }
 .prose-tistory p {
   @apply my-6;
@@ -202,4 +222,245 @@ body {
 }
 .prose-tistory tr:nth-child(even) td {
   @apply bg-white/5;
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* CP9 CTA 컴포넌트 스타일 (페르소나별 변형 포함)                    */
+/* ═══════════════════════════════════════════════════════════════ */
+
+/* 기본 CTA 컨테이너 */
+.cp9-cta {
+  text-align: center;
+  margin: 24px 0;
+}
+.cp9-cta--footer {
+  margin: 40px 0;
+  padding: 24px;
+  background: rgba(228, 0, 59, 0.04);
+  border-radius: 12px;
+  border: 1px solid rgba(228, 0, 59, 0.1);
+}
+
+/* CTA 이미지 */
+.cp9-cta__image {
+  max-width: 100%;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+/* CTA 버튼 */
+.cp9-cta__button {
+  display: inline-block;
+  background: #E4003B;
+  color: #fff !important;
+  font-weight: bold;
+  padding: 14px 32px;
+  border-radius: 8px;
+  text-decoration: none !important;
+  font-size: 1rem;
+  transition: background 0.2s, transform 0.15s;
+}
+.cp9-cta__button:hover {
+  background: #c70033;
+  transform: translateY(-1px);
+}
+.cp9-cta__button--large {
+  padding: 16px 40px;
+  font-size: 1.1rem;
+}
+
+/* CTA 텍스트 */
+.cp9-cta__headline {
+  font-weight: bold;
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+  color: var(--foreground);
+}
+.cp9-cta__sub-text {
+  font-size: 0.9rem;
+  color: var(--muted-foreground);
+  margin-bottom: 16px;
+}
+.cp9-cta__disclaimer {
+  font-size: 0.75rem;
+  color: #888;
+  margin-top: 8px;
+}
+
+/* CTA 뱃지 (공통) */
+.cp9-cta__spec-badge,
+.cp9-cta__trend-badge,
+.cp9-cta__living-badge,
+.cp9-cta__price-badge,
+.cp9-cta__curator-badge,
+.cp9-cta__compare-badge,
+.cp9-cta__editor-badge {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+/* ── 페르소나별 테마 ── */
+
+/* IT/테크: 블루 계열 */
+.cp9-cta--tech .cp9-cta__spec-badge { background: rgba(59,130,246,0.15); color: #3b82f6; }
+.cp9-cta--tech .cp9-cta__button--tech { background: #2563eb; }
+.cp9-cta--tech .cp9-cta__button--tech:hover { background: #1d4ed8; }
+.cp9-cta--tech.cp9-cta--footer { background: rgba(59,130,246,0.04); border-color: rgba(59,130,246,0.15); }
+
+/* 뷰티: 핑크 계열 */
+.cp9-cta--beauty .cp9-cta__trend-badge { background: rgba(236,72,153,0.15); color: #ec4899; }
+.cp9-cta--beauty .cp9-cta__button--beauty { background: #db2777; }
+.cp9-cta--beauty .cp9-cta__button--beauty:hover { background: #be185d; }
+.cp9-cta--beauty.cp9-cta--footer { background: rgba(236,72,153,0.04); border-color: rgba(236,72,153,0.15); }
+
+/* 살림/인테리어: 그린 계열 */
+.cp9-cta--living .cp9-cta__living-badge { background: rgba(34,197,94,0.15); color: #16a34a; }
+.cp9-cta--living .cp9-cta__button--living { background: #16a34a; }
+.cp9-cta--living .cp9-cta__button--living:hover { background: #15803d; }
+.cp9-cta--living.cp9-cta--footer { background: rgba(34,197,94,0.04); border-color: rgba(34,197,94,0.15); }
+
+/* 가성비 헌터: 오렌지 계열 */
+.cp9-cta--hunter .cp9-cta__price-badge { background: rgba(249,115,22,0.15); color: #ea580c; }
+.cp9-cta--hunter .cp9-cta__button--hunter { background: #ea580c; }
+.cp9-cta--hunter .cp9-cta__button--hunter:hover { background: #c2410c; }
+.cp9-cta--hunter.cp9-cta--footer { background: rgba(249,115,22,0.04); border-color: rgba(249,115,22,0.15); }
+
+/* 마스터 큐레이터: 골드/다크 계열 */
+.cp9-cta--luxury .cp9-cta__curator-badge { background: rgba(202,138,4,0.15); color: #ca8a04; }
+.cp9-cta--luxury .cp9-cta__button--luxury { background: linear-gradient(135deg, #1a1a2e, #16213e); }
+.cp9-cta--luxury .cp9-cta__button--luxury:hover { background: linear-gradient(135deg, #16213e, #0f3460); }
+.cp9-cta--luxury.cp9-cta--footer { background: rgba(202,138,4,0.03); border-color: rgba(202,138,4,0.15); }
+
+/* 비교 분석: 수라 계열 */
+.cp9-cta--compare .cp9-cta__compare-badge { background: rgba(6,182,212,0.15); color: #06b6d4; }
+.cp9-cta--compare .cp9-cta__button--compare { background: #0891b2; }
+.cp9-cta--compare .cp9-cta__button--compare:hover { background: #0e7490; }
+.cp9-cta--compare.cp9-cta--footer { background: rgba(6,182,212,0.04); border-color: rgba(6,182,212,0.15); }
+
+/* 큐레이션: 보라 계열 */
+.cp9-cta--curation .cp9-cta__editor-badge { background: rgba(139,92,246,0.15); color: #8b5cf6; }
+.cp9-cta--curation .cp9-cta__button--curation { background: #7c3aed; }
+.cp9-cta--curation .cp9-cta__button--curation:hover { background: #6d28d9; }
+.cp9-cta--curation.cp9-cta--footer { background: rgba(139,92,246,0.04); border-color: rgba(139,92,246,0.15); }
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* Level 2: 전환율 최적화 스타일                                    */
+/* ═══════════════════════════════════════════════════════════════ */
+
+/* 가격 블록 */
+.cp9-cta__price-block {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.cp9-cta__current-price {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #E4003B;
+}
+.cp9-cta__inline-price {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #E4003B;
+  margin-bottom: 8px;
+  display: block;
+}
+
+/* 로켓배송 뱃지 */
+.cp9-cta__rocket-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #5B2FFF;
+  color: #fff;
+}
+
+/* 긴급성 배너 */
+.cp9-cta__urgency {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #dc2626;
+  margin-bottom: 12px;
+  padding: 6px 16px;
+  background: rgba(220, 38, 38, 0.06);
+  border-radius: 6px;
+  display: inline-block;
+}
+
+/* 사회적 증거 */
+.cp9-cta__social-proof {
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+  margin-bottom: 12px;
+  font-style: italic;
+}
+
+/* 중간 CTA (본문 내 삽입) */
+.cp9-cta--mid {
+  margin: 32px 0;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(59,130,246,0.04), rgba(139,92,246,0.04));
+  border-radius: 12px;
+  border: 1px solid rgba(59,130,246,0.1);
+  text-align: center;
+}
+.cp9-cta__mid-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.cp9-cta__button--mid {
+  padding: 10px 24px;
+  font-size: 0.9rem;
+}
+
+/* 버튼 펄스 애니메이션 (CTA 주목도 향상) */
+@keyframes cp9-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(228, 0, 59, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(228, 0, 59, 0); }
+}
+.cp9-cta__button--large {
+  animation: cp9-pulse 2s ease-in-out infinite;
+}
+.cp9-cta__button--large:hover {
+  animation: none;
+}
+
+/* 본문 삽입 상품 이미지 */
+.cp9-product-image {
+  margin: 32px 0;
+  text-align: center;
+}
+.cp9-product-image img {
+  max-width: 100%;
+  max-height: 400px;
+  object-fit: contain;
+  border-radius: 12px;
+  margin: 0 auto;
+  display: block;
+}
+.cp9-product-image figcaption {
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+  margin-top: 8px;
+  text-align: center;
+}
+
+/* CTA footer 내 상품 이미지 */
+.cp9-cta__image--footer {
+  max-width: 200px;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: 12px;
+  margin: 0 auto 16px;
+  display: block;
 }

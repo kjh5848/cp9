@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { GlassCard } from "@/shared/ui/GlassCard";
 import { Button } from "@/shared/ui/button";
@@ -22,6 +22,8 @@ import { cn } from "@/shared/lib/utils";
 import { CoupangProductResponse } from "@/shared/types/api";
 import { WriteActionModal } from "@/features/research-analysis/ui/WriteActionModal";
 import ReactMarkdown from "react-markdown";
+import { useJobPolling } from "@/features/research-analysis/model/useJobPolling";
+import { toast } from "react-hot-toast";
 
 type SearchMode = "keyword" | "link" | "category" | "pl_brand";
 type PersonaType = "Single_Expert" | "Compare_Master" | "Curation_Blogger";
@@ -89,6 +91,17 @@ export const ProductCreation = () => {
   const router = useRouter();
   const [selectedProductIds, setSelectedProductIds] = useState<Set<number>>(new Set());
   const [isResearching, setIsResearching] = useState(false);
+  
+  /* ── 폴링 사용: 글 생성 완료 알림 ── */
+  const { startPolling, isPolling, jobStatus } = useJobPolling({
+    intervalMs: 5000,
+    onComplete: (status) => {
+      setIsResearching(false);
+    },
+    onFailed: (status) => {
+      setIsResearching(false);
+    },
+  });
   
   /* ── 린트 에러 복구용 모달 상태 ── */
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -257,72 +270,141 @@ export const ProductCreation = () => {
     });
   };
 
-  const handleStartResearch = async (params: { persona: string; textModel: string; imageModel: string; actionType: 'NOW' | 'SCHEDULE'; scheduledAt?: string; charLimit?: number }) => {
+  const handleStartResearch = async (params: { persona: string; textModel: string; imageModel: string; actionType: 'NOW' | 'SCHEDULE'; scheduledAt?: string; charLimit?: number; articleType?: 'single' | 'compare' | 'curation' }) => {
     if (selectedProductIds.size === 0) return;
     setIsResearching(true);
     setIsModalOpen(false);
     setError(null);
     
-    // 프로젝트 ID 생성 (임의 - 브라우저 비보안 환경 호환성 대응)
+    // 프로젝트 ID 생성
     const newProjectId = `proj_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 9)}`;
     
     try {
-      // 선택된 상품만 필터링 (검색 결과 및 기본 추천 상품 포함)
+      // 선택된 상품만 필터링
       const allAvailableProducts = [...results, ...defaultPlAll, ...defaultGoldbox];
       const selectedProducts = allAvailableProducts.filter(p => selectedProductIds.has(p.productId));
       const uniqueSelectedProducts = Array.from(new Map(selectedProducts.map(p => [p.productId, p])).values());
-      const resultsQueue: any[] = [];
-      
-      // 병렬로 리서치 데이터 전송
-      await Promise.all(
-        uniqueSelectedProducts.map(async (product) => {
-          const res = await fetch("/api/item-research", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              itemName: product.productName,
-              projectId: newProjectId,
-              itemId: String(product.productId),
-              productData: {
-                productName: product.productName,
-                productPrice: product.productPrice,
-                productImage: product.productImage,
-                productUrl: product.productUrl,
-                categoryName: product.categoryName || "",
-                isRocket: product.isRocket,
-                isFreeShipping: product.isFreeShipping,
-              },
-              seoConfig: {
-                persona: params.persona,
-                textModel: params.textModel,
-                imageModel: params.imageModel,
-                actionType: params.actionType,
-                scheduledAt: params.scheduledAt,
-                charLimit: params.charLimit
-              }
-            }),
+      const resolvedArticleType = params.articleType || 'single';
+
+      if (resolvedArticleType === 'compare' || resolvedArticleType === 'curation') {
+        // ── 비교/큐레이션: 다중 아이템을 하나의 요청으로 묶어 호출 ──
+        const leadProduct = uniqueSelectedProducts[0];
+        const res = await fetch("/api/item-research", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            itemName: resolvedArticleType === 'compare'
+              ? uniqueSelectedProducts.map(p => p.productName.slice(0, 20)).join(' vs ')
+              : `TOP ${uniqueSelectedProducts.length} 큐레이션`,
+            projectId: newProjectId,
+            itemId: String(leadProduct.productId),
+            productData: {
+              productName: leadProduct.productName,
+              productPrice: leadProduct.productPrice,
+              productImage: leadProduct.productImage,
+              productUrl: leadProduct.productUrl,
+              categoryName: leadProduct.categoryName || "",
+              isRocket: leadProduct.isRocket,
+              isFreeShipping: leadProduct.isFreeShipping,
+            },
+            // 다중 아이템 데이터
+            items: uniqueSelectedProducts.map(p => ({
+              productName: p.productName,
+              productPrice: p.productPrice,
+              productImage: p.productImage,
+              productUrl: p.productUrl,
+              categoryName: p.categoryName || "",
+              isRocket: p.isRocket,
+              isFreeShipping: p.isFreeShipping,
+              productId: String(p.productId),
+            })),
+            seoConfig: {
+              persona: params.persona,
+              textModel: params.textModel,
+              imageModel: params.imageModel,
+              actionType: params.actionType,
+              scheduledAt: params.scheduledAt,
+              charLimit: params.charLimit,
+              articleType: resolvedArticleType,
+            }
+          }),
+        });
+
+        if (res.ok) {
+          startPolling(newProjectId, String(leadProduct.productId));
+          toast.success(`📝 ${resolvedArticleType === 'compare' ? '비교 분석' : '큐레이션'} 글 생성이 시작되었습니다!`, {
+            duration: 4000,
+          });
+          // 스케줄 등록 시 스케줄 페이지로, 즉시 발행 시 글 상세 페이지로 이동
+          if (params.actionType === 'SCHEDULE') {
+            router.push('/schedule');
+          } else {
+            router.push(`/research/${leadProduct.productId}?projectId=${newProjectId}`);
+          }
+        } else {
+          toast.error('글 생성 요청에 실패했습니다.');
+          setIsResearching(false);
+        }
+      } else {
+        // ── 개별 발행: 기존 방식 (병렬 호출) ──
+        const responses = await Promise.all(
+          uniqueSelectedProducts.map(async (product) => {
+            const res = await fetch("/api/item-research", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                itemName: product.productName,
+                projectId: newProjectId,
+                itemId: String(product.productId),
+                productData: {
+                  productName: product.productName,
+                  productPrice: product.productPrice,
+                  productImage: product.productImage,
+                  productUrl: product.productUrl,
+                  categoryName: product.categoryName || "",
+                  isRocket: product.isRocket,
+                  isFreeShipping: product.isFreeShipping,
+                },
+                seoConfig: {
+                  persona: params.persona,
+                  textModel: params.textModel,
+                  imageModel: params.imageModel,
+                  actionType: params.actionType,
+                  scheduledAt: params.scheduledAt,
+                  charLimit: params.charLimit,
+                  articleType: 'single',
+                }
+              }),
+            });
+            return { product, ok: res.ok, data: await res.json() };
+          })
+        );
+
+        const successCount = responses.filter(r => r.ok).length;
+        
+        if (successCount > 0) {
+          const firstProduct = uniqueSelectedProducts[0];
+          startPolling(newProjectId, String(firstProduct.productId));
+          
+          toast.success(`📝 ${successCount}개 상품 글 생성이 시작되었습니다!\n완료 시 알림을 보내드리겠습니다.`, {
+            duration: 4000,
           });
           
-          if (!res.ok) {
-            console.error(`리서치 생성 실패 (상품 ID: ${product.productId})`);
+          if (params.actionType === 'SCHEDULE') {
+            // 스케줄 등록 시 스케줄 페이지로 이동
+            router.push('/schedule');
+          } else if (uniqueSelectedProducts.length === 1) {
+            router.push(`/research/${firstProduct.productId}?projectId=${newProjectId}`);
           } else {
-            const json = await res.json();
-            resultsQueue.push(json);
+            router.push('/research');
           }
-        })
-      );
-      
-      // 생성 완료 후 결과 페이지 대신 상세 페이지로 이동
-      if (uniqueSelectedProducts.length === 1) {
-        // 단일 상품: 바로 해당 상세 페이지로 이동
-        router.push(`/research/${uniqueSelectedProducts[0].productId}`);
-      } else {
-        // 복수 상품: 글 목록 페이지로 이동
-        router.push('/research');
+        } else {
+          toast.error('글 생성 요청에 실패했습니다.');
+          setIsResearching(false);
+        }
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "SEO 리서치 전환 중 오류가 발생했습니다.");
-    } finally {
       setIsResearching(false);
     }
   };
@@ -403,15 +485,15 @@ export const ProductCreation = () => {
   return (
     <div className="w-full max-w-5xl mx-auto space-y-8 py-8 pb-32 relative">
       {/* ── 로딩 오버레이 ── */}
-      {isResearching && (
-        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
-          <GlassCard className="p-8 flex flex-col items-center gap-4 max-w-sm w-full text-center border-blue-500/50">
-            <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
-            <h3 className="text-xl font-bold text-white">SEO 콘텐츠 생성 중...</h3>
-            <p className="text-sm text-slate-400">
-              AI가 설정된 조건에 맞게 글을 작성 중입니다.<br/>
-              약 30초~1분 정도 소요될 수 있습니다.
-            </p>
+      {/* ── 폴링 상태 표시 (하단 토스트로 대체, 전체화면 차단 제거) ── */}
+      {isPolling && (
+        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right-5">
+          <GlassCard className="p-4 flex items-center gap-3 border-blue-500/30 bg-gray-900/95 backdrop-blur-xl shadow-2xl max-w-sm">
+            <Loader2 className="w-5 h-5 animate-spin text-blue-500 flex-shrink-0" />
+            <div className="flex flex-col">
+              <span className="text-white text-sm font-medium">AI가 글을 작성 중...</span>
+              <span className="text-xs text-slate-400">완료 시 알림을 보내드립니다</span>
+            </div>
           </GlassCard>
         </div>
       )}
@@ -780,6 +862,11 @@ export const ProductCreation = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={`${selectedProductIds.size}개 상품`}
+        selectedItems={(() => {
+          const allAvailableProducts = [...results, ...defaultPlAll, ...defaultGoldbox];
+          const selectedProducts = allAvailableProducts.filter(p => selectedProductIds.has(p.productId));
+          return Array.from(new Map(selectedProducts.map(p => [p.productId, p])).values());
+        })()}
         onExecute={handleStartResearch}
       />
     </div>

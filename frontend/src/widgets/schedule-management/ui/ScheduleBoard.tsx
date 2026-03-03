@@ -3,9 +3,11 @@
 import React, { useState, useEffect } from "react";
 import { GlassCard } from "@/shared/ui/GlassCard";
 import { Button } from "@/shared/ui/button";
-import { Calendar as CalendarIcon, Clock, PenTool, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, PenTool, CheckCircle2, Loader2, AlertCircle, Trash2, Edit3 } from "lucide-react";
 import { DraftDetailModal } from "@/features/research-analysis/ui/DraftDetailModal";
 import { useResearchViewModel } from "@/features/research-analysis/model/useResearchViewModel";
+import { Input } from "@/shared/ui/input";
+import { toast } from "react-hot-toast";
 
 /**
  * [Widgets Layer]
@@ -20,7 +22,7 @@ export const ScheduleBoard = () => {
 
   // DB에서 가져온 데이터로 목록 분리
   const scheduledItems = researchList.filter(item => item.pack.status === 'SCHEDULED').map(item => ({
-    id: item.itemId,
+    id: `${item.projectId}_${item.itemId}`,
     title: item.pack.title || '제목 없음',
     persona: item.pack.seoConfig?.persona || 'IT',
     date: item.pack.scheduledAt || item.updatedAt,
@@ -29,7 +31,7 @@ export const ScheduleBoard = () => {
   }));
 
   const completedItems = researchList.filter(item => item.pack.status === 'PUBLISHED' || item.pack.content).map(item => ({
-    id: item.itemId,
+    id: `${item.projectId}_${item.itemId}`,
     title: item.pack.title || '제목 없음',
     persona: item.pack.seoConfig?.persona || 'IT',
     date: item.pack.scheduledAt || item.updatedAt,
@@ -42,6 +44,68 @@ export const ScheduleBoard = () => {
     title: "",
     markdown: "",
   });
+
+  // 수정 모드 상태
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDate, setEditDate] = useState("");
+  const [editTime, setEditTime] = useState("");
+
+  // 취소 확인 상태 (confirm 대신 state 사용)
+  const [cancelConfirmId, setCancelConfirmId] = useState<string | null>(null);
+
+  // 스케줄 취소 실행
+  const executeCancelSchedule = async (projectId: string, itemId: string) => {
+    try {
+      const res = await fetch(`/api/research?projectId=${encodeURIComponent(projectId)}&itemId=${encodeURIComponent(itemId)}`, {
+        method: 'DELETE',
+      });
+      const result = await res.json();
+      if (result.success) {
+        toast.success('스케줄이 취소되었습니다.');
+        setCancelConfirmId(null);
+        fetchResearch();
+      } else {
+        toast.error(`취소 실패: ${result.error}`);
+      }
+    } catch {
+      toast.error('스케줄 취소 중 오류가 발생했습니다.');
+    }
+  };
+
+  // 수정 모드 진입
+  const handleStartEdit = (id: string, currentDate: string) => {
+    setEditingId(id);
+    const d = new Date(currentDate);
+    setEditDate(d.toISOString().split('T')[0]);
+    setEditTime(d.toTimeString().slice(0, 5));
+  };
+
+  // 수정 저장
+  const handleSaveEdit = async (rawItem: any) => {
+    if (!editDate || !editTime) {
+      toast.error('날짜와 시간을 입력해주세요.');
+      return;
+    }
+    const newScheduledAt = new Date(`${editDate}T${editTime}:00`).toISOString();
+    const updatedPack = { ...rawItem.pack, scheduledAt: newScheduledAt };
+    try {
+      const res = await fetch('/api/research', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: rawItem.projectId, itemId: rawItem.itemId, pack: updatedPack }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        toast.success('스케줄이 수정되었습니다.');
+        setEditingId(null);
+        fetchResearch();
+      } else {
+        toast.error(`수정 실패: ${result.error}`);
+      }
+    } catch {
+      toast.error('스케줄 수정 중 오류가 발생했습니다.');
+    }
+  };
 
   const generateMockMarkdown = (title: string, persona: string) => {
     return `
@@ -166,9 +230,42 @@ export const ScheduleBoard = () => {
                     </div>
                   </div>
                 </div>
-                <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-border">
-                  <Button size="sm" variant="outline" className="h-7 text-xs border-border text-muted-foreground hover:bg-muted">수정</Button>
-                  <Button size="sm" variant="outline" className="h-7 text-xs border-destructive/20 text-destructive hover:bg-destructive/10">취소</Button>
+                <div className="flex flex-col gap-2 mt-4 pt-3 border-t border-border">
+                  {cancelConfirmId === item.id ? (
+                    <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-red-500/10 border border-red-500/20">
+                      <span className="text-xs text-red-400">정말 취소하시겠습니까?</span>
+                      <div className="flex gap-1.5">
+                        <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 border-red-500/30 text-red-400 hover:bg-red-500/20"
+                          onClick={() => executeCancelSchedule(item.rawItem.projectId, item.rawItem.itemId)}>삭제</Button>
+                        <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 border-border text-muted-foreground hover:bg-muted"
+                          onClick={() => setCancelConfirmId(null)}>아니오</Button>
+                      </div>
+                    </div>
+                  ) : editingId === item.id ? (
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 flex items-center gap-2">
+                        <Input type="date" value={editDate} onChange={e => setEditDate(e.target.value)}
+                          className="h-7 text-xs bg-slate-900 border-slate-700 text-slate-200" />
+                        <Input type="time" value={editTime} onChange={e => setEditTime(e.target.value)}
+                          className="h-7 text-xs bg-slate-900 border-slate-700 text-slate-200 w-24" />
+                      </div>
+                      <Button size="sm" variant="outline" className="h-7 text-xs border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10"
+                        onClick={() => handleSaveEdit(item.rawItem)}>저장</Button>
+                      <Button size="sm" variant="outline" className="h-7 text-xs border-border text-muted-foreground hover:bg-muted"
+                        onClick={() => setEditingId(null)}>닫기</Button>
+                    </div>
+                  ) : (
+                    <div className="flex justify-end gap-2">
+                      <Button size="sm" variant="outline" className="h-7 text-xs border-border text-muted-foreground hover:bg-muted gap-1"
+                        onClick={() => handleStartEdit(item.id, item.date)}>
+                        <Edit3 className="w-3 h-3" />수정
+                      </Button>
+                      <Button size="sm" variant="outline" className="h-7 text-xs border-destructive/20 text-destructive hover:bg-destructive/10 gap-1"
+                        onClick={() => setCancelConfirmId(item.id)}>
+                        <Trash2 className="w-3 h-3" />취소
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </GlassCard>
             ))}

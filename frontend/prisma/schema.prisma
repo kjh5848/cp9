@@ -28,3 +28,4 @@ model Draft {
   @@id([projectId, itemId])
   @@map("drafts")
 }
+
