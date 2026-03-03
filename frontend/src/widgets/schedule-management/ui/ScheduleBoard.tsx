@@ -1,13 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { GlassCard } from "@/shared/ui/GlassCard";
 import { Button } from "@/shared/ui/button";
-import { Calendar as CalendarIcon, Clock, PenTool, CheckCircle2, Loader2, AlertCircle, Trash2, Edit3 } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, PenTool, CheckCircle2, Loader2, AlertCircle, Trash2, Edit3, LayoutGrid, CalendarDays, Play, Square } from "lucide-react";
 import { DraftDetailModal } from "@/features/research-analysis/ui/DraftDetailModal";
 import { useResearchViewModel } from "@/features/research-analysis/model/useResearchViewModel";
+import { WeeklyCalendar, type CalendarItem } from "./WeeklyCalendar";
 import { Input } from "@/shared/ui/input";
 import { toast } from "react-hot-toast";
+import { cn } from "@/shared/lib/utils";
 
 /**
  * [Widgets Layer]
@@ -44,6 +46,97 @@ export const ScheduleBoard = () => {
     title: "",
     markdown: "",
   });
+
+  // 뷰 모드: 'board' | 'calendar'
+  const [viewMode, setViewMode] = useState<'board' | 'calendar'>('calendar');
+  // 주간 캘린더 오프셋 (0 = 이번 주)
+  const [weekOffset, setWeekOffset] = useState(0);
+
+  // 발행 큐 상태
+  const [queueRunning, setQueueRunning] = useState(false);
+  const [queueProgress, setQueueProgress] = useState({ current: 0, total: 0 });
+
+  // 발행 큐 실행: 대기중인 스케줄을 순차적으로 생성 API 호출
+  const runPublishQueue = useCallback(async () => {
+    const pendingItems = scheduledItems.filter(item => item.status === 'PENDING');
+    if (pendingItems.length === 0) {
+      toast.error('발행할 대기 항목이 없습니다.');
+      return;
+    }
+    setQueueRunning(true);
+    setQueueProgress({ current: 0, total: pendingItems.length });
+
+    for (let i = 0; i < pendingItems.length; i++) {
+      const item = pendingItems[i];
+      setQueueProgress({ current: i + 1, total: pendingItems.length });
+      try {
+        const raw = item.rawItem;
+        // 스케줄된 아이템의 파이프라인 실행 요청
+        const res = await fetch('/api/item-research', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            itemName: raw.pack.title || '상품',
+            projectId: raw.projectId,
+            itemId: raw.itemId,
+            productData: {
+              productName: raw.pack.title,
+              productPrice: raw.pack.priceKRW || 0,
+              productImage: raw.pack.productImage || '',
+              productUrl: raw.pack.productUrl || '',
+              categoryName: raw.pack.categoryName || '',
+              isRocket: raw.pack.isRocket || false,
+              isFreeShipping: raw.pack.isFreeShipping || false,
+            },
+            seoConfig: {
+              persona: raw.pack.persona || raw.pack.seoConfig?.persona || 'IT',
+              toneAndManner: '전문적이면서 친근한',
+              textModel: raw.pack.textModel || 'gpt-4o',
+              imageModel: 'dall-e-3',
+              actionType: 'NOW',
+              charLimit: 2000,
+              articleType: raw.pack.articleType || 'single',
+            },
+          }),
+        });
+        if (res.ok) {
+          toast.success(`${i + 1}/${pendingItems.length} 발행 시작: ${item.title.slice(0, 20)}...`);
+        } else {
+          toast.error(`발행 실패: ${item.title.slice(0, 20)}...`);
+        }
+      } catch {
+        toast.error(`발행 오류: ${item.title.slice(0, 20)}...`);
+      }
+      // 순차 호출 간 2초 딜레이 (API 부하 방지)
+      if (i < pendingItems.length - 1) {
+        await new Promise(r => setTimeout(r, 2000));
+      }
+    }
+
+    setQueueRunning(false);
+    toast.success('발행 큐 완료! 목록을 새로고침합니다.');
+    fetchResearch();
+  }, [scheduledItems, fetchResearch]);
+
+  // 캘린더 뷰용 아이템 변환
+  const calendarItems: CalendarItem[] = [
+    ...scheduledItems.map(item => ({
+      id: item.id,
+      title: item.title,
+      persona: item.persona,
+      date: item.date,
+      status: 'PENDING' as const,
+      articleType: item.rawItem.pack.articleType,
+      rawItem: item.rawItem,
+    })),
+    ...completedItems.map(item => ({
+      id: item.id,
+      title: item.title,
+      persona: item.persona,
+      date: item.date,
+      status: 'COMPLETED' as const,
+    })),
+  ];
 
   // 수정 모드 상태
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -173,20 +266,83 @@ export const ScheduleBoard = () => {
   return (
     <div className="flex flex-col gap-8 w-full max-w-5xl mx-auto py-8 px-4 md:px-8">
       {/* 헤더 영역 */}
-      <div className="flex justify-between items-end border-b border-border pb-6">
-        <div className="flex flex-col gap-2">
-          <h2 className="text-3xl font-bold text-foreground flex items-center gap-3">
-            <CalendarIcon className="w-8 h-8 text-blue-500" />
-            발행 스케줄 관리
-          </h2>
-          <p className="text-muted-foreground">
-            예약된 SEO 포스트 발행 일정을 한눈에 확인하고 관리합니다.
-          </p>
+      <div className="flex flex-col gap-4 border-b border-border pb-6">
+        <div className="flex justify-between items-end">
+          <div className="flex flex-col gap-2">
+            <h2 className="text-3xl font-bold text-foreground flex items-center gap-3">
+              <CalendarIcon className="w-8 h-8 text-blue-500" />
+              발행 스케줄 관리
+            </h2>
+            <p className="text-muted-foreground">
+              예약된 SEO 포스트 발행 일정을 한눈에 확인하고 관리합니다.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {/* 발행 큐 실행 버튼 */}
+            {scheduledItems.length > 0 && (
+              <Button
+                onClick={queueRunning ? () => setQueueRunning(false) : runPublishQueue}
+                variant={queueRunning ? "destructive" : "default"}
+                size="sm"
+                className={cn("gap-2 h-9 rounded-lg", !queueRunning && "bg-emerald-600 hover:bg-emerald-500")}
+                disabled={loading}
+              >
+                {queueRunning ? (
+                  <><Square className="w-3.5 h-3.5" />중지 ({queueProgress.current}/{queueProgress.total})</>
+                ) : (
+                  <><Play className="w-3.5 h-3.5" />일괄 발행 ({scheduledItems.length}건)</>
+                )}
+              </Button>
+            )}
+            <Button onClick={() => fetchResearch()} variant="outline" className="gap-2 h-9" disabled={loading}>
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "새로고침"}
+            </Button>
+          </div>
         </div>
-        <Button onClick={() => fetchResearch()} variant="outline" className="gap-2" disabled={loading}>
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "새로고침"}
-        </Button>
+        {/* 뷰 전환 탭 */}
+        <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg w-fit">
+          <button
+            onClick={() => setViewMode('calendar')}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+              viewMode === 'calendar'
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <CalendarDays className="w-4 h-4" />캘린더
+          </button>
+          <button
+            onClick={() => setViewMode('board')}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+              viewMode === 'board'
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <LayoutGrid className="w-4 h-4" />보드
+          </button>
+        </div>
       </div>
+
+      {/* 큐 진행률 */}
+      {queueRunning && (
+        <GlassCard className="p-4 border-emerald-500/20 bg-emerald-500/5">
+          <div className="flex items-center gap-3 text-sm">
+            <Loader2 className="w-5 h-5 animate-spin text-emerald-400" />
+            <div className="flex-1">
+              <p className="font-semibold text-emerald-400">발행 큐 실행 중... ({queueProgress.current}/{queueProgress.total})</p>
+              <div className="mt-2 h-1.5 bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                  style={{ width: `${(queueProgress.current / queueProgress.total) * 100}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        </GlassCard>
+      )}
 
       {error && (
         <GlassCard className="p-4 border-red-500/20 bg-red-500/5 mb-4">
@@ -197,7 +353,22 @@ export const ScheduleBoard = () => {
         </GlassCard>
       )}
 
-      {/* 보드 영역 */}
+      {/* 캘린더 뷰 */}
+      {viewMode === 'calendar' && (
+        <WeeklyCalendar
+          items={calendarItems}
+          weekOffset={weekOffset}
+          onWeekChange={setWeekOffset}
+          onItemClick={(item) => {
+            if (item.status === 'COMPLETED') {
+              setPreviewItem({ isOpen: true, title: item.title, markdown: '' });
+            }
+          }}
+        />
+      )}
+
+      {/* 보드 뷰 */}
+      {viewMode === 'board' && (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
         {/* 대기중 (예약) 목록 */}
@@ -334,6 +505,7 @@ export const ScheduleBoard = () => {
           </div>
         </div>
       </div>
+      )}
       
       <DraftDetailModal
         isOpen={previewItem.isOpen}

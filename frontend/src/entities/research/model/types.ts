@@ -23,6 +23,8 @@ export interface ResearchPack {
   contentType?: 'html' | 'markdown'; // 콘텐츠 형식
   status?: 'DRAFT' | 'SCHEDULED' | 'PUBLISHED';
   scheduledAt?: string | null;
+  categoryName?: string | null;
+  isFreeShipping?: boolean | null;
   // 글 생성 메타데이터
   persona?: string;               // 예: 'IT', 'BEAUTY', 'MASTER_CURATOR_H'
   personaName?: string;           // 예: 'IT/테크 전문가 블로거'
