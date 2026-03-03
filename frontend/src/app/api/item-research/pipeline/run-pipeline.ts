@@ -4,7 +4,7 @@
  */
 import { prisma } from '@/infrastructure/clients/prisma'
 import { getLangfuse } from '@/infrastructure/clients/langfuse'
-import { PERSONA_DISPLAY_NAME } from './config'
+import { PERSONA_DISPLAY_NAME, upgradeModelForArticleType } from './config'
 import { runResearchPhase } from './research-phase'
 import { runArticlePhase } from './article-phase'
 import { runImagePhase } from './image-phase'
@@ -26,7 +26,9 @@ export interface PipelineConfig {
  * Phase 1 → (Phase 2 + Phase 3 병렬) → Phase 4 → DB 저장
  */
 export async function runSeoPipeline(body: ItemResearchRequest, config: PipelineConfig): Promise<void> {
-  const { persona, tone, textModel, imageModel, charLimit, articleType } = config;
+  const { persona, tone, imageModel, charLimit, articleType } = config;
+  // 비교/큐레이션: 하위 모델 자동 업그레이드
+  const textModel = upgradeModelForArticleType(config.textModel, articleType);
   const finalPersonaName = persona === 'MASTER_CURATOR_H'
     ? '마스터 큐레이터 H'
     : PERSONA_DISPLAY_NAME[persona] || persona;

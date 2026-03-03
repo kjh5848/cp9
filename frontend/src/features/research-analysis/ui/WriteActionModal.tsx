@@ -274,25 +274,25 @@ export const WriteActionModal = ({
                     onClick={() => type.enabled && setArticleType(type.id)}
                     className={cn(
                       "p-4 rounded-xl border cursor-pointer transition-all duration-200 flex items-start gap-3",
-                      !type.enabled && "opacity-40 cursor-not-allowed",
+                      !type.enabled && "opacity-70 cursor-not-allowed",
                       type.enabled && articleType === type.id
                         ? "bg-blue-600/20 border-blue-500 text-blue-100"
                         : type.enabled
                           ? "bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-500"
-                          : "bg-slate-900/50 border-slate-800 text-slate-600",
+                          : "bg-slate-900/50 border-slate-800 text-slate-500",
                     )}
                   >
                     <div className="mt-0.5">{type.icon}</div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-sm">{type.label}</span>
-                        <span className="text-[10px] text-slate-500">
+                        <span className="font-bold">{type.label}</span>
+                        <span className="text-xs text-slate-500">
                           {type.minItems}~{type.maxItems}개
                         </span>
                       </div>
-                      <span className="text-xs opacity-80">{type.desc}</span>
+                      <span className="text-sm opacity-80">{type.desc}</span>
                       {!type.enabled && type.reason && (
-                        <span className="block text-[10px] text-red-400 mt-1">{type.reason}</span>
+                        <span className="block text-xs font-semibold text-red-400 mt-1.5">{type.reason}</span>
                       )}
                     </div>
                   </div>

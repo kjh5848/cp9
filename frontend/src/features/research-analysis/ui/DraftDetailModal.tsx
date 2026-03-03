@@ -44,9 +44,19 @@ export const DraftDetailModal = ({ isOpen, onClose, title, markdown }: DraftDeta
           </Button>
         </div>
 
-        {/* 본문 영역 (스크롤) - 텍스트 색상 명시적 지정 */}
-        <div className="flex-1 overflow-y-auto p-6 sm:p-10">
-          <div className="max-w-3xl mx-auto prose-tistory text-slate-800 dark:text-slate-200">
+        {/* 본문 영역 (스크롤) - CSS 변수를 라이트모드 값으로 강제 오버라이드 */}
+        <div 
+          className="flex-1 overflow-y-auto p-6 sm:p-10"
+          style={{
+            '--foreground': '#0f172a',
+            '--muted-foreground': '#475569',
+            '--border': '#e2e8f0',
+            '--card': '#ffffff',
+            '--card-foreground': '#0f172a',
+            '--muted': '#f1f5f9',
+          } as React.CSSProperties}
+        >
+          <div className="max-w-3xl mx-auto prose-tistory">
             {isHtmlContent ? (
               // HTML 콘텐츠: dangerouslySetInnerHTML로 렌더링
               <div 

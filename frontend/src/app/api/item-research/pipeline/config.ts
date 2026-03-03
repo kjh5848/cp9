@@ -40,3 +40,26 @@ export function createTextModel(textModel: string) {
   if (textModel.startsWith('gemini')) return createGeminiModel(textModel);
   return createGptModel(textModel);
 }
+
+/** 하위 모델 → 상위 모델 자동 업그레이드 매핑 */
+const MODEL_UPGRADE_MAP: Record<string, string> = {
+  'gpt-4o-mini': 'gpt-4o',
+  'gpt-3.5-turbo': 'gpt-4o',
+  'claude-3-haiku': 'claude-sonnet-4-20250514',
+  'gemini-1.5-flash': 'gemini-1.5-pro',
+};
+
+/**
+ * 비교/큐레이션 글 유형에서 컨텍스트가 클 때 하위 모델을 상위 모델로 자동 업그레이드합니다.
+ * 이미 상위 모델이 선택된 경우 그대로 유지합니다.
+ */
+export function upgradeModelForArticleType(textModel: string, articleType: string): string {
+  if (articleType === 'single') return textModel;
+  const upgraded = MODEL_UPGRADE_MAP[textModel];
+  if (upgraded) {
+    console.log(`🔄 [Model Upgrade] ${articleType} 글 유형 → ${textModel} → ${upgraded}`);
+    return upgraded;
+  }
+  return textModel;
+}
+

@@ -97,8 +97,14 @@ export async function runHtmlPhase(
     }
   );
 
+  // ── 큐레이션: 본문 하단에 상품 카드 그리드 삽입 ──
+  let productCardsHtml = '';
+  if (articleType === 'curation' && ctx.body.items?.length) {
+    productCardsHtml = buildCurationProductCards(ctx.body.items);
+  }
+
   // ── 최종 HTML 조합 ──
-  const seoContent = coupangHeaderHtml + htmlBody + coupangCtaHtml;
+  const seoContent = coupangHeaderHtml + htmlBody + productCardsHtml + coupangCtaHtml;
   console.log(`✅ [Phase 4] HTML 변환 완료 (${seoContent.length}자, 유형: ${articleType}, 페르소나: ${ctx.persona})`);
   return seoContent;
 }
@@ -125,3 +131,32 @@ function injectMultiItemLinks(html: string, items: Array<{ productName: string; 
   }
   return html;
 }
+
+/**
+ * 큐레이션 글 하단에 상품 카드 그리드를 생성합니다.
+ * 인라인 스타일 사용으로 블로그 환경에서도 정상 렌더링됩니다.
+ */
+function buildCurationProductCards(
+  items: Array<{ productName: string; productPrice: number; productUrl: string; productImage: string; isRocket?: boolean }>
+): string {
+  const cards = items.map(item => `
+<div style="display:inline-block;width:calc(50% - 12px);vertical-align:top;margin:6px;background:#f8f9fa;border-radius:12px;overflow:hidden;border:1px solid #e9ecef;">
+  ${item.productImage ? `<a href="${item.productUrl}" target="_blank" rel="noopener sponsored"><img src="${item.productImage}" alt="${item.productName}" style="width:100%;height:160px;object-fit:contain;background:#fff;padding:12px;" /></a>` : ''}
+  <div style="padding:12px 14px 14px;">
+    <p style="font-size:13px;font-weight:600;color:#333;margin:0 0 6px;line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${item.productName}</p>
+    <p style="font-size:15px;font-weight:700;color:#e53935;margin:0 0 8px;">${item.productPrice?.toLocaleString()}원${item.isRocket ? ' <span style="font-size:11px;color:#0073e6;font-weight:500;">🚀로켓</span>' : ''}</p>
+    <a href="${item.productUrl}" target="_blank" rel="noopener sponsored" style="display:block;text-align:center;background:#0073e6;color:#fff;padding:8px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;">가격 확인하기</a>
+  </div>
+</div>`).join('');
+
+  return `
+<div style="margin:32px 0;padding:24px 0;border-top:2px solid #e9ecef;">
+  <h3 style="font-size:18px;font-weight:700;margin:0 0 16px;color:#333;">📦 추천 상품 한눈에 보기</h3>
+  <div style="font-size:0;text-align:center;">
+    ${cards}
+  </div>
+  <p style="font-size:11px;color:#999;margin:16px 0 0;text-align:center;">※ 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.</p>
+</div>
+`;
+}
+
