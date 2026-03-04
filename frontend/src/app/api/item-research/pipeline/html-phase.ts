@@ -50,7 +50,7 @@ export async function runHtmlPhase(
     // 개별 발행: 단일 상품 이미지 + 중간 CTA
     const productImageUrl = ctx.body.productData?.productImage;
     const productImageHtml = productImageUrl
-      ? `<figure class="cp9-product-image"><img src="${productImageUrl}" alt="${ctx.body.itemName}" /><figcaption>${ctx.body.itemName}</figcaption></figure>`
+      ? `<figure class="cp9-product-image" style="text-align:center;margin:2em auto;max-width:420px;"><img src="${productImageUrl}" alt="${ctx.body.itemName}" style="max-width:100%;height:auto;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1px solid #eee;" /><figcaption style="font-size:13px;color:#94a3b8;margin-top:8px;">${ctx.body.itemName}</figcaption></figure>`
       : '';
     let midCtaInserted = false;
     let productImageInserted = false;
@@ -82,18 +82,38 @@ export async function runHtmlPhase(
     });
   }
 
-  // ── 후처리 3: "[...보러 가기]" 패턴에 쿠팡 구매 링크 자동 삽입 ──
+  // ── 후처리 3: "보러 가기" 패턴에 쿠팡 구매 링크 자동 삽입 ──
   const buyUrlForLink = ctx.body.productData?.productUrl
     || `https://www.coupang.com/vp/products/${ctx.body.itemId}`;
+  const ctaLinkStyle = 'color:#0073e6;font-weight:bold;text-decoration:underline;';
+
+  // 3-1: marked가 [텍스트 보러 가기](#) 또는 빈/더미 href 링크를 생성한 경우 → 쿠팡 URL로 교체
+  htmlBody = htmlBody.replace(
+    /<a\s+href="(#|javascript:void\(0\)|)"([^>]*)>([^<]*보러\s*가기[^<]*)<\/a>/gi,
+    `<a href="${buyUrlForLink}" target="_blank" rel="noopener noreferrer nofollow" style="${ctaLinkStyle}">$3 →</a>`
+  );
+
+  // 3-2: 대괄호가 HTML에 그대로 남은 경우 [텍스트 보러 가기]
   htmlBody = htmlBody.replace(
     /\[([^\]]*보러\s*가기[^\]]*)\]/g,
-    `<a href="${buyUrlForLink}" target="_blank" rel="noopener noreferrer nofollow" style="color:#0073e6;font-weight:bold;text-decoration:underline;">$1 →</a>`
+    `<a href="${buyUrlForLink}" target="_blank" rel="noopener noreferrer nofollow" style="${ctaLinkStyle}">$1 →</a>`
   );
+
+  // 3-3: <p> 태그 내에 링크 없이 "보러 가기" 텍스트만 있는 경우
   htmlBody = htmlBody.replace(
     /(<p[^>]*>)\s*([^<]*보러\s*가기[^<]*)\s*(<\/p>)/g,
     (match, open, text, close) => {
       if (match.includes('<a ')) return match;
-      return `${open}<a href="${buyUrlForLink}" target="_blank" rel="noopener noreferrer nofollow" style="color:#0073e6;font-weight:bold;text-decoration:underline;">${text.trim()} →</a>${close}`;
+      return `${open}<a href="${buyUrlForLink}" target="_blank" rel="noopener noreferrer nofollow" style="${ctaLinkStyle}">${text.trim()} →</a>${close}`;
+    }
+  );
+
+  // 3-4: <strong>, <em> 등 인라인 태그 안에 "보러 가기" 텍스트가 있는 경우
+  htmlBody = htmlBody.replace(
+    /(<(?:strong|em|b|i)[^>]*>)([^<]*보러\s*가기[^<]*)(<\/(?:strong|em|b|i)>)/gi,
+    (match) => {
+      if (match.includes('<a ')) return match;
+      return `<a href="${buyUrlForLink}" target="_blank" rel="noopener noreferrer nofollow" style="${ctaLinkStyle}">${match} →</a>`;
     }
   );
 
@@ -110,23 +130,34 @@ export async function runHtmlPhase(
 }
 
 /**
- * 비교/큐레이션 글에서 각 상품명 옆에 쿠팡 구매 링크를 연결합니다.
- * LLM이 생성한 마크다운 링크([구매](url))는 marked가 이미 <a> 태그로 변환하지만,
- * 일부 누락된 링크를 보완합니다.
+ * 비교/큐레이션 글에서 각 상품명 옆에 쿠팡 구매 링크를 연결하고,
+ * 각 상품 섹션(H3) 뒤에 대표 이미지를 자동 삽입합니다.
  */
-function injectMultiItemLinks(html: string, items: Array<{ productName: string; productUrl: string }>): string {
+function injectMultiItemLinks(
+  html: string,
+  items: Array<{ productName: string; productUrl: string; productImage?: string }>
+): string {
   for (const item of items) {
     if (!item.productUrl) continue;
     // 상품명이 본문에 있지만 <a> 태그로 감싸지 않은 경우 자동 링크 추가
     const escapedName = item.productName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    // H3 태그 안의 상품명에 구매 링크 아이콘 추가 (이미 링크가 없는 경우만)
+    // H3 태그 안의 상품명에 구매 링크 아이콘 추가 + H3 뒤에 상품 이미지 삽입
     const h3Regex = new RegExp(
       `(<h3[^>]*>)([^<]*?)(${escapedName.slice(0, 30)}[^<]*?)(</h3>)`,
       'gi'
     );
     html = html.replace(h3Regex, (match, open, prefix, name, close) => {
-      if (match.includes('<a ')) return match;
-      return `${open}${prefix}${name} <a href="${item.productUrl}" target="_blank" rel="noopener sponsored" style="color:#0073e6;font-size:0.85em;">[쿠팡에서 보기]</a>${close}`;
+      // 구매 링크 아이콘 추가 (이미 링크가 없는 경우만)
+      const linkIcon = match.includes('<a ')
+        ? ''
+        : ` <a href="${item.productUrl}" target="_blank" rel="noopener sponsored" style="color:#0073e6;font-size:0.85em;">[쿠팡에서 보기]</a>`;
+      
+      // 상품 대표 이미지 삽입 (H3 태그 바로 뒤)
+      const imageHtml = item.productImage
+        ? `<figure style="margin:16px 0;text-align:center;"><a href="${item.productUrl}" target="_blank" rel="noopener sponsored"><img src="${item.productImage}" alt="${item.productName}" style="max-width:100%;height:auto;max-height:300px;object-fit:contain;border-radius:12px;border:1px solid #e9ecef;background:#fff;padding:8px;" /></a><figcaption style="font-size:12px;color:#888;margin-top:6px;">${item.productName}</figcaption></figure>`
+        : '';
+      
+      return `${open}${prefix}${name}${linkIcon}${close}${imageHtml}`;
     });
   }
   return html;

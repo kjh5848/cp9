@@ -6,7 +6,7 @@ import { Button } from "@/shared/ui/button";
 import { Calendar as CalendarIcon, Clock, PenTool, CheckCircle2, Loader2, AlertCircle, Trash2, Edit3, LayoutGrid, CalendarDays, Play, Square } from "lucide-react";
 import { DraftDetailModal } from "@/features/research-analysis/ui/DraftDetailModal";
 import { useResearchViewModel } from "@/features/research-analysis/model/useResearchViewModel";
-import { WeeklyCalendar, type CalendarItem } from "./WeeklyCalendar";
+import { BigCalendarView, type ScheduleEvent } from "./BigCalendarView";
 import { Input } from "@/shared/ui/input";
 import { toast } from "react-hot-toast";
 import { cn } from "@/shared/lib/utils";
@@ -49,26 +49,27 @@ export const ScheduleBoard = () => {
 
   // 뷰 모드: 'board' | 'calendar'
   const [viewMode, setViewMode] = useState<'board' | 'calendar'>('calendar');
-  // 주간 캘린더 오프셋 (0 = 이번 주)
-  const [weekOffset, setWeekOffset] = useState(0);
+
 
   // 발행 큐 상태
   const [queueRunning, setQueueRunning] = useState(false);
   const [queueProgress, setQueueProgress] = useState({ current: 0, total: 0 });
 
-  // 발행 큐 실행: 대기중인 스케줄을 순차적으로 생성 API 호출
+  // 발행 큐 실행: 예약 시간이 지났으나 아직 미발행인 글만 순차 실행
+  const overdueItems = scheduledItems.filter(item =>
+    item.status === 'PENDING' && new Date(item.date) < new Date()
+  );
   const runPublishQueue = useCallback(async () => {
-    const pendingItems = scheduledItems.filter(item => item.status === 'PENDING');
-    if (pendingItems.length === 0) {
-      toast.error('발행할 대기 항목이 없습니다.');
+    if (overdueItems.length === 0) {
+      toast.error('밀린 스케줄이 없습니다.');
       return;
     }
     setQueueRunning(true);
-    setQueueProgress({ current: 0, total: pendingItems.length });
+    setQueueProgress({ current: 0, total: overdueItems.length });
 
-    for (let i = 0; i < pendingItems.length; i++) {
-      const item = pendingItems[i];
-      setQueueProgress({ current: i + 1, total: pendingItems.length });
+    for (let i = 0; i < overdueItems.length; i++) {
+      const item = overdueItems[i];
+      setQueueProgress({ current: i + 1, total: overdueItems.length });
       try {
         const raw = item.rawItem;
         // 스케줄된 아이템의 파이프라인 실행 요청
@@ -100,7 +101,7 @@ export const ScheduleBoard = () => {
           }),
         });
         if (res.ok) {
-          toast.success(`${i + 1}/${pendingItems.length} 발행 시작: ${item.title.slice(0, 20)}...`);
+          toast.success(`${i + 1}/${overdueItems.length} 발행 시작: ${item.title.slice(0, 20)}...`);
         } else {
           toast.error(`발행 실패: ${item.title.slice(0, 20)}...`);
         }
@@ -108,34 +109,45 @@ export const ScheduleBoard = () => {
         toast.error(`발행 오류: ${item.title.slice(0, 20)}...`);
       }
       // 순차 호출 간 2초 딜레이 (API 부하 방지)
-      if (i < pendingItems.length - 1) {
+      if (i < overdueItems.length - 1) {
         await new Promise(r => setTimeout(r, 2000));
       }
     }
 
     setQueueRunning(false);
-    toast.success('발행 큐 완료! 목록을 새로고침합니다.');
+    toast.success('밀린 스케줄 실행 완료! 목록을 새로고침합니다.');
     fetchResearch();
-  }, [scheduledItems, fetchResearch]);
+  }, [overdueItems, fetchResearch]);
 
-  // 캘린더 뷰용 아이템 변환
-  const calendarItems: CalendarItem[] = [
-    ...scheduledItems.map(item => ({
-      id: item.id,
-      title: item.title,
-      persona: item.persona,
-      date: item.date,
-      status: 'PENDING' as const,
-      articleType: item.rawItem.pack.articleType,
-      rawItem: item.rawItem,
-    })),
-    ...completedItems.map(item => ({
-      id: item.id,
-      title: item.title,
-      persona: item.persona,
-      date: item.date,
-      status: 'COMPLETED' as const,
-    })),
+  // react-big-calendar용 이벤트 변환 (allDay로 해당 날짜에만 표시)
+  const calendarEvents: ScheduleEvent[] = [
+    ...scheduledItems.map(item => {
+      const d = new Date(item.date);
+      return {
+        id: item.id,
+        title: item.title,
+        start: d,
+        end: d,
+        allDay: true,
+        status: 'PENDING' as const,
+        persona: item.persona,
+        articleType: item.rawItem.pack.articleType,
+        rawItem: item.rawItem,
+      };
+    }),
+    ...completedItems.map(item => {
+      const d = new Date(item.date);
+      return {
+        id: item.id,
+        title: item.title,
+        start: d,
+        end: d,
+        allDay: true,
+        status: 'COMPLETED' as const,
+        persona: item.persona,
+        content: item.content,
+      };
+    }),
   ];
 
   // 수정 모드 상태
@@ -278,19 +290,19 @@ export const ScheduleBoard = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {/* 발행 큐 실행 버튼 */}
-            {scheduledItems.length > 0 && (
+            {/* 밀린 스케줄 실행 버튼 (예약 시간 경과 + 미발행 건만 표시) */}
+            {overdueItems.length > 0 && (
               <Button
                 onClick={queueRunning ? () => setQueueRunning(false) : runPublishQueue}
                 variant={queueRunning ? "destructive" : "default"}
                 size="sm"
-                className={cn("gap-2 h-9 rounded-lg", !queueRunning && "bg-emerald-600 hover:bg-emerald-500")}
+                className={cn("gap-2 h-9 rounded-lg", !queueRunning && "bg-orange-600 hover:bg-orange-500")}
                 disabled={loading}
               >
                 {queueRunning ? (
                   <><Square className="w-3.5 h-3.5" />중지 ({queueProgress.current}/{queueProgress.total})</>
                 ) : (
-                  <><Play className="w-3.5 h-3.5" />일괄 발행 ({scheduledItems.length}건)</>
+                  <><Play className="w-3.5 h-3.5" />밀린 스케줄 실행 ({overdueItems.length}건)</>
                 )}
               </Button>
             )}
@@ -355,13 +367,16 @@ export const ScheduleBoard = () => {
 
       {/* 캘린더 뷰 */}
       {viewMode === 'calendar' && (
-        <WeeklyCalendar
-          items={calendarItems}
-          weekOffset={weekOffset}
-          onWeekChange={setWeekOffset}
-          onItemClick={(item) => {
-            if (item.status === 'COMPLETED') {
-              setPreviewItem({ isOpen: true, title: item.title, markdown: '' });
+        <BigCalendarView
+          events={calendarEvents}
+          onEventClick={(event) => {
+            // 콘텐츠가 있는 이벤트만 모달 열기
+            if (event.content) {
+              setPreviewItem({
+                isOpen: true,
+                title: event.title as string,
+                markdown: event.content || '',
+              });
             }
           }}
         />

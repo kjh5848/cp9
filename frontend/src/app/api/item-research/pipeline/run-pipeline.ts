@@ -1,6 +1,7 @@
 /**
  * SEO 파이프라인 오케스트레이터
  * Phase 1~4를 조합하여 전체 파이프라인을 실행하고, DB에 결과를 저장합니다.
+ * Phase 5(WordPress 발행)는 publishTarget에 따라 조건부 실행됩니다.
  */
 import { prisma } from '@/infrastructure/clients/prisma'
 import { getLangfuse } from '@/infrastructure/clients/langfuse'
@@ -9,6 +10,7 @@ import { runResearchPhase } from './research-phase'
 import { runArticlePhase } from './article-phase'
 import { runImagePhase } from './image-phase'
 import { runHtmlPhase } from './html-phase'
+import { runWordPressPhase } from './wordpress-phase'
 import type { ItemResearchRequest, PipelineContext } from './types'
 
 /** 파이프라인 설정 (route.ts에서 전달) */
@@ -19,6 +21,7 @@ export interface PipelineConfig {
   imageModel: string
   charLimit: number
   articleType: string
+  publishTarget: string
 }
 
 /**
@@ -48,9 +51,10 @@ export async function runSeoPipeline(body: ItemResearchRequest, config: Pipeline
     });
 
     // 파이프라인 컨텍스트 생성
+    const publishTarget = config.publishTarget || 'DB_ONLY';
     const ctx: PipelineContext = {
       body, persona, finalPersonaName, tone,
-      textModel, imageModel, charLimit, articleType, trace,
+      textModel, imageModel, charLimit, articleType, publishTarget, trace,
     };
 
     // ── Phase 1: Perplexity 리서치 ──
@@ -77,26 +81,47 @@ export async function runSeoPipeline(body: ItemResearchRequest, config: Pipeline
     const seoContent = await runHtmlPhase(ctx, markdownRaw, actualImageUrl);
     const phase4Ms = Date.now() - phase4Start;
 
+    // ── Phase 5: WordPress 발행 (조건부) ──
+    let wpResult = null;
+    let phase5Ms = 0;
+    if (publishTarget === 'WORDPRESS') {
+      const phase5Start = Date.now();
+      wpResult = await runWordPressPhase(ctx, seoContent, actualImageUrl, body.itemName);
+      phase5Ms = Date.now() - phase5Start;
+    }
+
     // ── 전체 소요시간 ──
     const totalMs = Date.now() - pipelineStartMs;
 
+    // ── 최종 상태 결정 ──
+    const finalStatus = wpResult?.wpStatus === 'publish'
+      ? 'WP_PUBLISHED'
+      : wpResult?.wpStatus === 'failed'
+        ? 'PUBLISHED'  // WP 실패해도 콘텐츠 자체는 생성 완료
+        : 'PUBLISHED';
+
     // ── 모니터링 데이터 구성 (DB에 직접 저장) ──
+    const monitoringPhases = [
+      { name: 'phase1-perplexity-research', latencyMs: phase1Ms },
+      { name: 'phase2-llm-article', latencyMs: phase2Ms },
+      { name: 'phase3-image-generation', latencyMs: phase3Ms },
+      { name: 'phase4-html-transform', latencyMs: phase4Ms },
+    ];
+    if (publishTarget === 'WORDPRESS') {
+      monitoringPhases.push({ name: 'phase5-wordpress-publish', latencyMs: phase5Ms });
+    }
     const monitoring = {
       totalLatencyMs: totalMs,
-      phases: [
-        { name: 'phase1-perplexity-research', latencyMs: phase1Ms },
-        { name: 'phase2-llm-article', latencyMs: phase2Ms },
-        { name: 'phase3-image-generation', latencyMs: phase3Ms },
-        { name: 'phase4-html-transform', latencyMs: phase4Ms },
-      ],
+      phases: monitoringPhases,
       // DALL-E 비용은 고정 ($0.04/장), LLM 비용은 Langfuse에서만 정확
       estimatedImageCost: imageModel === 'dall-e-3' ? 0.04 : 0,
       langfuseTraceId: trace?.id || null,
     };
 
-    // ── DB 저장 (status: PUBLISHED) ──
+    // ── DB 저장 ──
     console.log('✅ [SEO-Pipeline] 파이프라인 생성 완료!');
-    console.log(`📊 [모니터링] 총 ${(totalMs / 1000).toFixed(1)}s | P1: ${(phase1Ms / 1000).toFixed(1)}s | P2: ${(phase2Ms / 1000).toFixed(1)}s | P3: ${(phase3Ms / 1000).toFixed(1)}s | P4: ${(phase4Ms / 1000).toFixed(1)}s`);
+    const phaseLog = `P1: ${(phase1Ms / 1000).toFixed(1)}s | P2: ${(phase2Ms / 1000).toFixed(1)}s | P3: ${(phase3Ms / 1000).toFixed(1)}s | P4: ${(phase4Ms / 1000).toFixed(1)}s${phase5Ms ? ` | P5: ${(phase5Ms / 1000).toFixed(1)}s` : ''}`;
+    console.log(`📊 [모니터링] 총 ${(totalMs / 1000).toFixed(1)}s | ${phaseLog}`);
 
     const finalResearchPack = {
       itemId: body.itemId,
@@ -107,7 +132,7 @@ export async function runSeoPipeline(body: ItemResearchRequest, config: Pipeline
       productUrl: body.productData?.productUrl || `https://www.coupang.com/vp/products/${body.itemId}`,
       productImage: body.productData?.productImage || null,
       researchRaw: researchData,
-      status: 'PUBLISHED',
+      status: finalStatus,
       completedAt: new Date().toISOString(),
       persona,
       personaName: finalPersonaName,
@@ -133,6 +158,8 @@ export async function runSeoPipeline(body: ItemResearchRequest, config: Pipeline
       categoryName: body.productData?.categoryName || null,
       // 모니터링 데이터 (상세 페이지 사이드바용)
       monitoring,
+      // WordPress 발행 결과
+      wordpress: wpResult || null,
     };
 
     try {
@@ -141,8 +168,8 @@ export async function runSeoPipeline(body: ItemResearchRequest, config: Pipeline
         update: { pack: JSON.stringify(finalResearchPack) },
         create: { projectId: body.projectId, itemId: body.itemId, pack: JSON.stringify(finalResearchPack) }
       });
-      console.log('✅ [SEO-Pipeline] DB 저장 완료 (PUBLISHED)');
-      trace?.update({ output: { status: 'PUBLISHED', contentLength: seoContent.length } });
+      console.log(`✅ [SEO-Pipeline] DB 저장 완료 (${finalStatus})`);
+      trace?.update({ output: { status: finalStatus, contentLength: seoContent.length, wpPostUrl: wpResult?.postUrl } });
     } catch (dbError) {
       console.warn('DB Upsert Error (Prisma):', dbError);
     }

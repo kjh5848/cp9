@@ -32,13 +32,14 @@ export async function POST(request: NextRequest) {
     const scheduledAt = body.seoConfig?.scheduledAt || null
     const charLimit = body.seoConfig?.charLimit || 2000
     const articleType = body.seoConfig?.articleType || 'single'
+    const publishTarget = body.seoConfig?.publishTarget || 'DB_ONLY'
     const finalPersonaName = persona === 'MASTER_CURATOR_H'
       ? '마스터 큐레이터 H'
       : PERSONA_DISPLAY_NAME[persona] || persona
 
     console.log('🚀 [SEO-Pipeline] 작업을 시작합니다:', {
       itemName: body.itemName, persona, tone,
-      textModel, imageModel, actionType, scheduledAt, charLimit,
+      textModel, imageModel, actionType, scheduledAt, charLimit, publishTarget,
     });
 
     // ── 스케줄 예약 처리 ──
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 백그라운드 파이프라인 실행 (응답 후 비동기)
-    runSeoPipeline(body, { persona, tone, textModel, imageModel, charLimit, articleType });
+    runSeoPipeline(body, { persona, tone, textModel, imageModel, charLimit, articleType, publishTarget });
 
     // 즉시 응답
     return NextResponse.json({

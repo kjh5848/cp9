@@ -41,6 +41,8 @@ export interface ItemResearchRequest {
     scheduledAt?: string
     charLimit?: number
     articleType?: 'single' | 'compare' | 'curation'
+    /** 발행 대상: DB만 저장 / WP 즉시 발행 */
+    publishTarget?: 'DB_ONLY' | 'WORDPRESS'
   }
 }
 
@@ -54,7 +56,18 @@ export interface PipelineContext {
   imageModel: string
   charLimit: number
   articleType: string
+  publishTarget: string
   trace?: LangfuseTrace
+}
+
+/** WordPress 발행 결과 */
+export interface WordPressPublishResult {
+  postId: number | null
+  postUrl: string | null
+  wpStatus: string
+  publishedAt: string | null
+  latencyMs: number
+  error?: string
 }
 
 /** 파이프라인 최종 결과 */
@@ -62,4 +75,5 @@ export interface PipelineResult {
   seoContent: string
   thumbnailUrl: string | null
   researchRaw: string
+  wordpress?: WordPressPublishResult | null
 }

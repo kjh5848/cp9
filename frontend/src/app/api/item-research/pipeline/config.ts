@@ -63,3 +63,42 @@ export function upgradeModelForArticleType(textModel: string, articleType: strin
   return textModel;
 }
 
+/**
+ * 모델 API 호출 실패 시 대체할 폴백 모델 매핑
+ * - GPT 계열 → gpt-4o
+ * - Claude 계열 → claude-sonnet-4-20250514
+ * - Gemini 계열 → gemini-2.0-flash
+ * - 이미 폴백 모델이거나 매핑이 없으면 null 반환
+ */
+const MODEL_FALLBACK_MAP: Record<string, string> = {
+  // GPT 계열 폴백
+  'gpt-4o': 'gpt-4o-mini',
+  'gpt-4o-mini': 'gpt-4o',
+  // Claude 계열 폴백
+  'claude-sonnet-4-20250514': 'claude-3-5-sonnet-20241022',
+  'claude-3-5-sonnet-20241022': 'claude-sonnet-4-20250514',
+  // Gemini 계열 폴백
+  'gemini-2.0-flash': 'gemini-1.5-pro',
+  'gemini-1.5-pro': 'gemini-2.0-flash',
+};
+
+/**
+ * 실패한 모델에 대해 폴백 모델을 반환합니다.
+ * - 명시적 매핑이 있으면 해당 모델 반환
+ * - 매핑이 없으면 모델 프리픽스 기반으로 안전한 기본 모델 반환
+ * - 폴백할 수 없으면 null 반환
+ */
+export function getFallbackModel(failedModel: string): string | null {
+  // 명시적 폴백 매핑 확인
+  const explicit = MODEL_FALLBACK_MAP[failedModel];
+  if (explicit) return explicit;
+
+  // 프리픽스 기반 범용 폴백 (알 수 없는 모델명이어도 계열은 파악 가능)
+  if (failedModel.startsWith('gpt')) return 'gpt-4o';
+  if (failedModel.startsWith('claude')) return 'claude-sonnet-4-20250514';
+  if (failedModel.startsWith('gemini')) return 'gemini-2.0-flash';
+
+  // 어떤 계열인지도 모르면 gpt-4o로 최종 폴백
+  return 'gpt-4o';
+}
+

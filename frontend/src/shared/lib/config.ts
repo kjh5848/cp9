@@ -26,9 +26,10 @@ interface EnvironmentConfig {
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
   
-  // WordPress
-  WORDPRESS_API_KEY?: string;
+  // WordPress (Application Password 인증)
   WORDPRESS_SITE_URL?: string;
+  WORDPRESS_USERNAME?: string;
+  WORDPRESS_APP_PASSWORD?: string;
   
   // Base URL
   NEXT_PUBLIC_BASE_URL: string;
@@ -82,9 +83,10 @@ export const config: EnvironmentConfig = {
   GOOGLE_CLIENT_ID: getOptionalEnv('GOOGLE_CLIENT_ID'),
   GOOGLE_CLIENT_SECRET: getOptionalEnv('GOOGLE_CLIENT_SECRET'),
   
-  // WordPress (선택)
-  WORDPRESS_API_KEY: getOptionalEnv('WORDPRESS_API_KEY'),
+  // WordPress (Application Password 인증 - 선택)
   WORDPRESS_SITE_URL: getOptionalEnv('WORDPRESS_SITE_URL'),
+  WORDPRESS_USERNAME: getOptionalEnv('WORDPRESS_USERNAME'),
+  WORDPRESS_APP_PASSWORD: getOptionalEnv('WORDPRESS_APP_PASSWORD'),
   
   // Base URL (필수)
   NEXT_PUBLIC_BASE_URL: getRequiredEnv('NEXT_PUBLIC_BASE_URL'),
@@ -147,6 +149,6 @@ export function printEnvironmentInfo(): void {
     console.log(`  - Supabase URL: ${config.NEXT_PUBLIC_SUPABASE_URL ? '✅' : '❌'}`);
     console.log(`  - Coupang API: ${config.COUPANG_ACCESS_KEY ? '✅' : '❌'}`);
     console.log(`  - Perplexity API: ${config.PERPLEXITY_API_KEY ? '✅' : '❌'}`);
-    console.log(`  - WordPress: ${config.WORDPRESS_API_KEY ? '✅' : '❌'}`);
+    console.log(`  - WordPress: ${config.WORDPRESS_USERNAME ? '✅' : '❌'}`);
   }
 }

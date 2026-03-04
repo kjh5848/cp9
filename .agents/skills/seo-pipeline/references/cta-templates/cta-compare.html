@@ -1,29 +1,29 @@
 <!-- CTA 비교 분석형 템플릿 (Level 2) -->
-<!-- 비교 글에 최적화: 객관적 분석 결과 강조 -->
+<!-- 인라인 스타일 포함 — WP 테마 CSS 없이도 정상 렌더링 -->
 
 <!-- ── 상단: 상품 이미지 + 비교 결과 뱃지 + 가격 + 구매 버튼 ── -->
-<div class="cp9-cta cp9-cta--header cp9-cta--compare">
-  <img src="{{PRODUCT_IMAGE}}" alt="{{PRODUCT_NAME}}" class="cp9-cta__image" />
-  <div class="cp9-cta__compare-badge">
+<div class="cp9-cta cp9-cta--header cp9-cta--compare" style="max-width:680px;margin:2em auto;padding:28px 24px;border-radius:16px;text-align:center;background:linear-gradient(135deg,#f0fdf4 0%,#dcfce7 100%);border:1px solid #86efac;color:#14532d;font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;">
+  <img src="{{PRODUCT_IMAGE}}" alt="{{PRODUCT_NAME}}" class="cp9-cta__image" style="max-width:260px;height:auto;margin:0 auto 16px;border-radius:12px;display:block;background:#fff;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid #eee;" />
+  <div class="cp9-cta__compare-badge" style="display:inline-block;background:rgba(22,163,74,0.08);color:#16a34a;padding:4px 16px;border-radius:20px;font-size:12px;font-weight:600;margin-bottom:12px;">
     <span>비교 분석 완료</span>
   </div>
   {{PRICE_BLOCK}}
-  <p class="cp9-cta__sub-text">여러 제품을 객관적으로 비교 분석한 결과, 가장 추천하는 제품입니다.</p>
-  <a href="{{BUY_URL}}" target="_blank" rel="noopener sponsored" class="cp9-cta__button cp9-cta__button--compare">
+  <p class="cp9-cta__sub-text" style="font-size:14px;margin:8px 0;line-height:1.6;">여러 제품을 객관적으로 비교 분석한 결과, 가장 추천하는 제품입니다.</p>
+  <a href="{{BUY_URL}}" target="_blank" rel="noopener sponsored" class="cp9-cta__button cp9-cta__button--compare" style="display:inline-block;background:#16a34a;color:#fff!important;padding:14px 36px;border-radius:12px;font-size:16px;font-weight:700;text-decoration:none!important;margin:10px 0;box-shadow:0 4px 12px rgba(22,163,74,0.25);">
     쿠팡에서 비교 최저가 확인
   </a>
-  <p class="cp9-cta__disclaimer">※ 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.</p>
+  <p class="cp9-cta__disclaimer" style="font-size:11px;opacity:0.5;margin-top:14px;">※ 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.</p>
 </div>
 
 <!-- ── 하단: 비교 결론 CTA ── -->
-<div class="cp9-cta cp9-cta--footer cp9-cta--compare">
-  <img src="{{PRODUCT_IMAGE}}" alt="{{PRODUCT_NAME}}" class="cp9-cta__image cp9-cta__image--footer" />
-  <p class="cp9-cta__headline">전문가 비교 분석 결론</p>
+<div class="cp9-cta cp9-cta--footer cp9-cta--compare" style="max-width:680px;margin:2em auto;padding:28px 24px;border-radius:16px;text-align:center;background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);color:#fff;font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;">
+  <img src="{{PRODUCT_IMAGE}}" alt="{{PRODUCT_NAME}}" class="cp9-cta__image cp9-cta__image--footer" style="max-width:180px;height:auto;margin:0 auto 16px;border-radius:12px;display:block;background:#fff;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1);" />
+  <p class="cp9-cta__headline" style="font-size:20px;font-weight:800;margin:0 0 8px;">전문가 비교 분석 결론</p>
   {{URGENCY_BANNER}}
-  <p class="cp9-cta__social-proof">{{SOCIAL_PROOF}}</p>
-  <p class="cp9-cta__sub-text">스펙, 가격, 실사용 후기를 종합 비교한 최종 추천입니다. 더 이상 고민하지 마세요.</p>
-  <a href="{{BUY_URL}}" target="_blank" rel="noopener sponsored" class="cp9-cta__button cp9-cta__button--compare cp9-cta__button--large">
+  <p class="cp9-cta__social-proof" style="font-size:13px;opacity:0.85;margin:6px 0;">{{SOCIAL_PROOF}}</p>
+  <p class="cp9-cta__sub-text" style="font-size:14px;opacity:0.9;margin:8px 0;line-height:1.6;">스펙, 가격, 실사용 후기를 종합 비교한 최종 추천입니다. 더 이상 고민하지 마세요.</p>
+  <a href="{{BUY_URL}}" target="_blank" rel="noopener sponsored" class="cp9-cta__button cp9-cta__button--compare cp9-cta__button--large" style="display:inline-block;background:#22c55e;color:#fff!important;padding:18px 48px;border-radius:12px;font-size:18px;font-weight:700;text-decoration:none!important;margin:10px 0;box-shadow:0 4px 12px rgba(34,197,94,0.3);">
     비교 결과 1위 상품 구매하기
   </a>
-  <p class="cp9-cta__disclaimer">※ 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.</p>
+  <p class="cp9-cta__disclaimer" style="font-size:11px;opacity:0.5;margin-top:14px;">※ 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.</p>
 </div>

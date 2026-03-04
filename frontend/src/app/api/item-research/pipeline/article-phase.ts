@@ -3,7 +3,7 @@
  * 프롬프트 빌더 + LLM 호출을 담당합니다.
  */
 import { getSeoSkillTemplate } from '../seo-skill-parser'
-import { PERSONA_TEMPLATE_FILE, createTextModel } from './config'
+import { PERSONA_TEMPLATE_FILE, createTextModel, getFallbackModel } from './config'
 import type { PipelineContext } from './types'
 
 /**
@@ -87,6 +87,9 @@ ${researchData}
 - Perplexity 리서치 데이터의 최신 정보를 최우선으로 활용하세요.
 - 글 본문 중 구매를 유도하는 CTA는 반드시 아래 마크다운 링크 형식으로 작성하세요:
   [쿠팡에서 최저가 확인하기](${coupangUrl})
+- "보러 가기" 문구가 포함된 CTA도 반드시 마크다운 링크로 작성하세요:
+  [관련 리뷰 제목 보러 가기](${coupangUrl})
+  ※ 절대 URL 없이 텍스트만 넣지 마세요. 반드시 (쿠팡 URL)을 포함해야 합니다.
 - 이모지와 아이콘은 어디에도 사용하지 마라.
 - 마크다운 취소선(~~텍스트~~)은 절대 사용하지 마라. 텍스트 비교 시 취소선 대신 일반 텍스트로 "대비", "비교" 등의 표현을 사용하라.
 
@@ -185,7 +188,20 @@ ${researchData}
 }
 
 /**
+ * LLM API를 호출하는 내부 헬퍼 함수
+ */
+async function callLlm(modelName: string, systemPrompt: string, userPrompt: string): Promise<string> {
+  const textInstance = createTextModel(modelName);
+  const aiResponse = await textInstance.invoke([
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPrompt }
+  ]);
+  return aiResponse.content.toString();
+}
+
+/**
  * LLM을 호출하여 SEO 본문(마크다운)을 생성합니다.
+ * 실패 시 폴백 모델로 자동 재시도합니다.
  */
 export async function runArticlePhase(ctx: PipelineContext, researchData: string): Promise<string> {
   console.log(`✍️ [Phase 2] ${ctx.textModel} SEO 본문 작성 중...`);
@@ -199,19 +215,45 @@ export async function runArticlePhase(ctx: PipelineContext, researchData: string
   const systemPrompt = await buildSystemPrompt(ctx);
   const userPrompt = buildUserPrompt(ctx, researchData);
 
+  // 1차 시도: 원래 모델
   try {
-    const textInstance = createTextModel(ctx.textModel);
-    const aiResponse = await textInstance.invoke([
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt }
-    ]);
-    const result = aiResponse.content.toString();
+    const result = await callLlm(ctx.textModel, systemPrompt, userPrompt);
     console.log(`✅ [Phase 2] LLM 본문 생성 완료 (${result.length}자, 모델: ${ctx.textModel})`);
     generation?.end({ output: { length: result.length } });
     return result;
-  } catch (err) {
-    console.error(`[Phase 2] LLM API Error (${ctx.textModel}):`, err);
-    generation?.end({ output: { error: String(err) }, level: 'ERROR' });
-    return `# 작성 실패\n\n모델 API 호출 오류로 인해 글 생성을 실패했습니다. (Model: ${ctx.textModel})`;
+  } catch (primaryErr) {
+    console.error(`⚠️ [Phase 2] 1차 모델 실패 (${ctx.textModel}):`, primaryErr);
+
+    // 2차 시도: 폴백 모델로 자동 재시도
+    const fallbackModel = getFallbackModel(ctx.textModel);
+    if (fallbackModel && fallbackModel !== ctx.textModel) {
+      console.log(`🔄 [Phase 2] 폴백 모델로 재시도: ${ctx.textModel} → ${fallbackModel}`);
+
+      const fallbackGen = ctx.trace?.generation({
+        name: 'phase2-llm-article-fallback',
+        model: fallbackModel,
+        input: { note: `폴백 재시도 (원래 모델: ${ctx.textModel})` },
+      });
+
+      try {
+        const fallbackResult = await callLlm(fallbackModel, systemPrompt, userPrompt);
+        console.log(`✅ [Phase 2] 폴백 모델 성공 (${fallbackResult.length}자, 모델: ${fallbackModel}, 원래: ${ctx.textModel})`);
+        // 컨텍스트의 모델명도 실제 사용된 모델로 갱신
+        ctx.textModel = fallbackModel;
+        generation?.end({ output: { error: String(primaryErr), fallbackModel }, level: 'WARNING' });
+        fallbackGen?.end({ output: { length: fallbackResult.length } });
+        return fallbackResult;
+      } catch (fallbackErr) {
+        console.error(`❌ [Phase 2] 폴백 모델도 실패 (${fallbackModel}):`, fallbackErr);
+        generation?.end({ output: { error: String(primaryErr), fallbackError: String(fallbackErr) }, level: 'ERROR' });
+        fallbackGen?.end({ output: { error: String(fallbackErr) }, level: 'ERROR' });
+        // throw하여 run-pipeline.ts에서 FAILED 상태로 DB 저장
+        throw new Error(`모델 API 호출 실패 — 1차: ${ctx.textModel}, 폴백: ${fallbackModel}`);
+      }
+    }
+
+    // 폴백 모델이 없는 경우
+    generation?.end({ output: { error: String(primaryErr) }, level: 'ERROR' });
+    throw new Error(`모델 API 호출 실패 (${ctx.textModel})`);
   }
 }

@@ -21,7 +21,7 @@ export interface ResearchPack {
   researchRaw?: string | null;
   content?: string | null;
   contentType?: 'html' | 'markdown'; // 콘텐츠 형식
-  status?: 'DRAFT' | 'SCHEDULED' | 'PUBLISHED';
+  status?: 'DRAFT' | 'SCHEDULED' | 'PUBLISHED' | 'PROCESSING' | 'FAILED' | 'WP_PUBLISHED';
   scheduledAt?: string | null;
   categoryName?: string | null;
   isFreeShipping?: boolean | null;
@@ -42,6 +42,16 @@ export interface ResearchPack {
     persona?: string;
     [key: string]: any;
   };
+  error?: string | null; // 파이프라인 실패 시 에러 메시지
+  // WordPress 발행 결과
+  wordpress?: {
+    postId: number | null;
+    postUrl: string | null;
+    wpStatus: string;
+    publishedAt: string | null;
+    latencyMs?: number;
+    error?: string;
+  } | null;
 }
 
 export interface ResearchItem {
