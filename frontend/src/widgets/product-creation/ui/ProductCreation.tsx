@@ -817,29 +817,44 @@ export const ProductCreation = () => {
         </div>
       )}
 
-      {/* ── 선택 상품 액션 (Sticky) ── */}
+      {/* ── 선택 상품 액션 (Sticky) + 장바구니 미리보기 ── */}
       {selectedProductIds.size > 0 && (
         <div className="fixed bottom-0 left-0 right-0 z-50 p-4 animate-in slide-in-from-bottom-5">
           <div className="max-w-3xl mx-auto">
-            <GlassCard className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-blue-500/30 bg-gray-900/90 backdrop-blur-xl shadow-2xl">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                  <span className="text-blue-400 font-bold">{selectedProductIds.size}</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-white font-bold">개의 상품 선택됨</span>
-                  <span className="text-xs text-slate-400">클릭하여 선택/해제</span>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
+            <GlassCard className="p-4 border-blue-500/30 bg-gray-900/95 backdrop-blur-xl shadow-2xl space-y-3">
+              {/* 상단: 선택 상품 썸네일 미리보기 (장바구니 바) */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-blue-400">🛒 선택된 상품 ({selectedProductIds.size}개)</span>
+                <button
                   onClick={() => setSelectedProductMap(new Map())}
-                  className="border-white/10 text-slate-300 hover:text-white"
+                  className="text-[10px] text-muted-foreground hover:text-red-400 transition-colors flex items-center gap-1"
                 >
-                  선택 취소
-                </Button>
+                  <X className="w-3 h-3" />전체 해제
+                </button>
+              </div>
+              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-white/10">
+                {Array.from(selectedProductMap.values()).map(p => (
+                  <div key={p.productId} className="relative flex-none w-16 group">
+                    <button
+                      onClick={() => toggleSelection(p.productId)}
+                      className="absolute -top-1 -right-1 z-10 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="w-2.5 h-2.5 text-white" />
+                    </button>
+                    <div className="w-16 h-16 rounded-lg overflow-hidden border border-border/30 bg-white/5">
+                      {p.productImage ? (
+                        <Image src={p.productImage} alt={p.productName} width={64} height={64} className="object-cover w-full h-full" unoptimized />
+                      ) : (
+                        <Package className="w-6 h-6 text-muted-foreground/30 m-auto mt-4" />
+                      )}
+                    </div>
+                    <p className="text-[9px] text-muted-foreground mt-1 line-clamp-1 text-center">{p.productName}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* 하단: 액션 버튼 */}
+              <div className="flex items-center justify-end gap-3 pt-2 border-t border-white/10">
                 <Button
                   onClick={() => setIsModalOpen(true)}
                   disabled={isResearching}
