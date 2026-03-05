@@ -37,6 +37,9 @@ export const Navbar = ({ className }: NavbarProps) => {
         </Link>
 
         <nav className="hidden md:flex items-center gap-1">
+          <Link href="/keyword" className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors">
+            키워드 글쓰기
+          </Link>
           <Link href="/product" className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors">
             아이템 생성
           </Link>
@@ -45,6 +48,9 @@ export const Navbar = ({ className }: NavbarProps) => {
           </Link>
           <Link href="/schedule" className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors">
             스케줄 관리
+          </Link>
+          <Link href="/design" className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors">
+            디자인 설정
           </Link>
         </nav>
       </div>

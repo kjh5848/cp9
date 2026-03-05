@@ -11,7 +11,7 @@ import { LogIn } from "lucide-react";
  * 로그인 기능을 담당하는 위젯입니다.
  * Deep Tech 디자인이 반영된 Glassmorphism 카드를 사용합니다.
  */
-export const LoginCard = () => {
+export const AuthForm = () => {
   const handleLogin = (provider: string) => {
     console.log(`${provider} 로그인 시도...`);
     // TODO: Supabase OAuth 혹은 커스텀 API 연동

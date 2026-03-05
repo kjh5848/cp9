@@ -19,8 +19,9 @@ export async function POST(req: NextRequest) {
     }
     
     const products = await searchCoupangProducts(keyword, limit);
+
     
-    // 일관된 응답 형식으로 변환 및 이미지 리다이렉트 처리(애드블록 우회)
+    // 일관된 응답 형식으로 변환 및 이미지 애드블록 우회 처리
     const result: CoupangProductResponse[] = await Promise.all(
       (products as CoupangRawProduct[]).map(async (raw) => {
         const item = normalizeCoupangProduct(raw);
@@ -28,10 +29,13 @@ export async function POST(req: NextRequest) {
         return item;
       })
     );
+
     
     return NextResponse.json(result);
   } catch (e: unknown) {
+    console.error('[products/search] 에러:', e);
     const errorMessage = e instanceof Error ? e.message : '서버 오류';
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-} 
+}
+

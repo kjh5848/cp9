@@ -108,7 +108,7 @@ const STEPS = [
 ];
 
 /* ── 메인 컴포넌트 ── */
-export function LandingPage() {
+export function Landing() {
   const typing = useTyping(["상품 리서치", "SEO 콘텐츠", "시장 분석", "딥링크 생성"]);
   const heroRef = useRef<HTMLDivElement>(null);
 

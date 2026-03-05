@@ -52,6 +52,8 @@ export interface ResearchPack {
     latencyMs?: number;
     error?: string;
   } | null;
+  // 적용된 디자인 테마 ID (테마 재적용 시 기록)
+  appliedThemeId?: string | null;
 }
 
 export interface ResearchItem {
@@ -92,6 +94,7 @@ export interface WriteRequest {
   actionType?: 'NOW' | 'SCHEDULE'; // 즉시 실행 또는 예약 등록
   scheduledAt?: string; // 예약 시간 (ISO 형식)
   charLimit?: number; // 목표 글자수
+  themeId?: string; // 아티클 디자인 테마 ID
 }
 
 /**

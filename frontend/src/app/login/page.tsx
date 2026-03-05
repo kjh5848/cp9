@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { LoginCard } from "@/widgets/auth-form/ui/LoginCard";
+import { AuthForm } from "@/widgets/auth-form/ui/AuthForm";
 
 /**
  * [Login Page]
@@ -16,7 +16,7 @@ export default function LoginPage() {
       <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-purple-600/10 rounded-full blur-[120px]" />
       
       <div className="relative z-10 w-full px-4">
-        <LoginCard />
+        <AuthForm />
       </div>
 
       <div className="absolute bottom-8 text-[10px] text-slate-600 font-medium tracking-widest uppercase">

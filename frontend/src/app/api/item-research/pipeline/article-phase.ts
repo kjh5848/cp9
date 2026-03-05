@@ -29,6 +29,12 @@ ${personaTemplate}
 5. 목표 글자수를 채운 후에도 [자유 확장 영역]의 주제를 활용해 창의적으로 분량을 확보하라.
 6. CTA 2줄은 글 마지막에 반드시 포함하라.
 7. 반드시 아래 [대상 상품] 하나만을 주제로 작성하라. 다른 제품이나 카테고리 트렌드 기사로 변질되는 것을 절대 금지한다.
+8. [블록별 정렬 규칙 - 반드시 준수]:
+   - 본문 단락(p): 양쪽 정렬(justify). 각 <p> 태그에 style="text-align:justify" 를 적용 가능하도록 자연스러운 문장으로 작성하라.
+   - 제목(h1, h2, h3, h4): 왼쪽 정렬(left). 기본값이므로 별도 지정 불필요.
+   - CTA 영역 (구매 링크, 추천 문구): 중앙 정렬(center). "쿠팡에서 최저가 확인하기" 등 CTA 문구는 독립된 문단으로 작성하라.
+   - 이미지/캡션: 중앙 정렬(center).
+   - 테이블: 왼쪽 정렬(left).
 `;
 }
 
@@ -38,6 +44,8 @@ ${personaTemplate}
  */
 function buildUserPrompt(ctx: PipelineContext, researchData: string): string {
   const { articleType } = ctx;
+  // 키워드 모드: 상품 데이터 없이 키워드+제목 기반 프롬프트
+  if (ctx.body.keywordMode) return buildKeywordPrompt(ctx, researchData);
   if (articleType === 'compare') return buildComparePrompt(ctx, researchData);
   if (articleType === 'curation') return buildCurationPrompt(ctx, researchData);
   return buildSinglePrompt(ctx, researchData);
@@ -184,6 +192,62 @@ ${researchData}
 - 마크다운 취소선(~~텍스트~~)은 절대 사용하지 마라.
 
 위 지침에 따라 지금 바로 마크다운 큐레이션 블로그 포스팅 전문을 작성하라.
+`;
+}
+
+/** 키워드 모드 전용 프롬프트 (상품 데이터 없이 키워드+제목으로 글 작성) */
+function buildKeywordPrompt(ctx: PipelineContext, researchData: string): string {
+  const { keyword, selectedTitle } = ctx.body.keywordMode!;
+  const { charLimit, articleType } = ctx;
+
+  const s1 = Math.round(charLimit * 0.08);
+  const s2 = Math.round(charLimit * 0.22);
+  const s3 = Math.round(charLimit * 0.28);
+  const s4 = Math.round(charLimit * 0.18);
+  const s5 = Math.round(charLimit * 0.12);
+  const s6 = Math.round(charLimit * 0.12);
+
+  const articleTypeGuide = articleType === 'compare'
+    ? '이 글은 여러 제품/옵션을 비교 분석하는 형태로 작성하세요. 스펙 비교 테이블이 반드시 포함되어야 합니다.'
+    : articleType === 'curation'
+      ? '이 글은 여러 추천 아이템을 리스트 형태로 소개하는 큐레이션 글로 작성하세요.'
+      : '이 글은 주제에 대한 심층 분석 및 가이드 형태로 작성하세요.';
+
+  return `
+## 핵심 지시 (반드시 준수)
+이 글은 아래 [키워드]에 대한 SEO 최적화 블로그 포스팅이다.
+반드시 아래의 [확정 제목]을 H1 제목(# )으로 사용하라. 제목을 변경하는 것을 절대 금지한다.
+
+[키워드]: ${keyword}
+[확정 제목]: ${selectedTitle}
+[글 유형 지침]: ${articleTypeGuide}
+
+[최신 리서치 (Perplexity 검색 결과)]:
+${researchData}
+
+[목표 글자수]: 공백 포함 한국어 글자(Character) 기준으로 최소 ${charLimit}자 이상 작성.
+※ 글자(Character)는 토큰(Token)이 아닙니다. 한글 한 글자 = 1자입니다.
+
+[작성 구조 지침 - 반드시 준수]:
+1. 독자를 사로잡는 권위 있는 도입 (최소 ${s1}자 이상)
+2. 주제 이해를 위한 핵심 체크포인트 및 가이드 (최소 ${s2}자 이상)
+3. 상세 분석 — 스펙, 비교, 장단점 마크다운 테이블 포함 (최소 ${s3}자 이상)
+4. 실제 사용자 후기/커뮤니티 반응 분석 — 리서치 데이터 기반 (최소 ${s4}자 이상)
+5. 가격/구매 가이드 — 현재 가격, 할인 시즌, 최저가 구매 팁 (최소 ${s5}자 이상)
+6. 최종 추천 코멘트 — 추천 대상/비추천 대상 명확히 구분 (최소 ${s6}자 이상)
+7. CTA — 관련 주제 리뷰로 유도하는 문구
+
+[강제 지침]:
+- 각 섹션의 제목(h2, h3)은 자연스러운 블로그 소제목으로 작성하라.
+- "도입부:", "오프닝:", "섹션 1:" 같은 구조적 라벨은 절대 사용하지 마라.
+- 각 섹션별 최소 한국어 글자수 기준을 반드시 채우세요.
+- 리서치 데이터에서 발견한 실제 제품명, 가격, 스펙을 적극 활용하세요.
+- 구매를 유도하는 CTA는 "쿠팡에서 최저가 확인하기" 형태로 자연스럽게 삽입하세요.
+- 단, 구체적인 쿠팡 URL이 없으므로 CTA 링크는 [쿠팡에서 최저가 보기](https://www.coupang.com) 형태로 작성하세요.
+- 이모지와 아이콘은 어디에도 사용하지 마라.
+- 마크다운 취소선(~~텍스트~~)은 절대 사용하지 마라.
+
+위 지침에 따라 지금 바로 마크다운 블로그 포스팅 전문을 작성하라.
 `;
 }
 

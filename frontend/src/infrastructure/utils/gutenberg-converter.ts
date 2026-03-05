@@ -26,7 +26,19 @@ export function convertToGutenbergBlocks(html: string): string {
   // 1단계: AI 가이드 텍스트 제거
   let content = removeAiGuideText(html);
 
-  // 2단계: CTA 블록 추출 및 보호 (인라인 스타일 유지)
+  // 2단계A: <style> 태그 추출 및 보호 (wp:html 블록으로 보존)
+  const stylePlaceholders: Record<string, string> = {};
+  let styleIndex = 0;
+  content = content.replace(
+    /<style[^>]*>[\s\S]*?<\/style>/g,
+    (match) => {
+      const key = `__STYLE_PLACEHOLDER_${styleIndex++}__`;
+      stylePlaceholders[key] = `<!-- wp:html -->\n${match}\n<!-- /wp:html -->`;
+      return key;
+    }
+  );
+
+  // 2단계B: CTA 블록 추출 및 보호 (인라인 스타일 유지)
   const ctaPlaceholders: Record<string, string> = {};
   let ctaIndex = 0;
   content = content.replace(
@@ -127,7 +139,10 @@ export function convertToGutenbergBlocks(html: string): string {
     }
   );
 
-  // 5단계: CTA 플레이스홀더를 원래 콘텐츠로 복원
+  // 5단계: 플레이스홀더를 원래 콘텐츠로 복원 (style + CTA)
+  for (const [key, value] of Object.entries(stylePlaceholders)) {
+    content = content.replace(key, value);
+  }
   for (const [key, value] of Object.entries(ctaPlaceholders)) {
     content = content.replace(key, value);
   }

@@ -35,6 +35,18 @@ export default function RootLayout({
             },
           }}
         />
+        {/* 이전에 등록된 mockServiceWorker 자동 해제 */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+              registrations.forEach(function(registration) {
+                registration.unregister().then(function(success) {
+                  if (success) console.log('[SW] Service Worker 해제됨:', registration.scope);
+                });
+              });
+            });
+          }
+        `}} />
       </body>
     </html>
   );

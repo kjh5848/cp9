@@ -133,7 +133,8 @@ export const ResearchManagement = () => {
               imageModel: params.imageModel,
               actionType: params.actionType,
               scheduledAt: params.scheduledAt,
-              charLimit: params.charLimit
+              charLimit: params.charLimit,
+              themeId: params.themeId,
             });
             setActionModalState(prev => ({ ...prev, isOpen: false }));
           }}

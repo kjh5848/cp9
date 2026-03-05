@@ -29,3 +29,13 @@ model Draft {
   @@map("drafts")
 }
 
+model ArticleTheme {
+  id        String   @id @default(uuid())
+  name      String                // 테마 이름 (예: "깔끔한 블루")
+  config    String                // JSON: 각 요소별 CSS 설정값
+  isDefault Boolean  @default(false) @map("is_default")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("article_themes")
+}
+

@@ -28,6 +28,21 @@ export interface CtaTemplateData {
   projectId?: string;
   // 글 유형별 CTA 레이아웃 분기
   articleType?: 'single' | 'compare' | 'curation';
+  // 테마 CTA 설정 (디자인 에디터에서 커스텀한 설정)
+  themeCtaConfig?: {
+    layout?: 'minimal' | 'card' | 'banner' | 'gradient';
+    boxBgColor?: string;
+    boxBorderColor?: string;
+    headerText?: string;
+    footerText?: string;
+    midText?: string;
+    showShadow?: boolean;
+    showProductImage?: boolean;
+    priceColor?: string;
+    buttonColor?: string;
+    buttonTextColor?: string;
+    buttonRadius?: string;
+  };
 }
 
 /**
@@ -155,21 +170,25 @@ function buildPriceBlock(price: number, isRocket: boolean): string {
  * 본문 중간 삽입용 CTA HTML을 생성합니다.
  */
 function buildMidContentCta(data: CtaTemplateData, buyUrlWithUtm: string, variant: { id: string; midText: string }): string {
+  const tc = data.themeCtaConfig;
   const socialProof = getSocialProofText(data.persona);
+  const priceColor = tc?.priceColor || '#e53935';
+  const btnColor = tc?.buttonColor || '#2563eb';
+  const btnText = tc?.buttonTextColor || '#fff';
+  const btnRadius = tc?.buttonRadius || '12px';
+  const midLabel = tc?.midText || variant.midText;
   const priceInfo = data.productPrice
-    ? `<span class="cp9-cta__inline-price">${formatPrice(data.productPrice)}</span>`
+    ? `<span style="font-weight:700;color:${priceColor};font-size:16px;">${formatPrice(data.productPrice)}</span>`
     : '';
-  const tracking = '';
+  const btnStyle = `display:inline-block;background:${btnColor};color:${btnText};padding:10px 24px;border-radius:${btnRadius};font-weight:600;font-size:13px;text-decoration:none;`;
 
   return `
-<div class="cp9-cta cp9-cta--mid">
-  <div class="cp9-cta__mid-inner">
-    <p class="cp9-cta__social-proof">${socialProof}</p>
-    ${priceInfo}
-    <a href="${buyUrlWithUtm}" target="_blank" rel="noopener sponsored" class="cp9-cta__button cp9-cta__button--mid" ${tracking}>
-      ${variant.midText}
-    </a>
-  </div>
+<div class="cp9-cta cp9-cta--mid" style="text-align:center;padding:20px 0;margin:20px 0;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;">
+  <p style="font-size:12px;color:#94a3b8;margin:0 0 8px;">${socialProof}</p>
+  ${priceInfo ? `<p style="margin:0 0 12px;">${priceInfo}</p>` : ''}
+  <a href="${buyUrlWithUtm}" target="_blank" rel="noopener sponsored" class="cp9-cta__button cp9-cta__button--mid" style="${btnStyle}">
+    ${midLabel}
+  </a>
 </div>
 `;
 }
@@ -267,28 +286,72 @@ function buildFallbackCta(
   buyUrlWithUtm: string,
   variant: { id: string; headerText: string; footerText: string; midText: string }
 ): CtaBuildResult {
-  const priceInfo = data.productPrice ? `<p class="cp9-cta__current-price">${formatPrice(data.productPrice)}</p>` : '';
-  const headerHtml = data.productImage ? `
-<div class="cp9-cta cp9-cta--header">
-  <img src="${data.productImage}" alt="${data.productName}" class="cp9-cta__image" />
+  const tc = data.themeCtaConfig;
+  const layout = tc?.layout || 'card';
+  const boxBg = tc?.boxBgColor || '#f8fafc';
+  const boxBorder = tc?.boxBorderColor || '#e2e8f0';
+  const btnColor = tc?.buttonColor || '#2563eb';
+  const btnText = tc?.buttonTextColor || '#fff';
+  const btnRadius = tc?.buttonRadius || '12px';
+  const priceColor = tc?.priceColor || '#e53935';
+  const showShadow = tc?.showShadow !== false;
+  const showImage = tc?.showProductImage !== false;
+
+  // 헤더/푸터 문구: 테마 설정 우선, 없으면 variant 사용
+  const headerLabel = tc?.headerText || variant.headerText;
+  const footerLabel = tc?.footerText || variant.footerText;
+
+  const priceInfo = data.productPrice
+    ? `<p style="font-size:18px;font-weight:700;color:${priceColor};margin:4px 0 12px;">${formatPrice(data.productPrice)}</p>`
+    : '';
+
+  // 레이아웃별 스타일
+  const boxStyle = (() => {
+    const shadow = showShadow ? 'box-shadow:0 4px 16px rgba(0,0,0,0.10);' : '';
+    switch (layout) {
+      case 'minimal':
+        return `text-align:center;padding:16px 0;`;
+      case 'banner':
+        return `text-align:center;padding:24px 20px;background:${boxBg};border:1px solid ${boxBorder};border-radius:16px;${shadow}`;
+      case 'gradient':
+        return `text-align:center;padding:24px 20px;background:linear-gradient(135deg, ${boxBg}, ${btnColor});border-radius:16px;${shadow}`;
+      case 'card':
+      default:
+        return `text-align:center;padding:20px;background:${boxBg};border:1px solid ${boxBorder};border-radius:16px;${shadow}`;
+    }
+  })();
+
+  const imageHtml = showImage && data.productImage && layout !== 'minimal'
+    ? `<img src="${data.productImage}" alt="${data.productName}" style="max-width:160px;height:auto;border-radius:12px;margin:0 auto 12px;display:block;border:1px solid #eee;background:#fff;padding:8px;" />`
+    : '';
+
+  const btnStyle = `display:inline-block;background:${btnColor};color:${btnText};padding:12px 32px;border-radius:${btnRadius};font-weight:600;font-size:14px;text-decoration:none;`;
+  const gradientBtnStyle = layout === 'gradient'
+    ? `display:inline-block;background:rgba(255,255,255,0.95);color:${btnColor};padding:12px 32px;border-radius:${btnRadius};font-weight:600;font-size:14px;text-decoration:none;`
+    : btnStyle;
+
+  const headerHtml = `
+<div class="cp9-cta cp9-cta--header" style="${boxStyle}margin:24px 0;">
+  ${imageHtml}
+  <p style="font-size:13px;color:#64748b;margin:0 0 4px;">${data.productName}</p>
   ${priceInfo}
-  <a href="${buyUrlWithUtm}" target="_blank" rel="noopener sponsored" class="cp9-cta__button">
-    ${variant.headerText}
+  <a href="${buyUrlWithUtm}" target="_blank" rel="noopener sponsored" class="cp9-cta__button" style="${layout === 'gradient' ? gradientBtnStyle : btnStyle}">
+    ${headerLabel}
   </a>
-  <p class="cp9-cta__disclaimer">※ 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.</p>
+  <p class="cp9-cta__disclaimer" style="font-size:10px;color:#94a3b8;margin-top:10px;">※ 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.</p>
 </div>
-` : '';
+`;
 
   const midContentHtml = buildMidContentCta(data, buyUrlWithUtm, variant);
 
   const footerHtml = `
-<div class="cp9-cta cp9-cta--footer">
-  <p class="cp9-cta__headline">지금 바로 구매하세요!</p>
-  <p class="cp9-cta__urgency">${getUrgencyText()}</p>
-  <a href="${buyUrlWithUtm}" target="_blank" rel="noopener sponsored" class="cp9-cta__button cp9-cta__button--large">
-    ${variant.footerText}
+<div class="cp9-cta cp9-cta--footer" style="${boxStyle}margin:24px 0;">
+  <p style="font-size:16px;font-weight:700;color:${layout === 'gradient' ? '#fff' : '#1e293b'};margin:0 0 8px;">지금 바로 구매하세요!</p>
+  <p style="font-size:12px;color:${layout === 'gradient' ? 'rgba(255,255,255,0.7)' : '#94a3b8'};margin:0 0 12px;">${getUrgencyText()}</p>
+  <a href="${buyUrlWithUtm}" target="_blank" rel="noopener sponsored" class="cp9-cta__button cp9-cta__button--large" style="${layout === 'gradient' ? gradientBtnStyle : btnStyle}">
+    ${footerLabel}
   </a>
-  <p class="cp9-cta__disclaimer">※ 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.</p>
+  <p class="cp9-cta__disclaimer" style="font-size:10px;color:${layout === 'gradient' ? 'rgba(255,255,255,0.5)' : '#94a3b8'};margin-top:10px;">※ 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.</p>
 </div>
 `;
 

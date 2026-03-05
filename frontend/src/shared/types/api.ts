@@ -12,6 +12,7 @@ export interface CoupangProductResponse {
   isRocket: boolean;
   isFreeShipping: boolean;
   categoryName: string;
+  brand?: string;
   deepLinkUrl?: string;
 }
 
@@ -35,6 +36,7 @@ export interface CoupangRawProduct {
   rocketShipping?: boolean;
   isFreeShipping?: boolean;
   categoryName?: string;
+  brand?: string;
   [key: string]: unknown;
 }
 

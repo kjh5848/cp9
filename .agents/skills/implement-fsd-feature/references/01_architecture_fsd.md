@@ -51,3 +51,23 @@ React/Next.js 컴포넌트 내부에 비대해진 상태값과 부수 효과(`us
   - `onClick={viewModel.actions.handleSubmit}` 과 같이 액션을 바인딩합니다.
 - **로직 영역 (`features/.../model/useFeatureViewModel.ts`)**:
   - `useState`, API 콜, 데이터 정제 등을 수행하고 순수한 상태(State)와 행위(Action) 묶음을 View로 리턴합니다.
+
+## 4. `page.tsx` 및 Widget 네이밍 컨벤션
+
+### `page.tsx` 규칙 (얇은 껍데기)
+- `app/[route]/page.tsx`는 **Widget 1개를 import하여 렌더링** 하는 역할만 수행한다.
+- `page.tsx` 내부에 비즈니스 로직, 복잡한 상태 관리, API 호출 등을 직접 작성하지 않는다.
+- 공통 레이아웃(헤더, 배경)만 `page.tsx`에 두고, 나머지는 Widget에 위임한다.
+
+### Widget 컴포넌트 네이밍 규칙
+- **폴더명(kebab-case)을 PascalCase로 변환한 것이 곧 컴포넌트명이다** (1:1 매핑).
+- Widget 파일 경로: `widgets/{kebab-case}/ui/{PascalCase}.tsx`
+
+| 폴더명 | 컴포넌트명 | 파일 경로 |
+|---|---|---|
+| `keyword-writing` | `KeywordWriting` | `widgets/keyword-writing/ui/KeywordWriting.tsx` |
+| `auth-form` | `AuthForm` | `widgets/auth-form/ui/AuthForm.tsx` |
+| `landing` | `Landing` | `widgets/landing/ui/Landing.tsx` |
+| `schedule-management` | `ScheduleManagement` | `widgets/schedule-management/ui/ScheduleManagement.tsx` |
+
+- 서브 컴포넌트(같은 widget 내 보조 UI)는 자유 네이밍 가능. 예: `schedule-management/ui/BigCalendarView.tsx`

@@ -87,9 +87,10 @@ export const ProductCreation = () => {
   const [results, setResults] = useState<CoupangProductResponse[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  /* ── 상품 선택 및 SEO 분석 상태 ── */
+  /* ── 상품 선택 (장바구니 패턴: Map으로 선택 상품 데이터 보존) ── */
   const router = useRouter();
-  const [selectedProductIds, setSelectedProductIds] = useState<Set<number>>(new Set());
+  const [selectedProductMap, setSelectedProductMap] = useState<Map<number, CoupangProductResponse>>(new Map());
+  const selectedProductIds = useMemo(() => new Set(selectedProductMap.keys()), [selectedProductMap]);
   const [isResearching, setIsResearching] = useState(false);
   
   /* ── 폴링 사용: 글 생성 완료 알림 ── */
@@ -228,7 +229,6 @@ export const ProductCreation = () => {
     setLoading(true);
     setError(null);
     setResults([]);
-    setSelectedProductIds(new Set());
     /* 필터 초기화 */
     setPricePresetIdx(0);
     setRocketOnly(false);
@@ -259,18 +259,21 @@ export const ProductCreation = () => {
   };
 
   const toggleSelection = (productId: number) => {
-    setSelectedProductIds((prev) => {
-      const next = new Set(prev);
+    setSelectedProductMap((prev) => {
+      const next = new Map(prev);
       if (next.has(productId)) {
         next.delete(productId);
       } else {
-        next.add(productId);
+        // 현재 검색 결과 + 기본 추천 상품에서 데이터 찾기
+        const allAvailable = [...results, ...defaultPlAll, ...defaultGoldbox];
+        const product = allAvailable.find(p => p.productId === productId);
+        if (product) next.set(productId, product);
       }
       return next;
     });
   };
 
-  const handleStartResearch = async (params: { persona: string; textModel: string; imageModel: string; actionType: 'NOW' | 'SCHEDULE'; scheduledAt?: string; charLimit?: number; articleType?: 'single' | 'compare' | 'curation' }) => {
+  const handleStartResearch = async (params: { persona: string; textModel: string; imageModel: string; actionType: 'NOW' | 'SCHEDULE'; scheduledAt?: string; charLimit?: number; articleType?: 'single' | 'compare' | 'curation'; themeId?: string }) => {
     if (selectedProductIds.size === 0) return;
     setIsResearching(true);
     setIsModalOpen(false);
@@ -280,10 +283,8 @@ export const ProductCreation = () => {
     const newProjectId = `proj_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 9)}`;
     
     try {
-      // 선택된 상품만 필터링
-      const allAvailableProducts = [...results, ...defaultPlAll, ...defaultGoldbox];
-      const selectedProducts = allAvailableProducts.filter(p => selectedProductIds.has(p.productId));
-      const uniqueSelectedProducts = Array.from(new Map(selectedProducts.map(p => [p.productId, p])).values());
+      // 선택된 상품을 Map에서 직접 가져오기 (장바구니 패턴)
+      const uniqueSelectedProducts = Array.from(selectedProductMap.values());
       const resolvedArticleType = params.articleType || 'single';
 
       if (resolvedArticleType === 'compare' || resolvedArticleType === 'curation') {
@@ -326,6 +327,7 @@ export const ProductCreation = () => {
               scheduledAt: params.scheduledAt,
               charLimit: params.charLimit,
               articleType: resolvedArticleType,
+              ...(params.themeId && { themeId: params.themeId }),
             }
           }),
         });
@@ -373,6 +375,7 @@ export const ProductCreation = () => {
                   scheduledAt: params.scheduledAt,
                   charLimit: params.charLimit,
                   articleType: 'single',
+                  ...(params.themeId && { themeId: params.themeId }),
                 }
               }),
             });
@@ -832,7 +835,7 @@ export const ProductCreation = () => {
               <div className="flex items-center gap-3">
                 <Button
                   variant="outline"
-                  onClick={() => setSelectedProductIds(new Set())}
+                  onClick={() => setSelectedProductMap(new Map())}
                   className="border-white/10 text-slate-300 hover:text-white"
                 >
                   선택 취소
@@ -862,11 +865,7 @@ export const ProductCreation = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={`${selectedProductIds.size}개 상품`}
-        selectedItems={(() => {
-          const allAvailableProducts = [...results, ...defaultPlAll, ...defaultGoldbox];
-          const selectedProducts = allAvailableProducts.filter(p => selectedProductIds.has(p.productId));
-          return Array.from(new Map(selectedProducts.map(p => [p.productId, p])).values());
-        })()}
+        selectedItems={Array.from(selectedProductMap.values())}
         onExecute={handleStartResearch}
       />
     </div>

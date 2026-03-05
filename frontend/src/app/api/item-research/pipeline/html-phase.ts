@@ -25,9 +25,25 @@ export async function runHtmlPhase(
   // ── 후처리 1: 취소선(<del>) 태그 제거 ──
   htmlBody = htmlBody.replace(/<del>(.*?)<\/del>/g, '$1');
 
+  // ── 후처리 1.5: 블록별 정렬 인라인 스타일 자동 삽입 ──
+  // CTA/cp9- 클래스가 없는 일반 <p> 태그에 양쪽 정렬 적용
+  htmlBody = htmlBody.replace(
+    /<p(?![^>]*class=["'][^"']*cp9-)([^>]*)>/g,
+    (match, attrs) => {
+      // 이미 text-align 스타일이 있으면 건드리지 않음
+      if (match.includes('text-align')) return match;
+      if (attrs.includes('style="')) {
+        return match.replace('style="', 'style="text-align:justify;');
+      }
+      return `<p${attrs} style="text-align:justify;">`;
+    }
+  );
+
   // ── CTA 빌드 (대표 상품 기준) ──
   const buyUrl = ctx.body.productData?.productUrl
     || `https://www.coupang.com/vp/products/${ctx.body.itemId}`;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const themeCtaConfig = (ctx.themeConfig as any)?.cta || undefined;
   const { headerHtml: coupangHeaderHtml, midContentHtml, footerHtml: coupangCtaHtml } = buildCtaHtml({
     productName: ctx.body.itemName,
     productImage: ctx.body.productData?.productImage || imageUrl || '',
@@ -38,6 +54,7 @@ export async function runHtmlPhase(
     itemId: ctx.body.itemId,
     projectId: ctx.body.projectId || undefined,
     articleType: articleType as 'single' | 'compare' | 'curation',
+    themeCtaConfig,
   });
 
   // ── 비교/큐레이션: 본문 내 각 상품 구매 링크 자동 연결 ──
@@ -123,9 +140,15 @@ export async function runHtmlPhase(
     productCardsHtml = buildCurationProductCards(ctx.body.items);
   }
 
+  // ── 테마 CSS ──
+  const themeStyleTag = ctx.themeConfig ? buildThemeStyles(ctx.themeConfig) : '';
+
+  // ── 글 최하단 쿠팡 파트너스 disclaimer (1회만) ──
+  const disclaimerHtml = `<p style="font-size:11px;color:#999;text-align:center;margin:32px 0 8px;">※ 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.</p>`;
+
   // ── 최종 HTML 조합 ──
-  const seoContent = coupangHeaderHtml + htmlBody + productCardsHtml + coupangCtaHtml;
-  console.log(`✅ [Phase 4] HTML 변환 완료 (${seoContent.length}자, 유형: ${articleType}, 페르소나: ${ctx.persona})`);
+  const seoContent = themeStyleTag + coupangHeaderHtml + htmlBody + productCardsHtml + coupangCtaHtml + disclaimerHtml;
+  console.log(`✅ [Phase 4] HTML 변환 완료 (${seoContent.length}자, 유형: ${articleType}, 페르소나: ${ctx.persona}, 테마: ${ctx.themeConfig ? '적용' : '없음'})`);
   return seoContent;
 }
 
@@ -186,8 +209,160 @@ function buildCurationProductCards(
   <div style="font-size:0;text-align:center;">
     ${cards}
   </div>
-  <p style="font-size:11px;color:#999;margin:16px 0 0;text-align:center;">※ 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.</p>
 </div>
 `;
 }
 
+/**
+ * 테마 설정 JSON을 CSS <style> 태그로 변환합니다.
+ * WordPress 본문에 인라인으로 주입되어 테마 CSS 없이도 정상 렌더링됩니다.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function buildThemeStyles(themeConfig: Record<string, any>): string {
+  const h = themeConfig.heading || {};
+  const b = themeConfig.bold || {};
+  const bq = themeConfig.blockquote || {};
+  const li = themeConfig.list || {};
+  const tb = themeConfig.table || {};
+  const cta = themeConfig.cta || {};
+  const art = themeConfig.article || {};
+
+  const css = `
+/* CP9 아티클 테마 CSS */
+.entry-content, .post-content, article {
+  font-family: ${art.fontFamily || "'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif"};
+  line-height: ${art.lineHeight || '1.8'};
+  color: ${art.textColor || '#334155'};
+  ${art.bgColor && art.bgColor !== 'transparent' ? `background-color: ${art.bgColor};` : ''}
+}
+
+/* 블록별 기본 정렬 */
+.entry-content p, .post-content p, article p {
+  text-align: justify;
+}
+.entry-content h1, .entry-content h2, .entry-content h3, .entry-content h4,
+.post-content h1, .post-content h2, .post-content h3, .post-content h4,
+article h1, article h2, article h3, article h4 {
+  text-align: left;
+}
+.entry-content figure, .entry-content figcaption,
+.post-content figure, .post-content figcaption,
+article figure, article figcaption {
+  text-align: center;
+}
+
+/* 대제목 H2 */
+.entry-content h2, .post-content h2, article h2 {
+  color: ${h.h2Color || '#1a1a2e'};
+  font-size: ${h.h2FontSize || '24px'};
+  font-weight: 700;
+  border-left: 4px solid ${h.h2BorderColor || '#2563eb'};
+  padding-left: 12px;
+  margin: 32px 0 16px;
+  line-height: 1.4;
+}
+
+/* 소제목 H3 */
+.entry-content h3, .post-content h3, article h3 {
+  color: ${h.h3Color || '#1e293b'};
+  font-size: ${h.h3FontSize || '20px'};
+  font-weight: 600;
+  border-bottom: 2px solid ${h.h3BorderColor || '#3b82f6'};
+  padding-bottom: 8px;
+  margin: 28px 0 12px;
+  line-height: 1.4;
+}
+
+/* 볼드 강조 */
+.entry-content strong, .post-content strong, article strong {
+  color: ${b.color || '#1e293b'};
+  font-weight: 700;
+}
+
+/* 인용구 */
+.entry-content blockquote, .post-content blockquote, article blockquote {
+  border-left: 4px solid ${bq.borderColor || '#2563eb'} !important;
+  background-color: ${bq.bgColor || '#eff6ff'};
+  color: ${bq.textColor || '#1e40af'};
+  padding: 16px 20px;
+  border-radius: 0 8px 8px 0;
+  margin: 20px 0;
+  font-style: italic;
+  border-top: none !important;
+  border-right: none !important;
+  border-bottom: none !important;
+}
+
+/* 목록 */
+.entry-content ul, .post-content ul, article ul {
+  padding-left: 20px;
+}
+.entry-content ul li::marker, .post-content ul li::marker, article ul li::marker {
+  color: ${li.markerColor || '#2563eb'};
+}
+.entry-content ol li::marker, .post-content ol li::marker, article ol li::marker {
+  color: ${li.markerColor || '#2563eb'};
+  font-weight: 600;
+}
+
+/* 테이블 */
+.entry-content table, .post-content table, article table {
+  border-collapse: collapse;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid ${tb.borderColor || '#e2e8f0'};
+}
+.entry-content th, .post-content th, article th {
+  background-color: ${tb.headerBg || '#1e293b'};
+  color: ${tb.headerColor || '#fff'};
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 13px;
+}
+.entry-content td, .post-content td, article td {
+  padding: 10px 14px;
+  border-top: 1px solid ${tb.borderColor || '#e2e8f0'};
+  font-size: 13px;
+}
+.entry-content tr:nth-child(even), .post-content tr:nth-child(even), article tr:nth-child(even) {
+  background-color: ${tb.stripeBg || '#f8fafc'};
+}
+
+/* CTA 버튼 오버라이드 */
+.cp9-cta__button {
+  background: ${cta.buttonColor || '#2563eb'} !important;
+  color: ${cta.buttonTextColor || '#fff'} !important;
+  border-radius: ${cta.buttonRadius || '12px'} !important;
+}
+.cp9-cta__button--large {
+  background: ${cta.buttonColor || '#2563eb'} !important;
+  color: ${cta.buttonTextColor || '#fff'} !important;
+  border-radius: ${cta.buttonRadius || '12px'} !important;
+}
+.cp9-cta__button--mid {
+  background: ${cta.buttonColor || '#2563eb'} !important;
+  color: ${cta.buttonTextColor || '#fff'} !important;
+  border-radius: ${cta.buttonRadius || '12px'} !important;
+}
+
+/* 구분선 */
+.entry-content hr, .post-content hr, article hr {
+  border: none;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #e2e8f0, transparent);
+  margin: 32px 0;
+}
+
+/* 이미지 캡션 */
+.entry-content figcaption, .post-content figcaption, article figcaption {
+  font-size: 12px;
+  color: #94a3b8;
+  text-align: center;
+  margin-top: 8px;
+}
+`.trim();
+
+  return `<style type="text/css">\n${css}\n</style>\n`;
+}

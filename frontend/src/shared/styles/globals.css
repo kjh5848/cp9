@@ -152,23 +152,58 @@ body {
   text-align: left;
 }
 
-/* HTML 콘텐츠 본문: 명시적 왼쪽 정렬 */
+/* HTML 콘텐츠 본문: 명시적 왼쪽 정렬 + 다크 모드 인라인 스타일 오버라이드 */
 .article-html-content {
   text-align: left;
   word-break: keep-all;
   overflow-wrap: break-word;
 }
+
+/* 다크 모드: 인라인 스타일의 배경색 무력화 (cp9- CTA 컴포넌트는 제외) */
+.article-html-content p:not([class*="cp9-"]),
+.article-html-content span:not([class*="cp9-"]),
+.article-html-content div:not([class*="cp9-"]),
+.article-html-content li:not([class*="cp9-"]),
+.article-html-content td:not([class*="cp9-"]),
+.article-html-content th:not([class*="cp9-"]),
+.article-html-content blockquote:not([class*="cp9-"]),
+.article-html-content section:not([class*="cp9-"]),
+.article-html-content header:not([class*="cp9-"]),
+.article-html-content footer:not([class*="cp9-"]),
+.article-html-content figure:not([class*="cp9-"]),
+.article-html-content figcaption:not([class*="cp9-"]),
+.article-html-content h1, .article-html-content h2,
+.article-html-content h3, .article-html-content h4,
+.article-html-content h5, .article-html-content h6,
+.article-html-content ul, .article-html-content ol,
+.article-html-content table, .article-html-content thead,
+.article-html-content tbody, .article-html-content tr {
+  background-color: transparent !important;
+  background: transparent !important;
+}
 .article-html-content h1,
 .article-html-content h2,
 .article-html-content h3,
-.article-html-content h4,
-.article-html-content p,
-.article-html-content ul,
-.article-html-content ol,
-.article-html-content li,
-.article-html-content blockquote,
-.article-html-content table {
-  text-align: left !important;
+.article-html-content h4 {
+  color: var(--foreground) !important;
+}
+.article-html-content p:not([class*="cp9-"]),
+.article-html-content span:not([class*="cp9-"]),
+.article-html-content li:not([class*="cp9-"]),
+.article-html-content td:not([class*="cp9-"]),
+.article-html-content th:not([class*="cp9-"]),
+.article-html-content div:not([class*="cp9-"]),
+.article-html-content blockquote:not([class*="cp9-"]) {
+  color: var(--muted-foreground) !important;
+}
+
+.article-html-content strong,
+.article-html-content b {
+  color: var(--foreground) !important;
+}
+/* CTA 버튼 텍스트색 보장 */
+.article-html-content [class*="cp9-cta__button"] {
+  color: #fff !important;
 }
 .prose-tistory p {
   @apply my-6;

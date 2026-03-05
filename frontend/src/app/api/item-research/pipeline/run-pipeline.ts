@@ -22,6 +22,7 @@ export interface PipelineConfig {
   charLimit: number
   articleType: string
   publishTarget: string
+  themeId?: string
 }
 
 /**
@@ -50,11 +51,36 @@ export async function runSeoPipeline(body: ItemResearchRequest, config: Pipeline
       },
     });
 
+    // ── 디자인 테마 조회 ──
+    let themeConfig: Record<string, unknown> | undefined;
+    if (config.themeId) {
+      try {
+        const theme = await prisma.articleTheme.findUnique({ where: { id: config.themeId } });
+        if (theme) {
+          themeConfig = JSON.parse(theme.config);
+          console.log(`🎨 [테마] '${theme.name}' 적용`);
+        }
+      } catch (e) {
+        console.warn('[테마] 조회 실패, 기본 스타일 사용:', e);
+      }
+    } else {
+      // themeId 없으면 기본 테마 사용
+      try {
+        const defaultTheme = await prisma.articleTheme.findFirst({ where: { isDefault: true } });
+        if (defaultTheme) {
+          themeConfig = JSON.parse(defaultTheme.config);
+          console.log(`🎨 [테마] 기본 테마 '${defaultTheme.name}' 적용`);
+        }
+      } catch (e) {
+        console.warn('[테마] 기본 테마 조회 실패:', e);
+      }
+    }
+
     // 파이프라인 컨텍스트 생성
     const publishTarget = config.publishTarget || 'DB_ONLY';
     const ctx: PipelineContext = {
       body, persona, finalPersonaName, tone,
-      textModel, imageModel, charLimit, articleType, publishTarget, trace,
+      textModel, imageModel, charLimit, articleType, publishTarget, themeConfig, trace,
     };
 
     // ── Phase 1: Perplexity 리서치 ──
@@ -125,11 +151,12 @@ export async function runSeoPipeline(body: ItemResearchRequest, config: Pipeline
 
     const finalResearchPack = {
       itemId: body.itemId,
-      title: body.itemName,
+      title: body.keywordMode?.selectedTitle || body.itemName,
       content: seoContent,
       contentType: 'html' as const,
       thumbnailUrl: actualImageUrl,
-      productUrl: body.productData?.productUrl || `https://www.coupang.com/vp/products/${body.itemId}`,
+      productUrl: body.productData?.productUrl
+        || (body.keywordMode ? 'https://www.coupang.com' : `https://www.coupang.com/vp/products/${body.itemId}`),
       productImage: body.productData?.productImage || null,
       researchRaw: researchData,
       status: finalStatus,
@@ -141,6 +168,8 @@ export async function runSeoPipeline(body: ItemResearchRequest, config: Pipeline
       langfuseTraceId: trace?.id || null,
       // 글 유형 메타데이터
       articleType,
+      // 키워드 모드 메타데이터
+      keywordMode: body.keywordMode || null,
       // 비교/큐레이션 시 관련 아이템 정보 저장
       relatedItems: (articleType !== 'single' && body.items)
         ? body.items.map(item => ({

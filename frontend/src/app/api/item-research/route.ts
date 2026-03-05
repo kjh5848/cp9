@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
     const charLimit = body.seoConfig?.charLimit || 2000
     const articleType = body.seoConfig?.articleType || 'single'
     const publishTarget = body.seoConfig?.publishTarget || 'DB_ONLY'
+    const themeId = body.seoConfig?.themeId || undefined
     const finalPersonaName = persona === 'MASTER_CURATOR_H'
       ? '마스터 큐레이터 H'
       : PERSONA_DISPLAY_NAME[persona] || persona
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 백그라운드 파이프라인 실행 (응답 후 비동기)
-    runSeoPipeline(body, { persona, tone, textModel, imageModel, charLimit, articleType, publishTarget });
+    runSeoPipeline(body, { persona, tone, textModel, imageModel, charLimit, articleType, publishTarget, themeId });
 
     // 즉시 응답
     return NextResponse.json({

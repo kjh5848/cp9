@@ -15,7 +15,7 @@ import { cn } from "@/shared/lib/utils";
  * [Widgets Layer]
  * 스케줄링 목록(예약된 포스팅, 완료된 포스팅 등)을 글로벌로 관리하고 확인하는 보드입니다.
  */
-export const ScheduleBoard = () => {
+export const ScheduleManagement = () => {
   const { researchList, loading, error, fetchResearch } = useResearchViewModel();
 
   useEffect(() => {

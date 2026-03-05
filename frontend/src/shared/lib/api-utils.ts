@@ -18,6 +18,7 @@ export function normalizeCoupangProduct(product: CoupangRawProduct): CoupangProd
     isRocket: product.isRocket || product.rocketShipping || false,
     isFreeShipping: product.isFreeShipping || false,
     categoryName: product.categoryName || '',
+    brand: product.brand || undefined,
   };
 }
 

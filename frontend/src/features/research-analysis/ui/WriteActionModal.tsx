@@ -1,13 +1,20 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/shared/ui/dialog";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import {
   Calendar, Clock, PenTool, CalendarPlus,
   FileText, GitCompare, LayoutList, ChevronLeft, ChevronRight, Check, Info,
+  Palette,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import Link from "next/link";
 import { CoupangProductResponse } from "@/shared/types/api";
+import {
+  TEXT_MODEL_OPTIONS, IMAGE_MODEL_OPTIONS,
+  DEFAULT_TEXT_MODEL, DEFAULT_IMAGE_MODEL,
+  getTextModelGroups,
+} from "@/shared/config/model-options";
 
 /* ──────────────────────────── 타입 정의 ──────────────────────────── */
 
@@ -22,6 +29,7 @@ export interface WriteActionExecuteParams {
   scheduledAt?: string;
   charLimit?: number;
   articleType: ArticleType;
+  themeId?: string;
 }
 
 interface WriteActionModalProps {
@@ -136,10 +144,28 @@ export const WriteActionModal = ({
   // ── Step 3: 페르소나 & 모델 ──
   const [selectedPersona, setSelectedPersona] = useState("IT");
   const [personaName, setPersonaName] = useState("마스터 큐레이터 H");
-  const [selectedTextModel, setSelectedTextModel] = useState("claude-sonnet-4-6");
-  const [selectedImageModel, setSelectedImageModel] = useState("dall-e-3");
+  const [selectedTextModel, setSelectedTextModel] = useState(DEFAULT_TEXT_MODEL);
+  const [selectedImageModel, setSelectedImageModel] = useState(DEFAULT_IMAGE_MODEL);
   const [charLimit, setCharLimit] = useState(2000);
   const [charLimitMode, setCharLimitMode] = useState("2000");
+
+  // ── 아티클 디자인 테마 ──
+  const [themeId, setThemeId] = useState<string | null>(null);
+  const [themes, setThemes] = useState<{ id: string; name: string; isDefault: boolean }[]>([]);
+
+  const fetchThemes = useCallback(async () => {
+    try {
+      const res = await fetch('/api/design');
+      const data = await res.json();
+      const list = data.themes || [];
+      setThemes(list);
+      // 기본 테마 자동 선택
+      const def = list.find((t: { isDefault: boolean }) => t.isDefault);
+      if (def && !themeId) setThemeId(def.id);
+    } catch { /* 조용히 실패 */ }
+  }, [themeId]);
+
+  useEffect(() => { if (isOpen) fetchThemes(); }, [isOpen, fetchThemes]);
 
   // ── Step 4: 발행 방식 ──
   const [actionType, setActionType] = useState<"NOW" | "SCHEDULE">(defaultAction);
@@ -228,6 +254,7 @@ export const WriteActionModal = ({
       imageModel: selectedImageModel,
       charLimit,
       articleType,
+      ...(themeId && { themeId }),
     };
 
     if (actionType === "SCHEDULE") {
@@ -416,22 +443,11 @@ export const WriteActionModal = ({
                       value={selectedTextModel}
                       onChange={(e) => setSelectedTextModel(e.target.value)}
                     >
-                      <optgroup label="— OpenAI —">
-                        <option value="gpt-4o">GPT-4o</option>
-                        <option value="gpt-4o-mini">GPT-4o mini</option>
-                        <option value="o4-mini-2025-04-16">o4-mini</option>
-                        <option value="gpt-5-pro-2025-10-06">GPT-5 Pro</option>
-                      </optgroup>
-                      <optgroup label="— Anthropic (Claude) —">
-                        <option value="claude-sonnet-4-6">Claude Sonnet 4.6 ⭐</option>
-                        <option value="claude-opus-4-6">Claude Opus 4.6</option>
-                        <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
-                      </optgroup>
-                      <optgroup label="— Google (Gemini) —">
-                        <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-                        <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-                        <option value="gemini-3-pro-preview">Gemini 3 Pro Preview</option>
-                      </optgroup>
+                      {getTextModelGroups().map((g) => (
+                        <optgroup key={g.group} label={`— ${g.group} —`}>
+                          {g.models.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+                        </optgroup>
+                      ))}
                     </select>
                   </div>
                   <div className="space-y-1.5">
@@ -441,9 +457,7 @@ export const WriteActionModal = ({
                       value={selectedImageModel}
                       onChange={(e) => setSelectedImageModel(e.target.value)}
                     >
-                      <option value="dall-e-3">DALL-E 3 (OpenAI)</option>
-                      <option value="nano-banana">Nano Banana (Gemini 2.5 Flash Image) ⭐</option>
-                      <option value="none">사용 안 함</option>
+                      {IMAGE_MODEL_OPTIONS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
                     </select>
                   </div>
                 </div>
@@ -503,6 +517,51 @@ export const WriteActionModal = ({
                       )}
                     </>
                   )}
+                </div>
+              </div>
+
+              {/* 아티클 디자인 테마 */}
+              <div className="space-y-2 pt-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-slate-300 flex items-center gap-1.5">
+                    <Palette className="w-4 h-4 text-blue-400" />
+                    아티클 디자인
+                  </h4>
+                  <Link href="/design" target="_blank" className="text-[11px] text-blue-400 hover:text-blue-300 underline">
+                    디자인 설정 →
+                  </Link>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setThemeId(null)}
+                    className={cn(
+                      "p-2.5 rounded-lg border text-left transition-all duration-200 cursor-pointer",
+                      !themeId
+                        ? "bg-slate-700/50 border-slate-500 text-slate-200"
+                        : "bg-slate-800/50 border-slate-700 text-slate-500 hover:border-slate-600",
+                    )}
+                  >
+                    <span className="text-xs font-medium">기본 (스타일 없음)</span>
+                  </button>
+                  {themes.map((theme) => (
+                    <button
+                      key={theme.id}
+                      type="button"
+                      onClick={() => setThemeId(theme.id)}
+                      className={cn(
+                        "p-2.5 rounded-lg border text-left transition-all duration-200 cursor-pointer",
+                        themeId === theme.id
+                          ? "bg-blue-600/20 border-blue-500 text-blue-100"
+                          : "bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-500",
+                      )}
+                    >
+                      <span className="text-xs font-medium">{theme.name}</span>
+                      {theme.isDefault && (
+                        <span className="ml-1 text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded-full">기본</span>
+                      )}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
