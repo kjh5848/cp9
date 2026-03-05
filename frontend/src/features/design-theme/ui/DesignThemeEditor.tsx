@@ -10,6 +10,9 @@ import { cn } from '@/shared/lib/utils';
 import { ColorField } from '@/entities/design/ui/ColorField';
 import { ThemeListItem } from '@/entities/design/ui/ThemeListItem';
 import { ThemePreview } from '@/entities/design/ui/ThemePreview';
+import { CtaLayoutSelector } from '@/entities/design/ui/CtaLayoutSelector';
+import { CtaPreview } from '@/entities/design/ui/CtaPreview';
+import type { CtaLayout } from '@/entities/design/ui/CtaLayoutSelector';
 
 // Features Layer — ViewModel & 상수
 import { useDesignViewModel } from '../model/useDesignViewModel';
@@ -191,34 +194,13 @@ export function DesignThemeEditor() {
 
               {activeTab === 'cta' && (
                 <>
-                  {/* ── 레이아웃 프리셋 ── */}
+                  {/* ── 레이아웃 프리셋 (Entities/Design Dumb 컴포넌트) ── */}
                   <h4 className="text-sm font-semibold text-slate-300 mb-3">CTA 레이아웃</h4>
-                  <div className="grid grid-cols-2 gap-2 mb-4">
-                    {([
-                      { id: 'minimal', label: '미니멀', desc: '텍스트+버튼만', colors: ['transparent', '#2563eb'] },
-                      { id: 'card', label: '카드', desc: '박스+이미지+버튼', colors: ['#f8fafc', '#2563eb'] },
-                      { id: 'banner', label: '배너', desc: '와이드 배경 CTA', colors: ['#1e293b', '#3b82f6'] },
-                      { id: 'gradient', label: '그라데이션', desc: '그라데이션 배경', colors: ['#667eea', '#764ba2'] },
-                    ] as const).map(preset => (
-                      <button
-                        key={preset.id}
-                        onClick={() => actions.updateConfig('cta', { layout: preset.id })}
-                        className={cn(
-                          'p-3 rounded-xl border text-left transition-all duration-200',
-                          config.cta.layout === preset.id
-                            ? 'border-blue-500 bg-blue-500/10'
-                            : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
-                        )}
-                      >
-                        <div className="flex gap-1.5 mb-1.5">
-                          {preset.colors.map((c, i) => (
-                            <div key={i} className="w-4 h-4 rounded" style={{ backgroundColor: c }} />
-                          ))}
-                        </div>
-                        <p className="text-xs font-medium text-slate-200">{preset.label}</p>
-                        <p className="text-[10px] text-slate-500">{preset.desc}</p>
-                      </button>
-                    ))}
+                  <div className="mb-4">
+                    <CtaLayoutSelector
+                      selectedLayout={config.cta.layout}
+                      onSelect={(layout: CtaLayout) => actions.updateConfig('cta', { layout })}
+                    />
                   </div>
 
                   {/* ── 버튼 스타일 ── */}
@@ -266,53 +248,10 @@ export function DesignThemeEditor() {
                     </div>
                   </div>
 
-                  {/* ── CTA 미리보기 ── */}
+                  {/* ── CTA 미리보기 (Entities/Design Dumb 컴포넌트) ── */}
                   <hr className="border-slate-800 my-4" />
                   <h4 className="text-sm font-semibold text-slate-300 mb-3">미리보기</h4>
-                  <div
-                    className="rounded-xl overflow-hidden"
-                    style={{
-                      background: config.cta.layout === 'gradient'
-                        ? `linear-gradient(135deg, ${config.cta.boxBgColor}, ${config.cta.buttonColor})`
-                        : config.cta.layout === 'banner'
-                          ? config.cta.boxBgColor
-                          : config.cta.layout === 'card'
-                            ? config.cta.boxBgColor
-                            : 'transparent',
-                      border: config.cta.layout !== 'minimal' ? `1px solid ${config.cta.boxBorderColor}` : 'none',
-                      boxShadow: config.cta.showShadow ? '0 4px 16px rgba(0,0,0,0.12)' : 'none',
-                      padding: config.cta.layout === 'minimal' ? '12px 0' : '20px',
-                      textAlign: 'center' as const,
-                    }}
-                  >
-                    {config.cta.showProductImage && config.cta.layout !== 'minimal' && (
-                      <div style={{
-                        width: 80, height: 80, margin: '0 auto 12px',
-                        borderRadius: 12, backgroundColor: '#e2e8f0',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 28,
-                      }}>
-                        📦
-                      </div>
-                    )}
-                    <p style={{ fontSize: 11, color: '#94a3b8', marginBottom: 4 }}>상품명 예시</p>
-                    <p style={{ fontSize: 16, fontWeight: 700, color: config.cta.priceColor, marginBottom: 12 }}>29,900원</p>
-                    <div
-                      style={{
-                        display: 'inline-block',
-                        background: config.cta.buttonColor,
-                        color: config.cta.buttonTextColor,
-                        padding: '10px 28px',
-                        borderRadius: config.cta.buttonRadius,
-                        fontWeight: 600,
-                        fontSize: 13,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {config.cta.headerText || '쿠팡에서 최저가 확인하기'}
-                    </div>
-                    <p style={{ fontSize: 9, color: '#94a3b8', marginTop: 8 }}>※ 쿠팡 파트너스 활동의 일환으로, 일정액의 수수료를 제공받을 수 있습니다.</p>
-                  </div>
+                  <CtaPreview config={config.cta} />
                 </>
               )}
             </div>

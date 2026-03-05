@@ -9,8 +9,9 @@ import {
   ArrowLeft, FileText, Search, Settings, Share2, ExternalLink,
   ShoppingBag, TrendingUp, AlertCircle, CheckCircle2, Calendar,
   PenTool, Loader2, ImageIcon, Activity, DollarSign, Clock,
-  Zap, Layers, Link2, RefreshCw, Globe, Copy, X, Palette
+  Zap, Layers, Link2, RefreshCw, Globe, Copy, X
 } from 'lucide-react';
+import { ThemeSwitcher } from '@/entities/design/ui/ThemeSwitcher';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { toast } from 'react-hot-toast';
@@ -465,85 +466,15 @@ export function ArticleDetailView({ vm }: ArticleDetailViewProps) {
               </div>
             </GlassCard>
 
-            {/* 디자인 테마 스위처 */}
+            {/* 디자인 테마 스위처 (Entities/Design Dumb 컴포넌트) */}
             {pack.content && pack.status !== 'PROCESSING' && (
-              <GlassCard className="p-6 space-y-4">
-                <h3 className="font-bold flex items-center gap-2">
-                  <Palette className="w-4 h-4 text-violet-400" />디자인 변경
-                </h3>
-                {themesLoading ? (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Loader2 className="w-4 h-4 animate-spin" />테마 로딩 중...
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {/* 기본 (스타일 없음) */}
-                    <button
-                      onClick={() => actions.applyTheme(null)}
-                      disabled={applyingTheme}
-                      className={cn(
-                        'w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer group',
-                        previewThemeId === null && !pack.appliedThemeId
-                          ? 'bg-slate-700/50 border-slate-500 text-slate-200'
-                          : 'bg-white/5 border-white/10 text-slate-400 hover:border-slate-500 hover:bg-white/10'
-                      )}
-                    >
-                      <div className="flex gap-1">
-                        {['#94a3b8', '#64748b', '#475569', '#334155'].map((c, i) => (
-                          <div key={i} className="w-3 h-3 rounded-full" style={{ backgroundColor: c }} />
-                        ))}
-                      </div>
-                      <span className="text-xs font-medium flex-1">기본 (스타일 없음)</span>
-                    </button>
-
-                    {/* 저장된 테마 목록 */}
-                    {themes.map((theme) => {
-                      // 테마 config에서 색상 추출
-                      let previewColors = ['#2563eb', '#2563eb', '#2563eb', '#1e293b'];
-                      try {
-                        const cfg = JSON.parse(theme.config);
-                        previewColors = [
-                          cfg.heading?.h2BorderColor || '#2563eb',
-                          cfg.cta?.buttonColor || '#2563eb',
-                          cfg.blockquote?.borderColor || '#2563eb',
-                          cfg.table?.headerBg || '#1e293b',
-                        ];
-                      } catch { /* 조용히 실패 */ }
-
-                      const isActive = previewThemeId === theme.id || pack.appliedThemeId === theme.id;
-                      return (
-                        <button
-                          key={theme.id}
-                          onClick={() => actions.applyTheme(theme.id)}
-                          disabled={applyingTheme}
-                          className={cn(
-                            'w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer group',
-                            isActive
-                              ? 'bg-violet-500/20 border-violet-500/50 text-violet-200'
-                              : 'bg-white/5 border-white/10 text-slate-400 hover:border-slate-500 hover:bg-white/10'
-                          )}
-                        >
-                          <div className="flex gap-1">
-                            {previewColors.map((c, i) => (
-                              <div key={i} className="w-3 h-3 rounded-full" style={{ backgroundColor: c }} />
-                            ))}
-                          </div>
-                          <span className="text-xs font-medium flex-1">{theme.name}</span>
-                          {theme.isDefault && (
-                            <span className="text-[9px] bg-violet-500/20 text-violet-300 px-1.5 py-0.5 rounded-full">기본</span>
-                          )}
-                        </button>
-                      );
-                    })}
-
-                    {applyingTheme && (
-                      <div className="flex items-center justify-center gap-2 py-2 text-xs text-violet-300">
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />디자인 적용 중...
-                      </div>
-                    )}
-                  </div>
-                )}
-              </GlassCard>
+              <ThemeSwitcher
+                themes={themes}
+                activeThemeId={previewThemeId ?? pack.appliedThemeId}
+                onSelect={(themeId) => actions.applyTheme(themeId)}
+                loading={themesLoading}
+                applying={applyingTheme}
+              />
             )}
 
             {/* 관련 상품 목록 (사이드바) */}
