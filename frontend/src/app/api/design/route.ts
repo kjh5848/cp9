@@ -232,9 +232,9 @@ export async function GET() {
 
     // 테마가 없으면 기본 프리셋 시딩
     if (themes.length === 0) {
-      for (const preset of DEFAULT_PRESETS) {
-        await prisma.articleTheme.create({ data: preset });
-      }
+      await Promise.all(
+        DEFAULT_PRESETS.map((preset) => prisma.articleTheme.create({ data: preset }))
+      );
       const seeded = await prisma.articleTheme.findMany({
         orderBy: [{ isDefault: 'desc' }, { updatedAt: 'desc' }],
       });

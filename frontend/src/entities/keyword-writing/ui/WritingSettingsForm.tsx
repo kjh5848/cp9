@@ -64,7 +64,7 @@ export function WritingSettingsForm({
                   <span className="text-sm font-medium text-foreground">{p.label}</span>
                   <p className="text-[11px] text-muted-foreground">{p.desc}</p>
                 </div>
-                {persona === p.value && <Check className="w-4 h-4 text-emerald-400 shrink-0" />}
+                {persona === p.value ? <Check className="w-4 h-4 text-emerald-400 shrink-0" /> : null}
               </button>
             ))}
           </div>

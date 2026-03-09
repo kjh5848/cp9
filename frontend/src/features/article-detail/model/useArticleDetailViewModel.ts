@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
+import useSWR from 'swr';
 import { ResearchItem } from '@/entities/research/model/types';
 import { TEXT_MODELS } from './constants';
 
@@ -41,9 +42,8 @@ export function useArticleDetailViewModel() {
   const id = params.id as string;
   const projectId = searchParams.get('projectId');
 
-  // ── 글 데이터 ──
-  const [item, setItem] = useState<ResearchItem | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // ── SWR 페처 ──
+  const fetcher = (url: string) => fetch(url).then(res => res.json());
 
   // ── 모니터링 데이터 ──
   const [monitoring, setMonitoring] = useState<MonitoringData | null>(null);
@@ -61,8 +61,9 @@ export function useArticleDetailViewModel() {
   const [savingEdit, setSavingEdit] = useState(false);
 
   // ── 테마 재적용 ──
-  const [themes, setThemes] = useState<{ id: string; name: string; isDefault: boolean; config: string }[]>([]);
-  const [themesLoading, setThemesLoading] = useState(false);
+  const { data: themesData, isLoading: themesLoading, mutate: mutateThemes } = useSWR('/api/design', fetcher);
+  const themes: any[] = themesData?.themes || [];
+  
   const [applyingTheme, setApplyingTheme] = useState(false);
   const [previewThemeId, setPreviewThemeId] = useState<string | null>(null);
   const [appliedThemeBgColor, setAppliedThemeBgColor] = useState<string | null>(null);
@@ -74,49 +75,36 @@ export function useArticleDetailViewModel() {
   const [wpSelectedCats, setWpSelectedCats] = useState<number[]>([]);
   const [wpCatLoading, setWpCatLoading] = useState(false);
 
-  // ── 파생 상태 ──
+  // ── 데이터 조회 (SWR) ──
+  const { data: researchData, isLoading, mutate: fetchItem } = useSWR('/api/research', fetcher, {
+    refreshInterval: (data) => {
+      // data가 없는 경우(첫 로딩)나 캐시된 데이터에서 'PROCESSING' 상태인 항목이 있으면 폴링
+      const found = data?.data?.find((i: ResearchItem) => 
+        projectId ? i.itemId === id && i.projectId === projectId : i.itemId === id
+      );
+      return found?.pack?.status === 'PROCESSING' ? 4000 : 0;
+    }
+  });
+
+  const item = researchData?.data?.find((i: ResearchItem) =>
+    projectId ? i.itemId === id && i.projectId === projectId : i.itemId === id
+  ) || null;
+
+  // 파생 상태 선언 위치 보정
   const isArticleFailed = item?.pack?.status === 'FAILED' || item?.pack?.content?.includes('작성 실패');
   const isWpPublished = item?.pack?.status === 'WP_PUBLISHED' || !!item?.pack?.wordpress?.postUrl;
 
-  // ── 데이터 조회 ──
-  const fetchItem = useCallback(async (silent = false) => {
-    try {
-      if (!silent) setIsLoading(true);
-      const response = await fetch('/api/research');
-      if (!response.ok) throw new Error('Failed to fetch research list');
-      const json = await response.json();
-      const researchList = json.data || [];
-      const found = researchList.find((i: ResearchItem) =>
-        projectId ? i.itemId === id && i.projectId === projectId : i.itemId === id
-      );
-      if (found) {
-        setItem(found);
-      } else {
-        if (!silent) toast.error('해당 글을 찾을 수 없습니다.');
-      }
-    } catch (error) {
-      console.error('Error fetching article:', error);
-      if (!silent) toast.error('데이터를 불러오는데 실패했습니다.');
-    } finally {
-      if (!silent) setIsLoading(false);
-    }
-  }, [id, projectId]);
-
-  // 페이지 진입 초기 조회
-  useEffect(() => { fetchItem(); }, [fetchItem]);
-
-  // ── 글 작성 중 자동 새로고침(Polling) ──
+  // 글을 찾을 수 없는 경우 알림 (최초 데이터 로드 완료 후 1회)
   useEffect(() => {
-    let intervalId: NodeJS.Timeout;
-    if (item?.pack?.status === 'PROCESSING') {
-      intervalId = setInterval(() => {
-        fetchItem(true); // 조용히 백그라운드에서 상태 갱신
-      }, 4000); // 4초 마다
+    if (!isLoading && researchData?.data && !item) {
+      toast.error('해당 글을 찾을 수 없습니다.', { id: 'item-not-found' });
     }
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [item?.pack?.status, fetchItem]);
+  }, [isLoading, researchData, item]);
+
+  // ── 테마 목록 조회 (SWR 대응) ──
+  const fetchThemes = useCallback(async () => {
+    await mutateThemes();
+  }, [mutateThemes]);
 
   // ── 모니터링 조회 ──
   useEffect(() => {
@@ -138,24 +126,10 @@ export function useArticleDetailViewModel() {
     fetchMonitoring();
   }, [item, projectId, id]);
 
-  // ── 테마 목록 조회 ──
-  const fetchThemes = useCallback(async () => {
-    setThemesLoading(true);
-    try {
-      const res = await fetch('/api/design');
-      const data = await res.json();
-      setThemes(data.themes || []);
-    } catch (e) {
-      console.warn('테마 목록 조회 실패:', e);
-    } finally {
-      setThemesLoading(false);
-    }
-  }, []);
-
-  // 글이 로드되면 테마 목록도 조회
-  useEffect(() => {
-    if (item?.pack?.content) fetchThemes();
-  }, [item, fetchThemes]);
+  // (SWR 대체됨) 글이 로드되면 테마 목록도 조회
+  // useEffect(() => {
+  //   if (item?.pack?.content) fetchThemes();
+  // }, [item, fetchThemes]);
 
   // ── 테마 재적용 ──
   const applyTheme = useCallback(async (themeId: string | null) => {
@@ -262,7 +236,7 @@ export function useArticleDetailViewModel() {
             isRocket: item.pack.isRocket || false,
             isFreeShipping: item.pack.isFreeShipping || false,
           },
-          items: item.pack.relatedItems?.map(ri => ({
+          items: item.pack.relatedItems?.map((ri: any) => ({
             ...ri, productId: '', categoryName: '', isFreeShipping: false,
           })),
           seoConfig: {

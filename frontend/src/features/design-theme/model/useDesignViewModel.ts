@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
+import useSWR from 'swr';
 import { ThemeConfig, ArticleTheme } from '@/entities/design/model/types';
 import { getDefaultConfig, PRESET_THEME_NAMES, createMigratedBlocks } from './constants';
 
@@ -50,13 +51,18 @@ interface UseDesignViewModelReturn {
  */
 export const useDesignViewModel = (): UseDesignViewModelReturn => {
   const router = useRouter();
-  const [themes, setThemes] = useState<ArticleTheme[]>([]);
+  
+  // ── SWR 페처 ──
+  const fetcher = (url: string) => fetch(url).then(res => res.json());
+
+  const { data: themesData, isLoading: loading, mutate: fetchThemes } = useSWR('/api/design', fetcher);
+  const themes: ArticleTheme[] = themesData?.themes || [];
+
   const [selectedThemeId, setSelectedThemeId] = useState<string | null>(null);
   const [themeName, setThemeName] = useState('');
   const [config, setConfig] = useState<ThemeConfig>(getDefaultConfig());
   const [activeTab, setActiveTab] = useState('heading');
   const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [isPublishModeOpen, setPublishModeOpen] = useState(false);
 
   // ── 테마 선택 ──
@@ -86,25 +92,13 @@ export const useDesignViewModel = (): UseDesignViewModelReturn => {
     }
   }, []);
 
-  // ── 테마 목록 로드 ──
-  const fetchThemes = useCallback(async () => {
-    try {
-      const res = await fetch('/api/design?_t=' + Date.now());
-      const data = await res.json();
-      setThemes(data.themes || []);
-      // 기본 테마 자동 선택
-      if (data.themes?.length > 0) {
-        const defaultTheme = data.themes.find((t: ArticleTheme) => t.isDefault) || data.themes[0];
-        selectTheme(defaultTheme);
-      }
-    } catch (err) {
-      console.error('테마 로드 실패:', err);
-    } finally {
-      setLoading(false);
+  // ── 기본 테마 자동 선택 ──
+  useEffect(() => {
+    if (themes.length > 0 && !selectedThemeId && !themeName) {
+      const defaultTheme = themes.find((t: ArticleTheme) => t.isDefault) || themes[0];
+      selectTheme(defaultTheme);
     }
-  }, [selectTheme]);
-
-  useEffect(() => { fetchThemes(); }, [fetchThemes]);
+  }, [themes, selectedThemeId, themeName, selectTheme]);
 
   // ── 프리셋(읽기전용) 테마 판별 ──
   const isPresetTheme = useMemo(() => {

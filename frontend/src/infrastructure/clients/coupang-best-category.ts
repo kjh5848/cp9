@@ -1,5 +1,6 @@
 import { generateCoupangSignature } from '../utils/coupang-hmac';
 import { config } from '@/shared/lib/config';
+import { cache } from 'react';
 
 const COUPANG_ACCESS_KEY = config.COUPANG_ACCESS_KEY;
 const COUPANG_SECRET_KEY = config.COUPANG_SECRET_KEY;
@@ -35,7 +36,7 @@ export interface CoupangBestCategoryParams {
   imageSize?: string;
 }
 
-export async function fetchCoupangBestCategory(params: CoupangBestCategoryParams): Promise<CoupangBestCategoryProduct[]> {
+export const fetchCoupangBestCategory = cache(async (params: CoupangBestCategoryParams): Promise<CoupangBestCategoryProduct[]> => {
   const { categoryId, limit = 20, imageSize } = params;
   const method = 'GET';
   let path = `/v2/providers/affiliate_open_api/apis/openapi/products/bestcategories/${categoryId}?limit=${limit}`;
@@ -53,4 +54,4 @@ export async function fetchCoupangBestCategory(params: CoupangBestCategoryParams
   }
   const data = await res.json();
   return data.data || [];
-} 
+}); 

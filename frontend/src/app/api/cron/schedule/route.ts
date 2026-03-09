@@ -38,8 +38,8 @@ export async function GET(request: Request) {
 
     console.log(`⏰ [SEO-Cron] ${overdueItems.length}개의 밀린 작업을 실행합니다.`);
 
-    // 3. 순차적으로 파이프라인 트리거
-    for (const item of overdueItems) {
+    // 3. 병렬적으로 파이프라인 트리거
+    await Promise.all(overdueItems.map(async (item) => {
       const pack = typeof item.pack === 'string' ? JSON.parse(item.pack) : item.pack;
       
       const body: ItemResearchRequest = {
@@ -92,7 +92,7 @@ export async function GET(request: Request) {
 
       // 비동기 실행 (await하지 않음)
       runSeoPipeline(body, { persona, tone, textModel, imageModel, charLimit, articleType, publishTarget, themeId });
-    }
+    }));
 
     return NextResponse.json({ 
       success: true, 

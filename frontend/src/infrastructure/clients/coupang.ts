@@ -1,5 +1,6 @@
 import { generateCoupangSignature } from '../utils/coupang-hmac';
 import { config } from '@/shared/lib/config';
+import { cache } from 'react';
 
 const COUPANG_ACCESS_KEY = config.COUPANG_ACCESS_KEY;
 const COUPANG_SECRET_KEY = config.COUPANG_SECRET_KEY;
@@ -11,7 +12,7 @@ const COUPANG_API_HOST = 'https://api-gateway.coupang.com';
  * @param limit - 최대 개수
  * @returns 상품 리스트
  */
-export async function searchCoupangProducts(keyword: string, limit = 10) {
+export const searchCoupangProducts = cache(async (keyword: string, limit = 10) => {
   const method = 'GET';
   const path = `/v2/providers/affiliate_open_api/apis/openapi/v1/products/search?keyword=${encodeURIComponent(keyword)}&limit=${limit}`;
   const url = COUPANG_API_HOST + path;
@@ -27,4 +28,4 @@ export async function searchCoupangProducts(keyword: string, limit = 10) {
   }
   const data = await res.json();
   return data.data?.productData || [];
-} 
+}); 
