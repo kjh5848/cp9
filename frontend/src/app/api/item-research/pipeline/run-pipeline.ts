@@ -76,10 +76,27 @@ export async function runSeoPipeline(body: ItemResearchRequest, config: Pipeline
       }
     }
 
+    // ── 커스텀 페르소나 (DB) 조회 ──
+    let personaSystemPrompt: string | undefined;
+    let personaToneDesc: string | undefined;
+    let personaNegativePrompt: string | undefined;
+    try {
+      const dbPersona = await prisma.persona.findUnique({ where: { id: persona } });
+      if (dbPersona) {
+        personaSystemPrompt = dbPersona.systemPrompt;
+        personaToneDesc = dbPersona.toneDescription;
+        personaNegativePrompt = dbPersona.negativePrompt;
+        console.log(`🎭 [페르소나] DB 커스텀 페르소나 '${dbPersona.name}' 사용`);
+      }
+    } catch (e) {
+      console.warn('DB 페르소나 조회 중 에러 발생:', e);
+    }
+
     // 파이프라인 컨텍스트 생성
     const publishTarget = config.publishTarget || 'DB_ONLY';
     const ctx: PipelineContext = {
       body, persona, finalPersonaName, tone,
+      personaSystemPrompt, personaToneDesc, personaNegativePrompt,
       textModel, imageModel, charLimit, articleType, publishTarget, themeConfig, trace,
     };
 

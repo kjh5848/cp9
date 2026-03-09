@@ -57,7 +57,9 @@ export async function GET(request: Request) {
     }
 
     // 5. SEO Pipeline Request 파라미터 구성
-    // 기본 설정: IT 페르소나, GPT-4o, 단일(single) 타입, WP 자동배포(WP_PUBLISH) 추천
+    const personaId = pendingItem.personaId || 'IT';
+    console.log(`🎭 [Autopilot] 선택된 페르소나 ID: ${personaId}`);
+
     const projectId = 'autopilot'; // 기본 프로젝트 ID (원하는 대로 수정 가능)
     const itemId = String(selectedProduct.productId);
     const itemName = selectedProduct.productName;
@@ -68,8 +70,8 @@ export async function GET(request: Request) {
       itemId,
       productData: selectedProduct,
       seoConfig: {
-        persona: 'IT',
-        toneAndManner: '전문적이면서 친근한',
+        persona: personaId,
+        toneAndManner: '', // 페르소나의 toneDescription으로 대체됨
         textModel: 'gpt-4o',
         imageModel: 'dall-e-3',
         actionType: 'NOW',

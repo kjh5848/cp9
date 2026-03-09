@@ -59,6 +59,12 @@ export interface PipelineContext {
   persona: string
   finalPersonaName: string
   tone: string
+  
+  // 새로 추가된 커스텀 페르소나 DB 데이터 (존재 시 우선 활용)
+  personaSystemPrompt?: string
+  personaToneDesc?: string
+  personaNegativePrompt?: string
+
   textModel: string
   imageModel: string
   charLimit: number

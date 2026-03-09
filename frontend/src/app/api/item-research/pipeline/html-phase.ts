@@ -225,10 +225,17 @@ export async function runHtmlPhase(
   const customHtmlFooter = advancedConfig.customHtmlFooter?.trim() || '';
 
   // ── 글 최하단 쿠팡 파트너스 disclaimer (1회만) ──
+  // AI가 자체적으로 본문에 생성했거나, 커스텀 푸터에 들어간 기존 파트너스 문구를 정규식으로 일괄 제거
+  const disclaimerRegex = /<p[^>]*>\s*※?\s*(?:이\s*포스팅은\s*)?쿠팡\s*파트너스\s*활동의\s*일환으로,?\s*이에\s*따른\s*일정액의\s*수수료를\s*제공받(?:습니다|을\s*수\s*있습니다)\.?\s*<\/p>/gi;
+  htmlBody = htmlBody.replace(disclaimerRegex, '');
+  const rawDisclaimerRegex = /※?\s*(?:이\s*포스팅은\s*)?쿠팡\s*파트너스\s*활동의\s*일환으로,?\s*이에\s*따른\s*일정액의\s*수수료를\s*제공받(?:습니다|을\s*수\s*있습니다)\.?/gi;
+  htmlBody = htmlBody.replace(rawDisclaimerRegex, '');
+  const cleanCustomFooter = customHtmlFooter.replace(rawDisclaimerRegex, '');
+
   const disclaimerHtml = `<p style="font-size:11px;color:#999;text-align:center;margin:32px 0 8px;">※ 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.</p>`;
 
   // ── 최종 HTML 조합 ──
-  let seoContent = themeStyleTag + customHtmlHeader + coupangHeaderHtml + htmlBody + productCardsHtml + coupangCtaHtml + disclaimerHtml + customHtmlFooter;
+  let seoContent = themeStyleTag + customHtmlHeader + coupangHeaderHtml + htmlBody + productCardsHtml + coupangCtaHtml + disclaimerHtml + cleanCustomFooter;
   
   if (styleMode === 'class-only' && prefix !== 'cp9-') {
     seoContent = seoContent.replace(/class="([^"]*)"/g, (match, classes) => {
@@ -311,10 +318,32 @@ export function injectCtaBlocks(html: string, ctaBlocks: any[], buildData: any):
   let resultHtml = html;
   let footerAppended = '';
   
-  // 1. Process random-p blocks first using split based on pristine </p> tags
+  // 1. 플래그가 없는 위치 분류
   const randomPBlocks = ctaBlocks.filter(b => b.placement.position === 'random-p');
-  const otherBlocks = ctaBlocks.filter(b => b.placement.position !== 'random-p');
-  
+  const firstPBlocks = ctaBlocks.filter(b => b.placement.position === 'first-p');
+  const lastPBlocks = ctaBlocks.filter(b => b.placement.position === 'last-p');
+  const otherBlocks = ctaBlocks.filter(b => !['random-p', 'first-p', 'last-p'].includes(b.placement.position));
+
+  // first-p 삽입
+  if (firstPBlocks.length > 0) {
+    for (const block of firstPBlocks) {
+      const ctaHtml = buildCtaBlockHtml(buildData, block);
+      resultHtml = resultHtml.replace(/(<p[^>]*>)/i, ctaHtml + '\n$1');
+    }
+  }
+
+  // last-p 삽입
+  if (lastPBlocks.length > 0) {
+    for (const block of lastPBlocks) {
+      const ctaHtml = buildCtaBlockHtml(buildData, block);
+      const lastIndex = resultHtml.lastIndexOf('</p>');
+      if (lastIndex !== -1) {
+        resultHtml = resultHtml.substring(0, lastIndex + 4) + '\n' + ctaHtml + resultHtml.substring(lastIndex + 4);
+      }
+    }
+  }
+
+  // random-p 삽입
   if (randomPBlocks.length > 0) {
     const pChunks = resultHtml.split('</p>');
     const numP = pChunks.length - 1;
@@ -349,21 +378,28 @@ export function injectCtaBlocks(html: string, ctaBlocks: any[], buildData: any):
     }
   }
   
-  // 2. Process remaining header and footer blocks
+  // 2. 헤더 태그 및 기타 (article-start, article-end 등) 삽입
   for (const block of otherBlocks) {
     const ctaHtml = buildCtaBlockHtml(buildData, block);
     const { position, frequency } = block.placement;
     const maxCount = frequency === 'all' ? Infinity : parseInt(frequency, 10);
     
     if (position === 'article-end') {
-      footerAppended += ctaHtml;
+      footerAppended += ctaHtml + '\n';
+      continue;
+    }
+
+    if (position === 'article-start') {
+      resultHtml = ctaHtml + '\n' + resultHtml;
       continue;
     }
     
-    // Header tags (h2, h3)
-    const tag = position.includes('h2') ? 'h2' : 'h3';
-    const isBefore = position.includes('before');
+    // Header tags (h1, h2, h3)
+    const tagMatch = position.match(/h[123]/);
+    const tag = tagMatch ? tagMatch[0] : null;
+    if (!tag) continue; // 알 수 없는 position fallback
     
+    const isBefore = position.includes('before');
     let headerCount = 0;
     
     if (isBefore) {

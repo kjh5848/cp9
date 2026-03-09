@@ -17,6 +17,7 @@ import {
   DEFAULT_TEXT_MODEL, DEFAULT_IMAGE_MODEL,
   getTextModelGroups,
 } from "@/shared/config/model-options";
+import { usePersonaViewModel } from "@/features/persona/model/usePersonaViewModel";
 
 /* ──────────────────────────── 타입 정의 ──────────────────────────── */
 
@@ -47,7 +48,7 @@ interface WriteActionModalProps {
 
 /* ──────────────────────────── 상수 ──────────────────────────── */
 
-const PERSONA_OPTIONS = [
+const FALLBACK_PERSONA_OPTIONS = [
   { id: "IT", label: "💻 IT/테크 전문가", desc: "스펙 비교표 · 벤치마크 · 호환성 분석" },
   { id: "LIVING", label: "🏠 살림/인테리어 고수", desc: "공간별 활용 · 유지관리 · 가성비 판정" },
   { id: "BEAUTY", label: "✨ 패션/뷰티 쇼퍼", desc: "트렌드 핏 · 실착 후기 · 스타일링 가이드" },
@@ -145,13 +146,33 @@ export const WriteActionModal = ({
   // ── Step 1: 글 유형 ──
   const [articleType, setArticleType] = useState<ArticleType>("single");
 
-  // ── Step 3: 페르소나 & 모델 ──
-  const [selectedPersona, setSelectedPersona] = useState("IT");
+  // ── Step 3: 페르소나 연동 ──
+  const { personas, fetchPersonas } = usePersonaViewModel();
+  
+  useEffect(() => {
+    if (isOpen) fetchPersonas();
+  }, [isOpen, fetchPersonas]);
+
+  const displayPersonas = personas.length > 0 
+    ? personas.map(p => ({
+        id: p.id,
+        label: `🎭 ${p.name}`,
+        desc: p.toneDescription.slice(0, 30) + '...'
+      }))
+    : FALLBACK_PERSONA_OPTIONS;
+
+  const [selectedPersona, setSelectedPersona] = useState(displayPersonas[0]?.id || "IT");
   const [personaName, setPersonaName] = useState("마스터 큐레이터 H");
   const [selectedTextModel, setSelectedTextModel] = useState(DEFAULT_TEXT_MODEL);
   const [selectedImageModel, setSelectedImageModel] = useState(DEFAULT_IMAGE_MODEL);
   const [charLimit, setCharLimit] = useState(2000);
   const [charLimitMode, setCharLimitMode] = useState("2000");
+
+  useEffect(() => {
+    if (displayPersonas.length > 0 && !displayPersonas.find(p => p.id === selectedPersona)) {
+      setSelectedPersona(displayPersonas[0].id);
+    }
+  }, [displayPersonas, selectedPersona]);
 
   // ── 아티클 디자인 테마 ──
   const [themeId, setThemeId] = useState<string | null>(null);
@@ -192,7 +213,7 @@ export const WriteActionModal = ({
       const names = selectedItems.map((i) => i.productName.slice(0, 15));
       setCustomTitles({ main: names.join(" vs ") + " 비교 분석" });
     } else if (articleType === 'curation') {
-      setCustomTitles({ main: `2026년 추천 TOP ${itemCount} 큐레이션` });
+      setCustomTitles({ main: `${new Date().getFullYear()}년 추천 TOP ${itemCount} 큐레이션` });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [articleType, selectedItems]);
@@ -246,10 +267,35 @@ export const WriteActionModal = ({
     }));
   }, [itemCount]);
 
+  const autoSuggestedKeys = React.useRef<Set<string>>(new Set());
+
+  // Step 3(제목 설정) 진입 시 자동 AI 추천 트리거
+  React.useEffect(() => {
+    if (step === 3) {
+      if (articleType === 'single') {
+        selectedItems.forEach(item => {
+          const key = item.productId.toString();
+          if (!autoSuggestedKeys.current.has(key)) {
+            autoSuggestedKeys.current.add(key);
+            handleSuggestTitle(key, [item]);
+          }
+        });
+      } else {
+        const key = 'main';
+        if (!autoSuggestedKeys.current.has(key)) {
+          autoSuggestedKeys.current.add(key);
+          handleSuggestTitle(key, selectedItems);
+        }
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, articleType, selectedItems]);
+
   // 모달 열릴 때 스텝 초기화
   React.useEffect(() => {
     if (isOpen) {
       setStep(0);
+      autoSuggestedKeys.current = new Set();
       // 유효한 기본 타입 설정
       const defaultType = articleTypeAvailability.find((t) => t.enabled);
       if (defaultType) setArticleType(defaultType.id);
@@ -299,7 +345,7 @@ export const WriteActionModal = ({
         totalArticles: 1,
         estimatedMinutes: Math.ceil(itemCount * 0.3) + 3,
         estimatedCost: (0.08 + itemCount * 0.003).toFixed(2),
-        articles: [{ label: "📋 글 1", title: `2026년 추천 TOP ${itemCount} 큐레이션` }],
+        articles: [{ label: "📋 글 1", title: `${new Date().getFullYear()}년 추천 TOP ${itemCount} 큐레이션` }],
         hasMore: false,
       };
     }
@@ -341,7 +387,7 @@ export const WriteActionModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[560px] bg-gray-900 border-gray-800 text-slate-200 max-h-[85vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[560px] bg-gray-900 border-gray-800 text-slate-200 max-h-[85vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-white">포스팅 생성 설정</DialogTitle>
           <DialogDescription className="text-slate-400">
@@ -463,7 +509,7 @@ export const WriteActionModal = ({
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-slate-300">작성자 페르소나 선택</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {PERSONA_OPTIONS.map((opt) => (
+                  {displayPersonas.map((opt) => (
                     <div
                       key={opt.id}
                       onClick={() => setSelectedPersona(opt.id)}
@@ -479,19 +525,17 @@ export const WriteActionModal = ({
                     </div>
                   ))}
                 </div>
-                {selectedPersona === "MASTER_CURATOR_H" && (
-                  <div className="pt-1">
-                    <label className="text-xs text-slate-500 mb-1 block">작성자 닉네임 (글 본문에 반영됩니다)</label>
-                    <input
-                      type="text"
-                      placeholder="예: 마스터 큐레이터 H"
-                      value={personaName}
-                      onChange={(e) => setPersonaName(e.target.value)}
-                      className="w-full bg-slate-900 border border-blue-500/50 text-slate-200 text-sm rounded-md px-3 py-2 outline-none focus:border-blue-400 placeholder:text-slate-600"
-                    />
-                    <p className="text-[10px] text-slate-500 mt-1">비워두면 기본값 &apos;마스터 큐레이터 H&apos; 로 작성됩니다.</p>
-                  </div>
-                )}
+                <div className="pt-1">
+                  <label className="text-xs text-slate-500 mb-1 block">작성자 닉네임 (글 본문에 반영 제한적 사용)</label>
+                  <input
+                    type="text"
+                    placeholder="예: 마스터 큐레이터 H"
+                    value={personaName}
+                    onChange={(e) => setPersonaName(e.target.value)}
+                    className="w-full bg-slate-900 border border-blue-500/50 text-slate-200 text-sm rounded-md px-3 py-2 outline-none focus:border-blue-400 placeholder:text-slate-600"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">AI가 이 닉네임을 참고하여 본문을 작성합니다.</p>
+                </div>
               </div>
 
               {/* AI 모델 */}

@@ -11,6 +11,37 @@ import type { PipelineContext } from './types'
  * 페르소나 역할 + 블로그 템플릿 가이드라인을 결합합니다.
  */
 async function buildSystemPrompt(ctx: PipelineContext): Promise<string> {
+  // DB에서 가져온 커스텀 페르소나가 있는 경우 우선 사용
+  if (ctx.personaSystemPrompt || ctx.personaToneDesc) {
+    const sysPrompt = ctx.personaSystemPrompt || `당신은 대한민국 최고의 SEO 블로그 전문 작가이자 '${ctx.finalPersonaName}'입니다.`;
+    const toneDesc = ctx.personaToneDesc || '';
+    const negativePrompt = ctx.personaNegativePrompt ? `\n[절대 피해야 할 내용/단어 (Negative Prompt)]\n${ctx.personaNegativePrompt}` : '';
+
+    return `
+${sysPrompt}
+아래의 [블로그 작성 가이드라인] 및 [톤앤매너]를 완벽히 숙지하고 포스팅하라.
+
+[톤앤매너 및 스타일 가이드]
+${toneDesc}
+${negativePrompt}
+
+[공통 절대 규칙]
+1. 글은 반드시 H1(#) 제목으로 시작하라.
+2. 명시된 모든 필수 정보를 포함하여 풍부하게 작성해라.
+3. 이모지와 아이콘을 제목 포함 어디에도 절대 삽입하지 마라. 위반 시 실패로 간주한다.
+4. 마크다운 테이블은 반드시 올바른 문법으로 작성하라.
+5. CTA 2줄은 글 마지막에 반드시 포함하라.
+6. 반드시 아래 [대상 상품]만을 주제로 작성하라.
+7. [블록별 정렬 규칙 - 반드시 준수]:
+   - 본문 단락(p): 양쪽 정렬(justify). 각 <p> 태그에 style="text-align:justify" 를 적용 가능하도록 자연스러운 문장으로 작성하라.
+   - 제목(h1, h2, h3, h4): 왼쪽 정렬(left). 기본값이므로 별도 지정 불필요.
+   - CTA 영역 (구매 링크, 추천 문구): 중앙 정렬(center). "쿠팡에서 최저가 확인하기" 등 CTA 문구는 독립된 문단으로 작성하라.
+   - 이미지/캡션: 중앙 정렬(center).
+   - 테이블: 왼쪽 정렬(left).
+`;
+  }
+
+  // 커스텀 페르소나가 없는 경우 (기존 레거시 파일 기반 폴백)
   const templateFile = PERSONA_TEMPLATE_FILE[ctx.persona] || PERSONA_TEMPLATE_FILE['IT'];
   const personaTemplate = await getSeoSkillTemplate(templateFile);
 

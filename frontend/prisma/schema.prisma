@@ -39,12 +39,31 @@ model ArticleTheme {
   @@map("article_themes")
 }
 
+model Persona {
+  id              String           @id @default(uuid())
+  name            String
+  systemPrompt    String
+  toneDescription String
+  negativePrompt  String?
+
+  autopilotQueues AutopilotQueue[]
+
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @default(now()) @updatedAt @map("updated_at")
+
+  @@map("persona")
+}
+
 model AutopilotQueue {
   id           String   @id @default(uuid())
   keyword      String
   status       String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
   resultUrl    String?
   errorMessage String?
+  
+  personaId    String?
+  persona      Persona?  @relation(fields: [personaId], references: [id])
+
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
 
