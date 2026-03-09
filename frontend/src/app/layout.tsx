@@ -1,10 +1,20 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Syne, Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "@/shared/ui/toaster";
 import { Navbar } from "@/widgets/navbar/ui/Navbar";
 import "@/shared/styles/globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const syne = Syne({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-syne",
+});
+
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-jakarta",
+});
 
 export const metadata: Metadata = {
   title: "CP9 - Deep Tech AI Automation",
@@ -18,7 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" className="dark" suppressHydrationWarning>
-      <body className={`${inter.className} bg-background text-foreground antialiased`} suppressHydrationWarning>
+      <body className={`${syne.variable} ${jakarta.variable} font-sans bg-background text-foreground antialiased`} suppressHydrationWarning>
         {/* AuthProvider는 Entities/User Layer 완성 후 복구 예정 */}
         <Navbar />
         <main>
