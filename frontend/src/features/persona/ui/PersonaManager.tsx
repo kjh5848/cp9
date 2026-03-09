@@ -40,6 +40,18 @@ export function PersonaManager() {
       toneDescription: persona.toneDescription,
       negativePrompt: persona.negativePrompt || '',
     });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDuplicateClick = (persona: Persona) => {
+    setIsEditing(null); // 신규 생성 모드
+    setFormData({
+      name: `${persona.name} (커스텀)`,
+      systemPrompt: persona.systemPrompt,
+      toneDescription: persona.toneDescription,
+      negativePrompt: persona.negativePrompt || '',
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleCancelEdit = () => {
@@ -157,20 +169,35 @@ export function PersonaManager() {
               {personas.map((persona) => (
                 <div key={persona.id} className="bg-white p-6 rounded-xl border border-gray-200 hover:shadow-lg hover:-translate-y-0.5 transition-all">
                   <div className="flex justify-between items-start mb-4">
-                    <h3 className="font-bold text-lg text-gray-900 tracking-tight">{persona.name}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-bold text-lg text-gray-900 tracking-tight">{persona.name}</h3>
+                      {persona.isSystem ? (
+                        <span className="bg-blue-100 text-blue-800 text-[10px] px-2 py-0.5 rounded-full font-medium uppercase tracking-wider">System</span>
+                      ) : null}
+                    </div>
                     <div className="space-x-3 flex">
                       <button
-                        onClick={() => handleEditClick(persona)}
-                        className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                        onClick={() => handleDuplicateClick(persona)}
+                        className="text-sm font-medium text-emerald-600 hover:text-emerald-800 transition-colors"
                       >
-                        수정
+                        복제
                       </button>
-                      <button
-                        onClick={() => deletePersona(persona.id)}
-                        className="text-sm font-medium text-red-500 hover:text-red-700 transition-colors"
-                      >
-                        삭제
-                      </button>
+                      {!persona.isSystem ? (
+                        <>
+                          <button
+                            onClick={() => handleEditClick(persona)}
+                            className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                          >
+                            수정
+                          </button>
+                          <button
+                            onClick={() => deletePersona(persona.id)}
+                            className="text-sm font-medium text-red-500 hover:text-red-700 transition-colors"
+                          >
+                            삭제
+                          </button>
+                        </>
+                      ) : null}
                     </div>
                   </div>
                   

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Persona, CreatePersonaPayload, UpdatePersonaPayload } from '@/entities/persona/model/types';
+import { Persona, CreatePersonaPayload, UpdatePersonaPayload, SYSTEM_PERSONAS } from '@/entities/persona/model/types';
 
 export function usePersonaViewModel() {
   const [personas, setPersonas] = useState<Persona[]>([]);
