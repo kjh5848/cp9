@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import { ResearchPack } from "@/entities/research/model/types";
 import { GlassCard } from "@/shared/ui/GlassCard";

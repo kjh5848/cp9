@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useCallback, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
@@ -63,6 +65,7 @@ export function useArticleDetailViewModel() {
   const [themesLoading, setThemesLoading] = useState(false);
   const [applyingTheme, setApplyingTheme] = useState(false);
   const [previewThemeId, setPreviewThemeId] = useState<string | null>(null);
+  const [appliedThemeBgColor, setAppliedThemeBgColor] = useState<string | null>(null);
 
   // ── WordPress 발행 ──
   const [wpPublishing, setWpPublishing] = useState(false);
@@ -76,9 +79,9 @@ export function useArticleDetailViewModel() {
   const isWpPublished = item?.pack?.status === 'WP_PUBLISHED' || !!item?.pack?.wordpress?.postUrl;
 
   // ── 데이터 조회 ──
-  const fetchItem = useCallback(async () => {
+  const fetchItem = useCallback(async (silent = false) => {
     try {
-      setIsLoading(true);
+      if (!silent) setIsLoading(true);
       const response = await fetch('/api/research');
       if (!response.ok) throw new Error('Failed to fetch research list');
       const json = await response.json();
@@ -89,17 +92,31 @@ export function useArticleDetailViewModel() {
       if (found) {
         setItem(found);
       } else {
-        toast.error('해당 글을 찾을 수 없습니다.');
+        if (!silent) toast.error('해당 글을 찾을 수 없습니다.');
       }
     } catch (error) {
       console.error('Error fetching article:', error);
-      toast.error('데이터를 불러오는데 실패했습니다.');
+      if (!silent) toast.error('데이터를 불러오는데 실패했습니다.');
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   }, [id, projectId]);
 
+  // 페이지 진입 초기 조회
   useEffect(() => { fetchItem(); }, [fetchItem]);
+
+  // ── 글 작성 중 자동 새로고침(Polling) ──
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+    if (item?.pack?.status === 'PROCESSING') {
+      intervalId = setInterval(() => {
+        fetchItem(true); // 조용히 백그라운드에서 상태 갱신
+      }, 4000); // 4초 마다
+    }
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [item?.pack?.status, fetchItem]);
 
   // ── 모니터링 조회 ──
   useEffect(() => {
@@ -154,13 +171,28 @@ export function useArticleDetailViewModel() {
       if (!res.ok) throw new Error(data.error || '테마 적용 실패');
       toast.success('디자인이 변경되었습니다!');
       setPreviewThemeId(themeId);
+
+      // 테마 배경색 추출
+      if (themeId) {
+        const selectedTheme = themes.find(t => t.id === themeId);
+        if (selectedTheme) {
+          try {
+            const cfg = JSON.parse(selectedTheme.config);
+            const bgColor = cfg.article?.bgColor;
+            setAppliedThemeBgColor(bgColor && bgColor !== 'transparent' ? bgColor : null);
+          } catch { setAppliedThemeBgColor(null); }
+        }
+      } else {
+        setAppliedThemeBgColor(null);
+      }
+
       await fetchItem();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '테마 적용에 실패했습니다.');
     } finally {
       setApplyingTheme(false);
     }
-  }, [item, projectId, fetchItem]);
+  }, [item, projectId, fetchItem, themes]);
 
   // ── 글 편집 액션 ──
   const startEdit = useCallback(() => {
@@ -321,7 +353,7 @@ export function useArticleDetailViewModel() {
     // 재시도
     retryDialogOpen, retryModel, retryImageModel, retryLoading,
     // 테마
-    themes, themesLoading, applyingTheme, previewThemeId,
+    themes, themesLoading, applyingTheme, previewThemeId, appliedThemeBgColor,
     // WP 발행
     wpDialogOpen, wpPublishing, wpCategories, wpSelectedCats, wpCatLoading,
     // 액션

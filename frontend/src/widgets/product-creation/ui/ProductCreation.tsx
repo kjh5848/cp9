@@ -273,7 +273,7 @@ export const ProductCreation = () => {
     });
   };
 
-  const handleStartResearch = async (params: { persona: string; textModel: string; imageModel: string; actionType: 'NOW' | 'SCHEDULE'; scheduledAt?: string; charLimit?: number; articleType?: 'single' | 'compare' | 'curation'; themeId?: string }) => {
+  const handleStartResearch = async (params: { persona: string; textModel: string; imageModel: string; actionType: 'NOW' | 'SCHEDULE'; scheduledAt?: string; charLimit?: number; articleType?: 'single' | 'compare' | 'curation'; themeId?: string; customTitles?: Record<string, string> }) => {
     if (selectedProductIds.size === 0) return;
     setIsResearching(true);
     setIsModalOpen(false);
@@ -290,13 +290,16 @@ export const ProductCreation = () => {
       if (resolvedArticleType === 'compare' || resolvedArticleType === 'curation') {
         // ── 비교/큐레이션: 다중 아이템을 하나의 요청으로 묶어 호출 ──
         const leadProduct = uniqueSelectedProducts[0];
+        const titleFromModal = params.customTitles?.['main'];
+        const fallbackTitle = resolvedArticleType === 'compare'
+            ? uniqueSelectedProducts.map(p => p.productName.slice(0, 20)).join(' vs ')
+            : `TOP ${uniqueSelectedProducts.length} 큐레이션`;
+        
         const res = await fetch("/api/item-research", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            itemName: resolvedArticleType === 'compare'
-              ? uniqueSelectedProducts.map(p => p.productName.slice(0, 20)).join(' vs ')
-              : `TOP ${uniqueSelectedProducts.length} 큐레이션`,
+            itemName: titleFromModal || fallbackTitle,
             projectId: newProjectId,
             itemId: String(leadProduct.productId),
             productData: {
@@ -351,11 +354,12 @@ export const ProductCreation = () => {
         // ── 개별 발행: 기존 방식 (병렬 호출) ──
         const responses = await Promise.all(
           uniqueSelectedProducts.map(async (product) => {
+            const titleFromModal = params.customTitles?.[String(product.productId)];
             const res = await fetch("/api/item-research", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                itemName: product.productName,
+                itemName: titleFromModal || product.productName,
                 projectId: newProjectId,
                 itemId: String(product.productId),
                 productData: {

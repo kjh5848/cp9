@@ -146,10 +146,12 @@ body {
 }
 
 /* 티스토리 풍 커스텀 Typography 스타일 */
+/* 블로그 본문은 항상 라이트 모드로 렌더링 — 앱 다크 모드의 CSS 변수에 의존 X */
 .prose-tistory {
   @apply leading-relaxed font-sans text-base sm:text-[17px];
-  color: var(--foreground);
+  color: #334155; /* 고정 라이트 텍스트 색상 (slate-700) */
   text-align: left;
+  background-color: #ffffff; /* 테마 미적용 시 기본 배경 — 테마 CSS가 오버라이드 */
 }
 
 /* HTML 콘텐츠 본문: 명시적 왼쪽 정렬 + 다크 모드 인라인 스타일 오버라이드 */
@@ -160,46 +162,47 @@ body {
 }
 
 /* 다크 모드: 인라인 스타일의 배경색 무력화 (cp9- CTA 컴포넌트는 제외) */
-.article-html-content p:not([class*="cp9-"]),
-.article-html-content span:not([class*="cp9-"]),
-.article-html-content div:not([class*="cp9-"]),
-.article-html-content li:not([class*="cp9-"]),
-.article-html-content td:not([class*="cp9-"]),
-.article-html-content th:not([class*="cp9-"]),
-.article-html-content blockquote:not([class*="cp9-"]),
-.article-html-content section:not([class*="cp9-"]),
-.article-html-content header:not([class*="cp9-"]),
-.article-html-content footer:not([class*="cp9-"]),
-.article-html-content figure:not([class*="cp9-"]),
-.article-html-content figcaption:not([class*="cp9-"]),
-.article-html-content h1, .article-html-content h2,
-.article-html-content h3, .article-html-content h4,
-.article-html-content h5, .article-html-content h6,
-.article-html-content ul, .article-html-content ol,
-.article-html-content table, .article-html-content thead,
-.article-html-content tbody, .article-html-content tr {
+/* 테마 적용 시(.themed) 에는 이 규칙을 비활성화하여 테마 CSS가 우선 적용되게 함 */
+.article-html-content:not(.themed) p:not([class*="cp9-"]),
+.article-html-content:not(.themed) span:not([class*="cp9-"]),
+.article-html-content:not(.themed) div:not([class*="cp9-"]),
+.article-html-content:not(.themed) li:not([class*="cp9-"]),
+.article-html-content:not(.themed) td:not([class*="cp9-"]),
+.article-html-content:not(.themed) th:not([class*="cp9-"]),
+.article-html-content:not(.themed) blockquote:not([class*="cp9-"]),
+.article-html-content:not(.themed) section:not([class*="cp9-"]),
+.article-html-content:not(.themed) header:not([class*="cp9-"]),
+.article-html-content:not(.themed) footer:not([class*="cp9-"]),
+.article-html-content:not(.themed) figure:not([class*="cp9-"]),
+.article-html-content:not(.themed) figcaption:not([class*="cp9-"]),
+.article-html-content:not(.themed) h1, .article-html-content:not(.themed) h2,
+.article-html-content:not(.themed) h3, .article-html-content:not(.themed) h4,
+.article-html-content:not(.themed) h5, .article-html-content:not(.themed) h6,
+.article-html-content:not(.themed) ul, .article-html-content:not(.themed) ol,
+.article-html-content:not(.themed) table, .article-html-content:not(.themed) thead,
+.article-html-content:not(.themed) tbody, .article-html-content:not(.themed) tr {
   background-color: transparent !important;
   background: transparent !important;
 }
-.article-html-content h1,
-.article-html-content h2,
-.article-html-content h3,
-.article-html-content h4 {
-  color: var(--foreground) !important;
+.article-html-content:not(.themed) h1,
+.article-html-content:not(.themed) h2,
+.article-html-content:not(.themed) h3,
+.article-html-content:not(.themed) h4 {
+  color: #0f172a !important; /* 고정 라이트 색상 (slate-900) */
 }
-.article-html-content p:not([class*="cp9-"]),
-.article-html-content span:not([class*="cp9-"]),
-.article-html-content li:not([class*="cp9-"]),
-.article-html-content td:not([class*="cp9-"]),
-.article-html-content th:not([class*="cp9-"]),
-.article-html-content div:not([class*="cp9-"]),
-.article-html-content blockquote:not([class*="cp9-"]) {
-  color: var(--muted-foreground) !important;
+.article-html-content:not(.themed) p:not([class*="cp9-"]),
+.article-html-content:not(.themed) span:not([class*="cp9-"]),
+.article-html-content:not(.themed) li:not([class*="cp9-"]),
+.article-html-content:not(.themed) td:not([class*="cp9-"]),
+.article-html-content:not(.themed) th:not([class*="cp9-"]),
+.article-html-content:not(.themed) div:not([class*="cp9-"]),
+.article-html-content:not(.themed) blockquote:not([class*="cp9-"]) {
+  color: #64748b !important; /* 고정 라이트 색상 (slate-500) */
 }
 
-.article-html-content strong,
-.article-html-content b {
-  color: var(--foreground) !important;
+.article-html-content:not(.themed) strong,
+.article-html-content:not(.themed) b {
+  color: #0f172a !important; /* 고정 라이트 색상 (slate-900) */
 }
 /* CTA 버튼 텍스트색 보장 */
 .article-html-content [class*="cp9-cta__button"] {
@@ -211,7 +214,7 @@ body {
 }
 .prose-tistory h1, .prose-tistory h2, .prose-tistory h3, .prose-tistory h4, .prose-tistory h5, .prose-tistory h6 {
   @apply font-bold mb-4 mt-10 tracking-tight;
-  color: var(--foreground) !important;
+  color: var(--foreground);
 }
 .prose-tistory h1 { @apply text-3xl sm:text-4xl border-b pb-2 mb-6; border-color: var(--border); }
 .prose-tistory h2 { @apply text-2xl sm:text-3xl; }
@@ -498,4 +501,13 @@ body {
   border-radius: 12px;
   margin: 0 auto 16px;
   display: block;
+}
+
+/* 스크롤바 숨김 유틸리티 (스크롤 기능은 유지) */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 }

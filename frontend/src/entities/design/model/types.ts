@@ -3,9 +3,45 @@
  * 글 생성 시 적용될 CSS 스타일 설정값을 정의합니다.
  */
 
+/** 
+ * CTA 노출 위치 및 빈도 설정
+ */
+export interface CtaPlacementConfig {
+  /** 위치: H2 이전, H2 이후, 본문 끝, P 태그 무작위 등 */
+  position: 'before-h2' | 'after-h2' | 'before-h3' | 'after-h3' | 'random-p' | 'article-end';
+  /** 출현 빈도: 모두, 1개, 2개, 3개 (random-p 등의 조건과 함께 사용) */
+  frequency: 'all' | '1' | '2' | '3';
+}
+
+/** 
+ * 개별 CTA 블록 설정 (Multi-CTA System)
+ */
+export interface CtaBlockConfig {
+  id: string;
+  name: string;
+  placement: CtaPlacementConfig;
+  design: {
+    layout: 'minimal' | 'card' | 'banner' | 'gradient';
+    buttonColor: string;
+    buttonTextColor: string;
+    buttonRadius: string;
+    boxBgColor: string;
+    boxBorderColor: string;
+    text: string;           // CTA 주 텍스트 (기존 headerText 등 대체)
+    headline?: string;      // 상단 헤드라인 (기존 footerHeadline 대체)
+    showShadow: boolean;
+    showProductImage: boolean;
+    priceColor: string;
+    showUrgency: boolean;
+  };
+}
+
 /** 테마 설정 전체 구조 */
 export interface ThemeConfig {
   heading: {
+    h1Color: string;
+    h1BorderColor: string;
+    h1FontSize: string;
     h2Color: string;
     h2BorderColor: string;
     h2FontSize: string;
@@ -26,29 +62,29 @@ export interface ThemeConfig {
     stripeBg: string;
     borderColor: string;
   };
-  cta: {
+  /** 기존 단일 CTA 설정 (하위 호환성을 위해 유지) */
+  cta?: {
     buttonColor: string;
     buttonTextColor: string;
     buttonRadius: string;
-    /** CTA 레이아웃 프리셋 */
     layout: 'minimal' | 'card' | 'banner' | 'gradient';
-    /** CTA 박스 배경색 */
     boxBgColor: string;
-    /** CTA 박스 테두리 색상 */
     boxBorderColor: string;
-    /** CTA 헤더 텍스트 */
     headerText: string;
-    /** CTA 푸터 텍스트 */
     footerText: string;
-    /** CTA 중간 텍스트 */
     midText: string;
-    /** 박스 그림자 표시 여부 */
     showShadow: boolean;
-    /** 상품 이미지 표시 여부 */
     showProductImage: boolean;
-    /** 가격 강조 색상 */
     priceColor: string;
+    showHeaderCta: boolean;
+    showMidCta: boolean;
+    showFooterCta: boolean;
+    footerHeadline: string;
+    showUrgency: boolean;
+    showDisclaimer: boolean;
   };
+  /** 새롭게 추가된 다중 CTA 블록 설정 */
+  ctaBlocks?: CtaBlockConfig[];
   article: {
     bgColor: string;
     fontFamily: string;
@@ -56,6 +92,19 @@ export interface ThemeConfig {
     textColor: string;
   };
   disclaimer: { position: string };
+  /** 고급 설정: 커스텀 CSS/HTML, 스타일 모드 */
+  advanced: {
+    /** 유저가 직접 입력한 커스텀 CSS 코드 */
+    customCss: string;
+    /** 글 상단에 삽입할 커스텀 HTML */
+    customHtmlHeader: string;
+    /** 글 하단에 삽입할 커스텀 HTML */
+    customHtmlFooter: string;
+    /** 스타일 적용 모드: inline(완성형) / class-only(스킨 활용) / none(텍스트만) */
+    styleMode: 'inline' | 'class-only' | 'none';
+    /** CSS 클래스 접두어 (class-only 모드에서 사용, 기본: 'cp9-') */
+    classPrefix: string;
+  };
 }
 
 /** 저장된 아티클 테마 엔티티 */

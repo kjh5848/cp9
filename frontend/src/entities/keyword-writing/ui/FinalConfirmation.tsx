@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * [Entities/KeywordWriting] 최종 확인 카드 컴포넌트
  * 글 생성 전 모든 설정을 요약 표시하고, 생성 결과를 보여주는 순수 UI 컴포넌트입니다.

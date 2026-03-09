@@ -95,6 +95,7 @@ export interface WriteRequest {
   scheduledAt?: string; // 예약 시간 (ISO 형식)
   charLimit?: number; // 목표 글자수
   themeId?: string; // 아티클 디자인 테마 ID
+  customTitles?: Record<string, string>; // 커스텀 제목
 }
 
 /**

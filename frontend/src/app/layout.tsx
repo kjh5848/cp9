@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { Toaster } from "react-hot-toast";
+import { Toaster } from "@/shared/ui/toaster";
 import { Navbar } from "@/widgets/navbar/ui/Navbar";
 import "@/shared/styles/globals.css";
 
@@ -17,8 +17,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className="dark">
-      <body className={`${inter.className} bg-background text-foreground antialiased`}>
+    <html lang="ko" className="dark" suppressHydrationWarning>
+      <body className={`${inter.className} bg-background text-foreground antialiased`} suppressHydrationWarning>
         {/* AuthProvider는 Entities/User Layer 완성 후 복구 예정 */}
         <Navbar />
         <main>

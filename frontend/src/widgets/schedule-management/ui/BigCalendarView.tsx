@@ -100,28 +100,38 @@ export const BigCalendarView: React.FC<BigCalendarViewProps> = ({
   const eventStyleGetter = useCallback((event: ScheduleEvent) => {
     let backgroundColor = "";
     let borderLeft = "";
+    let borderTop = "none";
+    let borderRight = "none";
+    let borderBottom = "none";
 
     switch (event.status) {
       case "PENDING":
         backgroundColor = "rgba(245, 158, 11, 0.15)";
+        borderTop = "none"; borderRight = "none"; borderBottom = "none";
         borderLeft = "3px solid #f59e0b";
         break;
       case "COMPLETED":
         backgroundColor = "rgba(16, 185, 129, 0.15)";
+        borderTop = "none"; borderRight = "none"; borderBottom = "none";
         borderLeft = "3px solid #10b981";
         break;
       case "FAILED":
         backgroundColor = "rgba(239, 68, 68, 0.15)";
+        borderTop = "none"; borderRight = "none"; borderBottom = "none";
         borderLeft = "3px solid #ef4444";
         break;
       default:
         backgroundColor = "rgba(59, 130, 246, 0.15)";
+        borderTop = "none"; borderRight = "none"; borderBottom = "none";
         borderLeft = "3px solid #3b82f6";
     }
 
     return {
       style: {
         backgroundColor,
+        borderTop,
+        borderRight,
+        borderBottom,
         borderLeft,
         color: "var(--foreground)",
         opacity: 1,

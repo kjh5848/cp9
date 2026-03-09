@@ -100,6 +100,7 @@ ${researchData}
   ※ 절대 URL 없이 텍스트만 넣지 마세요. 반드시 (쿠팡 URL)을 포함해야 합니다.
 - 이모지와 아이콘은 어디에도 사용하지 마라.
 - 마크다운 취소선(~~텍스트~~)은 절대 사용하지 마라. 텍스트 비교 시 취소선 대신 일반 텍스트로 "대비", "비교" 등의 표현을 사용하라.
+${ctx.imageModel === 'none' ? '- **[중요]** 내부 이미지 생성 기능이 꺼져 있으므로, 글 내부에 `[이미지 제안: ...]` 형태의 텍스트나 플레이스홀더를 **절대** 생성하지 마라. 문맥상 필요하더라도 이미지 관련 제안 문자열은 빼고 텍스트만으로 작성하라.' : ''}
 
 위 지침에 따라 지금 바로 마크다운 블로그 포스팅 전문을 작성하라.
 `;
@@ -267,7 +268,7 @@ async function callLlm(modelName: string, systemPrompt: string, userPrompt: stri
  * LLM을 호출하여 SEO 본문(마크다운)을 생성합니다.
  * 실패 시 폴백 모델로 자동 재시도합니다.
  */
-export async function runArticlePhase(ctx: PipelineContext, researchData: string): Promise<string> {
+export async function runArticlePhase(ctx: PipelineContext, researchData: string): Promise<{ content: string, title: string | null }> {
   console.log(`✍️ [Phase 2] ${ctx.textModel} SEO 본문 작성 중...`);
 
   const generation = ctx.trace?.generation({
@@ -282,9 +283,12 @@ export async function runArticlePhase(ctx: PipelineContext, researchData: string
   // 1차 시도: 원래 모델
   try {
     const result = await callLlm(ctx.textModel, systemPrompt, userPrompt);
-    console.log(`✅ [Phase 2] LLM 본문 생성 완료 (${result.length}자, 모델: ${ctx.textModel})`);
-    generation?.end({ output: { length: result.length } });
-    return result;
+    const titleMatch = result.match(/^#\s+(.+)$/m);
+    const extractedTitle = titleMatch ? titleMatch[1].trim() : null;
+
+    console.log(`✅ [Phase 2] LLM 본문 생성 완료 (${result.length}자, 모델: ${ctx.textModel}, 추출된 제목: ${extractedTitle || '없음'})`);
+    generation?.end({ output: { length: result.length, title: extractedTitle } });
+    return { content: result, title: extractedTitle };
   } catch (primaryErr) {
     console.error(`⚠️ [Phase 2] 1차 모델 실패 (${ctx.textModel}):`, primaryErr);
 
@@ -301,12 +305,15 @@ export async function runArticlePhase(ctx: PipelineContext, researchData: string
 
       try {
         const fallbackResult = await callLlm(fallbackModel, systemPrompt, userPrompt);
-        console.log(`✅ [Phase 2] 폴백 모델 성공 (${fallbackResult.length}자, 모델: ${fallbackModel}, 원래: ${ctx.textModel})`);
+        const titleMatch = fallbackResult.match(/^#\s+(.+)$/m);
+        const extractedTitle = titleMatch ? titleMatch[1].trim() : null;
+
+        console.log(`✅ [Phase 2] 폴백 모델 성공 (${fallbackResult.length}자, 모델: ${fallbackModel}, 추출된 제목: ${extractedTitle || '없음'})`);
         // 컨텍스트의 모델명도 실제 사용된 모델로 갱신
         ctx.textModel = fallbackModel;
         generation?.end({ output: { error: String(primaryErr), fallbackModel }, level: 'WARNING' });
-        fallbackGen?.end({ output: { length: fallbackResult.length } });
-        return fallbackResult;
+        fallbackGen?.end({ output: { length: fallbackResult.length, title: extractedTitle } });
+        return { content: fallbackResult, title: extractedTitle };
       } catch (fallbackErr) {
         console.error(`❌ [Phase 2] 폴백 모델도 실패 (${fallbackModel}):`, fallbackErr);
         generation?.end({ output: { error: String(primaryErr), fallbackError: String(fallbackErr) }, level: 'ERROR' });

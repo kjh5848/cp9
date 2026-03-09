@@ -42,6 +42,16 @@ export interface CtaTemplateData {
     buttonColor?: string;
     buttonTextColor?: string;
     buttonRadius?: string;
+    /** CTA 위치별 on/off */
+    showHeaderCta?: boolean;
+    showMidCta?: boolean;
+    showFooterCta?: boolean;
+    /** 하단 CTA 헤드라인 */
+    footerHeadline?: string;
+    /** 긴급성 문구 표시 여부 */
+    showUrgency?: boolean;
+    /** 면책 문구 표시 여부 */
+    showDisclaimer?: boolean;
   };
 }
 
@@ -136,10 +146,10 @@ function formatPrice(price: number): string {
  */
 function getUrgencyText(): string {
   const hour = new Date().getHours();
-  if (hour >= 0 && hour < 6) return '야간 한정 특가가 곧 종료됩니다';
-  if (hour >= 6 && hour < 12) return '오전 타임세일 진행 중';
-  if (hour >= 12 && hour < 18) return '오늘의 특가, 재고 소진 시 종료';
-  return '금일 마감 임박! 내일 가격이 변동될 수 있습니다';
+  if (hour >= 0 && hour < 6) return '<span style="text-align:center;">야간 한정 특가가 곧 종료됩니다</span>';
+  if (hour >= 6 && hour < 12) return '<span style="text-align:center;">오전 타임세일 진행 중</span>';
+  if (hour >= 12 && hour < 18) return '<span style="text-align:center;">오늘의 특가, 재고 소진 시 종료</span>';
+  return '<span style="text-align:center;">금일 마감 임박! 내일 가격이 변동될 수 있습니다</span>';
 }
 
 /**
@@ -184,8 +194,8 @@ function buildMidContentCta(data: CtaTemplateData, buyUrlWithUtm: string, varian
 
   return `
 <div class="cp9-cta cp9-cta--mid" style="text-align:center;padding:20px 0;margin:20px 0;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;">
-  <p style="font-size:12px;color:#94a3b8;margin:0 0 8px;">${socialProof}</p>
-  ${priceInfo ? `<p style="margin:0 0 12px;">${priceInfo}</p>` : ''}
+  <p style="text-align:center;font-size:12px;color:#94a3b8;margin:0 0 8px;">${socialProof}</p>
+  ${priceInfo ? `<p style="text-align:center;margin:0 0 12px;">${priceInfo}</p>` : ''}
   <a href="${buyUrlWithUtm}" target="_blank" rel="noopener sponsored" class="cp9-cta__button cp9-cta__button--mid" style="${btnStyle}">
     ${midLabel}
   </a>
@@ -199,8 +209,17 @@ function buildMidContentCta(data: CtaTemplateData, buyUrlWithUtm: string, varian
  * Level 2: 전환율 최적화
  */
 export function buildCtaHtml(data: CtaTemplateData): CtaBuildResult {
-  // 글 유형에 따라 템플릿 파일 분기: compare/curation은 전용 템플릿, single은 페르소나별 매핑
   const articleType = data.articleType || 'single';
+  const variant = selectVariant(data.persona, articleType);
+  const buyUrlWithUtm = addUtmParams(data.buyUrl, data.persona);
+
+  // 커스텀 디자인(Theme) 설정이 있을 경우, 기존 정적 템플릿을 무시하고 100% 반영되는 동적 빌더 사용
+  const hasCustomTheme = !!data.themeCtaConfig && Object.keys(data.themeCtaConfig).length > 0;
+  if (hasCustomTheme) {
+    return buildDynamicCta(data, buyUrlWithUtm, variant);
+  }
+
+  // 커스텀 테마가 없을 경우 기존처럼 페르소나/유형별 템플릿 로드 시도
   const ARTICLE_TYPE_CTA_FILE: Record<string, string> = {
     'compare': 'cta-compare.html',
     'curation': 'cta-curation.html',
@@ -209,9 +228,6 @@ export function buildCtaHtml(data: CtaTemplateData): CtaBuildResult {
   const templatePath = path.join(
     process.cwd(), '..', '.agents', 'skills', 'seo-pipeline', 'references', 'cta-templates', templateFile
   );
-
-  // 글 유형 + 페르소나 기반 변형 선택 (랜덤 로테이션)
-  const variant = selectVariant(data.persona, articleType);
 
   let rawTemplate = '';
   try {
@@ -229,16 +245,14 @@ export function buildCtaHtml(data: CtaTemplateData): CtaBuildResult {
     console.warn(`[CTA Builder] 템플릿 읽기 실패: ${templateFile}`, err);
   }
 
-  const buyUrlWithUtm = addUtmParams(data.buyUrl, data.persona);
-
   if (!rawTemplate) {
-    console.warn('[CTA Builder] 폴백 CTA 사용');
-    return buildFallbackCta(data, buyUrlWithUtm, variant);
+    console.warn('[CTA Builder] 템플릿 없음, 동적 CTA 사용');
+    return buildDynamicCta(data, buyUrlWithUtm, variant);
   }
 
   // 동적 블록 생성
   const priceBlock = data.productPrice ? buildPriceBlock(data.productPrice, !!data.isRocket) : '';
-  const urgencyBanner = `<p class="cp9-cta__urgency">${getUrgencyText()}</p>`;
+  const urgencyBanner = `<p class="cp9-cta__urgency" style="text-align:center;">${getUrgencyText()}</p>`;
 
   // 플레이스홀더 치환
   let html = rawTemplate
@@ -264,24 +278,30 @@ export function buildCtaHtml(data: CtaTemplateData): CtaBuildResult {
     return match;
   });
 
-  // header/footer 분리
-  const headerMatch = html.match(/<!-- ── 상단.*?──[\s\S]*?<\/div>\s*\n/);
-  const footerMatch = html.match(/<!-- ── 하단.*?──[\s\S]*?<\/div>\s*\n?$/);
+  // header/footer 분리 (정규식 대신 주석 기준 split 사용 - 내부 중첩 div 닫힘 보장)
+  const parts = html.split(/<!-- ── 하단/);
+  const headerPart = parts[0];
+  const footerPart = parts.length > 1 ? `<!-- ── 하단${parts[1]}` : '';
 
   // 중간 CTA 생성
   const midContentHtml = buildMidContentCta(data, buyUrlWithUtm, variant);
 
+  // CTA 위치별 on/off 적용
+  const showHeader = data.themeCtaConfig?.showHeaderCta !== false;
+  const showMid = data.themeCtaConfig?.showMidCta !== false;
+  const showFooter = data.themeCtaConfig?.showFooterCta !== false;
+
   return {
-    headerHtml: headerMatch ? headerMatch[0] : '',
-    midContentHtml,
-    footerHtml: footerMatch ? footerMatch[0] : '',
+    headerHtml: showHeader ? headerPart : '',
+    midContentHtml: showMid ? midContentHtml : '',
+    footerHtml: showFooter ? footerPart : '',
   };
 }
 
 /**
- * 폴백 CTA
+ * ThemeCTAConfig 등을 기반으로 HTML을 즉석 생성하는 동적 CTA (기존 폴백 CTA 대체)
  */
-function buildFallbackCta(
+function buildDynamicCta(
   data: CtaTemplateData,
   buyUrlWithUtm: string,
   variant: { id: string; headerText: string; footerText: string; midText: string }
@@ -302,7 +322,7 @@ function buildFallbackCta(
   const footerLabel = tc?.footerText || variant.footerText;
 
   const priceInfo = data.productPrice
-    ? `<p style="font-size:18px;font-weight:700;color:${priceColor};margin:4px 0 12px;">${formatPrice(data.productPrice)}</p>`
+    ? `<p style="text-align:center;font-size:18px;font-weight:700;color:${priceColor};margin:4px 0 12px;">${formatPrice(data.productPrice)}</p>`
     : '';
 
   // 레이아웃별 스타일
@@ -312,7 +332,7 @@ function buildFallbackCta(
       case 'minimal':
         return `text-align:center;padding:16px 0;`;
       case 'banner':
-        return `text-align:center;padding:24px 20px;background:${boxBg};border:1px solid ${boxBorder};border-radius:16px;${shadow}`;
+        return `text-align:center;padding:24px 20px;background:${boxBg};border:none;border-left:6px solid ${btnColor};border-radius:8px;${shadow}`;
       case 'gradient':
         return `text-align:center;padding:24px 20px;background:linear-gradient(135deg, ${boxBg}, ${btnColor});border-radius:16px;${shadow}`;
       case 'card':
@@ -330,30 +350,109 @@ function buildFallbackCta(
     ? `display:inline-block;background:rgba(255,255,255,0.95);color:${btnColor};padding:12px 32px;border-radius:${btnRadius};font-weight:600;font-size:14px;text-decoration:none;`
     : btnStyle;
 
-  const headerHtml = `
+  const showHeader = tc?.showHeaderCta !== false;
+  const showMid = tc?.showMidCta !== false;
+  const showFooter = tc?.showFooterCta !== false;
+
+  const headerHtml = showHeader ? `
 <div class="cp9-cta cp9-cta--header" style="${boxStyle}margin:24px 0;">
   ${imageHtml}
-  <p style="font-size:13px;color:#64748b;margin:0 0 4px;">${data.productName}</p>
+  <p style="text-align:center;font-size:13px;color:#64748b;margin:0 0 4px;">${data.productName}</p>
   ${priceInfo}
   <a href="${buyUrlWithUtm}" target="_blank" rel="noopener sponsored" class="cp9-cta__button" style="${layout === 'gradient' ? gradientBtnStyle : btnStyle}">
     ${headerLabel}
   </a>
-  <p class="cp9-cta__disclaimer" style="font-size:10px;color:#94a3b8;margin-top:10px;">※ 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.</p>
 </div>
-`;
+` : '';
 
-  const midContentHtml = buildMidContentCta(data, buyUrlWithUtm, variant);
+  const midContentHtml = showMid ? buildMidContentCta(data, buyUrlWithUtm, variant) : '';
 
-  const footerHtml = `
+  // 하단 CTA 헤드라인 + 긴급성 문구
+  const footerHeadlineText = tc?.footerHeadline || '지금 바로 구매하세요!';
+  const showUrgency = tc?.showUrgency !== false;
+  const urgencyLine = showUrgency
+    ? `<p style="text-align:center;font-size:12px;color:${layout === 'gradient' ? 'rgba(255,255,255,0.7)' : '#94a3b8'};margin:0 0 12px;">${getUrgencyText()}</p>`
+    : '';
+
+  const footerHtml = showFooter ? `
 <div class="cp9-cta cp9-cta--footer" style="${boxStyle}margin:24px 0;">
-  <p style="font-size:16px;font-weight:700;color:${layout === 'gradient' ? '#fff' : '#1e293b'};margin:0 0 8px;">지금 바로 구매하세요!</p>
-  <p style="font-size:12px;color:${layout === 'gradient' ? 'rgba(255,255,255,0.7)' : '#94a3b8'};margin:0 0 12px;">${getUrgencyText()}</p>
+  <p style="text-align:center;font-size:16px;font-weight:700;color:${layout === 'gradient' ? '#fff' : '#1e293b'};margin:0 0 8px;">${footerHeadlineText}</p>
+  ${urgencyLine}
   <a href="${buyUrlWithUtm}" target="_blank" rel="noopener sponsored" class="cp9-cta__button cp9-cta__button--large" style="${layout === 'gradient' ? gradientBtnStyle : btnStyle}">
     ${footerLabel}
   </a>
-  <p class="cp9-cta__disclaimer" style="font-size:10px;color:${layout === 'gradient' ? 'rgba(255,255,255,0.5)' : '#94a3b8'};margin-top:10px;">※ 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.</p>
 </div>
-`;
+` : '';
 
   return { headerHtml, midContentHtml, footerHtml };
+}
+
+/**
+ * Multiple CTA System: CtaBlockConfig를 기반으로 단일 CTA HTML 블록을 생성합니다.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function buildCtaBlockHtml(data: CtaTemplateData, blockConfig: any): string {
+  const design = blockConfig.design;
+  const layout = design.layout || 'card';
+  const boxBg = design.boxBgColor || '#f8fafc';
+  const boxBorder = design.boxBorderColor || '#e2e8f0';
+  const btnColor = design.buttonColor || '#2563eb';
+  const btnText = design.buttonTextColor || '#ffffff';
+  const btnRadius = design.buttonRadius || '12px';
+  const priceColor = design.priceColor || '#e53935';
+  const showShadow = design.showShadow !== false;
+  const showImage = design.showProductImage !== false;
+
+  const buyUrlWithUtm = addUtmParams(data.buyUrl, data.persona);
+
+  const priceInfo = data.productPrice
+    ? `<p style="text-align:center;font-size:18px;font-weight:700;color:${priceColor};margin:4px 0 12px;">${formatPrice(data.productPrice)}</p>`
+    : '';
+
+  // 레이아웃별 스타일
+  const boxStyle = (() => {
+    const shadow = showShadow ? 'box-shadow:0 4px 16px rgba(0,0,0,0.10);' : '';
+    switch (layout) {
+      case 'minimal':
+        return `text-align:center;padding:16px 0;margin:24px 0;`;
+      case 'banner':
+        return `text-align:center;padding:24px 20px;background:${boxBg};border:none;border-left:6px solid ${btnColor};border-radius:8px;${shadow}margin:24px 0;`;
+      case 'gradient':
+        return `text-align:center;padding:24px 20px;background:linear-gradient(135deg, ${boxBg}, ${btnColor});border-radius:16px;${shadow}margin:24px 0;`;
+      case 'card':
+      default:
+        return `text-align:center;padding:20px;background:${boxBg};border:1px solid ${boxBorder};border-radius:16px;${shadow}margin:24px 0;`;
+    }
+  })();
+
+  const imageHtml = showImage && data.productImage && layout !== 'minimal'
+    ? `<img src="${data.productImage}" alt="${data.productName}" style="max-width:160px;height:auto;border-radius:12px;margin:0 auto 12px;display:block;border:1px solid #eee;background:#fff;padding:8px;" />`
+    : '';
+
+  const btnStyle = `display:inline-block;background:${btnColor};color:${btnText};padding:12px 32px;border-radius:${btnRadius};font-weight:600;font-size:14px;text-decoration:none;`;
+  const gradientBtnStyle = layout === 'gradient'
+    ? `display:inline-block;background:rgba(255,255,255,0.95);color:${btnColor};padding:12px 32px;border-radius:${btnRadius};font-weight:600;font-size:14px;text-decoration:none;`
+    : btnStyle;
+
+  const headlineHtml = design.headline
+    ? `<p style="text-align:center;font-size:16px;font-weight:700;color:${layout === 'gradient' ? '#fff' : '#1e293b'};margin:0 0 8px;">${design.headline}</p>`
+    : '';
+
+  const showUrgency = design.showUrgency !== false;
+  const urgencyLine = showUrgency
+    ? `<p style="text-align:center;font-size:12px;color:${layout === 'gradient' ? 'rgba(255,255,255,0.7)' : '#94a3b8'};margin:0 0 12px;">${getUrgencyText()}</p>`
+    : '';
+
+  return `
+<div class="cp9-cta cp9-cta-block" style="${boxStyle}">
+  ${headlineHtml}
+  ${imageHtml}
+  <p style="text-align:center;font-size:13px;color:${layout === 'gradient' ? 'rgba(255,255,255,0.9)' : '#64748b'};margin:0 0 4px;">${data.productName}</p>
+  ${priceInfo}
+  ${urgencyLine}
+  <a href="${buyUrlWithUtm}" target="_blank" rel="noopener sponsored" class="cp9-cta__button" style="${layout === 'gradient' ? gradientBtnStyle : btnStyle}">
+    ${design.text}
+  </a>
+</div>
+`;
 }

@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useCallback } from "react";
 import { ResearchItem, ResearchPack, WriteRequest, WriteResponse } from "@/entities/research/model/types";
 import { toast } from "react-hot-toast";
@@ -112,7 +114,9 @@ export const useResearchViewModel = (): UseResearchViewModelReturn => {
               actionType: request.actionType,
               scheduledAt: request.scheduledAt,
               charLimit: request.charLimit,
-            }
+              themeId: request.themeId,
+            },
+            customTitles: request.customTitles,
           }),
         });
 

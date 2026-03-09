@@ -12,10 +12,55 @@ import { prisma } from '@/infrastructure/clients/prisma';
 // ── 기본 프리셋 테마 ──
 const DEFAULT_PRESETS = [
   {
-    name: '클린 블루',
+    name: '기본',
     isDefault: true,
     config: JSON.stringify({
       heading: {
+        h1Color: '#0f172a',
+        h1BorderColor: '#cbd5e1',
+        h1FontSize: '28px',
+        h2Color: '#1e293b',
+        h2BorderColor: '#64748b',
+        h2FontSize: '24px',
+        h3Color: '#334155',
+        h3BorderColor: '#94a3b8',
+        h3FontSize: '20px',
+      },
+      bold: { color: '#1e293b' },
+      blockquote: {
+        borderColor: '#94a3b8',
+        bgColor: '#f8fafc',
+        textColor: '#475569',
+      },
+      list: { markerColor: '#64748b' },
+      table: {
+        headerBg: '#334155',
+        headerColor: '#f8fafc',
+        stripeBg: '#f8fafc',
+        borderColor: '#e2e8f0',
+      },
+      cta: {
+        buttonColor: '#475569',
+        buttonTextColor: '#ffffff',
+        buttonRadius: '12px',
+      },
+      article: {
+        bgColor: '#ffffff',
+        fontFamily: "'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif",
+        lineHeight: '1.8',
+        textColor: '#334155',
+      },
+      disclaimer: { position: 'footer-only' },
+    }),
+  },
+  {
+    name: '클린 블루',
+    isDefault: false,
+    config: JSON.stringify({
+      heading: {
+        h1Color: '#0f172a',
+        h1BorderColor: '#bfdbfe',
+        h1FontSize: '28px',
         h2Color: '#1a1a2e',
         h2BorderColor: '#2563eb',
         h2FontSize: '24px',
@@ -42,7 +87,7 @@ const DEFAULT_PRESETS = [
         buttonRadius: '12px',
       },
       article: {
-        bgColor: 'transparent',
+        bgColor: '#ffffff',
         fontFamily: "'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif",
         lineHeight: '1.8',
         textColor: '#334155',
@@ -55,6 +100,9 @@ const DEFAULT_PRESETS = [
     isDefault: false,
     config: JSON.stringify({
       heading: {
+        h1Color: '#f8fafc',
+        h1BorderColor: '#334155',
+        h1FontSize: '28px',
         h2Color: '#f1f5f9',
         h2BorderColor: '#6366f1',
         h2FontSize: '24px',
@@ -94,6 +142,9 @@ const DEFAULT_PRESETS = [
     isDefault: false,
     config: JSON.stringify({
       heading: {
+        h1Color: '#0f172a',
+        h1BorderColor: '#fecdd3',
+        h1FontSize: '28px',
         h2Color: '#1a1a2e',
         h2BorderColor: '#f43f5e',
         h2FontSize: '24px',
@@ -120,7 +171,7 @@ const DEFAULT_PRESETS = [
         buttonRadius: '12px',
       },
       article: {
-        bgColor: 'transparent',
+        bgColor: '#ffffff',
         fontFamily: "'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif",
         lineHeight: '1.8',
         textColor: '#374151',
@@ -133,6 +184,9 @@ const DEFAULT_PRESETS = [
     isDefault: false,
     config: JSON.stringify({
       heading: {
+        h1Color: '#064e3b',
+        h1BorderColor: '#bbf7d0',
+        h1FontSize: '28px',
         h2Color: '#14532d',
         h2BorderColor: '#16a34a',
         h2FontSize: '24px',
@@ -159,7 +213,7 @@ const DEFAULT_PRESETS = [
         buttonRadius: '12px',
       },
       article: {
-        bgColor: 'transparent',
+        bgColor: '#ffffff',
         fontFamily: "'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif",
         lineHeight: '1.8',
         textColor: '#1e293b',

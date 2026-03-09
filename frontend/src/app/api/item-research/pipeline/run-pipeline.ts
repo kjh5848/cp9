@@ -93,10 +93,16 @@ export async function runSeoPipeline(body: ItemResearchRequest, config: Pipeline
     const phase2Start = Date.now();
     const phase3Start = Date.now();
 
-    const [markdownRaw, actualImageUrl] = await Promise.all([
+    const [articleResult, actualImageUrl] = await Promise.all([
       runArticlePhase(ctx, researchData),
       runImagePhase(ctx),
     ]);
+    const markdownRaw = articleResult.content;
+    const extractedTitle = articleResult.title;
+    
+    // 최종 사용할 제목 (1순위: 사용자가 직접 선택/수정한 커스텀 제목(itemName에 바인딩됨), 2순위: 키워드모드 제목, 3순위: LLM 추출 제목)
+    // frontend의 ProductCreation.tsx에서 itemName에 customTitle을 넣어서 보내므로, body.itemName을 1순위로 사용합니다.
+    const finalTitle = body.itemName || body.keywordMode?.selectedTitle || extractedTitle || '제목 없음';
 
     const phase2Ms = Date.now() - phase2Start;
     const phase3Ms = Date.now() - phase3Start;
@@ -112,7 +118,7 @@ export async function runSeoPipeline(body: ItemResearchRequest, config: Pipeline
     let phase5Ms = 0;
     if (publishTarget === 'WORDPRESS') {
       const phase5Start = Date.now();
-      wpResult = await runWordPressPhase(ctx, seoContent, actualImageUrl, body.itemName);
+      wpResult = await runWordPressPhase(ctx, seoContent, actualImageUrl, finalTitle);
       phase5Ms = Date.now() - phase5Start;
     }
 
@@ -151,7 +157,7 @@ export async function runSeoPipeline(body: ItemResearchRequest, config: Pipeline
 
     const finalResearchPack = {
       itemId: body.itemId,
-      title: body.keywordMode?.selectedTitle || body.itemName,
+      title: finalTitle,
       content: seoContent,
       contentType: 'html' as const,
       thumbnailUrl: actualImageUrl,

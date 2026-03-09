@@ -60,10 +60,10 @@ export function CtaPreview({ config }: CtaPreviewProps) {
       )}
 
       {/* 상품명 */}
-      <p style={{ fontSize: 11, color: '#94a3b8', marginBottom: 4 }}>상품명 예시</p>
+      <p style={{ textAlign: "center", fontSize: 11, color: '#94a3b8', marginBottom: 4 }}>상품명 예시</p>
 
       {/* 가격 */}
-      <p style={{ fontSize: 16, fontWeight: 700, color: priceColor, marginBottom: 12 }}>29,900원</p>
+      <p style={{ textAlign: "center", fontSize: 16, fontWeight: 700, color: priceColor, marginBottom: 12 }}>29,900원</p>
 
       {/* CTA 버튼 */}
       <div
@@ -81,10 +81,6 @@ export function CtaPreview({ config }: CtaPreviewProps) {
         {headerText || '쿠팡에서 최저가 확인하기'}
       </div>
 
-      {/* 면책 문구 */}
-      <p style={{ fontSize: 9, color: '#94a3b8', marginTop: 8 }}>
-        ※ 쿠팡 파트너스 활동의 일환으로, 일정액의 수수료를 제공받을 수 있습니다.
-      </p>
     </div>
   );
 }

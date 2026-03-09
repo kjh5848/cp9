@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { ResearchItem } from "../model/types";
 import { Badge } from "@/shared/ui/badge";
@@ -16,6 +18,8 @@ import { useRouter } from "next/navigation";
 interface ResearchCardProps {
   research: ResearchItem;
   hasDraft?: boolean;
+  selected?: boolean;
+  onSelect?: (itemId: string, selected: boolean) => void;
   onEditClick?: (itemId: string) => void;
   onGenerateSEO?: (itemId: string) => void;
   onScheduleClick?: (itemId: string) => void;
@@ -28,6 +32,8 @@ interface ResearchCardProps {
  */
 export const ResearchCard = ({ 
   research, 
+  selected,
+  onSelect,
   onEditClick, 
   onGenerateSEO,
   className 
@@ -36,8 +42,8 @@ export const ResearchCard = ({
   const { pack, itemId, updatedAt } = research;
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // 버튼 클릭 시에는 상세 이동 방지
-    if ((e.target as HTMLElement).closest('button')) return;
+    // 버튼 클릭이나 체크박스 클릭 시 상세 이동 방지
+    if ((e.target as HTMLElement).closest('button') || (e.target as HTMLElement).closest('input[type="checkbox"]')) return;
     // projectId를 쿼리파라미터로 전달하여 동일 itemId의 다른 프로젝트 글 구분
     router.push(`/research/${itemId}?projectId=${research.projectId}`);
   };
@@ -46,10 +52,23 @@ export const ResearchCard = ({
     <div 
       onClick={handleCardClick}
       className={cn(
-        "group relative flex items-center gap-4 p-4 bg-card/50 backdrop-blur-sm border border-border rounded-xl transition-all duration-300 hover:border-blue-500/50 hover:bg-muted/30 cursor-pointer shadow-sm",
+        "group relative flex items-center gap-4 p-4 bg-card/50 backdrop-blur-sm border rounded-xl transition-all duration-300 hover:border-blue-500/50 hover:bg-muted/30 cursor-pointer shadow-sm",
+        selected ? "border-blue-500/50 bg-blue-500/5" : "border-border",
         className
       )}
     >
+      {/* 체크박스 (onSelect가 있을 때만 표시) */}
+      {onSelect && (
+        <div className="flex-shrink-0">
+          <input 
+            type="checkbox" 
+            checked={!!selected}
+            onChange={(e) => onSelect(itemId, e.target.checked)}
+            className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+          />
+        </div>
+      )}
+
       {/* 1. 썸네일 (더 작게) */}
       <div className="w-20 h-20 shrink-0 bg-muted rounded-lg border border-border overflow-hidden relative shadow-inner">
         {pack.thumbnailUrl ? (

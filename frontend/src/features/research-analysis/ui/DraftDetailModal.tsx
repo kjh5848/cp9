@@ -24,13 +24,13 @@ export const DraftDetailModal = ({ isOpen, onClose, title, markdown }: DraftDeta
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-0 bg-white dark:bg-[#23272f] border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+      <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-0 bg-white border-slate-200 rounded-xl overflow-hidden">
         
         {/* 헤더 영역 (고정) */}
-        <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+        <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-            <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white">
+            <DialogTitle className="text-lg font-bold text-slate-900">
               {title}
             </DialogTitle>
           </div>
@@ -38,29 +38,19 @@ export const DraftDetailModal = ({ isOpen, onClose, title, markdown }: DraftDeta
             variant="outline" 
             size="sm" 
             onClick={onClose}
-            className="h-8 w-8 p-0 rounded-full border-slate-300 dark:border-slate-700 text-slate-500 hover:text-slate-900 dark:hover:text-white"
+            className="h-8 w-8 p-0 rounded-full border-slate-300 text-slate-500 hover:text-slate-900"
           >
             <X className="w-4 h-4" />
           </Button>
         </div>
 
-        {/* 본문 영역 (스크롤) - CSS 변수를 라이트모드 값으로 강제 오버라이드 */}
-        <div 
-          className="flex-1 overflow-y-auto p-6 sm:p-10"
-          style={{
-            '--foreground': '#0f172a',
-            '--muted-foreground': '#475569',
-            '--border': '#e2e8f0',
-            '--card': '#ffffff',
-            '--card-foreground': '#0f172a',
-            '--muted': '#f1f5f9',
-          } as React.CSSProperties}
-        >
-          <div className="max-w-3xl mx-auto prose-tistory">
+        {/* 본문 영역 (스크롤) */}
+        <div className="flex-1 overflow-y-auto p-6 sm:p-10">
+          <article className="max-w-3xl mx-auto prose-tistory rounded-xl p-6">
             {isHtmlContent ? (
               // HTML 콘텐츠: dangerouslySetInnerHTML로 렌더링
               <div 
-                className="article-html-content"
+                className="article-html-content themed"
                 dangerouslySetInnerHTML={{ __html: markdown }} 
               />
             ) : (
@@ -69,11 +59,11 @@ export const DraftDetailModal = ({ isOpen, onClose, title, markdown }: DraftDeta
                 {markdown || "*내용이 없습니다.*"}
               </ReactMarkdown>
             )}
-          </div>
+          </article>
         </div>
         
         {/* 푸터 영역 (고정 기능 버튼 등 필요 시 확장 가능) */}
-        <div className="flex-shrink-0 flex justify-end px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+        <div className="flex-shrink-0 flex justify-end px-6 py-4 border-t border-slate-200 bg-slate-50">
           <Button onClick={onClose} className="bg-blue-600 hover:bg-blue-500 text-white">
             확인
           </Button>
