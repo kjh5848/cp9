@@ -7,7 +7,12 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: Request) {
   try {
     const queue = await prisma.autopilotQueue.findMany({
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
+      include: {
+        persona: {
+          select: { name: true }
+        }
+      }
     });
     return NextResponse.json({ success: true, data: queue });
   } catch (error) {
@@ -20,7 +25,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { keyword } = body;
+    const { keyword, personaId } = body;
     
     if (!keyword) {
       return NextResponse.json({ error: 'Keyword is required' }, { status: 400 });
@@ -29,7 +34,13 @@ export async function POST(request: Request) {
     const newItem = await prisma.autopilotQueue.create({
       data: {
         keyword,
-        status: 'PENDING'
+        status: 'PENDING',
+        personaId: personaId || null
+      },
+      include: {
+        persona: {
+          select: { name: true }
+        }
       }
     });
 
