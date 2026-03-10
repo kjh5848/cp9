@@ -53,9 +53,10 @@ export const TONE_OPTIONS = [
 
 /** 글 유형 옵션 */
 export const ARTICLE_TYPE_OPTIONS = [
-  { value: "single", label: "딥다이브 리뷰", desc: "하나의 주제를 깊이 파헤치기" },
-  { value: "compare", label: "비교 분석", desc: "여러 제품/옵션을 객관적 비교" },
-  { value: "curation", label: "큐레이션 리스트", desc: "다수 추천 리스트형" },
+  { value: "auto", label: "AI 자동 판별", desc: "키워드 의도에 맞게 에이전트가 선택", minItems: 0, maxItems: 50 },
+  { value: "single", label: "딥다이브 리뷰", desc: "하나의 주제를 깊이 파헤치기", minItems: 0, maxItems: 100 },
+  { value: "compare", label: "비교 분석", desc: "여러 제품/옵션을 객관적 비교", minItems: 2, maxItems: 5 },
+  { value: "curation", label: "큐레이션 리스트", desc: "다수 추천 리스트형", minItems: 3, maxItems: 50 },
 ] as const;
 
 /** 목표 글자수 옵션 */

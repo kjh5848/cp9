@@ -290,12 +290,22 @@ export const useDesignViewModel = (): UseDesignViewModelReturn => {
     input.click();
   }, []);
 
-  // ── 기본값으로 리셋 ──
+  // ── 테마 원래 상태로 초기화 ──
   const handleReset = useCallback(() => {
-    if (!confirm('현재 설정을 기본값으로 초기화하시겠습니까?')) return;
+    if (!confirm('현재 설정을 저장된 상태로 되돌리시겠습니까?')) return;
+    
+    if (selectedThemeId) {
+      const originalTheme = themes.find(t => t.id === selectedThemeId);
+      if (originalTheme) {
+        selectTheme(originalTheme);
+        toast.success('저장된 설정으로 돌아갔습니다.');
+        return;
+      }
+    }
+    
     setConfig(getDefaultConfig());
     toast.success('설정이 기본값으로 초기화되었습니다.');
-  }, []);
+  }, [selectedThemeId, themes, selectTheme]);
 
 
 

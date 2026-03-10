@@ -65,7 +65,7 @@ ${itemsList}
       `.trim();
     } else if (articleType === 'curation') {
       userPrompt = `
-아래 ${items.length}개의 [큐레이션 대상 상품들]을 추천 리스트 형태로 소개하는 매력적인 블로그 제목 후보 5개를 제안해라. (예: 2026년 가성비 추천 TOP ${items.length})
+아래 ${items.length}개의 [큐레이션 대상 상품들]을 추천 리스트 형태로 소개하는 매력적인 블로그 제목 후보 5개를 제안해라. (예: ${new Date().getFullYear()}년 가성비 추천 TOP ${items.length})
 반드시 JSON 배열 형식 형태의 텍스트(예: ["제목1", "제목2", ...])로만 출력할 것.
 
 [큐레이션 대상 상품들]:

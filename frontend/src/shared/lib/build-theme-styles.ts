@@ -50,17 +50,19 @@ export function buildThemeStyles(themeConfig: Record<string, any>): string {
 }
 .entry-content h1, .entry-content h2, .entry-content h3, .entry-content h4,
 .post-content h1, .post-content h2, .post-content h3, .post-content h4,
-article h1, article h2, article h3, article h4 {
+article h1, article h2, article h3, article h4,
+.article-html-content h1, .article-html-content h2, .article-html-content h3, .article-html-content h4 {
   text-align: left;
 }
 .entry-content figure, .entry-content figcaption,
 .post-content figure, .post-content figcaption,
-article figure, article figcaption {
+article figure, article figcaption,
+.article-html-content figure, .article-html-content figcaption {
   text-align: center;
 }
 
 /* 가장 큰 제목 H1 */
-.entry-content h1, .post-content h1, article h1 {
+.entry-content h1, .post-content h1, article h1, .article-html-content h1 {
   color: ${h.h1Color || '#0f172a'} !important;
   font-size: ${h.h1FontSize || '28px'} !important;
   font-weight: 800;
@@ -71,7 +73,7 @@ article figure, article figcaption {
 }
 
 /* 대제목 H2 */
-.entry-content h2, .post-content h2, article h2 {
+.entry-content h2, .post-content h2, article h2, .article-html-content h2 {
   color: ${h.h2Color || '#1a1a2e'} !important;
   font-size: ${h.h2FontSize || '24px'} !important;
   font-weight: 700;
@@ -82,7 +84,7 @@ article figure, article figcaption {
 }
 
 /* 소제목 H3 */
-.entry-content h3, .post-content h3, article h3 {
+.entry-content h3, .post-content h3, article h3, .article-html-content h3 {
   color: ${h.h3Color || '#1e293b'} !important;
   font-size: ${h.h3FontSize || '20px'} !important;
   font-weight: 600;
@@ -93,13 +95,13 @@ article figure, article figcaption {
 }
 
 /* 볼드 강조 */
-.entry-content strong, .post-content strong, article strong {
+.entry-content strong, .post-content strong, article strong, .article-html-content strong {
   color: ${b.color || '#1e293b'} !important;
   font-weight: 700;
 }
 
 /* 인용구 */
-.entry-content blockquote, .post-content blockquote, article blockquote {
+.entry-content blockquote, .post-content blockquote, article blockquote, .article-html-content blockquote {
   border-left: 4px solid ${bq.borderColor || '#2563eb'} !important;
   background-color: ${bq.bgColor || '#eff6ff'};
   color: ${bq.textColor || '#1e40af'};
@@ -113,13 +115,13 @@ article figure, article figcaption {
 }
 
 /* 목록 */
-.entry-content ul, .post-content ul, article ul {
+.entry-content ul, .post-content ul, article ul, .article-html-content ul {
   padding-left: 20px;
 }
-.entry-content ul li::marker, .post-content ul li::marker, article ul li::marker {
+.entry-content ul li::marker, .post-content ul li::marker, article ul li::marker, .article-html-content ul li::marker {
   color: ${li.markerColor || '#2563eb'};
 }
-.entry-content ol li::marker, .post-content ol li::marker, article ol li::marker {
+.entry-content ol li::marker, .post-content ol li::marker, article ol li::marker, .article-html-content ol li::marker {
   color: ${li.markerColor || '#2563eb'};
   font-weight: 600;
 }
@@ -168,7 +170,7 @@ article figure, article figcaption {
 }
 
 /* 구분선 */
-.entry-content hr, .post-content hr, article hr {
+.entry-content hr, .post-content hr, article hr, .article-html-content hr {
   border: none;
   height: 1px;
   background: linear-gradient(to right, transparent, #e2e8f0, transparent);
@@ -176,7 +178,7 @@ article figure, article figcaption {
 }
 
 /* 이미지 캡션 */
-.entry-content figcaption, .post-content figcaption, article figcaption {
+.entry-content figcaption, .post-content figcaption, article figcaption, .article-html-content figcaption {
   font-size: 12px;
   color: #94a3b8;
   text-align: center;

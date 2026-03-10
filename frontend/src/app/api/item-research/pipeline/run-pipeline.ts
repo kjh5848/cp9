@@ -85,7 +85,7 @@ export async function runSeoPipeline(body: ItemResearchRequest, config: Pipeline
       if (dbPersona) {
         personaSystemPrompt = dbPersona.systemPrompt;
         personaToneDesc = dbPersona.toneDescription;
-        personaNegativePrompt = dbPersona.negativePrompt;
+        personaNegativePrompt = dbPersona.negativePrompt || undefined;
         console.log(`🎭 [페르소나] DB 커스텀 페르소나 '${dbPersona.name}' 사용`);
       }
     } catch (e) {

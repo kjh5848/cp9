@@ -14,7 +14,11 @@ export async function getSeoSkillTemplate(filename: string): Promise<string> {
   for (const filePath of tryPaths) {
     try {
       if (fs.existsSync(filePath)) {
-        return fs.readFileSync(filePath, "utf-8");
+        let content = fs.readFileSync(filePath, "utf-8");
+        const currentYear = new Date().getFullYear();
+        // 동적 연도 교체: 프롬프트에 하드코딩된 과거 연도(2024, 2025 등)를 방지
+        content = content.replace(/202[4-9]년/g, `\${currentYear}년`);
+        return content;
       }
     } catch (err) {
       // ignore and try next

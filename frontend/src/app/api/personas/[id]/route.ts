@@ -4,7 +4,7 @@ import { prisma } from '@/infrastructure/clients/prisma';
 // 단일 페르소나 조회
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
@@ -27,7 +27,7 @@ export async function GET(
 // 단일 페르소나 수정
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
@@ -54,7 +54,7 @@ export async function PUT(
 // 단일 페르소나 삭제
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;

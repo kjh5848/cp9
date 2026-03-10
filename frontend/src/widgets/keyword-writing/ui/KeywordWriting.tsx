@@ -52,6 +52,8 @@ import {
   type CoupangSearchMode } from
 "@/shared/constants/coupang-constants";
 
+import { SelectedProductList } from "@/shared/ui/SelectedProductList";
+
 /* ──────────────────────────── 스텝 라벨 ──────────────────────────── */
 const STEP_LABELS_A = ["키워드 선정", "제목 선택", "상품 연결", "글 설정", "생성"];
 const STEP_LABELS_B = ["상품 검색", "상품 선택", "키워드/제목", "글 설정", "생성"];
@@ -60,28 +62,17 @@ const STEP_LABELS_B = ["상품 검색", "상품 선택", "키워드/제목", "�
 export const KeywordWriting = () => {
   const { router, state: s, actions: a } = useKeywordWritingViewModel();
 
-  /* ── 선택된 상품 장바구니 바 (공통) ── */
   const renderCartBar = () => {
     if (s.selectedProducts.length === 0) return null;
     return (
-      <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-3">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-bold text-blue-400">🛒 선택된 상품 ({s.selectedProducts.length}개)</span>
-          <button onClick={a.clearSelectedProducts} className="text-[10px] text-muted-foreground hover:text-red-400 transition-colors flex items-center gap-1"><Trash2 className="w-3 h-3" />전체 해제</button>
-        </div>
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-white/10">
-          {s.selectedProducts.map((p) =>
-          <div key={p.productId} className="relative flex-none w-16 group">
-              <button onClick={() => a.removeSelectedProduct(p.productId)} className="absolute -top-1 -right-1 z-10 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-2.5 h-2.5 text-white" /></button>
-              <div className="w-16 h-16 rounded-lg overflow-hidden border border-border/30 bg-white/5">
-                {p.productImage ? <Image src={p.productImage} alt={p.productName} width={64} height={64} className="object-cover w-full h-full" unoptimized /> : <Package className="w-6 h-6 text-muted-foreground/30 m-auto mt-4" />}
-              </div>
-              <p className="text-[9px] text-muted-foreground mt-1 line-clamp-1 text-center">{p.productName}</p>
-            </div>
-          )}
-        </div>
-      </div>);
-
+      <div className="sticky bottom-6 z-20 w-full animate-in slide-in-from-bottom-5">
+        <SelectedProductList
+          products={s.selectedProducts}
+          onRemove={a.removeSelectedProduct}
+          onClearAll={s.selectedProducts.length > 0 ? a.clearSelectedProducts : undefined}
+        />
+      </div>
+    );
   };
 
   return (
@@ -319,7 +310,7 @@ export const KeywordWriting = () => {
           {/* Step A3: 글 설정 */}
           {s.stepA === 3 ?
         <div className="space-y-6 animate-in fade-in duration-300">
-              <WritingSettingsForm persona={s.persona} setPersona={a.setPersona} tone={s.tone} setTone={a.setTone} articleType={s.articleType} setArticleType={a.setArticleType} textModel={s.textModel} setTextModel={a.setTextModel} imageModel={s.imageModel} setImageModel={a.setImageModel} charLimit={s.charLimit} setCharLimit={a.setCharLimit} />
+              <WritingSettingsForm persona={s.persona} setPersona={a.setPersona} articleType={s.articleType} setArticleType={a.setArticleType} textModel={s.textModel} setTextModel={a.setTextModel} imageModel={s.imageModel} setImageModel={a.setImageModel} charLimit={s.charLimit} setCharLimit={a.setCharLimit} itemCount={s.selectedProducts.length} />
               <div className="flex justify-between">
                 <Button variant="ghost" onClick={() => a.setStepA(2)}><ChevronLeft className="w-4 h-4 mr-1" />이전</Button>
                 <Button onClick={() => a.setStepA(4)} className="bg-blue-600 hover:bg-blue-500 text-white px-6">다음: 최종 확인 <ChevronRight className="w-4 h-4 ml-1" /></Button>
@@ -330,7 +321,7 @@ export const KeywordWriting = () => {
           {/* Step A4: 최종 확인 + 생성 */}
           {s.stepA === 4 ?
         <div className="space-y-6 animate-in fade-in duration-300">
-              <FinalConfirmation keyword={s.keyword} editedTitle={s.editedTitle} selectedProducts={s.selectedProducts} persona={s.persona} tone={s.tone} articleType={s.articleType} textModel={s.textModel} imageModel={s.imageModel} charLimit={s.charLimit} isGenerating={s.isGenerating} generationResult={s.generationResult} onGenerate={a.handleGenerate} onPrev={() => a.setStepA(3)} router={router} />
+              <FinalConfirmation keyword={s.keyword} editedTitle={s.editedTitle} selectedProducts={s.selectedProducts} persona={s.persona} articleType={s.articleType} textModel={s.textModel} imageModel={s.imageModel} charLimit={s.charLimit} isGenerating={s.isGenerating} generationResult={s.generationResult} onGenerate={a.handleGenerate} onPrev={() => a.setStepA(3)} router={router} />
             </div> : null
         }
         </> : null
@@ -422,20 +413,7 @@ export const KeywordWriting = () => {
           {/* Step B1: 상품 확인 → 키워드/제목 추출 */}
           {s.stepB === 1 ?
         <div className="space-y-6 animate-in fade-in duration-300">
-              <GlassCard className="p-6">
-                <div className="flex items-center gap-3 mb-4"><div className="p-2 bg-orange-500/20 rounded-lg"><ShoppingCart className="w-5 h-5 text-orange-400" /></div>
-                  <div className="flex-1"><h3 className="text-lg font-bold text-foreground">선택된 상품 확인</h3></div>
-                  <div className="bg-blue-500/20 text-blue-400 text-xs font-bold px-3 py-1 rounded-full">{s.selectedProducts.length}개</div>
-                </div>
-                <div className="flex gap-3 overflow-x-auto pb-2">
-                  {s.selectedProducts.map((p, idx) =>
-              <div key={idx} className="flex-none w-28 rounded-lg border border-border/30 overflow-hidden">
-                      <div className="relative w-full aspect-square bg-white/5">{p.productImage ? <Image src={p.productImage} alt={p.productName} fill sizes="112px" className="object-cover" unoptimized /> : null}</div>
-                      <div className="p-2"><p className="text-[10px] text-foreground line-clamp-1">{p.productName}</p><p className="text-xs text-blue-400 font-bold">{p.productPrice.toLocaleString()}원</p></div>
-                    </div>
-              )}
-                </div>
-              </GlassCard>
+              <SelectedProductList products={s.selectedProducts} className="bg-slate-900/40 backdrop-blur-md" />
               <Button onClick={() => {a.handleExtractFromProducts();a.setStepB(2);}} disabled={s.isExtractingKeywords} className="w-full h-12 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold">
                 {s.isExtractingKeywords ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />AI가 키워드를 추출 중...</> : <><Sparkles className="w-4 h-4 mr-2" />AI 키워드 + 제목 자동 추출</>}
               </Button>
@@ -473,7 +451,7 @@ export const KeywordWriting = () => {
           {/* Step B3: 글 설정 */}
           {s.stepB === 3 ?
         <div className="space-y-6 animate-in fade-in duration-300">
-              <WritingSettingsForm persona={s.persona} setPersona={a.setPersona} tone={s.tone} setTone={a.setTone} articleType={s.articleType} setArticleType={a.setArticleType} textModel={s.textModel} setTextModel={a.setTextModel} imageModel={s.imageModel} setImageModel={a.setImageModel} charLimit={s.charLimit} setCharLimit={a.setCharLimit} />
+              <WritingSettingsForm persona={s.persona} setPersona={a.setPersona} articleType={s.articleType} setArticleType={a.setArticleType} textModel={s.textModel} setTextModel={a.setTextModel} imageModel={s.imageModel} setImageModel={a.setImageModel} charLimit={s.charLimit} setCharLimit={a.setCharLimit} itemCount={s.selectedProducts.length} />
               <div className="flex justify-between">
                 <Button variant="ghost" onClick={() => a.setStepB(2)}><ChevronLeft className="w-4 h-4 mr-1" />이전</Button>
                 <Button onClick={() => a.setStepB(4)} className="bg-blue-600 hover:bg-blue-500 text-white px-6">다음: 최종 확인 <ChevronRight className="w-4 h-4 ml-1" /></Button>
@@ -484,7 +462,7 @@ export const KeywordWriting = () => {
           {/* Step B4: 최종 확인 + 생성 */}
           {s.stepB === 4 ?
         <div className="space-y-6 animate-in fade-in duration-300">
-              <FinalConfirmation keyword={s.keyword} editedTitle={s.editedTitle} selectedProducts={s.selectedProducts} persona={s.persona} tone={s.tone} articleType={s.articleType} textModel={s.textModel} imageModel={s.imageModel} charLimit={s.charLimit} isGenerating={s.isGenerating} generationResult={s.generationResult} onGenerate={a.handleGenerate} onPrev={() => a.setStepB(3)} router={router} />
+              <FinalConfirmation keyword={s.keyword} editedTitle={s.editedTitle} selectedProducts={s.selectedProducts} persona={s.persona} articleType={s.articleType} textModel={s.textModel} imageModel={s.imageModel} charLimit={s.charLimit} isGenerating={s.isGenerating} generationResult={s.generationResult} onGenerate={a.handleGenerate} onPrev={() => a.setStepB(3)} router={router} />
             </div> : null
         }
         </> : null

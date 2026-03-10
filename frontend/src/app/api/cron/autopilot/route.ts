@@ -17,17 +17,44 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // 2. 가장 오래된 PENDING 상태의 큐 아이템 하나 조회
-    const pendingItem = await prisma.autopilotQueue.findFirst({
-      where: { status: 'PENDING' },
-      orderBy: { createdAt: 'asc' }
+    // 2. 실행 가능한 큐 아이템 조회 (미래 시간으로 설정된 nextRunAt 제외)
+    const now = new Date();
+    const candidateItems = await prisma.autopilotQueue.findMany({
+      where: { 
+        status: 'PENDING',
+        OR: [
+          { nextRunAt: null },
+          { nextRunAt: { lte: now } }
+        ]
+      },
+      orderBy: [
+        { nextRunAt: 'asc' }, // 스케줄된 것 중 가장 오래 지연된 것 우선
+        { createdAt: 'asc' }  // 신규 등록된 것 우선
+      ]
+    });
+
+    if (candidateItems.length === 0) {
+      return NextResponse.json({ message: 'No eligible pending items found.', count: 0 });
+    }
+
+    // 2.1 동작 허용 시간(activeTimeStart ~ activeTimeEnd) 필터링 (KST 기준)
+    const kstHour = new Date(now.getTime() + 9 * 60 * 60 * 1000).getUTCHours();
+    
+    const pendingItem = candidateItems.find(item => {
+      const start = item.activeTimeStart ?? 0;
+      const end = item.activeTimeEnd ?? 23;
+      if (start <= end) {
+        return kstHour >= start && kstHour <= end; // 예: 09:00 ~ 22:00
+      } else {
+        return kstHour >= start || kstHour <= end; // 예: 22:00 ~ 04:00 (밤샘)
+      }
     });
 
     if (!pendingItem) {
-      return NextResponse.json({ message: 'No pending items found in autopilot queue.', count: 0 });
+      return NextResponse.json({ message: 'Items are pending but outside of allowed active hour window.', count: 0 });
     }
 
-    console.log(`🚀 [Autopilot] 큐 처리 시작: ${pendingItem.keyword}`);
+    console.log(`🚀 [Autopilot] 큐 처리 시작: ${pendingItem.keyword} (ID: ${pendingItem.id})`);
 
     // 3. 상태를 PROCESSING으로 변경하여 중복 실행 방지
     await prisma.autopilotQueue.update({
@@ -35,48 +62,111 @@ export async function GET(request: Request) {
       data: { status: 'PROCESSING' }
     });
 
-    // 4. 쿠팡 상품 검색
-    const products = await searchCoupangProducts(pendingItem.keyword, 3);
-    if (!products || products.length === 0) {
+    // 4. 지능형 아이템 소싱 에이전트 파이프라인 (Phase 6)
+    // 4.0 페르소나 컨텍스트 확보
+    const personaId = pendingItem.personaId || 'IT';
+    console.log(`🎭 [Autopilot] 선택된 페르소나 ID: ${personaId}`);
+    const personaRecord = await prisma.persona.findUnique({ where: { id: personaId } });
+    const personaName = personaRecord?.name || '기본 페르소나';
+    const personaPrompt = personaRecord?.systemPrompt || '전문 커머스 블로거입니다.';
+
+    let selectedProducts = [];
+    let intentContent = null;
+    
+    try {
+      // 4.1 의도 기획 에이전트 (Intent Planner)
+      const { runIntentPlanner } = await import('@/features/autopilot/lib/agent/intent-planner');
+      console.log(`🧠 [Autopilot] Intent Planner 시작 (키워드: ${pendingItem.keyword})`);
+      intentContent = await runIntentPlanner({
+        keyword: pendingItem.keyword,
+        articleType: pendingItem.articleType || 'single',
+        personaName,
+        personaPrompt
+      });
+      console.log(`📝 [Autopilot] 기획 완료: ${intentContent.title}`);
+
+      // 4.2 소싱 에이전트 (Sourcing Agent)
+      const { runSourcingAgent } = await import('@/features/autopilot/lib/agent/sourcing-agent');
+      console.log(`🛍️ [Autopilot] Sourcing Agent 시작 (필요 개수: ${intentContent.requiredItemCount})`);
+      const rawAgentProducts = await runSourcingAgent(intentContent);
+      
+      // 소싱 기준 (Sourcing Criteria) 필터링 적용 (Phase 3 기능 호환)
+      let productsFiltered = [...rawAgentProducts];
+      if (pendingItem.isRocketOnly) {
+        productsFiltered = productsFiltered.filter(p => p.isRocket);
+      }
+      if (pendingItem.minPrice) {
+        productsFiltered = productsFiltered.filter(p => p.productPrice >= pendingItem.minPrice!);
+      }
+      if (pendingItem.maxPrice) {
+        productsFiltered = productsFiltered.filter(p => p.productPrice <= pendingItem.maxPrice!);
+      }
+      
+      // 정렬 (Sort)
+      if (pendingItem.sortCriteria === 'salePriceAsc') {
+        productsFiltered.sort((a, b) => a.productPrice - b.productPrice);
+      } else if (pendingItem.sortCriteria === 'salePriceDesc') {
+        productsFiltered.sort((a, b) => b.productPrice - a.productPrice);
+      }
+
+      if (productsFiltered.length === 0) {
+        throw new Error('에이전트 소싱 결과가 필터링(가격/로켓)을 통과하지 못했습니다.');
+      }
+      
+      selectedProducts = productsFiltered;
+    } catch (agentError: any) {
+      console.error('Agent Pipeline Error:', agentError);
       await prisma.autopilotQueue.update({
         where: { id: pendingItem.id },
-        data: { status: 'FAILED', errorMessage: 'No Coupang products found.' }
+        data: { status: 'FAILED', errorMessage: `Agent Sourcing Failed: ${agentError.message}` }
       });
-      return NextResponse.json({ error: 'No Coupang products found.', id: pendingItem.id }, { status: 400 });
+      return NextResponse.json({ error: 'Agent Sourcing Failed', id: pendingItem.id }, { status: 400 });
     }
 
-    // 첫 번째 상품 선택 및 정규화
-    const rawProduct = products[0] as CoupangRawProduct;
-    let selectedProduct = normalizeCoupangProduct(rawProduct);
+    // 대표 상품 1개 추출 및 이미지 애드블록 우회 처리
+    const primaryProduct = normalizeCoupangProduct({
+      ...selectedProducts[0],
+      price: selectedProducts[0].productPrice // normalizeCoupangProduct 호환성 맞춤
+    } as unknown as CoupangRawProduct);
     
-    // 이미지 애드블록 우회 처리
     try {
-      selectedProduct.productImage = await resolveImageRedirectUrl(selectedProduct.productImage);
+      primaryProduct.productImage = await resolveImageRedirectUrl(primaryProduct.productImage);
     } catch (e) {
       console.warn('Failed to resolve image redirect url', e);
     }
 
     // 5. SEO Pipeline Request 파라미터 구성
-    const personaId = pendingItem.personaId || 'IT';
-    console.log(`🎭 [Autopilot] 선택된 페르소나 ID: ${personaId}`);
-
     const projectId = 'autopilot'; // 기본 프로젝트 ID (원하는 대로 수정 가능)
-    const itemId = String(selectedProduct.productId);
-    const itemName = selectedProduct.productName;
+    const itemId = String(primaryProduct.productId);
+    const itemName = primaryProduct.productName;
     
     const body: ItemResearchRequest = {
       itemName,
       projectId,
       itemId,
-      productData: selectedProduct,
+      productData: primaryProduct,
+      items: selectedProducts.map(p => ({
+        productId: String(p.productId),
+        productName: p.productName,
+        productPrice: p.productPrice,
+        productImage: p.productImage,
+        productUrl: p.productUrl,
+        categoryName: p.categoryName || '',
+        isRocket: p.isRocket || false,
+        isFreeShipping: p.isFreeShipping || false
+      })),
+      keywordMode: {
+        keyword: pendingItem.keyword,
+        selectedTitle: intentContent?.title || pendingItem.keyword
+      },
       seoConfig: {
         persona: personaId,
         toneAndManner: '', // 페르소나의 toneDescription으로 대체됨
-        textModel: 'gpt-4o',
-        imageModel: 'dall-e-3',
+        textModel: pendingItem.textModel ?? 'gpt-4o',
+        imageModel: pendingItem.imageModel ?? 'dall-e-3',
         actionType: 'NOW',
-        charLimit: 2000,
-        articleType: 'single', // 향후 비교 분석 등 지능화 가능
+        charLimit: pendingItem.charLimit || 5000,
+        articleType: (pendingItem.articleType === 'auto' ? intentContent?.recommendedArticleType : pendingItem.articleType) as 'single' | 'compare' | 'curation' || 'single', 
         publishTarget: 'WORDPRESS', // 워드프레스 즉시 포스팅
       },
     };
@@ -93,11 +183,11 @@ export async function GET(request: Request) {
     // 6. Research 테이블에 PROCESSING 상태로 레코드 생성
     const processingPack = {
       itemId,
-      title: itemName,
+      title: intentContent?.title || itemName,
       content: null,
       thumbnailUrl: null,
-      productUrl: selectedProduct.productUrl,
-      productImage: selectedProduct.productImage,
+      productUrl: primaryProduct.productUrl,
+      productImage: primaryProduct.productImage,
       researchRaw: null,
       status: 'PROCESSING',
       persona,
@@ -115,21 +205,39 @@ export async function GET(request: Request) {
 
     // 7. 파이프라인 트리거 (비동기)
     // 에러 체이닝을 위해 Promise.resolve 체인에서 에러를 확인하고 AutopilotQueue 상태를 방어적으로 업데이트할 수 있음
-    runSeoPipeline(body, { persona, tone, textModel, imageModel, charLimit, articleType, publishTarget, themeId })
-      .then(async () => {
-        // 성공적으로 파이프라인이 호출됨(완료됨)
+    try {
+      const pipelineResult = await runSeoPipeline(body, { persona, tone, textModel, imageModel, charLimit, articleType: articleType as 'single' | 'compare' | 'curation', publishTarget, themeId });
+      
+      // Phase 3: 스케줄링 간격(intervalHours)이 설정되어 있다면 반복 발행으로 간주
+      if (pendingItem.intervalHours && pendingItem.intervalHours > 0) {
+        const nextTime = new Date();
+        nextTime.setHours(nextTime.getHours() + pendingItem.intervalHours);
+
         await prisma.autopilotQueue.update({
           where: { id: pendingItem.id },
-          data: { status: 'COMPLETED' }
+          data: { 
+            status: 'PENDING',  // 다음 턴을 위해 PENDING 리셋
+            nextRunAt: nextTime,
+            resultUrl: String(pipelineResult) 
+          }
         });
-      })
-      .catch(async (e) => {
-        console.error('Autopilot Pipeline Error:', e);
+      } else {
+        // 단발성 큐라면 완료 상태로 종결
         await prisma.autopilotQueue.update({
           where: { id: pendingItem.id },
-          data: { status: 'FAILED', errorMessage: e instanceof Error ? e.message : 'Unknown error' }
+          data: { 
+            status: 'COMPLETED', 
+            resultUrl: String(pipelineResult) 
+          }
         });
+      }
+    } catch (e) {
+      console.error('Autopilot Pipeline Error:', e);
+      await prisma.autopilotQueue.update({
+        where: { id: pendingItem.id },
+        data: { status: 'FAILED', errorMessage: e instanceof Error ? e.message : 'Unknown error' }
       });
+    }
 
     return NextResponse.json({ 
       success: true, 

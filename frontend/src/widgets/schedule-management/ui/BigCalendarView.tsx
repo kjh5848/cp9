@@ -49,6 +49,8 @@ export interface ScheduleEvent extends RBCEvent {
   articleType?: string;
   content?: string;
   rawItem?: any;
+  isAutopilot?: boolean;
+  resultUrl?: string;
 }
 
 interface BigCalendarViewProps {

@@ -24,6 +24,7 @@ import { WriteActionModal } from "@/features/research-analysis/ui/WriteActionMod
 import ReactMarkdown from "react-markdown";
 import { useJobPolling } from "@/features/research-analysis/model/useJobPolling";
 import { toast } from "react-hot-toast";
+import { SelectedProductList } from "@/shared/ui/SelectedProductList";
 
 type SearchMode = "keyword" | "link" | "category" | "pl_brand";
 type PersonaType = "Single_Expert" | "Compare_Master" | "Curation_Blogger";
@@ -424,7 +425,7 @@ export const ProductCreation = () => {
           {icon}
           <h3 className="text-xl font-bold text-white">{title}</h3>
         </div>
-        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+        <div className="flex gap-4 overflow-x-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {items.map((product, idx) => {
             const isSelected = selectedProductIds.has(product.productId);
             return (
@@ -827,35 +828,12 @@ export const ProductCreation = () => {
           <div className="max-w-3xl mx-auto">
             <GlassCard className="p-4 border-blue-500/30 bg-gray-900/95 backdrop-blur-xl shadow-2xl space-y-3">
               {/* 상단: 선택 상품 썸네일 미리보기 (장바구니 바) */}
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-blue-400">🛒 선택된 상품 ({selectedProductIds.size}개)</span>
-                <button
-                onClick={() => setSelectedProductMap(new Map())}
-                className="text-[10px] text-muted-foreground hover:text-red-400 transition-colors flex items-center gap-1">
-                
-                  <X className="w-3 h-3" />전체 해제
-                </button>
-              </div>
-              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-white/10">
-                {Array.from(selectedProductMap.values()).map((p) =>
-              <div key={p.productId} className="relative flex-none w-16 group">
-                    <button
-                  onClick={() => toggleSelection(p.productId)}
-                  className="absolute -top-1 -right-1 z-10 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  
-                      <X className="w-2.5 h-2.5 text-white" />
-                    </button>
-                    <div className="w-16 h-16 rounded-lg overflow-hidden border border-border/30 bg-white/5">
-                      {p.productImage ?
-                  <Image src={p.productImage} alt={p.productName} width={64} height={64} className="object-cover w-full h-full" unoptimized /> :
-
-                  <Package className="w-6 h-6 text-muted-foreground/30 m-auto mt-4" />
-                  }
-                    </div>
-                    <p className="text-[9px] text-muted-foreground mt-1 line-clamp-1 text-center">{p.productName}</p>
-                  </div>
-              )}
-              </div>
+              <SelectedProductList
+                products={Array.from(selectedProductMap.values())}
+                onRemove={toggleSelection}
+                onClearAll={() => setSelectedProductMap(new Map())}
+                className="p-0 border-none bg-transparent shadow-none backdrop-blur-none"
+              />
 
               {/* 하단: 액션 버튼 */}
               <div className="flex items-center justify-end gap-3 pt-2 border-t border-white/10">

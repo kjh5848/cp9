@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { AutopilotQueueItem, CreateAutopilotQueuePayload } from '../../../entities/autopilot/model/types';
+import { AiResearchKeyword, AutopilotQueueItem, CreateAutopilotQueuePayload } from '../../../entities/autopilot/model/types';
 
 export function useAutopilotViewModel() {
   const [queue, setQueue] = useState<AutopilotQueueItem[]>([]);
@@ -10,7 +10,7 @@ export function useAutopilotViewModel() {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/autopilot/queue');
+      const res = await fetch(`/api/autopilot/queue?_t=${Date.now()}`, { cache: 'no-store' });
       const data = await res.json();
       if (data.success) {
         setQueue(data.data);
@@ -92,6 +92,56 @@ export function useAutopilotViewModel() {
     }
   };
 
+  const researchKeywords = async (personaId: string, topic: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/autopilot/research', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ personaId, topic, count: 20 }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        return data.data as AiResearchKeyword[];
+      } else {
+        throw new Error(data.error || 'Failed to research keywords');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const addBulkToQueue = async (payloads: CreateAutopilotQueuePayload[]) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/autopilot/queue/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: payloads }),
+      });
+      const data = await res.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to add bulk items to queue');
+      }
+      
+      await fetchQueue();
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     queue,
     isLoading,
@@ -99,6 +149,8 @@ export function useAutopilotViewModel() {
     fetchQueue,
     addToQueue,
     deleteFromQueue,
-    triggerCronManually
+    triggerCronManually,
+    researchKeywords,
+    addBulkToQueue,
   };
 }

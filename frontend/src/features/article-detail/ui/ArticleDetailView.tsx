@@ -281,11 +281,13 @@ export function ArticleDetailView({ vm }: ArticleDetailViewProps) {
                   </div>) : (
 
               /* === 미리보기 모드 === */
-              <article className="prose-tistory p-8 md:p-12 rounded-3xl border border-border/40 shadow-xl">
+              <article className="prose-tistory p-8 md:p-12 rounded-3xl border border-border/40 shadow-xl bg-card">
                     {pack.contentType === 'html' ?
-                <div className={cn("article-html-content", pack.appliedThemeId ? "themed" : null)} dangerouslySetInnerHTML={{ __html: pack.content! }} /> :
+                <div className={cn("article-html-content themed", pack.appliedThemeId ? "custom-themed" : null)} dangerouslySetInnerHTML={{ __html: pack.content! }} /> :
 
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{pack.content!}</ReactMarkdown>
+                <div className="article-html-content themed">
+                   <ReactMarkdown remarkPlugins={[remarkGfm]}>{pack.content!}</ReactMarkdown>
+                </div>
                 }
                   </article>) :
 

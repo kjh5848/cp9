@@ -5,7 +5,7 @@
  */
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import {
@@ -17,7 +17,7 @@ import {
 } from "../api/keyword-api";
 import { CoupangProductResponse } from "@/shared/types/api";
 import { DEFAULT_TEXT_MODEL, DEFAULT_IMAGE_MODEL } from "@/shared/config/model-options";
-import type { WritingMode, GenerationResult } from "@/entities/keyword-writing/model/types";
+import { type WritingMode, type GenerationResult, ARTICLE_TYPE_OPTIONS } from "@/entities/keyword-writing/model/types";
 import type { CoupangSearchMode } from "@/shared/constants/coupang-constants";
 
 export function useKeywordWritingViewModel() {
@@ -33,7 +33,6 @@ export function useKeywordWritingViewModel() {
   const [selectedTitleIdx, setSelectedTitleIdx] = useState<number | null>(null);
   const [titles, setTitles] = useState<TitleCandidate[]>([]);
   const [persona, setPersona] = useState("IT");
-  const [tone, setTone] = useState("professional");
   const [articleType, setArticleType] = useState("single");
   const [textModel, setTextModel] = useState(DEFAULT_TEXT_MODEL);
   const [imageModel, setImageModel] = useState(DEFAULT_IMAGE_MODEL);
@@ -44,6 +43,19 @@ export function useKeywordWritingViewModel() {
   // ── 쿠팡 상품 (장바구니 패턴: Map으로 선택 상품 데이터를 보존) ──
   const [coupangResults, setCoupangResults] = useState<CoupangProductResponse[]>([]);
   const [selectedProductMap, setSelectedProductMap] = useState<Map<number, CoupangProductResponse>>(new Map());
+
+  // 글 유형이 유효한지 체크하여 자동 리셋 (상품 선택 변경 시)
+  const selectedProductsLength = selectedProductMap.size;
+  useEffect(() => {
+    const currentOption = ARTICLE_TYPE_OPTIONS.find(a => a.value === articleType);
+    if (currentOption) {
+      const isValid = selectedProductsLength >= currentOption.minItems && selectedProductsLength <= currentOption.maxItems;
+      if (!isValid) {
+        setArticleType("single");
+      }
+    }
+  }, [selectedProductsLength, articleType]);
+
   const [isSearchingCoupang, setIsSearchingCoupang] = useState(false);
   const [coupangSearchTerm, setCoupangSearchTerm] = useState("");
 
@@ -274,7 +286,7 @@ export function useKeywordWritingViewModel() {
         itemName: finalTitle,
         projectId,
         itemId,
-        seoConfig: { persona, toneAndManner: tone, textModel, imageModel, charLimit: parseInt(charLimit), articleType, publishTarget: "DB_ONLY" },
+        seoConfig: { persona, textModel, imageModel, charLimit: parseInt(charLimit), articleType, publishTarget: "DB_ONLY" },
         keywordMode: { keyword: keyword.trim() || finalTitle, selectedTitle: finalTitle },
       };
       if (leadProduct) {
@@ -299,7 +311,7 @@ export function useKeywordWritingViewModel() {
       } else { toast.error("글 생성 요청에 실패했습니다."); }
     } catch { toast.error("글 생성 중 오류가 발생했습니다."); }
     finally { setIsGenerating(false); }
-  }, [keyword, editedTitle, selectedTitleIdx, titles, selectedProducts, persona, tone, textModel, imageModel, charLimit, articleType]);
+  }, [keyword, editedTitle, selectedTitleIdx, titles, selectedProducts, persona, textModel, imageModel, charLimit, articleType]);
 
   // ── 액션: 모드 전환 ──
   const switchMode = (newMode: WritingMode) => {
@@ -320,7 +332,6 @@ export function useKeywordWritingViewModel() {
       selectedTitleIdx,
       titles,
       persona,
-      tone,
       articleType,
       textModel,
       imageModel,
@@ -361,7 +372,6 @@ export function useKeywordWritingViewModel() {
       setIsEditingTitle,
       setSelectedTitleIdx,
       setPersona,
-      setTone,
       setArticleType,
       setTextModel,
       setImageModel,

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { GlassCard } from "@/shared/ui/GlassCard";
 import { Button } from "@/shared/ui/button";
-import { Calendar as CalendarIcon, Clock, PenTool, CheckCircle2, Loader2, AlertCircle, Trash2, Edit3, LayoutGrid, CalendarDays, Play, Square } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, PenTool, CheckCircle2, Loader2, AlertCircle, Trash2, Edit3, LayoutGrid, CalendarDays, Play, Square, Settings } from "lucide-react";
 import { DraftDetailModal } from "@/features/research-analysis/ui/DraftDetailModal";
 import { useResearchViewModel } from "@/features/research-analysis/model/useResearchViewModel";
 import { BigCalendarView, type ScheduleEvent } from "./BigCalendarView";
@@ -15,37 +15,85 @@ import { cn } from "@/shared/lib/utils";
  * [Widgets Layer]
  * 스케줄링 목록(예약된 포스팅, 완료된 포스팅 등)을 글로벌로 관리하고 확인하는 보드입니다.
  */
+import { useAutopilotViewModel } from '@/features/autopilot/model/useAutopilotViewModel';
+import { AutopilotConfigModal } from '@/features/autopilot/ui/AutopilotConfigModal';
+
 export const ScheduleManagement = () => {
-  const { researchList, loading, error, fetchResearch } = useResearchViewModel();
+  const { researchList, loading: researchLoading, error: researchError, fetchResearch } = useResearchViewModel();
+  const { queue: autopilotQueue, isLoading: autopilotLoading, fetchQueue: fetchAutopilotQueue, deleteFromQueue } = useAutopilotViewModel();
+
+  const loading = researchLoading || autopilotLoading;
+  const error = researchError;
 
   useEffect(() => {
     fetchResearch();
-  }, [fetchResearch]);
+    fetchAutopilotQueue();
+  }, [fetchResearch, fetchAutopilotQueue]);
 
   // DB에서 가져온 데이터로 목록 분리
-  const scheduledItems = researchList.filter(item => item.pack.status === 'SCHEDULED').map(item => ({
+  const manualScheduled = researchList.filter(item => item.pack.status === 'SCHEDULED').map(item => ({
     id: `${item.projectId}_${item.itemId}`,
     title: item.pack.title || '제목 없음',
     persona: item.pack.seoConfig?.persona || 'IT',
     date: item.pack.scheduledAt || item.updatedAt,
     status: 'PENDING',
-    rawItem: item
+    isAutopilot: false,
+    rawItem: item as any
   }));
 
-  const completedItems = researchList.filter(item => item.pack.status === 'PUBLISHED' || item.pack.content).map(item => ({
+  const autoScheduled = autopilotQueue.filter(item => ['PENDING', 'PROCESSING', 'FAILED'].includes(item.status)).map(item => ({
+    id: `auto_${item.id}`,
+    title: item.keyword, // "[Autopilot]" prefix 제거 (배지로 대체 예정)
+    persona: item.persona?.name || '기본 페르소나',
+    date: item.nextRunAt || item.createdAt,
+    status: item.status === 'FAILED' ? 'FAILED' : 'PENDING',
+    isAutopilot: true,
+    rawItem: item as any
+  }));
+
+  const scheduledItems = [...manualScheduled, ...autoScheduled].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  const manualCompleted = researchList.filter(item => item.pack.status === 'PUBLISHED' || item.pack.content).map(item => ({
     id: `${item.projectId}_${item.itemId}`,
     title: item.pack.title || '제목 없음',
     persona: item.pack.seoConfig?.persona || 'IT',
     date: item.pack.scheduledAt || item.updatedAt,
     status: 'COMPLETED',
+    isAutopilot: false,
     content: item.pack.content || ''
   }));
+
+  const autoCompleted = autopilotQueue.filter(item => item.status === 'COMPLETED').map(item => ({
+    id: `auto_${item.id}`,
+    title: item.keyword, // "[Autopilot]" prefix 제거
+    persona: item.persona?.name || '기본 페르소나',
+    date: item.nextRunAt || item.createdAt,
+    status: 'COMPLETED',
+    isAutopilot: true,
+    resultUrl: item.resultUrl,
+    content: '워드프레스에 자동 발행된 아이템입니다.'
+  }));
+
+  const completedItems = [...manualCompleted, ...autoCompleted].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   const [previewItem, setPreviewItem] = useState<{ isOpen: boolean; title: string; markdown: string }>({
     isOpen: false,
     title: "",
     markdown: "",
   });
+
+  // 오토파일럿 설정 모달 상태
+  const [autopilotModal, setAutopilotModal] = useState<{ isOpen: boolean; item: any }>({
+    isOpen: false,
+    item: null,
+  });
+
+  // 오토파일럿만 보기 필터
+  const [showAutopilotOnly, setShowAutopilotOnly] = useState(false);
+
+  // 화면에 표시할 아이템 (필터 적용)
+  const displayScheduledItems = showAutopilotOnly ? scheduledItems.filter(i => i.isAutopilot) : scheduledItems;
+  const displayCompletedItems = showAutopilotOnly ? completedItems.filter(i => i.isAutopilot) : completedItems;
 
   // 뷰 모드: 'board' | 'calendar'
   const [viewMode, setViewMode] = useState<'board' | 'calendar'>('calendar');
@@ -56,7 +104,7 @@ export const ScheduleManagement = () => {
   const [queueProgress, setQueueProgress] = useState({ current: 0, total: 0 });
 
   // 발행 큐 실행: 예약 시간이 지났으나 아직 미발행인 글만 순차 실행
-  const overdueItems = scheduledItems.filter(item =>
+  const overdueItems = displayScheduledItems.filter(item =>
     item.status === 'PENDING' && new Date(item.date) < new Date()
   );
   const runPublishQueue = useCallback(async () => {
@@ -121,31 +169,34 @@ export const ScheduleManagement = () => {
 
   // react-big-calendar용 이벤트 변환 (allDay로 해당 날짜에만 표시)
   const calendarEvents: ScheduleEvent[] = [
-    ...scheduledItems.map(item => {
+    ...displayScheduledItems.map(item => {
       const d = new Date(item.date);
       return {
         id: item.id,
-        title: item.title,
+        title: item.isAutopilot ? `[오토파일럿] ${item.title}` : item.title,
         start: d,
         end: d,
         allDay: true,
         status: 'PENDING' as const,
         persona: item.persona,
-        articleType: item.rawItem.pack.articleType,
+        articleType: item.isAutopilot ? item.rawItem.articleType : item.rawItem.pack.articleType,
         rawItem: item.rawItem,
+        isAutopilot: item.isAutopilot,
       };
     }),
-    ...completedItems.map(item => {
+    ...displayCompletedItems.map(item => {
       const d = new Date(item.date);
       return {
         id: item.id,
-        title: item.title,
+        title: item.isAutopilot ? `[오토파일럿] ${item.title}` : item.title,
         start: d,
         end: d,
         allDay: true,
         status: 'COMPLETED' as const,
         persona: item.persona,
         content: item.content,
+        isAutopilot: item.isAutopilot,
+        resultUrl: (item as any).resultUrl,
       };
     }),
   ];
@@ -159,18 +210,25 @@ export const ScheduleManagement = () => {
   const [cancelConfirmId, setCancelConfirmId] = useState<string | null>(null);
 
   // 스케줄 취소 실행
-  const executeCancelSchedule = async (projectId: string, itemId: string) => {
+  const executeCancelSchedule = async (item: any) => {
     try {
-      const res = await fetch(`/api/research?projectId=${encodeURIComponent(projectId)}&itemId=${encodeURIComponent(itemId)}`, {
-        method: 'DELETE',
-      });
-      const result = await res.json();
-      if (result.success) {
-        toast.success('스케줄이 취소되었습니다.');
+      if (item.isAutopilot) {
+        await deleteFromQueue(item.rawItem.id);
+        toast.success('오토파일럿 큐에서 삭제되었습니다.');
         setCancelConfirmId(null);
-        fetchResearch();
+        fetchAutopilotQueue();
       } else {
-        toast.error(`취소 실패: ${result.error}`);
+        const res = await fetch(`/api/research?projectId=${encodeURIComponent(item.rawItem.projectId)}&itemId=${encodeURIComponent(item.rawItem.itemId)}`, {
+          method: 'DELETE',
+        });
+        const result = await res.json();
+        if (result.success) {
+          toast.success('스케줄이 취소되었습니다.');
+          setCancelConfirmId(null);
+          fetchResearch();
+        } else {
+          toast.error(`취소 실패: ${result.error}`);
+        }
       }
     } catch {
       toast.error('스케줄 취소 중 오류가 발생했습니다.');
@@ -186,29 +244,50 @@ export const ScheduleManagement = () => {
   };
 
   // 수정 저장
-  const handleSaveEdit = async (rawItem: any) => {
+  const handleSaveEdit = async (item: any) => {
     if (!editDate || !editTime) {
       toast.error('날짜와 시간을 입력해주세요.');
       return;
     }
     const newScheduledAt = new Date(`${editDate}T${editTime}:00`).toISOString();
-    const updatedPack = { ...rawItem.pack, scheduledAt: newScheduledAt };
-    try {
-      const res = await fetch('/api/research', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId: rawItem.projectId, itemId: rawItem.itemId, pack: updatedPack }),
-      });
-      const result = await res.json();
-      if (result.success) {
-        toast.success('스케줄이 수정되었습니다.');
-        setEditingId(null);
-        fetchResearch();
-      } else {
-        toast.error(`수정 실패: ${result.error}`);
+
+    if (item.isAutopilot) {
+      try {
+        const res = await fetch('/api/autopilot/queue', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: item.rawItem.id, nextRunAt: newScheduledAt }),
+        });
+        const result = await res.json();
+        if (result.success) {
+          toast.success('오토파일럿 스케줄이 수정되었습니다.');
+          setEditingId(null);
+          fetchAutopilotQueue();
+        } else {
+          toast.error(`수정 실패: ${result.error}`);
+        }
+      } catch {
+        toast.error('오토파일럿 스케줄 수정 중 오류가 발생했습니다.');
       }
-    } catch {
-      toast.error('스케줄 수정 중 오류가 발생했습니다.');
+    } else {
+      const updatedPack = { ...item.rawItem.pack, scheduledAt: newScheduledAt };
+      try {
+        const res = await fetch('/api/research', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId: item.rawItem.projectId, itemId: item.rawItem.itemId, pack: updatedPack }),
+        });
+        const result = await res.json();
+        if (result.success) {
+          toast.success('스케줄이 수정되었습니다.');
+          setEditingId(null);
+          fetchResearch();
+        } else {
+          toast.error(`수정 실패: ${result.error}`);
+        }
+      } catch {
+        toast.error('스케줄 수정 중 오류가 발생했습니다.');
+      }
     }
   };
 
@@ -311,30 +390,38 @@ export const ScheduleManagement = () => {
             </Button>
           </div>
         </div>
-        {/* 뷰 전환 탭 */}
-        <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg w-fit">
-          <button
-            onClick={() => setViewMode('calendar')}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
-              viewMode === 'calendar'
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <CalendarDays className="w-4 h-4" />캘린더
-          </button>
-          <button
-            onClick={() => setViewMode('board')}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
-              viewMode === 'board'
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <LayoutGrid className="w-4 h-4" />보드
-          </button>
+        {/* 뷰 및 토글 옵션 */}
+        <div className="flex items-center gap-4">
+          <label className="flex items-center gap-2 cursor-pointer bg-slate-900/50 px-3 py-1.5 rounded-lg border border-slate-800 hover:bg-slate-800 transition-colors">
+            <div className={`relative w-8 h-4 rounded-full transition-colors ${showAutopilotOnly ? 'bg-blue-500' : 'bg-slate-700'}`}>
+              <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full transition-transform ${showAutopilotOnly ? 'translate-x-4' : 'translate-x-0'}`} />
+            </div>
+            <span className="text-sm font-medium text-slate-300">오토파일럿만 보기</span>
+          </label>
+          <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg w-fit">
+            <button
+              onClick={() => setViewMode('calendar')}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+                viewMode === 'calendar'
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <CalendarDays className="w-4 h-4" />캘린더
+            </button>
+            <button
+              onClick={() => setViewMode('board')}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+                viewMode === 'board'
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <LayoutGrid className="w-4 h-4" />보드
+            </button>
+          </div>
         </div>
       </div>
 
@@ -370,12 +457,18 @@ export const ScheduleManagement = () => {
         <BigCalendarView
           events={calendarEvents}
           onEventClick={(event) => {
-            // 콘텐츠가 있는 이벤트만 모달 열기
+            // 콘텐츠가 있는 완료된 이벤트는 리뷰 모달 열기
             if (event.content) {
               setPreviewItem({
                 isOpen: true,
                 title: event.title as string,
                 markdown: event.content || '',
+              });
+            } else if (event.isAutopilot && event.status === 'PENDING') {
+              // 콘텐츠가 없고(대기중) 오토파일럿 아이템인 경우 오토파일럿 설정 모달 열기
+              setAutopilotModal({
+                isOpen: true,
+                item: event.rawItem,
               });
             }
           }}
@@ -394,16 +487,23 @@ export const ScheduleManagement = () => {
               발행 대기중
             </h3>
             <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-              {scheduledItems.length}
+              {displayScheduledItems.length}
             </span>
           </div>
           
           <div className="flex flex-col gap-4">
-            {scheduledItems.map(item => (
+            {displayScheduledItems.map(item => (
               <GlassCard key={item.id} className="p-4 border-border bg-card hover:bg-muted/50 transition-colors">
                 <div className="flex flex-col gap-3">
                   <div className="flex justify-between items-start">
-                    <h4 className="font-semibold text-foreground line-clamp-1 flex-1 pr-4">{item.title}</h4>
+                    <h4 className="font-semibold text-foreground line-clamp-1 flex-1 pr-4 flex items-center gap-2">
+                      {item.isAutopilot && (
+                        <span className="bg-blue-500/10 text-blue-400 text-[10px] px-1.5 py-0.5 rounded border border-blue-500/20 font-bold tracking-tight shrink-0">
+                          Auto
+                        </span>
+                      )}
+                      {item.title}
+                    </h4>
                     {renderStatusBadge(item.status)}
                   </div>
                   <div className="flex items-center justify-between text-sm">
@@ -422,7 +522,7 @@ export const ScheduleManagement = () => {
                       <span className="text-xs text-red-400">정말 취소하시겠습니까?</span>
                       <div className="flex gap-1.5">
                         <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 border-red-500/30 text-red-400 hover:bg-red-500/20"
-                          onClick={() => executeCancelSchedule(item.rawItem.projectId, item.rawItem.itemId)}>삭제</Button>
+                          onClick={() => executeCancelSchedule(item)}>삭제</Button>
                         <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 border-border text-muted-foreground hover:bg-muted"
                           onClick={() => setCancelConfirmId(null)}>아니오</Button>
                       </div>
@@ -436,12 +536,18 @@ export const ScheduleManagement = () => {
                           className="h-7 text-xs bg-slate-900 border-slate-700 text-slate-200 w-24" />
                       </div>
                       <Button size="sm" variant="outline" className="h-7 text-xs border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10"
-                        onClick={() => handleSaveEdit(item.rawItem)}>저장</Button>
+                        onClick={() => handleSaveEdit(item)}>저장</Button>
                       <Button size="sm" variant="outline" className="h-7 text-xs border-border text-muted-foreground hover:bg-muted"
                         onClick={() => setEditingId(null)}>닫기</Button>
                     </div>
                   ) : (
                     <div className="flex justify-end gap-2">
+                      {item.isAutopilot && (
+                        <Button size="sm" variant="outline" className="h-7 text-xs border-blue-500/30 text-blue-500 hover:bg-blue-500/10 gap-1"
+                          onClick={() => setAutopilotModal({ isOpen: true, item: item.rawItem })}>
+                          <Settings className="w-3 h-3" />설정
+                        </Button>
+                      )}
                       <Button size="sm" variant="outline" className="h-7 text-xs border-border text-muted-foreground hover:bg-muted gap-1"
                         onClick={() => handleStartEdit(item.id, item.date)}>
                         <Edit3 className="w-3 h-3" />수정
@@ -471,7 +577,7 @@ export const ScheduleManagement = () => {
               발행 완료
             </h3>
             <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-              {completedItems.length}
+              {displayCompletedItems.length}
             </span>
           </div>
 
@@ -527,6 +633,12 @@ export const ScheduleManagement = () => {
         onClose={() => setPreviewItem((prev: typeof previewItem) => ({ ...prev, isOpen: false }))}
         title={previewItem.title}
         markdown={previewItem.markdown}
+      />
+      
+      <AutopilotConfigModal
+        isOpen={autopilotModal.isOpen}
+        onClose={() => setAutopilotModal(prev => ({ ...prev, isOpen: false }))}
+        config={autopilotModal.item}
       />
     </div>
   );

@@ -18,6 +18,8 @@ import {
   getTextModelGroups,
 } from "@/shared/config/model-options";
 import { usePersonaViewModel } from "@/features/persona/model/usePersonaViewModel";
+import { SharedArticleSettings } from "@/shared/ui/SharedArticleSettings";
+import { SelectedProductList } from "@/shared/ui/SelectedProductList";
 
 /* ──────────────────────────── 타입 정의 ──────────────────────────── */
 
@@ -156,7 +158,7 @@ export const WriteActionModal = ({
   const displayPersonas = personas.length > 0 
     ? personas.map(p => ({
         id: p.id,
-        label: `🎭 ${p.name}`,
+        label: p.name.replace(/[\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF]/g, '').trim(),
         desc: p.toneDescription.slice(0, 30) + '...'
       }))
     : FALLBACK_PERSONA_OPTIONS;
@@ -397,6 +399,8 @@ export const WriteActionModal = ({
 
         <StepIndicator current={step} total={TOTAL_STEPS} />
 
+        <SelectedProductList products={selectedItems} className="mb-2" />
+
         <div className="py-2 space-y-5 min-h-[280px]">
           {/* ════════ Step 1: 글 유형 선택 ════════ */}
           {step === 0 && (
@@ -505,126 +509,19 @@ export const WriteActionModal = ({
           {/* ════════ Step 3: 페르소나 & AI 모델 ════════ */}
           {step === 2 && (
             <div className="space-y-5">
-              {/* 페르소나 */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-slate-300">작성자 페르소나 선택</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {displayPersonas.map((opt) => (
-                    <div
-                      key={opt.id}
-                      onClick={() => setSelectedPersona(opt.id)}
-                      className={cn(
-                        "p-3 rounded-lg border cursor-pointer transition-all duration-200 flex flex-col gap-1",
-                        selectedPersona === opt.id
-                          ? "bg-blue-600/20 border-blue-500 text-blue-100"
-                          : "bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-500",
-                      )}
-                    >
-                      <span className="font-bold text-sm">{opt.label}</span>
-                      <span className="text-[10px] opacity-80">{opt.desc}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="pt-1">
-                  <label className="text-xs text-slate-500 mb-1 block">작성자 닉네임 (글 본문에 반영 제한적 사용)</label>
-                  <input
-                    type="text"
-                    placeholder="예: 마스터 큐레이터 H"
-                    value={personaName}
-                    onChange={(e) => setPersonaName(e.target.value)}
-                    className="w-full bg-slate-900 border border-blue-500/50 text-slate-200 text-sm rounded-md px-3 py-2 outline-none focus:border-blue-400 placeholder:text-slate-600"
-                  />
-                  <p className="text-[10px] text-slate-500 mt-1">AI가 이 닉네임을 참고하여 본문을 작성합니다.</p>
-                </div>
-              </div>
-
-              {/* AI 모델 */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-slate-300">사용할 AI 모델 선택</h4>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <label className="text-xs text-slate-500">텍스트 작성 모델</label>
-                    <select
-                      className="w-full bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-md px-3 py-2 outline-none focus:border-blue-500"
-                      value={selectedTextModel}
-                      onChange={(e) => setSelectedTextModel(e.target.value)}
-                    >
-                      {getTextModelGroups().map((g) => (
-                        <optgroup key={g.group} label={`— ${g.group} —`}>
-                          {g.models.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
-                        </optgroup>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs text-slate-500">이미지 생성 모델</label>
-                    <select
-                      className="w-full bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-md px-3 py-2 outline-none focus:border-blue-500"
-                      value={selectedImageModel}
-                      onChange={(e) => setSelectedImageModel(e.target.value)}
-                    >
-                      {IMAGE_MODEL_OPTIONS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
-                    </select>
-                  </div>
-                </div>
-
-                {/* 글자수 — 큐레이션은 자동 계산이므로 표시만 */}
-                <div className="pt-2 space-y-2">
-                  <label className="text-xs text-slate-500 block">목표 글자수 (공백 포함)</label>
-                  {articleType === "curation" ? (
-                    <div className="flex items-center gap-2 p-3 rounded-lg bg-purple-500/10 border border-purple-500/30">
-                      <Info className="w-4 h-4 text-purple-400 flex-shrink-0" />
-                      <div>
-                        <p className="text-sm text-purple-200 font-semibold">
-                          ~{charLimit.toLocaleString()}자 (자동 계산)
-                        </p>
-                        <p className="text-[10px] text-purple-400">
-                          {itemCount}개 아이템 × ~{getCurationGuideForCount(itemCount).perItem}자/아이템
-                          + 도입/결론 ~1,000자
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="grid grid-cols-5 gap-1.5">
-                        {CHAR_LIMIT_PRESETS.map((preset) => (
-                          <button
-                            key={preset.value}
-                            type="button"
-                            onClick={() => {
-                              setCharLimitMode(preset.value);
-                              if (preset.value !== "custom") setCharLimit(Number(preset.value));
-                            }}
-                            className={cn(
-                              "flex flex-col items-center py-2 px-1 rounded-md border text-center transition-all duration-200 cursor-pointer",
-                              charLimitMode === preset.value
-                                ? "bg-blue-600/20 border-blue-500 text-blue-100"
-                                : "bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-500",
-                            )}
-                          >
-                            <span className="text-xs font-bold leading-tight">{preset.label}</span>
-                            <span className="text-[9px] opacity-70 mt-0.5 leading-tight">{preset.desc}</span>
-                          </button>
-                        ))}
-                      </div>
-                      {charLimitMode === "custom" && (
-                        <div className="flex items-center gap-2 pt-1">
-                          <input
-                            type="number"
-                            className="w-full bg-slate-900 border border-blue-500/50 text-slate-200 text-sm rounded-md px-3 py-2 outline-none focus:border-blue-400"
-                            value={charLimit}
-                            onChange={(e) => setCharLimit(Number(e.target.value) || 2000)}
-                            min={500}
-                            step={500}
-                            placeholder="글자수 직접 입력"
-                          />
-                          <span className="text-sm text-slate-400 whitespace-nowrap">자 내외</span>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              </div>
+              <SharedArticleSettings
+                personas={personas}
+                articleType={articleType} setArticleType={(v) => setArticleType(v as any)}
+                hideArticleType={true}
+                hideTone={true}
+                persona={selectedPersona} setPersona={setSelectedPersona}
+                personaName={personaName} setPersonaName={setPersonaName}
+                textModel={selectedTextModel} setTextModel={setSelectedTextModel}
+                imageModel={selectedImageModel} setImageModel={setSelectedImageModel}
+                charLimit={charLimit} setCharLimit={(v) => setCharLimit(Number(v))}
+                charLimitMode={charLimitMode} setCharLimitMode={setCharLimitMode}
+                itemCount={itemCount}
+              />
 
               {/* 아티클 디자인 테마 */}
               <div className="space-y-2 pt-2">

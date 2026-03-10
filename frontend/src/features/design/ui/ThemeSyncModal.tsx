@@ -28,7 +28,7 @@ export const ThemeSyncModal = ({ isOpen, onClose, selectedCount, onSync }: Theme
   const fetchThemes = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/design/themes");
+      const res = await fetch("/api/design");
       if (res.ok) {
         const data = await res.json();
         setThemes(data.themes || []);

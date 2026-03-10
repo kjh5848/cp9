@@ -101,9 +101,20 @@ export async function POST(req: Request) {
         const themeStyleTag = buildThemeStyles(themeConfig);
         finalHtml = themeStyleTag + finalHtml;
 
+        // --- Strip any existing 쿠팡 파트너스 disclaimers (AI generated or old system generated) ---
+        const rawDisclaimerRegex = /<p[^>]*>\s*※?\s*(?:이\s*포스팅은\s*)?쿠팡\s*파트너스\s*활동의\s*일환으로,?\s*이에\s*따른\s*일정액의\s*수수료를\s*제공받(?:습니다|을\s*수\s*있습니다)\.?\s*<\/p>/gi;
+        finalHtml = finalHtml.replace(rawDisclaimerRegex, '');
+        const textDisclaimerRegex = /※?\s*(?:이\s*포스팅은\s*)?쿠팡\s*파트너스\s*활동의\s*일환으로,?\s*이에\s*따른\s*일정액의\s*수수료를\s*제공받(?:습니다|을\s*수\s*있습니다)\.?/gi;
+        finalHtml = finalHtml.replace(textDisclaimerRegex, '');
+
+        // --- Append exact single standard disclaimer at the very bottom ---
+        const disclaimerHtml = `<p style="font-size:11px;color:#999;text-align:center;margin:32px 0 8px;">※ 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.</p>`;
+        finalHtml = finalHtml + disclaimerHtml;
+
         // --- Save Back to DB ---
         pack.content = finalHtml;
         pack.updatedAt = new Date().toISOString();
+        pack.appliedThemeId = themeId;
 
         await prisma.research.update({
           where: { projectId_itemId: { projectId: record.projectId, itemId: record.itemId } },

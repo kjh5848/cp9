@@ -7,8 +7,8 @@
  * CTA 노출 위치 및 빈도 설정
  */
 export interface CtaPlacementConfig {
-  /** 위치: H2 이전, H2 이후, 본문 끝, P 태그 무작위 등 */
-  position: 'before-h2' | 'after-h2' | 'before-h3' | 'after-h3' | 'random-p' | 'article-end';
+  /** 위치: H1 이전/이후, H2 이전/이후, H3 이전/이후, 첫/마지막/랜덤 P, 최상단/최하단 */
+  position: 'article-start' | 'before-h1' | 'after-h1' | 'before-h2' | 'after-h2' | 'before-h3' | 'after-h3' | 'first-p' | 'last-p' | 'random-p' | 'article-end';
   /** 출현 빈도: 모두, 1개, 2개, 3개 (random-p 등의 조건과 함께 사용) */
   frequency: 'all' | '1' | '2' | '3';
 }
@@ -21,7 +21,7 @@ export interface CtaBlockConfig {
   name: string;
   placement: CtaPlacementConfig;
   design: {
-    layout: 'minimal' | 'card' | 'banner' | 'gradient';
+    layout: 'minimal' | 'card' | 'banner' | 'gradient' | 'outline' | 'shadow' | 'neon' | 'coupon' | 'modern' | 'luxury' | 'custom';
     buttonColor: string;
     buttonTextColor: string;
     buttonRadius: string;
@@ -33,6 +33,7 @@ export interface CtaBlockConfig {
     showProductImage: boolean;
     priceColor: string;
     showUrgency: boolean;
+    customHtml?: string;    // 커스텀 레이아웃용 HTML 코드
   };
 }
 

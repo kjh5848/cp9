@@ -12,7 +12,12 @@ export async function GET() {
     for (const sys of SYSTEM_PERSONAS) {
       await prisma.persona.upsert({
         where: { id: sys.id },
-        update: {},
+        update: {
+          name: sys.name,
+          systemPrompt: sys.systemPrompt,
+          toneDescription: sys.toneDescription,
+          negativePrompt: sys.negativePrompt,
+        },
         create: {
           id: sys.id,
           name: sys.name,
@@ -26,11 +31,11 @@ export async function GET() {
     const personas = await prisma.persona.findMany({
       orderBy: { createdAt: 'desc' },
     });
-    
-    // API 응답 시, 클라이언트에서 구분을 돕기 위해 id가 system-으로 시작하면 isSystem = true 플래그 주입
+
+    const systemIds = new Set(SYSTEM_PERSONAS.map(s => s.id));
     const formattedPersonas = personas.map((p: any) => ({
       ...p,
-      isSystem: p.id.startsWith('system-')
+      isSystem: systemIds.has(p.id)
     }));
 
     return NextResponse.json({ success: true, data: formattedPersonas });

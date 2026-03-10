@@ -11,6 +11,10 @@ import type { PipelineContext } from './types'
  * 페르소나 역할 + 블로그 템플릿 가이드라인을 결합합니다.
  */
 async function buildSystemPrompt(ctx: PipelineContext): Promise<string> {
+  // 기본 템플릿 파일 로드 (IT 폴백 사용)
+  const templateFile = PERSONA_TEMPLATE_FILE[ctx.persona] || PERSONA_TEMPLATE_FILE['IT'];
+  const personaTemplate = await getSeoSkillTemplate(templateFile);
+
   // DB에서 가져온 커스텀 페르소나가 있는 경우 우선 사용
   if (ctx.personaSystemPrompt || ctx.personaToneDesc) {
     const sysPrompt = ctx.personaSystemPrompt || `당신은 대한민국 최고의 SEO 블로그 전문 작가이자 '${ctx.finalPersonaName}'입니다.`;
@@ -21,13 +25,16 @@ async function buildSystemPrompt(ctx: PipelineContext): Promise<string> {
 ${sysPrompt}
 아래의 [블로그 작성 가이드라인] 및 [톤앤매너]를 완벽히 숙지하고 포스팅하라.
 
+[블로그 작성 가이드라인]
+${personaTemplate}
+
 [톤앤매너 및 스타일 가이드]
 ${toneDesc}
 ${negativePrompt}
 
 [공통 절대 규칙]
 1. 글은 반드시 H1(#) 제목으로 시작하라.
-2. 명시된 모든 필수 정보를 포함하여 풍부하게 작성해라.
+2. 가이드라인의 [필수 섹션 목차]를 반드시 순서대로 모두 포함하라.
 3. 이모지와 아이콘을 제목 포함 어디에도 절대 삽입하지 마라. 위반 시 실패로 간주한다.
 4. 마크다운 테이블은 반드시 올바른 문법으로 작성하라.
 5. CTA 2줄은 글 마지막에 반드시 포함하라.
@@ -42,9 +49,6 @@ ${negativePrompt}
   }
 
   // 커스텀 페르소나가 없는 경우 (기존 레거시 파일 기반 폴백)
-  const templateFile = PERSONA_TEMPLATE_FILE[ctx.persona] || PERSONA_TEMPLATE_FILE['IT'];
-  const personaTemplate = await getSeoSkillTemplate(templateFile);
-
   return `
 너는 대한민국 최고의 SEO 블로그 전문 작가이자 '${ctx.finalPersonaName}'이다.
 아래의 [블로그 작성 가이드라인]을 완벽히 숙지하고, 이후 지시하는 상품에 대해 마크다운 포맷의 블로그 포스팅을 작성하라.

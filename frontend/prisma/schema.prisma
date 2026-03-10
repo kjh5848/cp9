@@ -64,6 +64,24 @@ model AutopilotQueue {
   personaId    String?
   persona      Persona?  @relation(fields: [personaId], references: [id])
 
+  // Phase 3: 키워드별 개별 설정 (Article Settings)
+  articleType  String?   @default("single") // 단일, 비교, 큐레이션
+  textModel    String?   @default("gpt-4o")
+  imageModel   String?   @default("dall-e-3")
+  charLimit    Int?      @default(5000)
+
+  // Phase 3: 쿠팡 아이템 소싱 기준 (Sourcing Criteria)
+  sortCriteria String?   @default("salePriceAsc") // 정렬: 랭킹, 가격순 등
+  minPrice     Int?      // 최소 가격 필터
+  maxPrice     Int?      // 최대 가격 필터
+  isRocketOnly Boolean?  @default(false)          // 로켓배송 전용 필터
+
+  // Phase 3: 세밀한 스케줄링 간격 제어 (Scheduling & Interval Control)
+  intervalHours Int?     // 작동 주기 (예: 6 = 6시간마다)
+  activeTimeStart Int?   // 동작 허용 시작 시간 (예: 9 = 09:00)
+  activeTimeEnd   Int?   // 동작 허용 종료 시간 (예: 22 = 22:00)
+  nextRunAt       DateTime? @map("next_run_at") // 연산된 다음 실행 예정 시간
+
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
 

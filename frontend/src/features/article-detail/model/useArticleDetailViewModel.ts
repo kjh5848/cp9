@@ -136,10 +136,10 @@ export function useArticleDetailViewModel() {
     if (!item || !projectId) return;
     setApplyingTheme(true);
     try {
-      const res = await fetch('/api/design/apply', {
+      const res = await fetch('/api/item-research/sync-theme', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId, itemId: item.itemId, themeId }),
+        body: JSON.stringify({ projectId, itemIds: [item.itemId], themeId }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || '테마 적용 실패');

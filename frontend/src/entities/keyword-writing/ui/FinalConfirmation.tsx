@@ -16,6 +16,7 @@ import {
 import { cn } from "@/shared/lib/utils";
 import { GlassCard } from "@/shared/ui/GlassCard";
 import { Button } from "@/shared/ui/button";
+import { SelectedProductList } from "@/shared/ui/SelectedProductList";
 import { CoupangProductResponse } from "@/shared/types/api";
 import { getModelLabel } from "@/shared/config/model-options";
 import {
@@ -39,7 +40,6 @@ interface FinalConfirmationProps {
   editedTitle: string;
   selectedProducts: CoupangProductResponse[];
   persona: string;
-  tone: string;
   articleType: string;
   textModel: string;
   imageModel: string;
@@ -53,7 +53,7 @@ interface FinalConfirmationProps {
 
 export function FinalConfirmation({
   keyword, editedTitle, selectedProducts,
-  persona, tone, articleType, textModel, imageModel, charLimit,
+  persona, articleType, textModel, imageModel, charLimit,
   isGenerating, generationResult,
   onGenerate, onPrev, router,
 }: FinalConfirmationProps) {
@@ -78,19 +78,7 @@ export function FinalConfirmation({
 
       {/* 선택된 상품 미리보기 */}
       {selectedProducts.length > 0 && (
-        <div className="flex gap-3 overflow-x-auto pb-2 px-1">
-          {selectedProducts.map((p, idx) => (
-            <div key={idx} className="flex-none w-28 rounded-lg border border-border/30 overflow-hidden">
-              <div className="relative w-full aspect-square bg-white/5">
-                {p.productImage && <Image src={p.productImage} alt={p.productName} fill sizes="112px" className="object-cover" unoptimized />}
-              </div>
-              <div className="p-2">
-                <p className="text-[10px] text-foreground line-clamp-1">{p.productName}</p>
-                <p className="text-xs text-blue-400 font-bold">{p.productPrice.toLocaleString()}원</p>
-              </div>
-            </div>
-          ))}
-        </div>
+        <SelectedProductList products={selectedProducts} />
       )}
 
       {/* 생성 완료 알림 */}

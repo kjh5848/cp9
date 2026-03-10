@@ -5,14 +5,21 @@ import { cn } from '@/shared/lib/utils';
 
 /* ═══════════════════ 타입 ═══════════════════ */
 
-export type CtaLayout = 'minimal' | 'card' | 'banner' | 'gradient';
+export type CtaLayout = 'minimal' | 'card' | 'banner' | 'gradient' | 'outline' | 'shadow' | 'neon' | 'coupon' | 'modern' | 'luxury' | 'custom';
 
 /** 레이아웃 프리셋 정의 */
 const CTA_LAYOUT_PRESETS = [
   { id: 'minimal' as const, label: '미니멀', desc: '텍스트+버튼만', colors: ['transparent', '#2563eb'] },
-  { id: 'card' as const, label: '카드', desc: '박스+이미지+버튼', colors: ['#f8fafc', '#2563eb'] },
-  { id: 'banner' as const, label: '배너', desc: '와이드 배경 CTA', colors: ['#1e293b', '#3b82f6'] },
-  { id: 'gradient' as const, label: '그라데이션', desc: '그라데이션 배경', colors: ['#667eea', '#764ba2'] },
+  { id: 'card' as const, label: '카드', desc: '기본형(테두리)', colors: ['#f8fafc', '#2563eb'] },
+  { id: 'banner' as const, label: '배너', desc: '좌측 포인트 바', colors: ['#1e293b', '#3b82f6'] },
+  { id: 'gradient' as const, label: '그라데이션', desc: '화려한 컬러 배경', colors: ['#667eea', '#764ba2'] },
+  { id: 'outline' as const, label: '아웃라인', desc: '얇고 깔끔한 외곽선', colors: ['#ffffff', '#2563eb'] },
+  { id: 'shadow' as const, label: '섀도우', desc: '깊이감 있는 그림자', colors: ['#ffffff', '#2563eb'] },
+  { id: 'neon' as const, label: '다크 네온', desc: '다크 배경+글로우', colors: ['#0f172a', '#06b6d4'] },
+  { id: 'coupon' as const, label: '쿠폰형', desc: '점선 테두리/할인', colors: ['#fffbeb', '#f59e0b'] },
+  { id: 'modern' as const, label: '모던 라인', desc: '상하 구분선 엣지', colors: ['#fafafa', '#0f172a'] },
+  { id: 'luxury' as const, label: '럭셔리 다크', desc: '고급형 진한 배경', colors: ['#171717', '#d4af37'] },
+  { id: 'custom' as const, label: '커스텀', desc: '직접 HTML 작성', colors: ['#334155', '#94a3b8'] },
 ] as const;
 
 interface CtaLayoutSelectorProps {
