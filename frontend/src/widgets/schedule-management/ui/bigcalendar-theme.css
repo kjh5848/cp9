@@ -165,14 +165,19 @@
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4) !important;
   z-index: 30;
   max-width: 300px;
+  color: var(--foreground) !important;
 }
 
 .rbc-overlay-header {
   border-bottom-color: var(--border) !important;
-  color: var(--foreground);
+  color: var(--foreground) !important;
   font-weight: 700;
   font-size: 0.85rem;
   padding: 6px 8px !important;
+}
+
+.rbc-overlay * {
+  color: var(--foreground) !important;
 }
 
 /* 주간/일간 뷰 */

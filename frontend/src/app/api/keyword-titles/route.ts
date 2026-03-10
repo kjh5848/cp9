@@ -1,7 +1,7 @@
 /**
  * [API Route] POST /api/keyword-titles
  * 키워드 기반 SEO 최적화 제목 후보 생성 API
- * GPT를 활용하여 주어진 키워드에 맞는 블로그 제목 후보를 5개 생성합니다.
+ * GPT를 활용하여 주어진 키워드에 맞는 블로그 제목 후보를 N개(기본 5, 최대 30) 생성합니다.
  */
 import { NextResponse } from 'next/server'
 import { createTextModel } from '../item-research/pipeline/config'
@@ -9,12 +9,16 @@ import { createTextModel } from '../item-research/pipeline/config'
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { keyword, persona, articleType, textModel: requestedModel } = body as {
+    const { keyword, persona, articleType, textModel: requestedModel, count: requestedCount, excludeTitles } = body as {
       keyword: string
       persona?: string
       articleType?: string
       textModel?: string
+      count?: number
+      excludeTitles?: string[]
     }
+
+    const count = Math.min(Math.max(requestedCount || 5, 1), 30) // 1~30개 제한
 
     if (!keyword || keyword.trim().length === 0) {
       return NextResponse.json(
@@ -32,7 +36,7 @@ export async function POST(request: Request) {
 검색 엔진 최적화, 클릭률(CTR) 극대화, 독자 호기심 자극에 뛰어난 블로그 제목을 만들어야 합니다.
 
 [제목 작성 원칙]
-1. 구체적인 숫자/연도 활용 (예: "\${new Date().getFullYear()}년", "TOP 5", "3가지")
+1. 구체적인 숫자/연도 활용 (예: "${new Date().getFullYear()}년", "TOP 5", "3가지")
 2. 검색 의도(Intent)를 정확히 반영
 3. 감정적 트리거 사용 (예: "후회 없는", "솔직 비교", "완벽 가이드")
 4. 30~50자 내외로 간결하게
@@ -55,12 +59,16 @@ export async function POST(request: Request) {
 ]
 `
 
+    const excludeText = excludeTitles && excludeTitles.length > 0 
+      ? `\n[제외할 제목 목록]\n다음 제목들과 의미상 중복되거나 유사한 제목은 절대 제안하지 마세요:\n- ${excludeTitles.join('\n- ')}\n` 
+      : ''
+
     const userPrompt = `
 [메인 키워드]: ${keyword}
 [글 유형]: ${articleType || '자유 (가장 적합한 유형으로 추천)'}
 [페르소나]: ${persona || '범용'}
-
-위 키워드로 SEO에 최적화된 블로그 제목 후보를 정확히 5개 생성하세요.
+${excludeText}
+위 키워드로 SEO에 최적화된 블로그 제목 후보를 정확히 ${count}개 생성하세요.
 각 제목은 서로 다른 앵글(관점/접근법)을 가져야 합니다.
 `
 
@@ -70,9 +78,9 @@ export async function POST(request: Request) {
     ])
 
     const rawText = aiResponse.content.toString()
-    const titles = parseTitles(rawText)
+    const titles = parseTitles(rawText, count)
 
-    return NextResponse.json({ titles, keyword, model: modelName })
+    return NextResponse.json({ titles, keyword, model: modelName, count })
   } catch (error) {
     console.error('[keyword-titles] 에러:', error)
     return NextResponse.json(
@@ -83,7 +91,7 @@ export async function POST(request: Request) {
 }
 
 /** AI 응답에서 제목 JSON 파싱 */
-function parseTitles(rawText: string): Array<{
+function parseTitles(rawText: string, count: number = 5): Array<{
   title: string
   subtitle: string
   targetAudience: string
@@ -92,7 +100,8 @@ function parseTitles(rawText: string): Array<{
   try {
     const jsonMatch = rawText.match(/\[[\s\S]*\]/)
     if (jsonMatch) {
-      return JSON.parse(jsonMatch[0])
+      const parsed = JSON.parse(jsonMatch[0])
+      return Array.isArray(parsed) ? parsed.slice(0, count) : []
     }
     return []
   } catch {

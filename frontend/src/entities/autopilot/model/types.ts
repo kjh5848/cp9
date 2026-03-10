@@ -1,7 +1,7 @@
 export interface AutopilotQueueItem {
   id: string;
   keyword: string;
-  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'EXPIRED';
   resultUrl?: string | null;
   errorMessage?: string | null;
   personaId?: string | null;
@@ -26,11 +26,17 @@ export interface AutopilotQueueItem {
   activeTimeStart?: number | null;
   activeTimeEnd?: number | null;
   nextRunAt?: string | null;
+
+  // Phase 4: 반복 횟수 제한
+  maxRuns?: number | null;
+  currentRuns?: number;
+  expiresAt?: string | null;
 }
 
 export interface CreateAutopilotQueuePayload {
   keyword: string;
   personaId?: string;
+  themeId?: string;
   
   // Phase 3 Configuration Fields
   articleType?: string;
@@ -46,10 +52,23 @@ export interface CreateAutopilotQueuePayload {
   intervalHours?: number;
   activeTimeStart?: number;
   activeTimeEnd?: number;
+  startDate?: string;
+
+  // Phase 4: 반복 횟수 제한
+  maxRuns?: number;
+  expiresAt?: string;
 }
 
 export interface AiResearchKeyword {
   keyword: string;
   intent: string;
   type?: 'long-tail' | 'short-tail';
+}
+
+/** AI 키워드 기반 제목 제안 결과 */
+export interface SuggestedTitle {
+  title: string;
+  subtitle: string;
+  targetAudience: string;
+  searchIntent: string;
 }

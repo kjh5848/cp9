@@ -3,6 +3,7 @@ import { prisma } from '@/infrastructure/clients/prisma';
 import { searchCoupangProducts } from '@/infrastructure/clients/coupang';
 import { normalizeCoupangProduct, resolveImageRedirectUrl } from '@/shared/lib/api-utils';
 import { runSeoPipeline } from '../../item-research/pipeline/run-pipeline';
+import { getNextRunAtKST } from '@/features/autopilot/lib/scheduler';
 import type { ItemResearchRequest } from '../../item-research/pipeline/types';
 import { CoupangRawProduct } from '@/shared/types/api';
 
@@ -88,21 +89,17 @@ export async function GET(request: Request) {
       // 4.2 소싱 에이전트 (Sourcing Agent)
       const { runSourcingAgent } = await import('@/features/autopilot/lib/agent/sourcing-agent');
       console.log(`🛍️ [Autopilot] Sourcing Agent 시작 (필요 개수: ${intentContent.requiredItemCount})`);
-      const rawAgentProducts = await runSourcingAgent(intentContent);
       
-      // 소싱 기준 (Sourcing Criteria) 필터링 적용 (Phase 3 기능 호환)
-      let productsFiltered = [...rawAgentProducts];
-      if (pendingItem.isRocketOnly) {
-        productsFiltered = productsFiltered.filter(p => p.isRocket);
-      }
-      if (pendingItem.minPrice) {
-        productsFiltered = productsFiltered.filter(p => p.productPrice >= pendingItem.minPrice!);
-      }
-      if (pendingItem.maxPrice) {
-        productsFiltered = productsFiltered.filter(p => p.productPrice <= pendingItem.maxPrice!);
-      }
+      const sourcingConstraints = {
+        minPrice: pendingItem.minPrice,
+        maxPrice: pendingItem.maxPrice,
+        isRocketOnly: pendingItem.isRocketOnly
+      };
+
+      const rawAgentProducts = await runSourcingAgent(intentContent, sourcingConstraints);
       
       // 정렬 (Sort)
+      let productsFiltered = [...rawAgentProducts];
       if (pendingItem.sortCriteria === 'salePriceAsc') {
         productsFiltered.sort((a, b) => a.productPrice - b.productPrice);
       } else if (pendingItem.sortCriteria === 'salePriceDesc') {
@@ -110,7 +107,7 @@ export async function GET(request: Request) {
       }
 
       if (productsFiltered.length === 0) {
-        throw new Error('에이전트 소싱 결과가 필터링(가격/로켓)을 통과하지 못했습니다.');
+        throw new Error('에이전트 소싱 결과가 비어 있습니다.');
       }
       
       selectedProducts = productsFiltered;
@@ -206,28 +203,87 @@ export async function GET(request: Request) {
     // 7. 파이프라인 트리거 (비동기)
     // 에러 체이닝을 위해 Promise.resolve 체인에서 에러를 확인하고 AutopilotQueue 상태를 방어적으로 업데이트할 수 있음
     try {
-      const pipelineResult = await runSeoPipeline(body, { persona, tone, textModel, imageModel, charLimit, articleType: articleType as 'single' | 'compare' | 'curation', publishTarget, themeId });
-      
-      // Phase 3: 스케줄링 간격(intervalHours)이 설정되어 있다면 반복 발행으로 간주
-      if (pendingItem.intervalHours && pendingItem.intervalHours > 0) {
-        const nextTime = new Date();
-        nextTime.setHours(nextTime.getHours() + pendingItem.intervalHours);
+      const autopilotData = {
+        queueId: pendingItem.id,
+        keyword: pendingItem.keyword,
+        createdAt: pendingItem.createdAt,
+        minPrice: pendingItem.minPrice,
+        maxPrice: pendingItem.maxPrice,
+        isRocketOnly: pendingItem.isRocketOnly,
+        sortCriteria: pendingItem.sortCriteria,
+        intervalHours: pendingItem.intervalHours,
+        articleType: pendingItem.articleType,
+      };
 
+      const pipelineResult = await runSeoPipeline(body, { persona, tone, textModel, imageModel, charLimit, articleType: articleType as 'single' | 'compare' | 'curation', publishTarget, themeId, autopilotData });
+      
+      // 실행 완료 시점 기준 resultUrl 확보
+      const resultUrl = pipelineResult || null;
+
+      // 반복 발행 로직: intervalHours가 설정되어 있을 때
+      if (pendingItem.intervalHours && pendingItem.intervalHours > 0) {
+        const newRunCount = (pendingItem.currentRuns ?? 0) + 1;
+        
+        // 종결 조건 1: 최대 발행 횟수 도달
+        const isMaxRunsReached = pendingItem.maxRuns && newRunCount >= pendingItem.maxRuns;
+        // 종결 조건 2: 발행 종료일 초과
+        const isExpired = pendingItem.expiresAt && new Date() >= new Date(pendingItem.expiresAt);
+
+        // 현재 아이템은 항상 COMPLETED로 보존 (이력 유지)
         await prisma.autopilotQueue.update({
           where: { id: pendingItem.id },
           data: { 
-            status: 'PENDING',  // 다음 턴을 위해 PENDING 리셋
-            nextRunAt: nextTime,
-            resultUrl: String(pipelineResult) 
+            status: isMaxRunsReached || isExpired ? 'EXPIRED' : 'COMPLETED',
+            currentRuns: newRunCount,
+            resultUrl
           }
         });
+
+        if (isMaxRunsReached || isExpired) {
+          console.log(`🏁 [Autopilot] 큐 종결 (${isMaxRunsReached ? '횟수 제한' : '기간 만료'}): ${pendingItem.keyword}`);
+        } else {
+          // 다음 턴을 위해 동일 설정의 새 PENDING 레코드 생성
+          const nextTime = getNextRunAtKST(
+            pendingItem.intervalHours,
+            pendingItem.activeTimeStart,
+            pendingItem.activeTimeEnd,
+            0,        // offsetHours 불필요 (단일 재예약)
+            new Date() // 실행 완료 시점 기준
+          );
+
+          await (prisma.autopilotQueue as any).create({
+            data: {
+              keyword: pendingItem.keyword,
+              status: 'PENDING',
+              personaId: pendingItem.personaId || null,
+              themeId: (pendingItem as any).themeId || null,
+              articleType: pendingItem.articleType,
+              textModel: (pendingItem as any).textModel || 'gpt-4o',
+              imageModel: (pendingItem as any).imageModel || 'dall-e-3',
+              charLimit: (pendingItem as any).charLimit || 5000,
+              sortCriteria: pendingItem.sortCriteria,
+              minPrice: pendingItem.minPrice,
+              maxPrice: pendingItem.maxPrice,
+              isRocketOnly: pendingItem.isRocketOnly,
+              intervalHours: pendingItem.intervalHours,
+              activeTimeStart: pendingItem.activeTimeStart,
+              activeTimeEnd: pendingItem.activeTimeEnd,
+              nextRunAt: nextTime,
+              maxRuns: pendingItem.maxRuns,
+              currentRuns: newRunCount,
+              expiresAt: pendingItem.expiresAt,
+            },
+          });
+          console.log(`🔄 [Autopilot] 다음 실행 예약 (새 레코드): ${nextTime.toISOString()} (${newRunCount}/${pendingItem.maxRuns ?? '∞'}회)`);
+        }
       } else {
         // 단발성 큐라면 완료 상태로 종결
         await prisma.autopilotQueue.update({
           where: { id: pendingItem.id },
           data: { 
-            status: 'COMPLETED', 
-            resultUrl: String(pipelineResult) 
+            status: 'COMPLETED',
+            currentRuns: (pendingItem.currentRuns ?? 0) + 1,
+            resultUrl
           }
         });
       }

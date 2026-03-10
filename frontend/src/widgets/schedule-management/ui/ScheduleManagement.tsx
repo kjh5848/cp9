@@ -63,15 +63,15 @@ export const ScheduleManagement = () => {
     content: item.pack.content || ''
   }));
 
-  const autoCompleted = autopilotQueue.filter(item => item.status === 'COMPLETED').map(item => ({
+  const autoCompleted = autopilotQueue.filter(item => item.status === 'COMPLETED' || item.status === 'EXPIRED').map(item => ({
     id: `auto_${item.id}`,
     title: item.keyword, // "[Autopilot]" prefix 제거
     persona: item.persona?.name || '기본 페르소나',
     date: item.nextRunAt || item.createdAt,
-    status: 'COMPLETED',
+    status: item.status === 'EXPIRED' ? 'EXPIRED' : 'COMPLETED',
     isAutopilot: true,
     resultUrl: item.resultUrl,
-    content: '워드프레스에 자동 발행된 아이템입니다.'
+    content: item.resultUrl ? '' : '워드프레스에 자동 발행된 아이템입니다.'
   }));
 
   const completedItems = [...manualCompleted, ...autoCompleted].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -167,16 +167,17 @@ export const ScheduleManagement = () => {
     fetchResearch();
   }, [overdueItems, fetchResearch]);
 
-  // react-big-calendar용 이벤트 변환 (allDay로 해당 날짜에만 표시)
+  // react-big-calendar용 이벤트 변환 (시간대별 표시)
   const calendarEvents: ScheduleEvent[] = [
     ...displayScheduledItems.map(item => {
       const d = new Date(item.date);
+      const endDate = new Date(d.getTime() + 60 * 60 * 1000); // 1시간 블록
       return {
         id: item.id,
         title: item.isAutopilot ? `[오토파일럿] ${item.title}` : item.title,
         start: d,
-        end: d,
-        allDay: true,
+        end: endDate,
+        allDay: false,
         status: 'PENDING' as const,
         persona: item.persona,
         articleType: item.isAutopilot ? item.rawItem.articleType : item.rawItem.pack.articleType,
@@ -186,12 +187,13 @@ export const ScheduleManagement = () => {
     }),
     ...displayCompletedItems.map(item => {
       const d = new Date(item.date);
+      const endDate = new Date(d.getTime() + 60 * 60 * 1000); // 1시간 블록
       return {
         id: item.id,
         title: item.isAutopilot ? `[오토파일럿] ${item.title}` : item.title,
         start: d,
-        end: d,
-        allDay: true,
+        end: endDate,
+        allDay: false,
         status: 'COMPLETED' as const,
         persona: item.persona,
         content: item.content,
@@ -393,6 +395,12 @@ export const ScheduleManagement = () => {
         {/* 뷰 및 토글 옵션 */}
         <div className="flex items-center gap-4">
           <label className="flex items-center gap-2 cursor-pointer bg-slate-900/50 px-3 py-1.5 rounded-lg border border-slate-800 hover:bg-slate-800 transition-colors">
+            <input 
+              type="checkbox" 
+              className="hidden" 
+              checked={showAutopilotOnly} 
+              onChange={(e) => setShowAutopilotOnly(e.target.checked)} 
+            />
             <div className={`relative w-8 h-4 rounded-full transition-colors ${showAutopilotOnly ? 'bg-blue-500' : 'bg-slate-700'}`}>
               <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full transition-transform ${showAutopilotOnly ? 'translate-x-4' : 'translate-x-0'}`} />
             </div>
@@ -457,15 +465,16 @@ export const ScheduleManagement = () => {
         <BigCalendarView
           events={calendarEvents}
           onEventClick={(event) => {
-            // 콘텐츠가 있는 완료된 이벤트는 리뷰 모달 열기
-            if (event.content) {
+            // 오토파일럿 완료 이벤트에 resultUrl이 있으면 새 탭으로 열기
+            if (event.isAutopilot && event.resultUrl) {
+              window.open(event.resultUrl, '_blank');
+            } else if (event.content) {
               setPreviewItem({
                 isOpen: true,
                 title: event.title as string,
                 markdown: event.content || '',
               });
             } else if (event.isAutopilot && event.status === 'PENDING') {
-              // 콘텐츠가 없고(대기중) 오토파일럿 아이템인 경우 오토파일럿 설정 모달 열기
               setAutopilotModal({
                 isOpen: true,
                 item: event.rawItem,
@@ -531,9 +540,9 @@ export const ScheduleManagement = () => {
                     <div className="flex items-center gap-2">
                       <div className="flex-1 flex items-center gap-2">
                         <Input type="date" value={editDate} onChange={e => setEditDate(e.target.value)}
-                          className="h-7 text-xs bg-slate-900 border-slate-700 text-slate-200" />
+                          className="h-7 text-xs bg-slate-900 border-slate-700 text-slate-200 [color-scheme:dark]" />
                         <Input type="time" value={editTime} onChange={e => setEditTime(e.target.value)}
-                          className="h-7 text-xs bg-slate-900 border-slate-700 text-slate-200 w-24" />
+                          className="h-7 text-xs bg-slate-900 border-slate-700 text-slate-200 w-24 [color-scheme:dark]" />
                       </div>
                       <Button size="sm" variant="outline" className="h-7 text-xs border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10"
                         onClick={() => handleSaveEdit(item)}>저장</Button>
@@ -605,11 +614,16 @@ export const ScheduleManagement = () => {
                     variant="outline" 
                     className="h-7 text-xs border-blue-500/30 text-blue-500 hover:bg-blue-500/10"
                     onClick={() => {
+                      // resultUrl이 있으면 새 탭으로 열기, 없으면 본문 모달
+                      if ((item as any).resultUrl) {
+                        window.open((item as any).resultUrl, '_blank');
+                      } else {
                         setPreviewItem({
-                        isOpen: true,
-                        title: item.title,
-                        markdown: item.content || '생성된 본문이 없습니다.'
-                      });
+                          isOpen: true,
+                          title: item.title,
+                          markdown: item.content || '생성된 본문이 없습니다.'
+                        });
+                      }
                     }}
                   >
                     <PenTool className="w-3 h-3 mr-1" />

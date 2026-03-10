@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { GlassCard } from "@/shared/ui/GlassCard";
 import { Button } from "@/shared/ui/button";
-import { Calendar as CalendarIcon, LayoutGrid, CalendarDays, Loader2, AlertCircle, Trash2 } from "lucide-react";
+import { Calendar as CalendarIcon, LayoutGrid, CalendarDays, Loader2, AlertCircle, Trash2, ExternalLink } from "lucide-react";
 import { BigCalendarView, type ScheduleEvent } from "@/widgets/schedule-management/ui/BigCalendarView";
 import { AutopilotQueueItem } from "../../../entities/autopilot/model/types";
 import { cn } from "@/shared/lib/utils";
@@ -18,15 +18,16 @@ interface AutopilotScheduleBoardProps {
 export function AutopilotScheduleBoard({ queue, isLoading, onRefresh, onDelete }: AutopilotScheduleBoardProps) {
   const [viewMode, setViewMode] = useState<'calendar' | 'board'>('calendar');
 
-  // Convert queue items to Calendar events
+  // 큐 아이템을 캘린더 이벤트로 변환
   const calendarEvents: ScheduleEvent[] = queue.map(item => {
     const d = new Date(item.nextRunAt || item.createdAt);
+    const endDate = new Date(d.getTime() + 60 * 60 * 1000); // 1시간 블록으로 표시
     return {
       id: item.id,
       title: item.keyword,
       start: d,
-      end: d,
-      allDay: true,
+      end: endDate,
+      allDay: false,
       status: item.status as "PENDING" | "COMPLETED" | "FAILED",
       persona: item.persona?.name || '기본 페르소나',
       rawItem: item,
@@ -34,7 +35,7 @@ export function AutopilotScheduleBoard({ queue, isLoading, onRefresh, onDelete }
   });
 
   const scheduledItems = queue.filter(item => item.status === 'PENDING' || item.status === 'PROCESSING');
-  const completedItems = queue.filter(item => item.status === 'COMPLETED');
+  const completedItems = queue.filter(item => item.status === 'COMPLETED' || item.status === 'EXPIRED');
   const failedItems = queue.filter(item => item.status === 'FAILED');
 
   const renderStatusBadge = (status: string) => {
@@ -47,6 +48,8 @@ export function AutopilotScheduleBoard({ queue, isLoading, onRefresh, onDelete }
         return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">완료됨</span>;
       case 'FAILED':
         return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/30">실패</span>;
+      case 'EXPIRED':
+        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-500/20 text-orange-400 border border-orange-500/30">만료됨</span>;
       default:
         return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-500/20 text-slate-400 border border-slate-500/30">{status}</span>;
     }
@@ -166,10 +169,25 @@ export function AutopilotScheduleBoard({ queue, isLoading, onRefresh, onDelete }
                     <div className="flex text-xs text-muted-foreground">
                       {item.persona?.name || '기본 페르소나'}
                     </div>
-                    <div className="mt-2 pt-2 border-t border-border/50">
-                      <span className="text-[10px] text-emerald-400 break-all">
-                        {item.resultUrl || 'URL 없음'}
-                      </span>
+                    <div className="flex flex-col mt-2 pt-2 border-t border-border/50 gap-2">
+                      {item.resultUrl ? (
+                        <a
+                          href={item.resultUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-[11px] text-emerald-400 hover:text-emerald-300 transition-colors"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          게시글 보기
+                        </a>
+                      ) : (
+                        <span className="text-[10px] text-slate-500">URL 없음</span>
+                      )}
+                      {(item.currentRuns !== undefined && item.currentRuns > 0) && (
+                        <span className="text-[10px] text-slate-400">
+                          발행 {item.currentRuns}{item.maxRuns ? ` / ${item.maxRuns}` : ''}회
+                        </span>
+                      )}
                     </div>
                   </div>
                 </GlassCard>

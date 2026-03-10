@@ -1,44 +1,73 @@
+/**
+ * 다음 실행 예약 시각을 KST 기준으로 계산합니다.
+ *
+ * @param intervalHours - 반복 주기 (시간 단위). null이면 offsetHours만 반영.
+ * @param activeStart - 동작 허용 시작 시간 (KST, 0~23)
+ * @param activeEnd - 동작 허용 종료 시간 (KST, 0~23)
+ * @param offsetHours - 추가 오프셋(대량 등록 시 인덱스별 간격)
+ * @param baseDate - 기준 시점 (미지정 시 현재 시각)
+ * @returns 다음 실행 예정 시각 (UTC Date)
+ */
 export function getNextRunAtKST(
   intervalHours?: number | null, 
   activeStart?: number | null, 
   activeEnd?: number | null,
-  offsetHours: number = 0
+  offsetHours: number = 0,
+  baseDate?: Date | string | null
 ): Date {
-  const now = new Date();
+  const base = baseDate ? new Date(baseDate) : new Date();
   
-  // 기준 시간: 현재 시간 + (인덱스 * 주기 시간)
-  let targetTime = new Date(now.getTime() + offsetHours * 60 * 60 * 1000);
+  // 기준 시간에 intervalHours(주기)와 offsetHours(대량 등록 오프셋)를 합산
+  const totalOffsetMs = (offsetHours + (intervalHours ?? 0)) * 60 * 60 * 1000;
+  let targetTime = new Date(base.getTime() + totalOffsetMs);
   
+  // 활성 시간대 필터링 (KST 기준)
   if (activeStart !== null && activeStart !== undefined && activeEnd !== null && activeEnd !== undefined) {
-    const currentKSTHour = (targetTime.getUTCHours() + 9) % 24;
-    
-    let isWithinActiveTime = false;
-    if (activeStart <= activeEnd) {
-      isWithinActiveTime = currentKSTHour >= activeStart && currentKSTHour <= activeEnd;
-    } else {
-      isWithinActiveTime = currentKSTHour >= activeStart || currentKSTHour <= activeEnd;
-    }
-    
-    if (!isWithinActiveTime) {
-      let hoursToAdd = 0;
-      if (activeStart <= activeEnd) {
-         if (currentKSTHour < activeStart) {
-           hoursToAdd = activeStart - currentKSTHour;
-         } else {
-           hoursToAdd = 24 - currentKSTHour + activeStart;
-         }
-      } else {
-         if (currentKSTHour > activeEnd && currentKSTHour < activeStart) {
-           hoursToAdd = activeStart - currentKSTHour;
-         }
-      }
-      
-      targetTime = new Date(targetTime.getTime() + hoursToAdd * 60 * 60 * 1000);
-      
-      // 예약 시각을 해당 시간의 정각으로 맞춤 (예: 09:00:00)
-      targetTime.setUTCMinutes(0, 0, 0); 
-    }
+    targetTime = adjustToActiveWindow(targetTime, activeStart, activeEnd);
   }
   
   return targetTime;
+}
+
+/**
+ * targetTime이 활성 시간대 밖이면, 가장 가까운 활성 시작 시각으로 보정합니다.
+ * 활성 시간대 안이면 그대로 반환합니다 (분/초 유지).
+ */
+function adjustToActiveWindow(targetTime: Date, activeStart: number, activeEnd: number): Date {
+  const currentKSTHour = (targetTime.getUTCHours() + 9) % 24;
+  
+  let isWithinActiveTime = false;
+  if (activeStart <= activeEnd) {
+    // 일반 구간: 예) 09:00 ~ 22:00
+    isWithinActiveTime = currentKSTHour >= activeStart && currentKSTHour <= activeEnd;
+  } else {
+    // 야간 랩어라운드 구간: 예) 22:00 ~ 04:00
+    isWithinActiveTime = currentKSTHour >= activeStart || currentKSTHour <= activeEnd;
+  }
+  
+  if (isWithinActiveTime) {
+    return targetTime; // 분/초 그대로 유지
+  }
+  
+  // 활성 시간대 밖 → 다음 activeStart 정각으로 이동
+  let hoursToAdd = 0;
+  if (activeStart <= activeEnd) {
+    // 일반 구간
+    if (currentKSTHour < activeStart) {
+      hoursToAdd = activeStart - currentKSTHour;
+    } else {
+      // currentKSTHour > activeEnd
+      hoursToAdd = 24 - currentKSTHour + activeStart;
+    }
+  } else {
+    // 야간 구간: 비활성 = (activeEnd, activeStart) 사이
+    if (currentKSTHour > activeEnd && currentKSTHour < activeStart) {
+      hoursToAdd = activeStart - currentKSTHour;
+    }
+  }
+  
+  const adjusted = new Date(targetTime.getTime() + hoursToAdd * 60 * 60 * 1000);
+  // 활성 시작 정각으로 맞춤 (예: 09:00:00)
+  adjusted.setUTCMinutes(0, 0, 0);
+  return adjusted;
 }

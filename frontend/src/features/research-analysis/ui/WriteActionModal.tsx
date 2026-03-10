@@ -719,7 +719,7 @@ export const WriteActionModal = ({
                           type="date"
                           value={scheduleDate}
                           onChange={(e) => setScheduleDate(e.target.value)}
-                          className="pl-9 bg-slate-900 border-slate-700 text-slate-200"
+                          className="pl-9 bg-slate-900 border-slate-700 text-slate-200 [color-scheme:dark]"
                         />
                       </div>
                     </div>
@@ -731,7 +731,7 @@ export const WriteActionModal = ({
                           type="time"
                           value={scheduleTime}
                           onChange={(e) => setScheduleTime(e.target.value)}
-                          className="pl-9 bg-slate-900 border-slate-700 text-slate-200"
+                          className="pl-9 bg-slate-900 border-slate-700 text-slate-200 [color-scheme:dark]"
                         />
                       </div>
                     </div>

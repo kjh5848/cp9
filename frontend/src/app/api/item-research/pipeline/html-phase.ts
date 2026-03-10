@@ -234,8 +234,72 @@ export async function runHtmlPhase(
 
   const disclaimerHtml = `<p style="font-size:11px;color:#999;text-align:center;margin:32px 0 8px;">※ 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.</p>`;
 
+  // ── 후처리 5: 메타데이터 명시 (표 형태) ──
+  const searchKeyword = ctx.body.keywordMode?.keyword || ctx.body.itemName;
+  const articleTypeKr = ctx.articleType === 'compare' ? '비교 분석' : ctx.articleType === 'curation' ? '추천 큐레이션' : '단일 리뷰';
+  
+  // 오토파일럿 세팅값 추가 행 (존재 시에만 렌더링)
+  const ap = ctx.autopilotData;
+  let autopilotMetaRows = '';
+  if (ap) {
+    const rocketLabel = ap.isRocketOnly ? '✅ 로켓배송만' : '전체 (로켓 포함)';
+    const priceRange = (ap.minPrice || ap.maxPrice)
+      ? `${ap.minPrice ? ap.minPrice.toLocaleString() + '원' : '제한없음'} ~ ${ap.maxPrice ? ap.maxPrice.toLocaleString() + '원' : '제한없음'}`
+      : '전체';
+    const intervalLabel = ap.intervalHours ? `${ap.intervalHours}시간 마다` : '단발성';
+    
+    autopilotMetaRows = `
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <th style="padding: 12px 20px; color: #64748b; font-weight: 600; background-color: #fcfcfd;">🚀 배송 필터</th>
+        <td style="padding: 12px 20px; color: #334155;">${rocketLabel}</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <th style="padding: 12px 20px; color: #64748b; font-weight: 600; background-color: #fcfcfd;">💰 가격 범위</th>
+        <td style="padding: 12px 20px; color: #334155;">${priceRange}</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <th style="padding: 12px 20px; color: #64748b; font-weight: 600; background-color: #fcfcfd;">🔄 발행 주기</th>
+        <td style="padding: 12px 20px; color: #334155;">${intervalLabel}</td>
+      </tr>`;
+  }
+  // 테마 이름 메타 행
+  const themeMetaRow = ctx.themeConfig
+    ? `<tr style="border-bottom: 1px solid #f1f5f9;">
+        <th style="padding: 12px 20px; color: #64748b; font-weight: 600; background-color: #fcfcfd;">🎨 디자인 템플릿</th>
+        <td style="padding: 12px 20px; color: #334155;">${(ctx.themeConfig as any)?.name || '커스텀 테마'}</td>
+      </tr>`
+    : '';
+
+  const keywordHtml = searchKeyword ? `
+<div style="margin-top: 40px; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; background: #ffffff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); max-width: 600px; margin-left: auto; margin-right: auto;">
+  <div style="background-color: #f8fafc; padding: 12px 20px; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #0f172a; text-align: center; font-size: 15px; letter-spacing: -0.3px;">
+    🎯 포스팅 생성 정보
+  </div>
+  <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
+    <tbody>
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <th style="padding: 12px 20px; width: 35%; color: #64748b; font-weight: 600; background-color: #fcfcfd;">타겟 키워드</th>
+        <td style="padding: 12px 20px; color: #334155; font-weight: 500;">${searchKeyword}</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <th style="padding: 12px 20px; color: #64748b; font-weight: 600; background-color: #fcfcfd;">작성 페르소나</th>
+        <td style="padding: 12px 20px; color: #334155;">${ctx.finalPersonaName}</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <th style="padding: 12px 20px; color: #64748b; font-weight: 600; background-color: #fcfcfd;">글 형식</th>
+        <td style="padding: 12px 20px; color: #334155;">${articleTypeKr}</td>
+      </tr>
+      <tr${autopilotMetaRows || themeMetaRow ? ' style="border-bottom: 1px solid #f1f5f9;"' : ''}>
+        <th style="padding: 12px 20px; color: #64748b; font-weight: 600; background-color: #fcfcfd;">목표 분량</th>
+        <td style="padding: 12px 20px; color: #334155;">${ctx.charLimit.toLocaleString()}자 이상</td>
+      </tr>${autopilotMetaRows}${themeMetaRow}
+    </tbody>
+  </table>
+</div>
+` : '';
+
   // ── 최종 HTML 조합 ──
-  let seoContent = themeStyleTag + customHtmlHeader + coupangHeaderHtml + htmlBody + productCardsHtml + coupangCtaHtml + disclaimerHtml + cleanCustomFooter;
+  let seoContent = themeStyleTag + customHtmlHeader + coupangHeaderHtml + htmlBody + productCardsHtml + keywordHtml + coupangCtaHtml + disclaimerHtml + cleanCustomFooter;
   
   if (styleMode === 'class-only' && prefix !== 'cp9-') {
     seoContent = seoContent.replace(/class="([^"]*)"/g, (match, classes) => {

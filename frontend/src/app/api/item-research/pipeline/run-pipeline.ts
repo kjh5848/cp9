@@ -11,6 +11,7 @@ import { runArticlePhase } from './article-phase'
 import { runImagePhase } from './image-phase'
 import { runHtmlPhase } from './html-phase'
 import { runWordPressPhase } from './wordpress-phase'
+import { resolveImageRedirectUrl } from '@/shared/lib/api-utils'
 import type { ItemResearchRequest, PipelineContext } from './types'
 
 /** 파이프라인 설정 (route.ts에서 전달) */
@@ -23,13 +24,14 @@ export interface PipelineConfig {
   articleType: string
   publishTarget: string
   themeId?: string
+  autopilotData?: any
 }
 
 /**
  * 백그라운드에서 SEO 파이프라인 전체를 실행합니다.
  * Phase 1 → (Phase 2 + Phase 3 병렬) → Phase 4 → DB 저장
  */
-export async function runSeoPipeline(body: ItemResearchRequest, config: PipelineConfig): Promise<void> {
+export async function runSeoPipeline(body: ItemResearchRequest, config: PipelineConfig): Promise<string | null> {
   const { persona, tone, imageModel, charLimit, articleType } = config;
   // 비교/큐레이션: 하위 모델 자동 업그레이드
   const textModel = upgradeModelForArticleType(config.textModel, articleType);
@@ -50,6 +52,18 @@ export async function runSeoPipeline(body: ItemResearchRequest, config: Pipeline
         itemName: body.itemName, itemId: body.itemId,
       },
     });
+
+    // ── 이미지 링크(Redirect URL) 사전 Resolve 처리 ──
+    const itemsToResolve = [body.productData, ...(body.items || [])].filter(Boolean) as Array<{ productImage?: string | null }>;
+    await Promise.all(itemsToResolve.map(async (item) => {
+      if (item.productImage && !item.productImage.includes('coupangcdn.com')) {
+        try {
+          item.productImage = await resolveImageRedirectUrl(item.productImage);
+        } catch (e) {
+          console.warn('Failed to resolve image redirect url:', item.productImage, e);
+        }
+      }
+    }));
 
     // ── 디자인 테마 조회 ──
     let themeConfig: Record<string, unknown> | undefined;
@@ -98,6 +112,7 @@ export async function runSeoPipeline(body: ItemResearchRequest, config: Pipeline
       body, persona, finalPersonaName, tone,
       personaSystemPrompt, personaToneDesc, personaNegativePrompt,
       textModel, imageModel, charLimit, articleType, publishTarget, themeConfig, trace,
+      autopilotData: config.autopilotData || undefined,
     };
 
     // ── Phase 1: Perplexity 리서치 ──
@@ -191,6 +206,8 @@ export async function runSeoPipeline(body: ItemResearchRequest, config: Pipeline
       langfuseTraceId: trace?.id || null,
       // 글 유형 메타데이터
       articleType,
+      // 오토파일럿 기반 실행 메타데이터
+      autopilotData: config.autopilotData || null,
       // 키워드 모드 메타데이터
       keywordMode: body.keywordMode || null,
       // 비교/큐레이션 시 관련 아이템 정보 저장
@@ -229,6 +246,9 @@ export async function runSeoPipeline(body: ItemResearchRequest, config: Pipeline
     // Langfuse 트레이스 전송
     await langfuse?.flushAsync();
 
+    // 워드프레스 발행 URL 반환 (오토파일럿 크론에서 resultUrl로 활용)
+    return wpResult?.postUrl || null;
+
   } catch (error) {
     // 파이프라인 실패 시 FAILED 상태로 DB 업데이트
     console.error('❌ [SEO-Pipeline] 백그라운드 파이프라인 실패:', error);
@@ -257,5 +277,6 @@ export async function runSeoPipeline(body: ItemResearchRequest, config: Pipeline
     } catch (dbError) {
       console.warn('DB FAILED Upsert Error:', dbError);
     }
+    return null;
   }
 }

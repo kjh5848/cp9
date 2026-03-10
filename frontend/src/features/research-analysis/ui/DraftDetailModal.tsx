@@ -55,9 +55,11 @@ export const DraftDetailModal = ({ isOpen, onClose, title, markdown }: DraftDeta
               />
             ) : (
               // 마크다운 콘텐츠: ReactMarkdown으로 렌더링
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {markdown || "*내용이 없습니다.*"}
-              </ReactMarkdown>
+              <div className="article-html-content themed">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {markdown || "*내용이 없습니다.*"}
+                </ReactMarkdown>
+              </div>
             )}
           </article>
         </div>

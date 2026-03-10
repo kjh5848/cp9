@@ -1,13 +1,15 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAutopilotViewModel } from '../model/useAutopilotViewModel';
 import { usePersonaViewModel } from '@/features/persona/model/usePersonaViewModel';
 import { SharedArticleSettings } from '@/shared/ui/SharedArticleSettings';
 import { DEFAULT_TEXT_MODEL, DEFAULT_IMAGE_MODEL } from '@/shared/config/model-options';
-import { AiResearchKeyword, CreateAutopilotQueuePayload } from '../../../entities/autopilot/model/types';
+import { AiResearchKeyword, CreateAutopilotQueuePayload, SuggestedTitle } from '../../../entities/autopilot/model/types';
 
 export function AutopilotDashboard() {
+  const router = useRouter();
   const {
     queue,
     isLoading: isQueueLoading,
@@ -54,11 +56,52 @@ export function AutopilotDashboard() {
   const [intervalHours, setIntervalHours] = useState('24'); // 기본 24시간
   const [activeTimeStart, setActiveTimeStart] = useState('9'); // 기본 09:00
   const [activeTimeEnd, setActiveTimeEnd] = useState('22'); // 기본 22:00
+  const [startDate, setStartDate] = useState(''); // 시작 일시지정
+  const [maxRuns, setMaxRuns] = useState(''); // 최대 발행 횟수
+  const [expiresAt, setExpiresAt] = useState(''); // 발행 종료일
+
+  // 단일 키워드 스텝 위자드
+  const [singleStep, setSingleStep] = useState<1 | 2 | 3>(1);
+  const [titleCount, setTitleCount] = useState(15);
+  const [suggestedTitles, setSuggestedTitles] = useState<SuggestedTitle[]>([]);
+  // selectedTitleIndices, editableTitles 삭제 (장바구니 로직으로 대체)
+  const [cartTitles, setCartTitles] = useState<SuggestedTitle[]>([]); // 장바구니에 담긴 제목들
+  const [customTitleInput, setCustomTitleInput] = useState(''); // 수동 추가 인풋
+  const [isGeneratingTitles, setIsGeneratingTitles] = useState(false);
+
+  // Theme State
+  const [themes, setThemes] = useState<import('@/entities/design/ui/ThemeSwitcher').ThemeSwitcherTheme[]>([]);
+  const [themeId, setThemeId] = useState<string | null>(null);
+
+  const fetchThemes = async () => {
+    try {
+      const res = await fetch('/api/design');
+      const data = await res.json();
+      const list = data.themes || [];
+      setThemes(list);
+      const defaultTheme = list.find((t: any) => t.isDefault);
+      if (defaultTheme) {
+        setThemeId(defaultTheme.id);
+      } else if (list.length > 0) {
+        setThemeId(list[0].id);
+      }
+    } catch (e) {
+      console.error('Failed to fetch themes', e);
+    }
+  };
 
   useEffect(() => {
     fetchQueue();
     fetchPersonas();
+    fetchThemes();
   }, [fetchQueue, fetchPersonas]);
+
+  useEffect(() => {
+    const now = new Date();
+    const tzOffset = now.getTimezoneOffset() * 60000;
+    const localISOTime = new Date(now.getTime() - tzOffset).toISOString().slice(0, 16);
+    setStartDate(localISOTime);
+  }, []);
 
   // Set the first persona as default if available since the selection UI is hidden
   useEffect(() => {
@@ -67,14 +110,80 @@ export function AutopilotDashboard() {
     }
   }, [personas, personaId]);
 
-  const handleSingleSubmit = async () => {
+  // AI 제목 생성 핸들러 (Step 1 → Step 2)
+  const handleGenerateTitles = async () => {
     if (!keyword.trim()) {
       alert('키워드를 입력해주세요.');
       return;
     }
-    const success = await addToQueue({
-      keyword,
+    setIsGeneratingTitles(true);
+    try {
+      const excludeTitles = cartTitles.map((t) => t.title);
+      const res = await fetch('/api/keyword-titles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          keyword: keyword.trim(),
+          persona: personaId || undefined,
+          articleType: articleType === 'auto' ? undefined : articleType,
+          textModel,
+          count: titleCount,
+          excludeTitles,
+        }),
+      });
+      const data = await res.json();
+      if (data.titles && data.titles.length > 0) {
+        setSuggestedTitles(data.titles);
+        setSingleStep(2);
+      } else {
+        alert('제목 생성에 실패했습니다. 다시 시도해주세요.');
+      }
+    } catch (e) {
+      alert('제목 생성 중 오류가 발생했습니다.');
+      console.error(e);
+    }
+    setIsGeneratingTitles(false);
+  };
+
+  // 스케줄 미리보기 계산 (장바구니 제목 기준)
+  const calculateSchedulePreview = () => {
+    const base = startDate ? new Date(startDate) : new Date();
+    const interval = parseInt(intervalHours || '24', 10);
+    const activeStart = parseInt(activeTimeStart || '9', 10);
+    const activeEnd = parseInt(activeTimeEnd || '22', 10);
+
+    return cartTitles.map((item, i) => {
+      const runTime = new Date(base.getTime() + i * interval * 60 * 60 * 1000);
+      // 활성 시간대 보정
+      const hour = runTime.getHours();
+      if (activeEnd > activeStart) {
+        // 일반 시간대 (예: 9~22)
+        if (hour < activeStart) runTime.setHours(activeStart, 0, 0, 0);
+        else if (hour >= activeEnd) {
+          runTime.setDate(runTime.getDate() + 1);
+          runTime.setHours(activeStart, 0, 0, 0);
+        }
+      }
+      return {
+        index: i,
+        title: item.title,
+        scheduledAt: runTime,
+      };
+    });
+  };
+
+  // 단일 키워드 스텝 위자드 큐 등록 (Step 3)
+  const handleSingleSubmit = async () => {
+    const preview = calculateSchedulePreview();
+    if (preview.length === 0) {
+      alert('발행할 제목을 하나 이상 장바구니에 담아주세요.');
+      return;
+    }
+
+    const payloads: CreateAutopilotQueuePayload[] = preview.map((item) => ({
+      keyword: item.title,
       personaId: personaId || undefined,
+      themeId: themeId || undefined,
       articleType,
       textModel,
       imageModel,
@@ -83,12 +192,22 @@ export function AutopilotDashboard() {
       minPrice: minPrice ? parseInt(minPrice, 10) : undefined,
       maxPrice: maxPrice ? parseInt(maxPrice, 10) : undefined,
       isRocketOnly,
-      intervalHours: intervalHours ? parseInt(intervalHours, 10) : undefined,
+      intervalHours: undefined, // 각 제목은 단발성 (반복하지 않음)
       activeTimeStart: activeTimeStart ? parseInt(activeTimeStart, 10) : undefined,
       activeTimeEnd: activeTimeEnd ? parseInt(activeTimeEnd, 10) : undefined,
-    });
+      startDate: item.scheduledAt.toISOString(),
+      maxRuns: maxRuns ? parseInt(maxRuns, 10) : undefined,
+      expiresAt: expiresAt || undefined,
+    }));
+
+    const success = await addBulkToQueue(payloads);
     if (success) {
+      alert(`${payloads.length}개 제목이 큐에 등록되었습니다.`);
       setKeyword('');
+      setSuggestedTitles([]);
+      setCartTitles([]);
+      setSingleStep(1);
+      router.push('/schedule');
     }
   };
 
@@ -138,10 +257,15 @@ export function AutopilotDashboard() {
       alert('발행할 키워드를 하나 이상 선택해주세요.');
       return;
     }
+    if (startDate && new Date(startDate) < new Date()) {
+      alert('현재 시간 이전으로 설정할 수 없습니다.');
+      return;
+    }
 
     const payloads: CreateAutopilotQueuePayload[] = Array.from(selectedKeywords).map(kw => ({
       keyword: kw,
       personaId: personaId || undefined,
+      themeId: themeId || undefined,
       articleType,
       textModel,
       imageModel,
@@ -153,6 +277,9 @@ export function AutopilotDashboard() {
       intervalHours: intervalHours ? parseInt(intervalHours, 10) : undefined,
       activeTimeStart: activeTimeStart ? parseInt(activeTimeStart, 10) : undefined,
       activeTimeEnd: activeTimeEnd ? parseInt(activeTimeEnd, 10) : undefined,
+      startDate: startDate || undefined,
+      maxRuns: maxRuns ? parseInt(maxRuns, 10) : undefined,
+      expiresAt: expiresAt || undefined,
     }));
 
     const success = await addBulkToQueue(payloads);
@@ -161,6 +288,7 @@ export function AutopilotDashboard() {
       setResearchResults([]);
       setSelectedKeywords(new Set());
       setTopic('');
+      router.push('/schedule');
     }
   };
 
@@ -177,6 +305,8 @@ export function AutopilotDashboard() {
         return <span className="bg-emerald-500/10 text-emerald-400 text-xs px-2.5 py-1 rounded-full border border-emerald-500/20 font-medium tracking-wide">완료됨</span>;
       case 'FAILED':
         return <span className="bg-red-500/10 text-red-400 text-xs px-2.5 py-1 rounded-full border border-red-500/20 font-medium tracking-wide">실패</span>;
+      case 'EXPIRED':
+        return <span className="bg-orange-500/10 text-orange-400 text-xs px-2.5 py-1 rounded-full border border-orange-500/20 font-medium tracking-wide">만료됨</span>;
       default:
         return <span className="bg-slate-800 text-slate-300 text-xs px-2.5 py-1 rounded-full font-medium tracking-wide">{status}</span>;
     }
@@ -242,17 +372,264 @@ export function AutopilotDashboard() {
 
         <div className="relative z-10 space-y-6">
           {inputMode === 'single' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1.5 md:col-span-2">
-                <label className="block text-sm font-medium text-slate-300 tracking-tight">키워드 (검색어)</label>
-                <input
-                  type="text"
-                  value={keyword}
-                  onChange={(e) => setKeyword(e.target.value)}
-                  placeholder="예: 다이슨 청소기 추천"
-                  className="w-full p-3 bg-slate-950/50 border border-slate-800/50 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors text-slate-200 placeholder:text-slate-600 outline-none shadow-inner"
-                />
+            <div className="space-y-6">
+              {/* 스텝 인디케이터 */}
+              <div className="flex items-center gap-2 mb-2">
+                {[1, 2, 3].map((step) => (
+                  <React.Fragment key={step}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (step === 1) setSingleStep(1);
+                        else if (step === 2 && (suggestedTitles.length > 0 || cartTitles.length > 0)) setSingleStep(2);
+                        else if (step === 3 && cartTitles.length > 0) setSingleStep(3);
+                      }}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                        singleStep === step
+                          ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                          : singleStep > step
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 cursor-pointer'
+                          : 'bg-slate-800/50 text-slate-500 border border-slate-700/30'
+                      }`}
+                    >
+                      <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                        singleStep === step ? 'bg-blue-500 text-white' : singleStep > step ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-400'
+                      }`}>{singleStep > step ? '✓' : step}</span>
+                      {step === 1 ? '키워드 입력' : step === 2 ? '제목 선택' : '설정 & 등록'}
+                    </button>
+                    {step < 3 && <div className={`flex-1 h-px ${singleStep > step ? 'bg-emerald-500/30' : 'bg-slate-700/50'}`} />}
+                  </React.Fragment>
+                ))}
               </div>
+
+              {/* Step 1: 키워드 입력 + 제목 개수 선택 */}
+              {singleStep === 1 && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label className="block text-sm font-medium text-slate-300 tracking-tight">키워드 (검색어)</label>
+                      <input
+                        type="text"
+                        value={keyword}
+                        onChange={(e) => setKeyword(e.target.value)}
+                        placeholder="예: 다이슨 청소기 추천"
+                        className="w-full p-3 bg-slate-950/50 border border-slate-800/50 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors text-slate-200 placeholder:text-slate-600 outline-none shadow-inner"
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleGenerateTitles(); }}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="block text-sm font-medium text-slate-300 tracking-tight">생성할 제목 개수</label>
+                      <select
+                        value={titleCount}
+                        onChange={(e) => setTitleCount(Number(e.target.value))}
+                        className="w-full p-3 bg-slate-950/50 border border-slate-800/50 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors text-slate-200 outline-none shadow-inner"
+                      >
+                        <option value={5}>5개</option>
+                        <option value={10}>10개</option>
+                        <option value={15}>15개 (추천)</option>
+                        <option value={20}>20개</option>
+                        <option value={30}>30개</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleGenerateTitles}
+                      disabled={isGeneratingTitles || !keyword.trim()}
+                      className="px-6 py-3 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 shadow-[0_4px_15px_rgba(59,130,246,0.3)] active:scale-[0.98] transition-all"
+                    >
+                      {isGeneratingTitles ? (
+                        <span className="flex items-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          AI 제목 생성 중...
+                        </span>
+                      ) : `AI 제목 ${titleCount}개 생성`}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 2: AI 제안 제목 테이블 & 장바구니 */}
+              {singleStep === 2 && (
+                <div className="space-y-6">
+                  {/* 상단 액션: 다시 생성 */}
+                  <div className="flex justify-between items-center mb-2">
+                     <h3 className="text-sm font-semibold text-slate-200">
+                        {'\u201c'}{keyword}{'\u201d'} 관련 제목 추천
+                     </h3>
+                     <button
+                        type="button"
+                        onClick={() => setSingleStep(1)}
+                        className="text-xs font-medium text-slate-400 hover:text-slate-300 transition-colors bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700/50"
+                     >
+                        ← 키워드 다시 설정
+                     </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* 왼쪽: AI 제안 목록 */}
+                    <div className="flex flex-col border border-slate-800/50 rounded-xl overflow-hidden bg-slate-900/50 max-h-[600px]">
+                      <div className="flex justify-between items-center p-3 border-b border-slate-800/50 bg-slate-800/30 sticky top-0 z-10 backdrop-blur-md">
+                        <span className="text-xs font-bold text-slate-300">AI 추천 목록</span>
+                        <div className="flex gap-2">
+                           <button
+                             type="button"
+                             onClick={() => {
+                               const duplicatesRemoved = suggestedTitles.filter(st => !cartTitles.some(ct => ct.title === st.title));
+                               setCartTitles([...cartTitles, ...duplicatesRemoved]);
+                               setSuggestedTitles([]);
+                             }}
+                             className="text-[10px] font-medium text-blue-400 bg-blue-500/10 px-2 py-1 rounded hover:bg-blue-500/20 transition-colors"
+                           >
+                             모두 담기
+                           </button>
+                           <button
+                             type="button"
+                             onClick={handleGenerateTitles}
+                             disabled={isGeneratingTitles}
+                             className="text-[10px] font-medium text-purple-400 bg-purple-500/10 px-2 py-1 rounded hover:bg-purple-500/20 transition-colors disabled:opacity-50"
+                           >
+                             {isGeneratingTitles ? '생성 중...' : '추가 추천 받기'}
+                           </button>
+                        </div>
+                      </div>
+                      <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                        {suggestedTitles.length === 0 ? (
+                           <div className="p-8 text-center text-xs text-slate-500">
+                             추천 가능한 제목이 없습니다.<br/>'추가 추천 받기'를 눌러보세요.
+                           </div>
+                        ) : (
+                           <ul className="divide-y divide-slate-800/50">
+                             {suggestedTitles.map((item, i) => (
+                               <li key={i} className="p-3 hover:bg-slate-800/40 transition-colors flex items-start gap-3 group">
+                                 <button
+                                   type="button"
+                                   onClick={() => {
+                                      setCartTitles([...cartTitles, item]);
+                                      setSuggestedTitles(suggestedTitles.filter((_, idx) => idx !== i));
+                                   }}
+                                   className="mt-0.5 shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 group-hover:bg-blue-500 group-hover:text-white transition-colors"
+                                 >
+                                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
+                                 </button>
+                                 <div className="flex-1 min-w-0">
+                                   <p className="text-sm font-medium text-slate-200 break-words">{item.title}</p>
+                                   {item.subtitle && <p className="text-[11px] text-slate-500 mt-1 line-clamp-1">{item.subtitle}</p>}
+                                   <div className="flex items-center gap-2 mt-2">
+                                     <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                                        item.searchIntent.includes('구매') ? 'bg-emerald-500/10 text-emerald-400'
+                                        : item.searchIntent.includes('비교') ? 'bg-amber-500/10 text-amber-400'
+                                        : 'bg-blue-500/10 text-blue-400'
+                                      }`}>{item.searchIntent}</span>
+                                     <span className="text-[10px] text-slate-400 truncate">{item.targetAudience}</span>
+                                   </div>
+                                 </div>
+                               </li>
+                             ))}
+                           </ul>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 오른쪽: 장바구니 담긴 리스트 + 수동 추가 */}
+                    <div className="flex flex-col border border-emerald-500/20 rounded-xl overflow-hidden bg-slate-900/50 max-h-[600px] shadow-[0_0_15px_rgba(16,185,129,0.05)]">
+                      <div className="flex justify-between items-center p-3 border-b border-slate-800/50 bg-slate-800/30 sticky top-0 z-10 backdrop-blur-md">
+                        <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                          선택된 제목 장바구니 ({cartTitles.length})
+                        </span>
+                        <button
+                           onClick={() => setCartTitles([])}
+                           className="text-[10px] font-medium text-slate-500 hover:text-red-400 transition-colors"
+                        >
+                           비우기
+                        </button>
+                      </div>
+                      
+                      <div className="p-3 border-b border-slate-800/50 bg-slate-950/50">
+                        <form
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            if (!customTitleInput.trim()) return;
+                            setCartTitles([...cartTitles, {
+                              title: customTitleInput.trim(),
+                              subtitle: '수동 추가됨',
+                              targetAudience: '범용',
+                              searchIntent: '정보형'
+                            }]);
+                            setCustomTitleInput('');
+                          }}
+                          className="flex gap-2"
+                        >
+                          <input
+                            type="text"
+                            value={customTitleInput}
+                            onChange={(e) => setCustomTitleInput(e.target.value)}
+                            placeholder="직접 제목을 입력하세요..."
+                            className="flex-1 px-3 py-1.5 text-sm bg-slate-900 border border-slate-700/50 rounded-lg focus:outline-none focus:border-emerald-500/50 text-slate-200 placeholder:text-slate-600"
+                          />
+                          <button
+                            type="submit"
+                            disabled={!customTitleInput.trim()}
+                            className="shrink-0 px-3 py-1.5 bg-emerald-600/20 text-emerald-400 text-sm font-medium rounded-lg hover:bg-emerald-600/30 disabled:opacity-50 transition-colors"
+                          >
+                            추가
+                          </button>
+                        </form>
+                      </div>
+
+                      <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                        {cartTitles.length === 0 ? (
+                           <div className="p-8 text-center text-xs text-slate-500">
+                             먼저 왼쪽 목록에서 제목을 추가하거나,<br/>상단에서 직접 인풋으로 추가해주세요.
+                           </div>
+                        ) : (
+                           <ul className="divide-y divide-slate-800/30">
+                             {cartTitles.map((item, i) => (
+                               <li key={i} className="p-3 hover:bg-slate-800/40 transition-colors flex items-start gap-3 group">
+                                 <button
+                                   type="button"
+                                   onClick={() => setCartTitles(cartTitles.filter((_, idx) => idx !== i))}
+                                   className="mt-0.5 shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-slate-900 text-slate-500 hover:bg-red-500/20 hover:text-red-400 transition-colors"
+                                 >
+                                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+                                 </button>
+                                 <div className="flex-1 min-w-0">
+                                   <input
+                                      type="text"
+                                      value={item.title}
+                                      onChange={(e) => {
+                                         const newCart = [...cartTitles];
+                                         newCart[i] = { ...newCart[i], title: e.target.value };
+                                         setCartTitles(newCart);
+                                      }}
+                                      className="w-full bg-transparent border-none outline-none text-sm font-medium text-emerald-100 focus:bg-slate-800/50 rounded px-1 -mx-1 transition-colors"
+                                   />
+                                   {item.subtitle && <p className="text-[10px] text-slate-500 mt-0.5 px-1">{item.subtitle}</p>}
+                                 </div>
+                               </li>
+                             ))}
+                           </ul>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 하단 CTA */}
+                  <div className="flex justify-end pt-4 border-t border-slate-800/50 mt-6 md:mt-8">
+                    <button
+                      type="button"
+                      onClick={() => setSingleStep(3)}
+                      disabled={cartTitles.length === 0}
+                      className="px-6 py-3 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 shadow-[0_4px_15px_rgba(16,185,129,0.3)] active:scale-[0.98] transition-all flex items-center gap-2"
+                    >
+                      장바구니 {cartTitles.length}개 제목으로 설정 진행
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="space-y-4">
@@ -357,10 +734,12 @@ export function AutopilotDashboard() {
             </div>
           )}
 
-          {/* 공통 SEO 글 작성 설정 UI 재사용 (Phase 3 기능) */}
-          <div className={`transition-all duration-500 ${inputMode === 'bulk' && researchResults.length === 0 ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+          {/* 공통 SEO 글 작성 설정 UI — 단일 키워드 Step 3 또는 대량 모드에서만 표시 */}
+          <div className={`transition-all duration-500 ${
+            (inputMode === 'single' && singleStep !== 3) ? 'hidden' :
+            (inputMode === 'bulk' && researchResults.length === 0) ? 'opacity-50 pointer-events-none' : 'opacity-100'
+          }`}>
             <div className="pt-8 border-t border-slate-800/50">
-              <h3 className="text-sm font-semibold text-slate-300 mb-4 tracking-tight">글 생성 상세 설정</h3>
               <SharedArticleSettings
                 personas={personas}
                 persona={personaId}
@@ -373,23 +752,31 @@ export function AutopilotDashboard() {
                 setImageModel={setImageModel}
                 charLimit={charLimit}
                 setCharLimit={setCharLimit}
+                themes={themes}
+                themeId={themeId}
+                setThemeId={setThemeId}
                 hideArticleType={true}
-                hideTone={true} // 톤앤매너는 자체 persona select box로 위임하거나 생략
-                hidePersona={true} // 오토파일럿에서는 페르소나 선택 사용 안 함
+                hideTone={true}
+                hidePersona={true}
               />
             </div>
 
-            {/* 아이템 소싱 기준 & 스케줄링 설정 UI (Phase 3 기능) */}
+            {/* 아이템 소싱 기준 & 스케줄링 설정 UI */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-6 mt-4 border-t border-slate-800/50">
               {/* 소싱 기준 */}
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-slate-300 tracking-tight flex-1">아이템 소싱 기준</h3>
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-300 tracking-tight flex-1">아이템 소싱 기준</h3>
+                  <p className="text-[10.5px] text-slate-500 mt-1 mt-0.5 leading-tight">
+                    * 리뷰 데이터는 쿠팡 API 정책상 제공되지 않아 <strong className="text-slate-400 font-medium">인기/랭킹 기준</strong>으로 우선 소싱됩니다.
+                  </p>
+                </div>
                 <div className="flex gap-2">
                   <button type="button" onClick={() => applySourcingPreset('salePriceAsc', true, '', '50000')} className="px-2 py-1 text-[11px] font-medium bg-slate-800/50 text-slate-300 rounded border border-slate-700/50 hover:bg-blue-500/20 hover:text-blue-300 transition-colors">
-                    기본 (가성비+로켓)
+                    인기 로켓 가성비 (5만↓)
                   </button>
-                  <button type="button" onClick={() => applySourcingPreset('랭킹순', false, '50000', '')} className="px-2 py-1 text-[11px] font-medium bg-slate-800/50 text-slate-300 rounded border border-slate-700/50 hover:bg-emerald-500/20 hover:text-emerald-300 transition-colors">
-                    고급 (랭킹+5만↑)
+                  <button type="button" onClick={() => applySourcingPreset('RANK', true, '50000', '')} className="px-2 py-1 text-[11px] font-medium bg-slate-800/50 text-slate-300 rounded border border-slate-700/50 hover:bg-emerald-500/20 hover:text-emerald-300 transition-colors">
+                    인기 로켓 프리미엄 (5만↑)
                   </button>
                 </div>
                 
@@ -401,11 +788,9 @@ export function AutopilotDashboard() {
                       onChange={(e) => setSortCriteria(e.target.value)}
                       className="w-[180px] p-2 text-sm bg-slate-950/50 border border-slate-800/50 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors text-slate-200 outline-none"
                     >
-                      <option value="salePriceAsc">낮은 가격순 (가성비)</option>
-                      <option value="salePriceDesc">높은 가격순 (프리미엄)</option>
-                      <option value="랭킹순">랭킹순 (베스트셀러)</option>
-                      <option value="리뷰많은순">리뷰 많은순</option>
-                      <option value="별점높은순">별점 높은순</option>
+                      <option value="RANK">쿠팡 랭킹/인기순</option>
+                      <option value="salePriceAsc">가격낮은순 (가성비)</option>
+                      <option value="salePriceDesc">가격높은순 (프리미엄)</option>
                     </select>
                   </div>
 
@@ -464,16 +849,55 @@ export function AutopilotDashboard() {
                 
                 <div className="space-y-3 p-4 bg-slate-800/20 rounded-xl border border-slate-800/50">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-slate-300">발행 주기 (시간)</label>
+                    <label className="text-sm font-medium text-slate-300">시작 일시지정 (선택)</label>
                     <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        value={intervalHours}
-                        onChange={(e) => setIntervalHours(e.target.value)}
-                        placeholder="24"
-                        className="w-[100px] p-2 text-sm bg-slate-950/50 border border-slate-800/50 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors text-slate-200 outline-none text-right"
-                      />
-                      <span className="text-sm text-slate-400">시간 마다</span>
+                        <input
+                          type="datetime-local"
+                          value={startDate}
+                          onChange={(e) => setStartDate(e.target.value)}
+                          className="w-[220px] p-2 text-sm bg-slate-950/50 border border-slate-800/50 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors text-slate-200 outline-none [color-scheme:dark]"
+                        />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-slate-300">발행 주기/빈도</label>
+                    <div className="flex items-center gap-2">
+                      <select 
+                        className="w-[140px] p-2 text-sm bg-slate-950/50 border border-slate-800/50 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors text-slate-200 outline-none"
+                        value={
+                          ['24', '48', '56', '72', '168', '720'].includes(intervalHours) 
+                            ? intervalHours 
+                            : 'custom'
+                        }
+                        onChange={(e) => {
+                          if (e.target.value !== 'custom') {
+                            setIntervalHours(e.target.value);
+                          } else {
+                            setIntervalHours('');
+                          }
+                        }}
+                      >
+                        <option value="24">매일 1회</option>
+                        <option value="48">이틀에 1회</option>
+                        <option value="56">일주일에 3회</option>
+                        <option value="72">일주일에 2회</option>
+                        <option value="168">일주일에 1회</option>
+                        <option value="720">한 달에 1회</option>
+                        <option value="custom">시간 직접 입력</option>
+                      </select>
+                      {['24', '48', '56', '72', '168', '720'].includes(intervalHours) ? null : (
+                        <>
+                          <input
+                            type="number"
+                            value={intervalHours}
+                            onChange={(e) => setIntervalHours(e.target.value)}
+                            placeholder="24"
+                            className="w-[80px] p-2 text-sm bg-slate-950/50 border border-slate-800/50 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors text-slate-200 outline-none text-right"
+                          />
+                          <span className="text-sm text-slate-400">시간 마다</span>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -501,21 +925,93 @@ export function AutopilotDashboard() {
                       </select>
                     </div>
                   </div>
+
+                  {/* 반복 횟수 제한 */}
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-slate-300">발행 횟수 제한</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        value={maxRuns}
+                        onChange={(e) => setMaxRuns(e.target.value)}
+                        placeholder="0"
+                        min="0"
+                        className="w-[100px] p-2 text-sm bg-slate-950/50 border border-slate-800/50 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors text-slate-200 outline-none placeholder:text-slate-600 text-right"
+                      />
+                      <span className="text-sm text-slate-400">{!maxRuns || maxRuns === '0' ? '무제한' : '회'}</span>
+                    </div>
+                  </div>
+
+                  {/* 발행 종료일 */}
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-slate-300">발행 종료일 (선택)</label>
+                    <input
+                      type="datetime-local"
+                      value={expiresAt}
+                      onChange={(e) => setExpiresAt(e.target.value)}
+                      className="w-[220px] p-2 text-sm bg-slate-950/50 border border-slate-800/50 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors text-slate-200 outline-none [color-scheme:dark]"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
 
+            {/* 단일 키워드 Step 3: 스케줄 미리보기 테이블 */}
+            {inputMode === 'single' && singleStep === 3 && cartTitles.length > 0 && (
+              <div className="mt-6 pt-6 border-t border-slate-800/50">
+                <h3 className="text-sm font-semibold text-slate-300 tracking-tight mb-3 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  발행 스케줄 미리보기 ({cartTitles.length}건)
+                </h3>
+                <div className="border border-slate-800/50 rounded-xl overflow-hidden bg-slate-900/50 max-h-[300px] overflow-y-auto custom-scrollbar">
+                  <table className="w-full text-left text-sm text-slate-300">
+                    <thead className="bg-slate-950/80 sticky top-0 z-10 text-xs text-slate-400 uppercase tracking-widest backdrop-blur-md">
+                      <tr>
+                        <th className="px-4 py-3 w-[50px] border-b border-slate-800">#</th>
+                        <th className="px-4 py-3 border-b border-slate-800">제목</th>
+                        <th className="px-4 py-3 w-[180px] border-b border-slate-800">예약 발행 시간</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/50">
+                      {calculateSchedulePreview().map((item, i) => (
+                        <tr key={i} className="hover:bg-slate-800/40 transition-colors">
+                          <td className="px-4 py-3 text-slate-500 text-xs font-mono">{i + 1}</td>
+                          <td className="px-4 py-3 font-medium text-white">{item.title}</td>
+                          <td className="px-4 py-3 text-emerald-400 font-mono text-xs">
+                            {item.scheduledAt.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit', weekday: 'short' })}
+                            {' '}
+                            {item.scheduledAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
             <div className="flex justify-end pt-8 mt-2 border-t border-slate-800/50">
-              {inputMode === 'single' ? (
-                <button
-                  type="button"
-                  onClick={handleSingleSubmit}
-                  disabled={isQueueLoading || !keyword.trim()}
-                  className="px-8 py-4 text-sm font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-500 disabled:opacity-50 shadow-[inset_0_1px_0px_rgba(255,255,255,0.2),0_4px_10px_rgba(37,99,235,0.4)] active:scale-[0.98] transition-all flex items-center justify-center min-w-[200px]"
-                >
-                  {isQueueLoading ? '추가 중...' : '단일 키워드 큐에 등록'}
-                </button>
-              ) : (
+              {inputMode === 'single' && singleStep === 3 ? (
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setSingleStep(2)}
+                    className="px-4 py-3 text-sm font-medium text-slate-400 bg-slate-800/50 rounded-xl hover:bg-slate-700/50 hover:text-slate-300 border border-slate-700/50 transition-all"
+                  >
+                    ← 제목 선택으로
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSingleSubmit}
+                    disabled={isQueueLoading || selectedTitleIndices.size === 0}
+                    className="px-8 py-3 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl hover:from-blue-500 hover:to-cyan-500 disabled:opacity-50 shadow-[inset_0_1px_0px_rgba(255,255,255,0.2),0_4px_10px_rgba(37,99,235,0.4)] active:scale-[0.98] transition-all flex items-center justify-center min-w-[200px]"
+                  >
+                    {isQueueLoading ? '등록 중...' : `${selectedTitleIndices.size}개 제목 큐에 등록`}
+                  </button>
+                </div>
+              ) : inputMode === 'bulk' ? (
                 <button
                   type="button"
                   onClick={handleBulkSubmit}
@@ -524,7 +1020,7 @@ export function AutopilotDashboard() {
                 >
                   {isQueueLoading ? '추가 중...' : `${selectedKeywords.size}개 키워드 일괄 큐에 등록`}
                 </button>
-              )}
+              ) : null}
             </div>
           </div>
         </div>

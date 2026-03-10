@@ -24,12 +24,13 @@ export async function POST(request: Request) {
       const activeTimeEnd = payload.activeTimeEnd !== undefined && payload.activeTimeEnd !== null ? parseInt(payload.activeTimeEnd, 10) : null;
 
       const offsetHours = intervalHours ? (index * intervalHours) : 0;
-      const nextRunAt = getNextRunAtKST(intervalHours, activeTimeStart, activeTimeEnd, offsetHours);
+      const nextRunAt = getNextRunAtKST(intervalHours, activeTimeStart, activeTimeEnd, offsetHours, payload.startDate || null);
 
       return {
         keyword: payload.keyword,
         status: 'PENDING',
         personaId: payload.personaId || null,
+        themeId: payload.themeId || null,
         
         articleType: payload.articleType ?? 'single',
         textModel: payload.textModel ?? 'gpt-4o',
@@ -45,6 +46,8 @@ export async function POST(request: Request) {
         activeTimeStart,
         activeTimeEnd,
         nextRunAt,
+        maxRuns: payload.maxRuns ? parseInt(payload.maxRuns, 10) : null,
+        expiresAt: payload.expiresAt ? new Date(payload.expiresAt) : null,
       };
     });
 

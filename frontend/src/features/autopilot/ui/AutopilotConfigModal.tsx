@@ -48,7 +48,11 @@ export const AutopilotConfigModal: React.FC<AutopilotConfigModalProps> = ({ isOp
               <ul className="flex flex-col gap-2 text-xs text-muted-foreground">
                 <li className="flex items-center justify-between">
                   <span>정렬</span>
-                  <span className="text-foreground">{config.sortCriteria === 'RANK' ? '쿠팡 랭킹순' : '고객 리뷰순'}</span>
+                  <span className="text-foreground">
+                    {config.sortCriteria === 'salePriceAsc' ? '가격낮은순 (가성비)' : 
+                     config.sortCriteria === 'salePriceDesc' ? '가격높은순 (프리미엄)' : 
+                     config.sortCriteria === 'RANK' ? '쿠팡 랭킹/인기순' : '쿠팡 랭킹/인기순'}
+                  </span>
                 </li>
                 <li className="flex items-center justify-between">
                   <span>최소 가격</span>

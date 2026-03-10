@@ -14,6 +14,8 @@ export interface ThemeSwitcherTheme {
   name: string;
   isDefault: boolean;
   config: string;
+  description?: string;
+  colors?: { primary: string; secondary?: string };
 }
 
 interface ThemeSwitcherProps {

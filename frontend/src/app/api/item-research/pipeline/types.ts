@@ -72,6 +72,9 @@ export interface PipelineContext {
   publishTarget: string
   themeConfig?: Record<string, unknown>
   trace?: LangfuseTrace
+  /** 오토파일럿 메타데이터 (HTML 메타 표 주입용) */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  autopilotData?: any
 }
 
 /** WordPress 발행 결과 */

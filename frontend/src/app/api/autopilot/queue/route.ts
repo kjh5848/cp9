@@ -39,7 +39,11 @@ export async function POST(request: Request) {
       isRocketOnly,
       intervalHours,
       activeTimeStart,
-      activeTimeEnd
+      activeTimeEnd,
+      startDate,
+      themeId,
+      maxRuns,
+      expiresAt
     } = body;
     
     if (!keyword) {
@@ -50,13 +54,14 @@ export async function POST(request: Request) {
     const parsedStart = activeTimeStart !== undefined && activeTimeStart !== null ? parseInt(activeTimeStart, 10) : null;
     const parsedEnd = activeTimeEnd !== undefined && activeTimeEnd !== null ? parseInt(activeTimeEnd, 10) : null;
 
-    const nextRunAt = getNextRunAtKST(parsedInterval, parsedStart, parsedEnd);
+    const nextRunAt = getNextRunAtKST(parsedInterval, parsedStart, parsedEnd, 0, startDate || null);
 
     const newItem = await prisma.autopilotQueue.create({
       data: {
         keyword,
         status: 'PENDING',
         personaId: personaId || null,
+        themeId: themeId || null,
         
         // Phase 3 Configs
         articleType: articleType ?? 'single',
@@ -73,6 +78,8 @@ export async function POST(request: Request) {
         activeTimeStart: parsedStart,
         activeTimeEnd: parsedEnd,
         nextRunAt,
+        maxRuns: maxRuns ? parseInt(maxRuns, 10) : null,
+        expiresAt: expiresAt ? new Date(expiresAt) : null,
       },
       include: {
         persona: {
@@ -112,7 +119,7 @@ export async function DELETE(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { id, nextRunAt, status, errorMessage } = body;
+    const { id, nextRunAt, status, errorMessage, resultUrl } = body;
     
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
@@ -122,6 +129,7 @@ export async function PUT(request: Request) {
     if (nextRunAt !== undefined) data.nextRunAt = new Date(nextRunAt);
     if (status) data.status = status;
     if (errorMessage !== undefined) data.errorMessage = errorMessage;
+    if (resultUrl !== undefined) data.resultUrl = resultUrl;
 
     const updatedItem = await prisma.autopilotQueue.update({
       where: { id },
