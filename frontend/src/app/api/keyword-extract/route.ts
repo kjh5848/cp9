@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     }
 
     // 빠른 응답을 위해 경량 모델 사용
-    const model = createTextModel('gpt-4o-mini')
+    const model = createTextModel('claude-sonnet-4-5')
 
     const productList = productNames
       .map((name, i) => `${i + 1}. ${name}`)

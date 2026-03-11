@@ -57,11 +57,12 @@ model Persona {
 model AutopilotQueue {
   id           String   @id @default(uuid())
   keyword      String
-  status       String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  status       String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED, EXPIRED
   resultUrl    String?
   errorMessage String?
   
   personaId    String?
+  themeId      String? // Phase 7: 디자인 테마 ID
   persona      Persona?  @relation(fields: [personaId], references: [id])
 
   // Phase 3: 키워드별 개별 설정 (Article Settings)
@@ -81,6 +82,11 @@ model AutopilotQueue {
   activeTimeStart Int?   // 동작 허용 시작 시간 (예: 9 = 09:00)
   activeTimeEnd   Int?   // 동작 허용 종료 시간 (예: 22 = 22:00)
   nextRunAt       DateTime? @map("next_run_at") // 연산된 다음 실행 예정 시간
+
+  // Phase 4: 반복 횟수 제한 및 종료일 설정
+  maxRuns      Int?      // 최대 발행 횟수 (null → 무제한)
+  currentRuns  Int       @default(0) // 현재까지 실행된 횟수
+  expiresAt    DateTime? @map("expires_at") // 발행 종료 일시
 
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")

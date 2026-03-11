@@ -33,12 +33,17 @@ export function AutopilotDashboard() {
 
   // Mode state
   const [inputMode, setInputMode] = useState<'single' | 'bulk'>('single');
+  const [wizardStep, setWizardStep] = useState(1);
 
-  // Single Keyword Mode State
+  // ── Single Keyword State ──
   const [keyword, setKeyword] = useState('');
+  const [titleCount, setTitleCount] = useState(15);
+  const [isGeneratingTitles, setIsGeneratingTitles] = useState(false);
 
-  // Bulk Research Mode State
-  const [topic, setTopic] = useState('');
+  // ── Bulk Keyword State ──
+  const [bulkKeywordsText, setBulkKeywordsText] = useState('');
+  const [bulkTitleCountPerKeyword, setBulkTitleCountPerKeyword] = useState(2);
+  const [isBulkGenerating, setIsBulkGenerating] = useState(false);
   const [personaId, setPersonaId] = useState<string>('');
   const [personaName, setPersonaName] = useState('');('');
   const [researchResults, setResearchResults] = useState<AiResearchKeyword[]>([]);
@@ -66,42 +71,42 @@ export function AutopilotDashboard() {
   const [expiresAt, setExpiresAt] = useState(''); // 발행 종료일
 
   // 단일 키워드 스텝 위자드
-  const [singleStep, setSingleStep] = useState<1 | 2 | 3>(1);
-  const [titleCount, setTitleCount] = useState(15);
   const [suggestedTitles, setSuggestedTitles] = useState<SuggestedTitle[]>([]);
   
   // 장바구니 상태
   const [cartTitles, setCartTitles] = useState<SuggestedTitle[]>([]); 
   const [customTitleInput, setCustomTitleInput] = useState(''); // 수동 추가 인풋
-  const [isGeneratingTitles, setIsGeneratingTitles] = useState(false);
+  
 
   // ── Zustand Draft 연동 (Silent Recovery) ──
-  const autopilotStore = useAutopilotStore();
+  const { cartTitles: storeCartTitles, settings: storeSettings, setCartTitles: setStoreCartTitles, updateSettings: setStoreSettings, clearCart: storeClearCart } = useAutopilotStore();
   const [isStoreRestored, setIsStoreRestored] = useState(false);
 
   useEffect(() => {
     if (!isStoreRestored) {
-      if (autopilotStore.cartTitles && autopilotStore.cartTitles.length > 0) {
-        setCartTitles(autopilotStore.cartTitles);
+      if (storeCartTitles && storeCartTitles.length > 0) {
+        setCartTitles(storeCartTitles);
       }
-      if (autopilotStore.settings) {
-        setIntervalHours(autopilotStore.settings.intervalHours);
-        setActiveTimeStart(autopilotStore.settings.activeTimeStart);
-        setActiveTimeEnd(autopilotStore.settings.activeTimeEnd);
+      if (storeSettings) {
+        setIntervalHours(storeSettings.intervalHours);
+        setActiveTimeStart(storeSettings.activeTimeStart);
+        setActiveTimeEnd(storeSettings.activeTimeEnd);
       }
       setIsStoreRestored(true);
     }
-  }, [autopilotStore, isStoreRestored]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isStoreRestored]);
 
   // 입력 내용 변경 시 Store 스토리지 자동 업데이트
   useEffect(() => {
     if (isStoreRestored) {
-      autopilotStore.setCartTitles(cartTitles);
-      autopilotStore.updateSettings({
+      setStoreCartTitles(cartTitles);
+      setStoreSettings({
         intervalHours, activeTimeStart, activeTimeEnd
       });
     }
-  }, [cartTitles, intervalHours, activeTimeStart, activeTimeEnd, isStoreRestored, autopilotStore]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartTitles, intervalHours, activeTimeStart, activeTimeEnd, isStoreRestored]);
 
 
   // Theme State
@@ -159,6 +164,28 @@ export function AutopilotDashboard() {
     }
   }, [personas, personaId]);
 
+  // Helper function to generate titles
+  const generateKeywordTitles = async (
+    personaId: string | undefined,
+    kw: string,
+    count: number,
+    excludeTitles: string[] = []
+  ) => {
+    const res = await fetch('/api/keyword-titles', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        keyword: kw.trim(),
+        persona: personaId,
+        articleType: articleType === 'auto' ? undefined : articleType,
+        textModel,
+        count,
+        excludeTitles,
+      }),
+    });
+    return res.json();
+  };
+
   // AI 제목 생성 핸들러 (Step 1 → Step 2)
   const handleGenerateTitles = async () => {
     if (!keyword.trim()) {
@@ -168,22 +195,10 @@ export function AutopilotDashboard() {
     setIsGeneratingTitles(true);
     try {
       const excludeTitles = cartTitles.map((t) => t.title);
-      const res = await fetch('/api/keyword-titles', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          keyword: keyword.trim(),
-          persona: personaId || undefined,
-          articleType: articleType === 'auto' ? undefined : articleType,
-          textModel,
-          count: titleCount,
-          excludeTitles,
-        }),
-      });
-      const data = await res.json();
-      if (data.titles && data.titles.length > 0) {
-        setSuggestedTitles(data.titles);
-        setSingleStep(2);
+      const result = await generateKeywordTitles(personaId, keyword, titleCount, excludeTitles);
+      if (result && result.titles && result.titles.length > 0) {
+        setSuggestedTitles(result.titles);
+        setWizardStep(2);
       } else {
         alert('제목 생성에 실패했습니다. 다시 시도해주세요.');
       }
@@ -257,93 +272,12 @@ export function AutopilotDashboard() {
     const success = await addBulkToQueue(payloads);
     if (success) {
       alert(`${payloads.length}개 제목이 큐에 등록되었습니다.`);
-      autopilotStore.clearCart(); // 큐에 등록 후 장바구니 비우기
+      storeClearCart(); // 큐에 등록 후 장바구니 비우기
       setKeyword('');
+      setBulkKeywordsText('');
       setSuggestedTitles([]);
       setCartTitles([]);
-      setSingleStep(1);
-      router.push('/schedule');
-    }
-  };
-
-  const handleResearch = async () => {
-    if (!topic) {
-      alert('주제를 입력해주세요.');
-      return;
-    }
-    const currentPersonaId = personaId || personas?.[0]?.id;
-    if (!currentPersonaId) {
-      alert('백그라운드 오류: 사용 가능한 시스템 페르소나가 없습니다.');
-      return;
-    }
-    
-    setIsResearching(true);
-    const results = await researchKeywords(currentPersonaId, topic);
-    setIsResearching(false);
-    
-    if (results && results.length > 0) {
-      setResearchResults(results);
-      setSelectedKeywords(new Set(results.map(r => r.keyword))); // 다중 선택 기본값
-    } else {
-      alert('리서치 결과가 없습니다. 다시 시도해주세요.');
-    }
-  };
-
-  const toggleKeywordSelection = (kw: string) => {
-    const next = new Set(selectedKeywords);
-    if (next.has(kw)) {
-      next.delete(kw);
-    } else {
-      next.add(kw);
-    }
-    setSelectedKeywords(next);
-  };
-
-  const toggleAllKeywords = () => {
-    if (selectedKeywords.size === researchResults.length) {
-      setSelectedKeywords(new Set());
-    } else {
-      setSelectedKeywords(new Set(researchResults.map(r => r.keyword)));
-    }
-  };
-
-  const handleBulkSubmit = async () => {
-    if (selectedKeywords.size === 0) {
-      alert('발행할 키워드를 하나 이상 선택해주세요.');
-      return;
-    }
-    if (startDate && new Date(startDate) < new Date()) {
-      alert('현재 시간 이전으로 설정할 수 없습니다.');
-      return;
-    }
-
-    const payloads: CreateAutopilotQueuePayload[] = Array.from(selectedKeywords).map(kw => ({
-      personaName,
-      keyword: kw,
-      personaId: personaId || undefined,
-      themeId: themeId || undefined,
-      articleType,
-      textModel,
-      imageModel,
-      charLimit: parseInt(charLimit as string, 10),
-      sortCriteria,
-      minPrice: minPrice ? parseInt(minPrice, 10) : undefined,
-      maxPrice: maxPrice ? parseInt(maxPrice, 10) : undefined,
-      isRocketOnly,
-      intervalHours: intervalHours ? parseInt(intervalHours, 10) : undefined,
-      activeTimeStart: activeTimeStart ? parseInt(activeTimeStart, 10) : undefined,
-      activeTimeEnd: activeTimeEnd ? parseInt(activeTimeEnd, 10) : undefined,
-      startDate: startDate || undefined,
-      maxRuns: maxRuns ? parseInt(maxRuns, 10) : undefined,
-      expiresAt: expiresAt || undefined,
-    }));
-
-    const success = await addBulkToQueue(payloads);
-    if (success) {
-      alert(`${payloads.length}건의 아이템이 큐에 담겼습니다.`);
-      setResearchResults([]);
-      setSelectedKeywords(new Set());
-      setTopic('');
+      setWizardStep(1);
       router.push('/schedule');
     }
   };
@@ -436,30 +370,30 @@ export function AutopilotDashboard() {
                     <button
                       type="button"
                       onClick={() => {
-                        if (step === 1) setSingleStep(1);
-                        else if (step === 2 && (suggestedTitles.length > 0 || cartTitles.length > 0)) setSingleStep(2);
-                        else if (step === 3 && cartTitles.length > 0) setSingleStep(3);
+                        if (step === 1) setWizardStep(1);
+                        else if (step === 2 && (suggestedTitles.length > 0 || cartTitles.length > 0)) setWizardStep(2);
+                        else if (step === 3 && cartTitles.length > 0) setWizardStep(3);
                       }}
                       className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                        singleStep === step
+                        wizardStep === step
                           ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                          : singleStep > step
+                          : wizardStep > step
                           ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 cursor-pointer'
                           : 'bg-slate-800/50 text-slate-500 border border-slate-700/30'
                       }`}
                     >
                       <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                        singleStep === step ? 'bg-blue-500 text-white' : singleStep > step ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-400'
-                      }`}>{singleStep > step ? '✓' : step}</span>
+                        wizardStep === step ? 'bg-blue-500 text-white' : wizardStep > step ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-400'
+                      }`}>{wizardStep > step ? '✓' : step}</span>
                       {step === 1 ? '키워드 입력' : step === 2 ? '제목 선택' : '설정 & 등록'}
                     </button>
-                    {step < 3 && <div className={`flex-1 h-px ${singleStep > step ? 'bg-emerald-500/30' : 'bg-slate-700/50'}`} />}
+                    {step < 3 && <div className={`flex-1 h-px ${wizardStep > step ? 'bg-emerald-500/30' : 'bg-slate-700/50'}`} />}
                   </React.Fragment>
                 ))}
               </div>
 
               {/* Step 1: 키워드 입력 + 제목 개수 선택 */}
-              {singleStep === 1 && (
+              {wizardStep === 1 && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-1.5 md:col-span-2">
@@ -507,7 +441,7 @@ export function AutopilotDashboard() {
               )}
 
               {/* Step 2: AI 제안 제목 테이블 & 장바구니 */}
-              {singleStep === 2 && (
+              {wizardStep === 2 && (
                 <div className="space-y-6">
                   {/* 상단 액션: 다시 생성 */}
                   <div className="flex justify-between items-center mb-2">
@@ -516,7 +450,7 @@ export function AutopilotDashboard() {
                      </h3>
                      <button
                         type="button"
-                        onClick={() => setSingleStep(1)}
+                        onClick={() => setWizardStep(1)}
                         className="text-xs font-medium text-slate-400 hover:text-slate-300 transition-colors bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700/50"
                      >
                         ← 키워드 다시 설정
@@ -692,7 +626,7 @@ export function AutopilotDashboard() {
                   <div className="flex justify-end pt-4 border-t border-slate-800/50 mt-6 md:mt-8">
                     <button
                       type="button"
-                      onClick={() => setSingleStep(3)}
+                      onClick={() => setWizardStep(3)}
                       disabled={cartTitles.length === 0}
                       className="px-6 py-3 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 shadow-[0_4px_15px_rgba(16,185,129,0.3)] active:scale-[0.98] transition-all flex items-center gap-2"
                     >
@@ -808,7 +742,7 @@ export function AutopilotDashboard() {
 
           {/* 공통 SEO 글 작성 설정 UI — 단일 키워드 Step 3 또는 대량 모드에서만 표시 */}
           <div className={`transition-all duration-500 ${
-            (inputMode === 'single' && singleStep !== 3) ? 'hidden' :
+            (inputMode === 'single' && wizardStep !== 3) ? 'hidden' :
             (inputMode === 'bulk' && researchResults.length === 0) ? 'opacity-50 pointer-events-none' : 'opacity-100'
           }`}>
             <div className="pt-8 border-t border-slate-800/50">
@@ -1033,7 +967,7 @@ export function AutopilotDashboard() {
             </div>
 
             {/* 단일 키워드 Step 3: 스케줄 미리보기 테이블 */}
-            {inputMode === 'single' && singleStep === 3 && cartTitles.length > 0 && (
+            {inputMode === 'single' && wizardStep === 3 && cartTitles.length > 0 && (
               <div className="mt-6 pt-6 border-t border-slate-800/50">
                 <h3 className="text-sm font-semibold text-slate-300 tracking-tight mb-3 flex items-center gap-2">
                   <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1069,11 +1003,11 @@ export function AutopilotDashboard() {
             )}
 
             <div className="flex justify-end pt-8 mt-2 border-t border-slate-800/50">
-              {inputMode === 'single' && singleStep === 3 ? (
+              {inputMode === 'single' && wizardStep === 3 ? (
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
-                    onClick={() => setSingleStep(2)}
+                    onClick={() => setWizardStep(2)}
                     className="px-4 py-3 text-sm font-medium text-slate-400 bg-slate-800/50 rounded-xl hover:bg-slate-700/50 hover:text-slate-300 border border-slate-700/50 transition-all"
                   >
                     ← 제목 선택으로

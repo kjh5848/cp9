@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     }
 
     // 제목 생성용 모델 (빠른 응답을 위해 경량 모델 사용)
-    const modelName = requestedModel || 'gpt-4o-mini'
+    const modelName = requestedModel || 'claude-sonnet-4-5'
     const model = createTextModel(modelName)
 
     const systemPrompt = `
