@@ -70,8 +70,8 @@ export const ScheduleManagement = () => {
     date: item.nextRunAt || item.createdAt,
     status: item.status === 'EXPIRED' ? 'EXPIRED' : 'COMPLETED',
     isAutopilot: true,
-    resultUrl: item.resultUrl,
-    content: item.resultUrl ? '' : '워드프레스에 자동 발행된 아이템입니다.'
+    resultUrl: item.resultUrl === 'undefined' ? null : item.resultUrl,
+    content: (item.resultUrl && item.resultUrl !== 'undefined') ? '' : '스케줄에 등록된 아이템입니다.'
   }));
 
   const completedItems = [...manualCompleted, ...autoCompleted].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -198,7 +198,7 @@ export const ScheduleManagement = () => {
         persona: item.persona,
         content: item.content,
         isAutopilot: item.isAutopilot,
-        resultUrl: (item as any).resultUrl,
+        resultUrl: (item as any).resultUrl === 'undefined' ? null : (item as any).resultUrl,
       };
     }),
   ];
@@ -465,8 +465,8 @@ export const ScheduleManagement = () => {
         <BigCalendarView
           events={calendarEvents}
           onEventClick={(event) => {
-            // 오토파일럿 완료 이벤트에 resultUrl이 있으면 새 탭으로 열기
-            if (event.isAutopilot && event.resultUrl) {
+            // 오토파일럿 완료 이벤트에 유효한 resultUrl이 있으면 새 탭으로 열기
+            if (event.isAutopilot && event.resultUrl && event.resultUrl !== 'undefined') {
               window.open(event.resultUrl, '_blank');
             } else if (event.content) {
               setPreviewItem({
@@ -614,9 +614,10 @@ export const ScheduleManagement = () => {
                     variant="outline" 
                     className="h-7 text-xs border-blue-500/30 text-blue-500 hover:bg-blue-500/10"
                     onClick={() => {
-                      // resultUrl이 있으면 새 탭으로 열기, 없으면 본문 모달
-                      if ((item as any).resultUrl) {
-                        window.open((item as any).resultUrl, '_blank');
+                      // 유효한 resultUrl이 있으면 새 탭으로 열기, 없으면 본문 모달
+                      const url = (item as any).resultUrl;
+                      if (url && url !== 'undefined') {
+                        window.open(url, '_blank');
                       } else {
                         setPreviewItem({
                           isOpen: true,

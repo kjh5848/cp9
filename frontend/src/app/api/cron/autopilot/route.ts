@@ -99,7 +99,7 @@ export async function GET(request: Request) {
       const rawAgentProducts = await runSourcingAgent(intentContent, sourcingConstraints);
       
       // 정렬 (Sort)
-      let productsFiltered = [...rawAgentProducts];
+      const productsFiltered = [...rawAgentProducts];
       if (pendingItem.sortCriteria === 'salePriceAsc') {
         productsFiltered.sort((a, b) => a.productPrice - b.productPrice);
       } else if (pendingItem.sortCriteria === 'salePriceDesc') {

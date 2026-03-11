@@ -17,6 +17,7 @@ import type { ItemResearchRequest, PipelineContext } from './types'
 /** 파이프라인 설정 (route.ts에서 전달) */
 export interface PipelineConfig {
   persona: string
+  personaName?: string
   tone: string
   textModel: string
   imageModel: string
@@ -32,12 +33,12 @@ export interface PipelineConfig {
  * Phase 1 → (Phase 2 + Phase 3 병렬) → Phase 4 → DB 저장
  */
 export async function runSeoPipeline(body: ItemResearchRequest, config: PipelineConfig): Promise<string | null> {
-  const { persona, tone, imageModel, charLimit, articleType } = config;
+  const { persona, personaName, tone, imageModel, charLimit, articleType } = config;
   // 비교/큐레이션: 하위 모델 자동 업그레이드
   const textModel = upgradeModelForArticleType(config.textModel, articleType);
-  const finalPersonaName = persona === 'MASTER_CURATOR_H'
+  const finalPersonaName = personaName || (persona === 'MASTER_CURATOR_H'
     ? '마스터 큐레이터 H'
-    : PERSONA_DISPLAY_NAME[persona] || persona;
+    : PERSONA_DISPLAY_NAME[persona] || persona);
 
   // 파이프라인 전체 시작 시각
   const pipelineStartMs = Date.now();

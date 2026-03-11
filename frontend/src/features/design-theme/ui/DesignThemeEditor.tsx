@@ -22,6 +22,7 @@ import type { StyleMode } from '@/entities/design/ui/StyleModeSelector';
 // Features Layer — ViewModel & 상수
 import { useDesignViewModel } from '../model/useDesignViewModel';
 import { TABS } from '../model/constants';
+import { useLeaveConfirm } from '@/shared/lib/hooks/useLeaveConfirm';
 
 /**
  * [Features/DesignTheme Layer]
@@ -30,9 +31,11 @@ import { TABS } from '../model/constants';
  */
 export function DesignThemeEditor() {
   const {
-    themes, selectedThemeId, themeName, config, activeTab, saving, loading, showDeleteConfirm, isPublishModeOpen, isPresetTheme, router,
+    themes, selectedThemeId, themeName, config, activeTab, saving, loading, showDeleteConfirm, isPublishModeOpen, isPresetTheme, isDirty, router,
     actions,
   } = useDesignViewModel();
+
+  useLeaveConfirm(isDirty);
 
   // 로딩 상태
   if (loading) {
@@ -72,7 +75,7 @@ export function DesignThemeEditor() {
             <Button variant="outline" size="sm" className="border-slate-700 text-slate-400 hover:text-white" onClick={actions.handleExport} title="JSON 내보내기">
               <Download className="w-4 h-4 mr-1" /> 내보내기
             </Button>
-            {selectedThemeId && !isPresetTheme && (
+            {selectedThemeId && (
               <>
                 <Button variant="outline" size="sm" className="border-slate-700 text-slate-400 hover:text-white" onClick={actions.handleDuplicate} title="테마 복제">
                   <Copy className="w-4 h-4 mr-1" /> 복제
@@ -85,24 +88,12 @@ export function DesignThemeEditor() {
                 </Button>
               </>
             )}
-            {selectedThemeId && isPresetTheme && (
-              <>
-                <Button variant="outline" size="sm" className="border-slate-700 text-slate-400 hover:text-white" onClick={actions.handleDuplicate} title="프리셋 복제 후 수정 가능">
-                  <Copy className="w-4 h-4 mr-1" /> 복제해서 편집
-                </Button>
-                <span className="text-[10px] px-2 py-1 rounded bg-amber-500/15 text-amber-400 border border-amber-500/20">
-                  🔒 프리셋 (읽기 전용)
-                </span>
-              </>
-            )}
             <Button variant="outline" size="sm" className="border-slate-700 text-slate-400 hover:text-white" onClick={actions.handleReset} title="기본값으로 리셋">
               <RotateCcw className="w-4 h-4" />
             </Button>
-            {!isPresetTheme && (
-              <Button size="sm" className="bg-blue-600 hover:bg-blue-500 text-white" onClick={actions.handleSave} disabled={saving}>
-                <Save className="w-4 h-4 mr-1" /> {saving ? '저장 중...' : '저장'}
-              </Button>
-            )}
+            <Button size="sm" className="bg-blue-600 hover:bg-blue-500 text-white" onClick={actions.handleSave} disabled={saving}>
+              <Save className="w-4 h-4 mr-1" /> {saving ? '저장 중...' : '저장'}
+            </Button>
           </div>
         </div>
 

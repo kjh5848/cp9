@@ -17,8 +17,8 @@ interface NavbarProps {
  * Glassmorphism 디자인이 적용되어 있으며 고정(fixed) 위치를 가집니다.
  */
 export const Navbar = ({ className }: NavbarProps) => {
-  // 임시Mock 유저 데이터
-  const user = null; 
+  // 임시Mock 유저 데이터 (테스트를 위해 활성화)
+  const user = { email: "admin@cp9.com" }; 
   const signOut = () => console.log("Sign out");
 
   return (
@@ -57,6 +57,9 @@ export const Navbar = ({ className }: NavbarProps) => {
           </Link>
           <Link href="/autopilot" className="px-4 py-2 text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors">
             오토파일럿
+          </Link>
+          <Link href="/my-page" className="px-4 py-2 text-sm font-bold text-cyan-400 hover:text-cyan-300 transition-colors">
+            마이페이지
           </Link>
         </nav>
       </div>

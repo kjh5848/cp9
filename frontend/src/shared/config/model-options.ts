@@ -24,7 +24,7 @@ export const TEXT_MODEL_OPTIONS: ModelOption[] = [
   { value: "o4-mini-2025-04-16", label: "o4-mini", group: "OpenAI" },
   { value: "gpt-5-pro-2025-10-06", label: "GPT-5 Pro", group: "OpenAI" },
   // Anthropic (Claude)
-  { value: "claude-sonnet-4-6", label: "Claude Sonnet 4.6 ⭐", group: "Anthropic (Claude)" },
+  { value: "claude-sonnet-4-5", label: "Claude Sonnet 4.5", group: "Anthropic (Claude)" },
   { value: "claude-opus-4-6", label: "Claude Opus 4.6", group: "Anthropic (Claude)" },
   { value: "claude-haiku-4-5-20251001", label: "Claude Haiku 4.5", group: "Anthropic (Claude)" },
   // Google (Gemini)
@@ -43,7 +43,7 @@ export const IMAGE_MODEL_OPTIONS: ImageModelOption[] = [
 
 /* ──────────────────────── 기본값 ──────────────────────── */
 
-export const DEFAULT_TEXT_MODEL = "claude-sonnet-4-6";
+export const DEFAULT_TEXT_MODEL = "claude-sonnet-4-5";
 export const DEFAULT_IMAGE_MODEL = "dall-e-3";
 
 /* ──────────────────────── 유틸리티 ──────────────────────── */

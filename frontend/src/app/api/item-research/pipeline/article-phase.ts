@@ -186,13 +186,9 @@ function buildCurationPrompt(ctx: PipelineContext, researchData: string): string
   const itemCount = items.length;
   const { charLimit } = ctx;
 
-  // 아이템 수별 권장 글자수
-  let perItemChars = 300;
-  if (itemCount <= 10) perItemChars = 300;
-  else if (itemCount <= 20) perItemChars = 200;
-  else if (itemCount <= 30) perItemChars = 150;
-  else if (itemCount <= 40) perItemChars = 120;
-  else perItemChars = 100;
+  // 큐레이션에서는 charLimit이 '아이템당 목표 분량'을 의미함
+  const perItemChars = charLimit || 300;
+  const totalCharLimit = (perItemChars * itemCount) + 1000; // 도입/결론 분량 추가
 
   const itemsList = items.map((item, i) =>
     `${i + 1}. ${item.productName} — ${item.productPrice.toLocaleString()}원 | ${item.isRocket ? '로켓배송' : ''} | [구매](${item.productUrl})`
@@ -208,7 +204,7 @@ ${itemsList}
 [최신 리서치 (Perplexity 검색 결과)]:
 ${researchData}
 
-[목표 글자수]: 공백 포함 한국어 글자(Character) 기준으로 최소 ${charLimit}자 이상 작성.
+[목표 글자수]: 공백 포함 한국어 글자(Character) 기준으로 총 ${totalCharLimit}자 이상 작성.
 [아이템당 권장 글자수]: 약 ${perItemChars}자
 
 [작성 구조 지침 - 반드시 준수]:
@@ -221,7 +217,7 @@ ${researchData}
 3. **마무리** (~500자) — 종합 추천과 선택 가이드
 
 [강제 지침]:
-- 각 상품 소개는 ~${perItemChars}자로 간결하게 작성하라. 장황하게 늘리지 마라.
+- 각 상품 소개는 최소 ${perItemChars}자 이상 상세하게 작성하라.
 - 모든 상품의 쿠팡 구매 링크를 반드시 포함하라.
 - 순위에 대한 명확한 근거를 제시하라 (가격, 성능, 인기도 등).
 - 이모지와 아이콘은 어디에도 사용하지 마라.

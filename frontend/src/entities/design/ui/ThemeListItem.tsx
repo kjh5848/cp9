@@ -3,7 +3,7 @@ import { cn } from '@/shared/lib/utils';
 import { ArticleTheme, ThemeConfig } from '../model/types';
 import { getThemePreviewTokens } from '../model/utils';
 import { PRESET_THEME_NAMES } from '@/features/design-theme/model/constants';
-import { Lock, Type, Code, Palette } from 'lucide-react';
+import { Type, Code, Palette } from 'lucide-react';
 
 /** ThemeListItem Props 타입 */
 interface ThemeListItemProps {
@@ -89,17 +89,7 @@ export function ThemeListItem({ theme, isSelected, onClick, liveConfig, disabled
             </div>
           </div>
           
-          {/* 프리셋 테마 잠금 아이콘 */}
-          {isPreset ?
-          <div className="flex items-center justify-center w-5 h-5 rounded-full bg-slate-800/80 border border-slate-700/50 relative group">
-              <Lock className="w-3 h-3 text-slate-400" />
-              <div className="absolute bottom-full right-0 mb-1.5 hidden group-hover:block z-10 w-max pointer-events-none">
-                <div className="bg-slate-800 text-slate-200 text-[10px] px-2 py-1 rounded shadow-lg border border-slate-700 whitespace-nowrap">
-                  기본 테마 (색상 등 디자인 변경 불가)
-                </div>
-              </div>
-            </div> : null
-          }
+          {/* 프리셋 테마 잠금 아이콘 제거 */}
         </div>
       </div>
     </button>);

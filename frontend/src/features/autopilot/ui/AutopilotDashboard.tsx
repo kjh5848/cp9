@@ -7,6 +7,8 @@ import { usePersonaViewModel } from '@/features/persona/model/usePersonaViewMode
 import { SharedArticleSettings } from '@/shared/ui/SharedArticleSettings';
 import { DEFAULT_TEXT_MODEL, DEFAULT_IMAGE_MODEL } from '@/shared/config/model-options';
 import { AiResearchKeyword, CreateAutopilotQueuePayload, SuggestedTitle } from '../../../entities/autopilot/model/types';
+import { useUserSettingsViewModel } from '@/features/user-settings/model/useUserSettingsViewModel';
+import { useAutopilotStore } from '@/entities/autopilot/model/useAutopilotStore';
 
 export function AutopilotDashboard() {
   const router = useRouter();
@@ -27,6 +29,8 @@ export function AutopilotDashboard() {
     fetchPersonas
   } = usePersonaViewModel();
 
+  const { themeSettings, articleSettings, profile } = useUserSettingsViewModel();
+
   // Mode state
   const [inputMode, setInputMode] = useState<'single' | 'bulk'>('single');
 
@@ -35,7 +39,8 @@ export function AutopilotDashboard() {
 
   // Bulk Research Mode State
   const [topic, setTopic] = useState('');
-  const [personaId, setPersonaId] = useState('');
+  const [personaId, setPersonaId] = useState<string>('');
+  const [personaName, setPersonaName] = useState('');('');
   const [researchResults, setResearchResults] = useState<AiResearchKeyword[]>([]);
   const [selectedKeywords, setSelectedKeywords] = useState<Set<string>>(new Set());
   const [isResearching, setIsResearching] = useState(false);
@@ -53,7 +58,7 @@ export function AutopilotDashboard() {
   const [isRocketOnly, setIsRocketOnly] = useState(false);
 
   // Scheduling
-  const [intervalHours, setIntervalHours] = useState('24'); // 기본 24시간
+  const [intervalHours, setIntervalHours] = useState('1440'); // 기본 24시간 (1440분)
   const [activeTimeStart, setActiveTimeStart] = useState('9'); // 기본 09:00
   const [activeTimeEnd, setActiveTimeEnd] = useState('22'); // 기본 22:00
   const [startDate, setStartDate] = useState(''); // 시작 일시지정
@@ -64,10 +69,40 @@ export function AutopilotDashboard() {
   const [singleStep, setSingleStep] = useState<1 | 2 | 3>(1);
   const [titleCount, setTitleCount] = useState(15);
   const [suggestedTitles, setSuggestedTitles] = useState<SuggestedTitle[]>([]);
-  // selectedTitleIndices, editableTitles 삭제 (장바구니 로직으로 대체)
-  const [cartTitles, setCartTitles] = useState<SuggestedTitle[]>([]); // 장바구니에 담긴 제목들
+  
+  // 장바구니 상태
+  const [cartTitles, setCartTitles] = useState<SuggestedTitle[]>([]); 
   const [customTitleInput, setCustomTitleInput] = useState(''); // 수동 추가 인풋
   const [isGeneratingTitles, setIsGeneratingTitles] = useState(false);
+
+  // ── Zustand Draft 연동 (Silent Recovery) ──
+  const autopilotStore = useAutopilotStore();
+  const [isStoreRestored, setIsStoreRestored] = useState(false);
+
+  useEffect(() => {
+    if (!isStoreRestored) {
+      if (autopilotStore.cartTitles && autopilotStore.cartTitles.length > 0) {
+        setCartTitles(autopilotStore.cartTitles);
+      }
+      if (autopilotStore.settings) {
+        setIntervalHours(autopilotStore.settings.intervalHours);
+        setActiveTimeStart(autopilotStore.settings.activeTimeStart);
+        setActiveTimeEnd(autopilotStore.settings.activeTimeEnd);
+      }
+      setIsStoreRestored(true);
+    }
+  }, [autopilotStore, isStoreRestored]);
+
+  // 입력 내용 변경 시 Store 스토리지 자동 업데이트
+  useEffect(() => {
+    if (isStoreRestored) {
+      autopilotStore.setCartTitles(cartTitles);
+      autopilotStore.updateSettings({
+        intervalHours, activeTimeStart, activeTimeEnd
+      });
+    }
+  }, [cartTitles, intervalHours, activeTimeStart, activeTimeEnd, isStoreRestored, autopilotStore]);
+
 
   // Theme State
   const [themes, setThemes] = useState<import('@/entities/design/ui/ThemeSwitcher').ThemeSwitcherTheme[]>([]);
@@ -79,11 +114,16 @@ export function AutopilotDashboard() {
       const data = await res.json();
       const list = data.themes || [];
       setThemes(list);
-      const defaultTheme = list.find((t: any) => t.isDefault);
-      if (defaultTheme) {
-        setThemeId(defaultTheme.id);
-      } else if (list.length > 0) {
-        setThemeId(list[0].id);
+      
+      if (themeSettings?.themeId && list.some((t: any) => t.id === themeSettings.themeId)) {
+        setThemeId(themeSettings.themeId);
+      } else {
+        const defaultTheme = list.find((t: any) => t.isDefault);
+        if (defaultTheme) {
+          setThemeId(defaultTheme.id);
+        } else if (list.length > 0) {
+          setThemeId(list[0].id);
+        }
       }
     } catch (e) {
       console.error('Failed to fetch themes', e);
@@ -94,7 +134,8 @@ export function AutopilotDashboard() {
     fetchQueue();
     fetchPersonas();
     fetchThemes();
-  }, [fetchQueue, fetchPersonas]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchQueue, fetchPersonas, themeSettings?.themeId]);
 
   useEffect(() => {
     const now = new Date();
@@ -102,6 +143,14 @@ export function AutopilotDashboard() {
     const localISOTime = new Date(now.getTime() - tzOffset).toISOString().slice(0, 16);
     setStartDate(localISOTime);
   }, []);
+
+  // Sync settings with My Page defaults when available
+  useEffect(() => {
+    if (articleSettings?.defaultTextModel) setTextModel(articleSettings.defaultTextModel);
+    if (articleSettings?.defaultImageModel) setImageModel(articleSettings.defaultImageModel);
+    if (articleSettings?.presetWordCount) setCharLimit(articleSettings.presetWordCount);
+    if (profile?.name) setPersonaName(profile.name);
+  }, [articleSettings, profile]);
 
   // Set the first persona as default if available since the selection UI is hidden
   useEffect(() => {
@@ -148,7 +197,7 @@ export function AutopilotDashboard() {
   // 스케줄 미리보기 계산 (장바구니 제목 기준)
   const calculateSchedulePreview = () => {
     const base = startDate ? new Date(startDate) : new Date();
-    const interval = parseInt(intervalHours || '24', 10);
+    const interval = parseInt(intervalHours || '1440', 10);
     const activeStart = parseInt(activeTimeStart || '9', 10);
     const activeEnd = parseInt(activeTimeEnd || '22', 10);
 
@@ -180,12 +229,16 @@ export function AutopilotDashboard() {
       return;
     }
 
-    const payloads: CreateAutopilotQueuePayload[] = preview.map((item) => ({
-      keyword: item.title,
-      personaId: personaId || undefined,
-      themeId: themeId || undefined,
-      articleType,
-      textModel,
+    const payloads: CreateAutopilotQueuePayload[] = preview.map((item) => {
+      // 장바구니에 담긴 개별 설정 가져오기 (preview.index 활용)
+      const cartItem = cartTitles[item.index];
+      
+      return {
+        keyword: item.title,
+        personaId: personaId || undefined,
+        themeId: themeId || undefined,
+        articleType: cartItem?.articleType && cartItem.articleType !== 'auto' ? cartItem.articleType : articleType,
+        textModel,
       imageModel,
       charLimit: parseInt(charLimit as string, 10),
       sortCriteria,
@@ -198,11 +251,13 @@ export function AutopilotDashboard() {
       startDate: item.scheduledAt.toISOString(),
       maxRuns: maxRuns ? parseInt(maxRuns, 10) : undefined,
       expiresAt: expiresAt || undefined,
-    }));
+    };
+  });
 
     const success = await addBulkToQueue(payloads);
     if (success) {
       alert(`${payloads.length}개 제목이 큐에 등록되었습니다.`);
+      autopilotStore.clearCart(); // 큐에 등록 후 장바구니 비우기
       setKeyword('');
       setSuggestedTitles([]);
       setCartTitles([]);
@@ -263,6 +318,7 @@ export function AutopilotDashboard() {
     }
 
     const payloads: CreateAutopilotQueuePayload[] = Array.from(selectedKeywords).map(kw => ({
+      personaName,
       keyword: kw,
       personaId: personaId || undefined,
       themeId: themeId || undefined,
@@ -606,7 +662,23 @@ export function AutopilotDashboard() {
                                       }}
                                       className="w-full bg-transparent border-none outline-none text-sm font-medium text-emerald-100 focus:bg-slate-800/50 rounded px-1 -mx-1 transition-colors"
                                    />
-                                   {item.subtitle && <p className="text-[10px] text-slate-500 mt-0.5 px-1">{item.subtitle}</p>}
+                                   <div className="flex items-center gap-2 mt-1.5 px-1">
+                                     <select
+                                       value={item.articleType || 'auto'}
+                                       onChange={(e) => {
+                                         const newCart = [...cartTitles];
+                                         newCart[i] = { ...newCart[i], articleType: e.target.value };
+                                         setCartTitles(newCart);
+                                       }}
+                                       className="bg-slate-900 border border-slate-700/50 text-slate-300 text-[11px] rounded px-1.5 py-0.5 outline-none focus:border-emerald-500/50 transition-colors"
+                                     >
+                                       <option value="auto">AI가 추천하는 유형 사용</option>
+                                       <option value="single">단일 아이템 리뷰</option>
+                                       <option value="compare">비교 분석 (2~5개)</option>
+                                       <option value="curation">다중 큐레이션 (TOP N)</option>
+                                     </select>
+                                     {item.subtitle && <p className="text-[10px] text-slate-500 truncate">{item.subtitle}</p>}
+                                   </div>
                                  </div>
                                </li>
                              ))}
@@ -744,6 +816,8 @@ export function AutopilotDashboard() {
                 personas={personas}
                 persona={personaId}
                 setPersona={setPersonaId}
+                personaName={personaName}
+                setPersonaName={setPersonaName}
                 articleType={articleType}
                 setArticleType={setArticleType}
                 textModel={textModel}
@@ -835,13 +909,13 @@ export function AutopilotDashboard() {
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-slate-300 tracking-tight">발행 스케줄링</h3>
                   <div className="flex gap-2">
-                    <button type="button" onClick={() => applySchedulePreset('24', '14', '22')} className="px-2 py-1 text-[11px] font-medium bg-slate-800/50 text-slate-300 rounded border border-slate-700/50 hover:bg-blue-500/20 hover:text-blue-300 transition-colors">
+                    <button type="button" onClick={() => applySchedulePreset('1440', '14', '22')} className="px-2 py-1 text-[11px] font-medium bg-slate-800/50 text-slate-300 rounded border border-slate-700/50 hover:bg-blue-500/20 hover:text-blue-300 transition-colors">
                       오후 (14~22시)
                     </button>
-                    <button type="button" onClick={() => applySchedulePreset('12', '22', '6')} className="px-2 py-1 text-[11px] font-medium bg-slate-800/50 text-slate-300 rounded border border-slate-700/50 hover:bg-purple-500/20 hover:text-purple-300 transition-colors">
+                    <button type="button" onClick={() => applySchedulePreset('720', '22', '6')} className="px-2 py-1 text-[11px] font-medium bg-slate-800/50 text-slate-300 rounded border border-slate-700/50 hover:bg-purple-500/20 hover:text-purple-300 transition-colors">
                       심야 (밤샘)
                     </button>
-                    <button type="button" onClick={() => applySchedulePreset('6', '0', '23')} className="px-2 py-1 text-[11px] font-medium bg-slate-800/50 text-slate-300 rounded border border-slate-700/50 hover:bg-emerald-500/20 hover:text-emerald-300 transition-colors">
+                    <button type="button" onClick={() => applySchedulePreset('360', '0', '23')} className="px-2 py-1 text-[11px] font-medium bg-slate-800/50 text-slate-300 rounded border border-slate-700/50 hover:bg-emerald-500/20 hover:text-emerald-300 transition-colors">
                       종일 (24시간)
                     </button>
                   </div>
@@ -866,7 +940,7 @@ export function AutopilotDashboard() {
                       <select 
                         className="w-[140px] p-2 text-sm bg-slate-950/50 border border-slate-800/50 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors text-slate-200 outline-none"
                         value={
-                          ['24', '48', '56', '72', '168', '720'].includes(intervalHours) 
+                          ['10', '30', '60', '180', '720', '1440', '2880'].includes(intervalHours) 
                             ? intervalHours 
                             : 'custom'
                         }
@@ -878,24 +952,26 @@ export function AutopilotDashboard() {
                           }
                         }}
                       >
-                        <option value="24">매일 1회</option>
-                        <option value="48">이틀에 1회</option>
-                        <option value="56">일주일에 3회</option>
-                        <option value="72">일주일에 2회</option>
-                        <option value="168">일주일에 1회</option>
-                        <option value="720">한 달에 1회</option>
-                        <option value="custom">시간 직접 입력</option>
+                        <option value="10">10분 간격 (테스트용 초고속)</option>
+                        <option value="30">30분 마다</option>
+                        <option value="60">1시간 마다</option>
+                        <option value="180">3시간 마다</option>
+                        <option value="720">반나절(12시간) 마다</option>
+                        <option value="1440">매일 1회 (24시간)</option>
+                        <option value="2880">이틀에 1회</option>
+                        <option value="custom">분 직접 입력</option>
                       </select>
-                      {['24', '48', '56', '72', '168', '720'].includes(intervalHours) ? null : (
+                      {['10', '30', '60', '180', '720', '1440', '2880'].includes(intervalHours) ? null : (
                         <>
                           <input
                             type="number"
                             value={intervalHours}
                             onChange={(e) => setIntervalHours(e.target.value)}
-                            placeholder="24"
+                            placeholder="60"
+                            min="10"
                             className="w-[80px] p-2 text-sm bg-slate-950/50 border border-slate-800/50 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors text-slate-200 outline-none text-right"
                           />
-                          <span className="text-sm text-slate-400">시간 마다</span>
+                          <span className="text-sm text-slate-400">분 마다</span>
                         </>
                       )}
                     </div>
@@ -1005,10 +1081,10 @@ export function AutopilotDashboard() {
                   <button
                     type="button"
                     onClick={handleSingleSubmit}
-                    disabled={isQueueLoading || selectedTitleIndices.size === 0}
+                    disabled={isQueueLoading || cartTitles.length === 0}
                     className="px-8 py-3 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl hover:from-blue-500 hover:to-cyan-500 disabled:opacity-50 shadow-[inset_0_1px_0px_rgba(255,255,255,0.2),0_4px_10px_rgba(37,99,235,0.4)] active:scale-[0.98] transition-all flex items-center justify-center min-w-[200px]"
                   >
-                    {isQueueLoading ? '등록 중...' : `${selectedTitleIndices.size}개 제목 큐에 등록`}
+                    {isQueueLoading ? '등록 중...' : `${cartTitles.length}개 제목 큐에 등록`}
                   </button>
                 </div>
               ) : inputMode === 'bulk' ? (

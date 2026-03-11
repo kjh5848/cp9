@@ -20,6 +20,7 @@ import {
 import { usePersonaViewModel } from "@/features/persona/model/usePersonaViewModel";
 import { SharedArticleSettings } from "@/shared/ui/SharedArticleSettings";
 import { SelectedProductList } from "@/shared/ui/SelectedProductList";
+import { useUserSettingsViewModel } from "@/features/user-settings/model/useUserSettingsViewModel";
 
 /* ──────────────────────────── 타입 정의 ──────────────────────────── */
 
@@ -55,7 +56,7 @@ const FALLBACK_PERSONA_OPTIONS = [
   { id: "LIVING", label: "🏠 살림/인테리어 고수", desc: "공간별 활용 · 유지관리 · 가성비 판정" },
   { id: "BEAUTY", label: "✨ 패션/뷰티 쇼퍼", desc: "트렌드 핏 · 실착 후기 · 스타일링 가이드" },
   { id: "HUNTER", label: "🔥 가성비/할인 헌터", desc: "가격 비교표 · 할인 분석 · 구매 긴박성 CTA" },
-  { id: "MASTER_CURATOR_H", label: "⭐ 마스터 큐레이터", desc: "렌탈 딥다이브 · 하이엔드 비교 · SEO 구조화" },
+  { id: "MASTER_CURATOR_H", label: "마스터 큐레이터", desc: "렌탈 딥다이브 · 하이엔드 비교 · SEO 구조화" },
 ];
 
 const CHAR_LIMIT_PRESETS = [
@@ -148,9 +149,10 @@ export const WriteActionModal = ({
   // ── Step 1: 글 유형 ──
   const [articleType, setArticleType] = useState<ArticleType>("single");
 
-  // ── Step 3: 페르소나 연동 ──
+  // ── Step 3: 설정(Settings) 로드 빛 페르소나 연동 ──
   const { personas, fetchPersonas } = usePersonaViewModel();
-  
+  const { profile, articleSettings, themeSettings } = useUserSettingsViewModel();
+
   useEffect(() => {
     if (isOpen) fetchPersonas();
   }, [isOpen, fetchPersonas]);
@@ -163,12 +165,25 @@ export const WriteActionModal = ({
       }))
     : FALLBACK_PERSONA_OPTIONS;
 
-  const [selectedPersona, setSelectedPersona] = useState(displayPersonas[0]?.id || "IT");
-  const [personaName, setPersonaName] = useState("마스터 큐레이터 H");
-  const [selectedTextModel, setSelectedTextModel] = useState(DEFAULT_TEXT_MODEL);
-  const [selectedImageModel, setSelectedImageModel] = useState(DEFAULT_IMAGE_MODEL);
-  const [charLimit, setCharLimit] = useState(2000);
-  const [charLimitMode, setCharLimitMode] = useState("2000");
+  // DB 연동된 초기값 할당
+  const defaultPersonaId = themeSettings?.personaId || (displayPersonas[0]?.id || "IT");
+  const [selectedPersona, setSelectedPersona] = useState(defaultPersonaId);
+  const [personaName, setPersonaName] = useState(profile?.name || "마스터 큐레이터 H");
+  const [selectedTextModel, setSelectedTextModel] = useState(articleSettings?.defaultTextModel || DEFAULT_TEXT_MODEL);
+  const [selectedImageModel, setSelectedImageModel] = useState(articleSettings?.defaultImageModel || DEFAULT_IMAGE_MODEL);
+  const [charLimit, setCharLimit] = useState(articleSettings?.presetWordCount || 2000);
+  const [charLimitMode, setCharLimitMode] = useState(articleSettings?.presetWordCount ? "custom" : "2000");
+
+  useEffect(() => {
+    // 모달이 열릴 때(또는 설정이 로드될 때) 마이페이지 설정을 최우선 반영하여 초기화
+    if (isOpen) {
+      if (themeSettings?.personaId) setSelectedPersona(themeSettings.personaId);
+      if (profile?.name) setPersonaName(profile.name);
+      if (articleSettings?.defaultTextModel) setSelectedTextModel(articleSettings.defaultTextModel);
+      if (articleSettings?.defaultImageModel) setSelectedImageModel(articleSettings.defaultImageModel);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, profile?.name, themeSettings?.personaId, articleSettings?.defaultTextModel, articleSettings?.defaultImageModel]);
 
   useEffect(() => {
     if (displayPersonas.length > 0 && !displayPersonas.find(p => p.id === selectedPersona)) {
@@ -187,13 +202,17 @@ export const WriteActionModal = ({
       const list = data.themes || [];
       setThemes(list);
       
-      // 기본 테마 등록
-      const defaultTheme = list.find((t: any) => t.isDefault);
-      if (defaultTheme) {
-        setThemeId(defaultTheme.id);
+      // 사용자 설정(themeSettings)에 themeId가 있으면 최우선으로 적용, 없으면 default 지정된 테마 사용
+      if (themeSettings?.themeId && list.some((t: any) => t.id === themeSettings.themeId)) {
+        setThemeId(themeSettings.themeId);
+      } else {
+        const defaultTheme = list.find((t: any) => t.isDefault);
+        if (defaultTheme) {
+          setThemeId(defaultTheme.id);
+        }
       }
     } catch { /* 조용히 실패 */ }
-  }, []);
+  }, [themeSettings?.themeId]);
 
   useEffect(() => { if (isOpen) fetchThemes(); }, [isOpen, fetchThemes]);
 
@@ -313,11 +332,14 @@ export const WriteActionModal = ({
       const autoLimit = getCurationCharLimit(itemCount);
       setCharLimit(autoLimit);
       setCharLimitMode("custom");
+    } else if (articleSettings?.presetWordCount) {
+      setCharLimit(articleSettings.presetWordCount);
+      setCharLimitMode("custom");
     } else {
       setCharLimit(2000);
       setCharLimitMode("2000");
     }
-  }, [articleType, itemCount]);
+  }, [articleType, itemCount, articleSettings?.presetWordCount]);
 
   // ── 발행 예시 계산 ──
   const publishPreview = useMemo(() => {
@@ -355,7 +377,7 @@ export const WriteActionModal = ({
 
   // ── 제출 ──
   const handleConfirm = () => {
-    const finalPersonaName = personaName.trim() || "마스터 큐레이터 H";
+    const finalPersonaName = personaName.trim() || profile?.name || "마스터 큐레이터 H";
     const baseParams = {
       persona: selectedPersona,
       personaName: finalPersonaName,
@@ -509,6 +531,7 @@ export const WriteActionModal = ({
           {/* ════════ Step 3: 페르소나 & AI 모델 ════════ */}
           {step === 2 && (
             <div className="space-y-5">
+              
               <SharedArticleSettings
                 personas={personas}
                 articleType={articleType} setArticleType={(v) => setArticleType(v as any)}
@@ -564,7 +587,7 @@ export const WriteActionModal = ({
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-semibold text-slate-300">포스팅 제목 설정</h4>
                 <div className="text-[10px] text-slate-500">
-                  작성자: <span className="font-semibold text-blue-400">{personaName || "마스터 큐레이터 H"}</span>
+                  작성자: <span className="font-semibold text-blue-400">{personaName || profile?.name || "마스터 큐레이터 H"}</span>
                 </div>
               </div>
 

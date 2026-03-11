@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { usePersonaViewModel } from '../model/usePersonaViewModel';
 import { Persona, CreatePersonaPayload } from '@/entities/persona/model/types';
+import { useQueryState } from 'nuqs';
 
 export function PersonaManager() {
   const {
@@ -22,6 +23,31 @@ export function PersonaManager() {
     toneDescription: '',
     negativePrompt: '',
   });
+
+  // ── 탭, 검색 필터 (Nuqs 연동 URL State) ──
+  const [activeTab, setActiveTab] = useQueryState('tab', { defaultValue: 'all' });
+  const [searchQuery, setSearchQuery] = useQueryState('q', { defaultValue: '' });
+
+  // ── 필터링 로직 ──
+  const filteredPersonas = useMemo(() => {
+    let filtered = personas;
+    // 1. 탭 필터링
+    if (activeTab === 'system') {
+      filtered = filtered.filter(p => p.isSystem);
+    } else if (activeTab === 'custom') {
+      filtered = filtered.filter(p => !p.isSystem);
+    }
+    // 2. 검색어 필터링
+    if (searchQuery) {
+      const lowerQ = searchQuery.toLowerCase();
+      filtered = filtered.filter(p => 
+        p.name.toLowerCase().includes(lowerQ) || 
+        p.systemPrompt.toLowerCase().includes(lowerQ) ||
+        p.toneDescription.toLowerCase().includes(lowerQ)
+      );
+    }
+    return filtered;
+  }, [personas, activeTab, searchQuery]);
 
   useEffect(() => {
     fetchPersonas();
@@ -162,6 +188,35 @@ export function PersonaManager() {
            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
            등록된 페르소나 뱅크 ({personas.length})
         </h2>
+
+        {/* 필터 및 검색 UI */}
+        <div className="relative z-10 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex bg-slate-950/80 p-1 rounded-xl border border-slate-800/80">
+            {['all', 'system', 'custom'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  activeTab === tab
+                    ? 'bg-slate-800 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-slate-300'
+                }`}
+              >
+                {tab === 'all' ? '전체' : tab === 'system' ? '기본 (System)' : '커스텀 내 페르소나'}
+              </button>
+            ))}
+          </div>
+          <div className="w-full sm:w-72">
+            <input
+              type="text"
+              placeholder="페르소나 검색..."
+              value={searchQuery || ''}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full p-2.5 bg-slate-950/50 border border-slate-800/50 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors text-slate-200 placeholder:text-slate-600 outline-none text-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)]"
+            />
+          </div>
+        </div>
+
         <div className="relative z-10">
           {isLoading && personas.length === 0 ? (
             <div className="text-slate-400 text-center py-12 flex justify-center items-center flex-col gap-4">
@@ -170,11 +225,11 @@ export function PersonaManager() {
             </div>
           ) : personas.length === 0 ? (
             <div className="text-slate-400 p-12 text-center bg-slate-800/30 rounded-xl border border-slate-800/50 font-medium tracking-tight">
-              아직 등록된 페르소나가 없습니다. 위쪽 폼에서 첫 페르소나를 생성해보세요!
+              해당 조건에 맞는 페르소나가 없습니다.
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {personas.map((persona) => (
+              {filteredPersonas.map((persona) => (
                 <div key={persona.id} className="bg-slate-800/30 p-6 rounded-2xl border border-slate-700/50 hover:bg-slate-800/50 hover:border-slate-600/50 transition-all group backdrop-blur-sm">
                   <div className="flex justify-between items-start mb-5">
                     <div className="flex items-center gap-2 flex-wrap">

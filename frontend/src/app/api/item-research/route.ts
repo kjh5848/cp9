@@ -34,9 +34,10 @@ export async function POST(request: NextRequest) {
     const articleType = body.seoConfig?.articleType || 'single'
     const publishTarget = body.seoConfig?.publishTarget || 'DB_ONLY'
     const themeId = body.seoConfig?.themeId || undefined
-    const finalPersonaName = persona === 'MASTER_CURATOR_H'
+    const personaName = body.seoConfig?.personaName || undefined
+    const finalPersonaName = personaName || (persona === 'MASTER_CURATOR_H'
       ? '마스터 큐레이터 H'
-      : PERSONA_DISPLAY_NAME[persona] || persona
+      : PERSONA_DISPLAY_NAME[persona] || persona)
 
     console.log('🚀 [SEO-Pipeline] 작업을 시작합니다:', {
       itemName: body.itemName, persona, tone,
@@ -88,7 +89,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 백그라운드 파이프라인 실행 (응답 후 비동기)
-    runSeoPipeline(body, { persona, tone, textModel, imageModel, charLimit, articleType, publishTarget, themeId });
+    runSeoPipeline(body, { persona, personaName, tone, textModel, imageModel, charLimit, articleType, publishTarget, themeId });
 
     // 즉시 응답
     return NextResponse.json({

@@ -18,6 +18,7 @@ import {
 import { CoupangProductResponse } from "@/shared/types/api";
 import { DEFAULT_TEXT_MODEL, DEFAULT_IMAGE_MODEL } from "@/shared/config/model-options";
 import { type WritingMode, type GenerationResult, ARTICLE_TYPE_OPTIONS } from "@/entities/keyword-writing/model/types";
+import { useWriteDraftStore } from "@/entities/keyword-writing/model/useWriteDraftStore";
 import type { CoupangSearchMode } from "@/shared/constants/coupang-constants";
 
 export function useKeywordWritingViewModel() {
@@ -39,6 +40,37 @@ export function useKeywordWritingViewModel() {
   const [charLimit, setCharLimit] = useState("5000");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationResult, setGenerationResult] = useState<GenerationResult | null>(null);
+
+  // ── Zustand Draft 연동 (Silent Recovery) ──
+  const draftStore = useWriteDraftStore();
+  const [isDraftRestored, setIsDraftRestored] = useState(false);
+
+  useEffect(() => {
+    if (!isDraftRestored) {
+      if (draftStore.keyword) setKeyword(draftStore.keyword);
+      if (draftStore.editedTitle) setEditedTitle(draftStore.editedTitle);
+      if (draftStore.settings) {
+        setPersona(draftStore.settings.persona);
+        setArticleType(draftStore.settings.articleType);
+        setTextModel(draftStore.settings.textModel);
+        setImageModel(draftStore.settings.imageModel);
+        setCharLimit(draftStore.settings.charLimit);
+      }
+      setIsDraftRestored(true);
+    }
+  }, [draftStore, isDraftRestored]);
+
+  // 입력 내용 변경 시 Draft 자동 업데이트
+  useEffect(() => {
+    if (isDraftRestored) {
+      draftStore.setKeyword(keyword);
+      draftStore.setEditedTitle(editedTitle);
+      draftStore.updateSettings({
+        persona, articleType, textModel, imageModel, charLimit
+      });
+    }
+  }, [keyword, editedTitle, persona, articleType, textModel, imageModel, charLimit, isDraftRestored, draftStore]);
+
 
   // ── 쿠팡 상품 (장바구니 패턴: Map으로 선택 상품 데이터를 보존) ──
   const [coupangResults, setCoupangResults] = useState<CoupangProductResponse[]>([]);
@@ -307,11 +339,12 @@ export function useKeywordWritingViewModel() {
       const res = await fetch("/api/item-research", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(requestBody) });
       if (res.ok) {
         setGenerationResult({ projectId, itemId });
+        draftStore.resetDraft(); // 제출 성공 후 드래프트 초기화
         toast.success("글 생성이 시작되었습니다!", { duration: 4000 });
       } else { toast.error("글 생성 요청에 실패했습니다."); }
     } catch { toast.error("글 생성 중 오류가 발생했습니다."); }
     finally { setIsGenerating(false); }
-  }, [keyword, editedTitle, selectedTitleIdx, titles, selectedProducts, persona, textModel, imageModel, charLimit, articleType]);
+  }, [keyword, editedTitle, selectedTitleIdx, titles, selectedProducts, persona, textModel, imageModel, charLimit, articleType, draftStore]);
 
   // ── 액션: 모드 전환 ──
   const switchMode = (newMode: WritingMode) => {

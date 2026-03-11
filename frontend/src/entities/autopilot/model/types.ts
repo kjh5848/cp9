@@ -36,6 +36,7 @@ export interface AutopilotQueueItem {
 export interface CreateAutopilotQueuePayload {
   keyword: string;
   personaId?: string;
+  personaName?: string;
   themeId?: string;
   
   // Phase 3 Configuration Fields
@@ -71,4 +72,5 @@ export interface SuggestedTitle {
   subtitle: string;
   targetAudience: string;
   searchIntent: string;
+  articleType?: string; // 추가된 속성: 개별 글 유형 지정
 }

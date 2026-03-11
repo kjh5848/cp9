@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Info, Lock, Type, Code, Palette } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { GlassCard } from "@/shared/ui/GlassCard";
@@ -8,6 +8,8 @@ import { IMAGE_MODEL_OPTIONS, getTextModelGroups } from "@/shared/config/model-o
 import { TONE_OPTIONS, ARTICLE_TYPE_OPTIONS, CHAR_LIMIT_OPTIONS } from "@/entities/keyword-writing/model/types";
 import { PRESET_THEME_NAMES } from "@/features/design-theme/model/constants";
 import { getThemePreviewTokens } from "@/entities/design/model/utils";
+import { useUserSettingsViewModel } from "@/features/user-settings/model/useUserSettingsViewModel";
+
 
 // 글자 수 프리셋 (WriteActionModal 기준)
 const CHAR_LIMIT_PRESETS = [
@@ -16,6 +18,13 @@ const CHAR_LIMIT_PRESETS = [
   { label: "3천자", value: "3000" },
   { label: "5천자", value: "5000" },
   { label: "직접", value: "custom" },
+];
+
+const CURATION_CHAR_LIMIT_PRESETS = [
+  { label: "300자", value: "300" },
+  { label: "500자", value: "500" },
+  { label: "700자", value: "700" },
+  { label: "1000자", value: "1000" },
 ];
 
 export interface PersonaOption {
@@ -86,6 +95,9 @@ export function SharedArticleSettings({
   themeId, setThemeId,
 }: SharedArticleSettingsProps) {
   
+  const { articleSettings, themeSettings } = useUserSettingsViewModel();
+  const [quickPreset, setQuickPreset] = useState<string>("");
+
   // 페르소나 데이터 가공 (Fallback 처리)
   const displayPersonas = personas.length > 0 
     ? personas.map(p => ({
@@ -105,6 +117,56 @@ export function SharedArticleSettings({
 
   return (
     <div className="space-y-6">
+      
+      {/* 간편 설정 불러오기 */}
+      <div className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h4 className="text-sm font-semibold text-slate-300">간편 설정 불러오기</h4>
+          <span className="text-[10px] text-slate-500">선택 시 설정값이 자동 입력됩니다.</span>
+        </div>
+        <select
+          className="w-full bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-lg px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+          value={quickPreset}
+          onChange={(e) => {
+            const val = e.target.value;
+            setQuickPreset(val);
+            if (val === "my-settings") {
+              if (articleSettings) {
+                if (articleSettings.defaultTextModel) setTextModel(articleSettings.defaultTextModel);
+                if (articleSettings.defaultImageModel && setImageModel) setImageModel(articleSettings.defaultImageModel);
+                if (articleSettings.presetWordCount) {
+                  setCharLimit(articleSettings.presetWordCount);
+                  if (setCharLimitMode) setCharLimitMode("custom");
+                }
+              }
+              if (themeSettings?.personaId) setPersona(themeSettings.personaId);
+              if (themeSettings?.personaName && setPersonaName) setPersonaName(themeSettings.personaName);
+              if (themeSettings?.themeId && setThemeId) setThemeId(themeSettings.themeId);
+            } else if (val === "preset-a") {
+              setTextModel("gpt-4o-mini");
+              if (setImageModel) setImageModel("dall-e-3");
+              setCharLimit(2000);
+              if (setCharLimitMode) setCharLimitMode("2000");
+              if (themeSettings?.personaId) setPersona(themeSettings.personaId);
+              if (themeSettings?.personaName && setPersonaName) setPersonaName(themeSettings.personaName);
+              if (themeSettings?.themeId && setThemeId) setThemeId(themeSettings.themeId);
+            } else if (val === "preset-b") {
+              setTextModel("claude-sonnet-4-6");
+              if (setImageModel) setImageModel("dall-e-3");
+              setCharLimit(5000);
+              if (setCharLimitMode) setCharLimitMode("5000");
+              if (themeSettings?.personaId) setPersona(themeSettings.personaId);
+              if (themeSettings?.personaName && setPersonaName) setPersonaName(themeSettings.personaName);
+              if (themeSettings?.themeId && setThemeId) setThemeId(themeSettings.themeId);
+            }
+          }}
+        >
+          <option value="" disabled>간편 설정을 선택하세요</option>
+          <option value="my-settings">내 설정 불러오기 (마이페이지 기본값)</option>
+          <option value="preset-a">권장 A (가성비/스피드) - GPT-4o mini + 2,000자</option>
+          <option value="preset-b">권장 B (고품질 전문글) - Claude 4.6 Sonnet + 5,000자</option>
+        </select>
+      </div>
       
       {/* 1. 글 유형 & 톤앤매너 */}
       {(!hideArticleType || (!hideTone && setTone && tone)) && (
@@ -392,18 +454,52 @@ export function SharedArticleSettings({
 
       {/* 4. 글자수 설정 */}
       <div className="pt-2 space-y-3">
-        <h4 className="text-sm font-semibold text-slate-300 tracking-tight">목표 글자수 (공백 포함)</h4>
+        <h4 className="text-sm font-semibold text-slate-300 tracking-tight">
+          {articleType === "curation" ? "아이템당 목표 분량 (공백 포함)" : "목표 글자수 (공백 포함)"}
+        </h4>
         {articleType === "curation" ? (
-          <div className="flex items-center gap-3 p-3.5 rounded-xl bg-purple-500/10 border border-purple-500/30">
-            <Info className="w-5 h-5 text-purple-400 flex-shrink-0" />
-            <div>
-              <p className="text-sm text-purple-200 font-bold mb-0.5">
-                ~{getCurationGuideForCount(itemCount).total.toLocaleString()}자 (자동 계산)
-              </p>
-              <p className="text-[11px] text-purple-400 leading-relaxed">
-                {itemCount}개 아이템 × ~{getCurationGuideForCount(itemCount).perItem}자/아이템 
-                + 도입/결론 ~1,000자
-              </p>
+          <div className="space-y-3">
+            {setCharLimitMode && charLimitMode ? (
+              <div className="grid grid-cols-4 gap-2">
+                {CURATION_CHAR_LIMIT_PRESETS.map((preset) => (
+                  <button
+                    key={preset.value}
+                    type="button"
+                    onClick={() => {
+                      setCharLimitMode(preset.value);
+                      setCharLimit(Number(preset.value));
+                    }}
+                    className={cn(
+                      "flex flex-col items-center py-2.5 px-1 rounded-lg border text-center transition-all duration-200 cursor-pointer",
+                      String(charLimit) === preset.value
+                        ? "bg-purple-600/20 border-purple-500 text-purple-100 shadow-[0_0_10px_rgba(168,85,247,0.1)]"
+                        : "bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500 hover:bg-slate-800"
+                    )}
+                  >
+                    <span className="text-xs font-bold">{preset.label}</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <select 
+                className="w-full bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-lg px-3 py-2.5 outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-colors" 
+                value={String(charLimit)} 
+                onChange={(e) => setCharLimit(e.target.value)}
+              >
+                {CURATION_CHAR_LIMIT_PRESETS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+            )}
+
+            <div className="flex items-start gap-3 p-3 rounded-xl bg-purple-500/10 border border-purple-500/30 mt-2">
+              <Info className="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm text-purple-200 font-bold mb-0.5">
+                  총 예상 분량: ~{((Number(charLimit) || 300) * itemCount + 1000).toLocaleString()}자
+                </p>
+                <p className="text-[11px] text-purple-400 leading-relaxed">
+                  (아이템 {itemCount}개 × {Number(charLimit) || 300}자) + (도입/결론 ~1,000자)
+                </p>
+              </div>
             </div>
           </div>
         ) : (

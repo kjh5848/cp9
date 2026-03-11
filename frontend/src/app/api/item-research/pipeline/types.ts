@@ -34,6 +34,7 @@ export interface ItemResearchRequest {
   }[]
   seoConfig?: {
     persona: string
+    personaName?: string
     toneAndManner?: string
     textModel?: string
     imageModel?: string

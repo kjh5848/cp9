@@ -30,12 +30,17 @@ export async function POST(req: NextRequest) {
     const templateFile = PERSONA_TEMPLATE_FILE[persona] || PERSONA_TEMPLATE_FILE['IT'];
     const personaTemplate = await getSeoSkillTemplate(templateFile);
 
+    const currentYear = new Date().getFullYear();
+
     // ── 시스템 프롬프트 ──
     const systemPrompt = `
 너는 대한민국 최고의 SEO 블로그 전문 작가이자 '${finalPersonaName}'이다.
 아래의 [블로그 작성 가이드라인]을 숙지하고, 사용자가 제시한 상품(들)을 주제로 **클릭을 유도하는 매력적인 블로그 제목(H1)**을 5개 제안하라.
 제목은 검색 의도(Intent)를 파악하고 후킹(Hooking) 요소를 넣어 매력적으로 작성하라.
 제목 외에 다른 부가적인 말은 절대 하지 말고, 오직 추천 제목만 JSON 배열(Array) 형식의 문자열로 응답하라.
+
+[⚡ 중요: 연도 표기 규칙]
+현재 연도는 ${currentYear}년이다. 제목에 연도가 들어갈 경우 반드시 "${currentYear}년"을 사용해야 하며, 2024년 등 과거 연도는 절대 사용하지 말 것.
 
 [블로그 작성 가이드라인]
 ${personaTemplate}

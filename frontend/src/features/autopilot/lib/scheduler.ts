@@ -1,24 +1,24 @@
 /**
  * 다음 실행 예약 시각을 KST 기준으로 계산합니다.
  *
- * @param intervalHours - 반복 주기 (시간 단위). null이면 offsetHours만 반영.
+ * @param intervalMinutes - 반복 주기 (분 단위). DB의 intervalHours 필더를 활용하되 분 단위로 저장/처리.
  * @param activeStart - 동작 허용 시작 시간 (KST, 0~23)
  * @param activeEnd - 동작 허용 종료 시간 (KST, 0~23)
- * @param offsetHours - 추가 오프셋(대량 등록 시 인덱스별 간격)
+ * @param offsetMinutes - 추가 오프셋(대량 등록 시 인덱스별 간격, 분 단위)
  * @param baseDate - 기준 시점 (미지정 시 현재 시각)
  * @returns 다음 실행 예정 시각 (UTC Date)
  */
 export function getNextRunAtKST(
-  intervalHours?: number | null, 
+  intervalMinutes?: number | null, 
   activeStart?: number | null, 
   activeEnd?: number | null,
-  offsetHours: number = 0,
+  offsetMinutes: number = 0,
   baseDate?: Date | string | null
 ): Date {
   const base = baseDate ? new Date(baseDate) : new Date();
   
-  // 기준 시간에 intervalHours(주기)와 offsetHours(대량 등록 오프셋)를 합산
-  const totalOffsetMs = (offsetHours + (intervalHours ?? 0)) * 60 * 60 * 1000;
+  // 기준 시간에 intervalMinutes(주기)와 offsetMinutes(대량 등록 오프셋)를 합산 (분 단위 -> 밀리초 변환)
+  const totalOffsetMs = (offsetMinutes + (intervalMinutes ?? 0)) * 60 * 1000;
   let targetTime = new Date(base.getTime() + totalOffsetMs);
   
   // 활성 시간대 필터링 (KST 기준)

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Syne, Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "@/shared/ui/toaster";
 import { Navbar } from "@/widgets/navbar/ui/Navbar";
+import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import "@/shared/styles/globals.css";
 
 const syne = Syne({
@@ -29,12 +30,14 @@ export default function RootLayout({
   return (
     <html lang="ko" className="dark" suppressHydrationWarning>
       <body className={`${syne.variable} ${jakarta.variable} font-sans bg-background text-foreground antialiased`} suppressHydrationWarning>
-        {/* AuthProvider는 Entities/User Layer 완성 후 복구 예정 */}
-        <Navbar />
-        <main>
-          {children}
-        </main>
-        <Toaster 
+        <NuqsAdapter>
+          {/* AuthProvider는 Entities/User Layer 완성 후 복구 예정 */}
+          <Navbar />
+          <main>
+            {children}
+          </main>
+          <Toaster 
+
           position="bottom-right"
           toastOptions={{
             style: {
@@ -57,6 +60,7 @@ export default function RootLayout({
             });
           }
         `}} />
+        </NuqsAdapter>
       </body>
     </html>
   );

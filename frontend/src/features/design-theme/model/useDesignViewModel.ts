@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import useSWR from 'swr';
 import { ThemeConfig, ArticleTheme } from '@/entities/design/model/types';
 import { getDefaultConfig, PRESET_THEME_NAMES, createMigratedBlocks } from './constants';
+import { DEFAULT_PRESETS } from './presets';
 
 /**
  * ViewModel 반환 타입 정의
@@ -23,6 +24,8 @@ interface UseDesignViewModelReturn {
   isPublishModeOpen: boolean;
   /** 현재 선택된 테마가 프리셋(읽기전용)인지 여부 */
   isPresetTheme: boolean;
+  /** 저장되지 않은 변경사항 유무 */
+  isDirty: boolean;
   router: ReturnType<typeof useRouter>;
 
   // 액션
@@ -64,6 +67,7 @@ export const useDesignViewModel = (): UseDesignViewModelReturn => {
   const [activeTab, setActiveTab] = useState('heading');
   const [saving, setSaving] = useState(false);
   const [isPublishModeOpen, setPublishModeOpen] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
 
   // ── 테마 선택 ──
   const selectTheme = useCallback((theme: ArticleTheme) => {
@@ -90,6 +94,7 @@ export const useDesignViewModel = (): UseDesignViewModelReturn => {
     } catch {
       setConfig(getDefaultConfig());
     }
+    setIsDirty(false);
   }, []);
 
   // ── 기본 테마 자동 선택 ──
@@ -108,25 +113,18 @@ export const useDesignViewModel = (): UseDesignViewModelReturn => {
   // ── config 부분 업데이트 ──
   const updateConfig = useCallback(<K extends keyof ThemeConfig>(section: K, updates: Partial<ThemeConfig[K]>) => {
     setConfig(prev => {
-      // 프리셋 테마인 경우 advanced.styleMode 변경만 허용
-      if ((PRESET_THEME_NAMES as readonly string[]).includes(themeName)) {
-        if (section === 'advanced' && 'styleMode' in updates) {
-          const { styleMode } = updates as any;
-          return {
-            ...prev,
-            advanced: { ...prev.advanced, styleMode },
-          };
-        }
-        toast.error('기본 테마는 발행 모드만 변경할 수 있습니다.');
-        return prev;
-      }
-      
       return {
         ...prev,
         [section]: Array.isArray(updates) ? updates : { ...prev[section], ...updates },
       };
     });
-  }, [themeName]);
+    setIsDirty(true);
+  }, []);
+
+  const handleSetThemeName = useCallback((name: string) => {
+    setThemeName(name);
+    setIsDirty(true);
+  }, []);
 
   // ── 저장 ──
   const handleSave = useCallback(async () => {
@@ -153,6 +151,7 @@ export const useDesignViewModel = (): UseDesignViewModelReturn => {
       if (!selectedThemeId) {
         setSelectedThemeId(data.theme.id);
       }
+      setIsDirty(false);
       await fetchThemes();
     } catch (err) {
       toast.error('저장에 실패했습니다.');
@@ -184,8 +183,12 @@ export const useDesignViewModel = (): UseDesignViewModelReturn => {
 
   const handleDelete = useCallback(() => {
     if (!selectedThemeId) return;
+    if (isPresetTheme) {
+      toast.error('기본 디자인 테마는 삭제가 불가합니다.');
+      return;
+    }
     setShowDeleteConfirm(true);
-  }, [selectedThemeId]);
+  }, [selectedThemeId, isPresetTheme]);
 
   const confirmDelete = useCallback(async () => {
     if (!selectedThemeId) return;
@@ -211,6 +214,7 @@ export const useDesignViewModel = (): UseDesignViewModelReturn => {
     setSelectedThemeId(null);
     setThemeName('새 테마');
     setConfig(getDefaultConfig());
+    setIsDirty(false);
   }, []);
 
   // ── 테마 복제 ──
@@ -292,7 +296,37 @@ export const useDesignViewModel = (): UseDesignViewModelReturn => {
 
   // ── 테마 원래 상태로 초기화 ──
   const handleReset = useCallback(() => {
-    if (!confirm('현재 설정을 저장된 상태로 되돌리시겠습니까?')) return;
+    if (isPresetTheme) {
+      if (!confirm('이 기본 디자인 테마를 초기 상태로 되돌리시겠습니까?\n(수정했던 변경사항과 내용이 모두 초기화됩니다.)')) return;
+      
+      const factoryDefault = DEFAULT_PRESETS.find(p => p.name === themeName);
+      if (factoryDefault) {
+        try {
+          const parsed = JSON.parse(factoryDefault.config);
+          const defaults = getDefaultConfig();
+          setConfig({
+            ...defaults,
+            ...parsed,
+            heading: { ...defaults.heading, ...(parsed.heading || {}) },
+            bold: { ...defaults.bold, ...(parsed.bold || {}) },
+            blockquote: { ...defaults.blockquote, ...(parsed.blockquote || {}) },
+            list: { ...defaults.list, ...(parsed.list || {}) },
+            table: { ...defaults.table, ...(parsed.table || {}) },
+            cta: { ...defaults.cta, ...(parsed.cta || {}) },
+            ctaBlocks: parsed.ctaBlocks || createMigratedBlocks(parsed.cta),
+            article: { ...defaults.article, ...(parsed.article || {}) },
+            disclaimer: { ...defaults.disclaimer, ...(parsed.disclaimer || {}) },
+            advanced: { ...defaults.advanced, ...(parsed.advanced || {}) },
+          });
+          toast.success('초기 상태로 복구되었습니다. 저장 버튼을 눌러 확정하세요.');
+        } catch {
+          toast.error('초기화 중 오류가 발생했습니다.');
+        }
+        return;
+      }
+    }
+
+    if (!confirm('현재 설정을 마지막으로 저장된 상태로 되돌리시겠습니까?')) return;
     
     if (selectedThemeId) {
       const originalTheme = themes.find(t => t.id === selectedThemeId);
@@ -305,7 +339,7 @@ export const useDesignViewModel = (): UseDesignViewModelReturn => {
     
     setConfig(getDefaultConfig());
     toast.success('설정이 기본값으로 초기화되었습니다.');
-  }, [selectedThemeId, themes, selectTheme]);
+  }, [selectedThemeId, themes, selectTheme, isPresetTheme, themeName]);
 
 
 
@@ -320,9 +354,10 @@ export const useDesignViewModel = (): UseDesignViewModelReturn => {
     showDeleteConfirm,
     isPublishModeOpen,
     isPresetTheme,
+    isDirty,
     router,
     actions: {
-      setThemeName,
+      setThemeName: handleSetThemeName,
       setActiveTab,
       selectTheme,
       updateConfig,

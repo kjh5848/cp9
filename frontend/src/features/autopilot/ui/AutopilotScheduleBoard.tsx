@@ -170,7 +170,7 @@ export function AutopilotScheduleBoard({ queue, isLoading, onRefresh, onDelete }
                       {item.persona?.name || '기본 페르소나'}
                     </div>
                     <div className="flex flex-col mt-2 pt-2 border-t border-border/50 gap-2">
-                      {item.resultUrl ? (
+                      {item.resultUrl && item.resultUrl !== 'undefined' ? (
                         <a
                           href={item.resultUrl}
                           target="_blank"

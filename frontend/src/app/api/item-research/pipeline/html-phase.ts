@@ -26,6 +26,11 @@ export async function runHtmlPhase(
   // ── 후처리 1: 취소선(<del>) 태그 제거 ──
   htmlBody = htmlBody.replace(/<del>(.*?)<\/del>/g, '$1');
 
+  // ── 후처리 1.2: 비교/큐레이션 멀티 썸네일 및 링크 주입 ──
+  if ((articleType === 'compare' || articleType === 'curation') && ctx.body.items?.length) {
+    htmlBody = injectMultiItemLinks(htmlBody, ctx.body.items);
+  }
+
   // ── 후처리 1.5: 블록별 인라인 스타일 혹은 클래스 자동 삽입 ──
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const advancedConfig = (ctx.themeConfig as any)?.advanced || {};

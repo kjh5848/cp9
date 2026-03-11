@@ -14,6 +14,8 @@ import {
   SlidersHorizontal,
   X,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   CheckCircle2,
   Settings2 } from
 "lucide-react";
@@ -419,13 +421,37 @@ export const ProductCreation = () => {
 
   const renderProductList = (title: string, items: CoupangProductResponse[], icon: React.ReactNode) => {
     if (!items || !items.length) return null;
+
+    const scrollLeft = (e: React.MouseEvent<HTMLButtonElement>) => {
+      const container = e.currentTarget.parentElement?.querySelector('.scroll-container');
+      if (container) {
+        container.scrollBy({ left: -400, behavior: 'smooth' });
+      }
+    };
+
+    const scrollRight = (e: React.MouseEvent<HTMLButtonElement>) => {
+      const container = e.currentTarget.parentElement?.querySelector('.scroll-container');
+      if (container) {
+        container.scrollBy({ left: 400, behavior: 'smooth' });
+      }
+    };
+
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-2 px-2">
           {icon}
           <h3 className="text-xl font-bold text-white">{title}</h3>
         </div>
-        <div className="flex gap-4 overflow-x-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <div className="relative group">
+          <button
+            onClick={scrollLeft}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-slate-800/90 text-white shadow-xl opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-700 backdrop-blur-md border border-white/10"
+            aria-label="왼쪽으로 스크롤"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+
+          <div className="scroll-container flex gap-4 overflow-x-auto pb-4 px-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {items.map((product, idx) => {
             const isSelected = selectedProductIds.has(product.productId);
             return (
@@ -483,6 +509,15 @@ export const ProductCreation = () => {
               </GlassCard>);
 
           })}
+          </div>
+          
+          <button
+            onClick={scrollRight}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-slate-800/90 text-white shadow-xl opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-700 backdrop-blur-md border border-white/10"
+            aria-label="오른쪽으로 스크롤"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
         </div>
       </div>);
 
