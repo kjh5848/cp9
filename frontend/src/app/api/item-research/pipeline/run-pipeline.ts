@@ -207,6 +207,8 @@ export async function runSeoPipeline(body: ItemResearchRequest, config: Pipeline
       langfuseTraceId: trace?.id || null,
       // 글 유형 메타데이터
       articleType,
+      charLimit: ctx.charLimit,
+      themeName: (ctx.themeConfig as any)?.name || '커스텀 테마',
       // 오토파일럿 기반 실행 메타데이터
       autopilotData: config.autopilotData || null,
       // 키워드 모드 메타데이터

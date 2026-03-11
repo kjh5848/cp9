@@ -275,33 +275,7 @@ export async function runHtmlPhase(
       </tr>`
     : '';
 
-  const keywordHtml = searchKeyword ? `
-<div style="margin-top: 40px; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; background: #ffffff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); max-width: 600px; margin-left: auto; margin-right: auto;">
-  <div style="background-color: #f8fafc; padding: 12px 20px; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #0f172a; text-align: center; font-size: 15px; letter-spacing: -0.3px;">
-    🎯 포스팅 생성 정보
-  </div>
-  <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
-    <tbody>
-      <tr style="border-bottom: 1px solid #f1f5f9;">
-        <th style="padding: 12px 20px; width: 35%; color: #64748b; font-weight: 600; background-color: #fcfcfd;">타겟 키워드</th>
-        <td style="padding: 12px 20px; color: #334155; font-weight: 500;">${searchKeyword}</td>
-      </tr>
-      <tr style="border-bottom: 1px solid #f1f5f9;">
-        <th style="padding: 12px 20px; color: #64748b; font-weight: 600; background-color: #fcfcfd;">작성 페르소나</th>
-        <td style="padding: 12px 20px; color: #334155;">${ctx.finalPersonaName}</td>
-      </tr>
-      <tr style="border-bottom: 1px solid #f1f5f9;">
-        <th style="padding: 12px 20px; color: #64748b; font-weight: 600; background-color: #fcfcfd;">글 형식</th>
-        <td style="padding: 12px 20px; color: #334155;">${articleTypeKr}</td>
-      </tr>
-      <tr${autopilotMetaRows || themeMetaRow ? ' style="border-bottom: 1px solid #f1f5f9;"' : ''}>
-        <th style="padding: 12px 20px; color: #64748b; font-weight: 600; background-color: #fcfcfd;">목표 분량</th>
-        <td style="padding: 12px 20px; color: #334155;">${ctx.charLimit.toLocaleString()}자 이상</td>
-      </tr>${autopilotMetaRows}${themeMetaRow}
-    </tbody>
-  </table>
-</div>
-` : '';
+  const keywordHtml = '';
 
   // ── 최종 HTML 조합 ──
   let seoContent = themeStyleTag + customHtmlHeader + coupangHeaderHtml + htmlBody + productCardsHtml + keywordHtml + coupangCtaHtml + disclaimerHtml + cleanCustomFooter;
