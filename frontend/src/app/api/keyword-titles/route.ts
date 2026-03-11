@@ -31,12 +31,15 @@ export async function POST(request: Request) {
     const modelName = requestedModel || 'claude-sonnet-4-5'
     const model = createTextModel(modelName)
 
+    const currentYear = new Date().getFullYear()
+
     const systemPrompt = `
 당신은 대한민국 최고의 SEO 블로그 제목 전문가입니다.
+현재 연도는 ${currentYear}년입니다. 과거 연도(예: 2023년, 2024년 등)를 절대 사용하지 말고, 반드시 올해인 ${currentYear}년을 기준으로 제목을 작성하세요.
 검색 엔진 최적화, 클릭률(CTR) 극대화, 독자 호기심 자극에 뛰어난 블로그 제목을 만들어야 합니다.
 
 [제목 작성 원칙]
-1. 구체적인 숫자/연도 활용 (예: "${new Date().getFullYear()}년", "TOP 5", "3가지")
+1. 구체적인 숫자/최신 연도 활용 (예: "${currentYear}년", "TOP 5", "3가지")
 2. 검색 의도(Intent)를 정확히 반영
 3. 감정적 트리거 사용 (예: "후회 없는", "솔직 비교", "완벽 가이드")
 4. 30~50자 내외로 간결하게

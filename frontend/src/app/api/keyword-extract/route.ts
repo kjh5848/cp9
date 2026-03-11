@@ -35,13 +35,16 @@ export async function POST(request: Request) {
         ? 'compare'
         : articleType || 'single'
 
+    const currentYear = new Date().getFullYear()
+
     const systemPrompt = `
 당신은 대한민국 최고의 쿠팡 파트너스 SEO 전문가입니다.
+현재 연도는 ${currentYear}년입니다. 과거 연도(예: 2023년, 2024년 등)를 절대 사용하지 말고, 연도를 언급할 거면 ${currentYear}년을 쓰세요.
 주어진 상품명 목록에서 블로그 SEO에 최적화된 메인 키워드와 제목 후보를 추출합니다.
 
 [규칙]
-1. 키워드는 실제 사용자가 검색할 법한 자연스러운 롱테일 키워드
-2. 제목은 클릭률(CTR)이 높은 블로그 제목 (30~50자)
+1. 키워드는 실제 사용자가 검색할 법한 자연스러운 롱테일 키워드 (최신 트렌드 반영)
+2. 제목은 클릭률(CTR)이 높은 블로그 제목 (30~50자, ${currentYear}년 등 숫자 적극 활용)
 3. 이모지/아이콘 절대 사용 금지
 4. 메인 키워드를 제목 앞부분에 자연스럽게 배치
 
