@@ -53,6 +53,7 @@ export function AutopilotDashboard() {
   // Phase 3 Configuration States (Shared)
   const [articleType, setArticleType] = useState('auto');
   const [textModel, setTextModel] = useState(DEFAULT_TEXT_MODEL);
+  const [titleModel, setTitleModel] = useState('gpt-4o-mini');
   const [imageModel, setImageModel] = useState(DEFAULT_IMAGE_MODEL);
   const [charLimit, setCharLimit] = useState<string | number>('5000');
 
@@ -151,6 +152,7 @@ export function AutopilotDashboard() {
 
   // Sync settings with My Page defaults when available
   useEffect(() => {
+    if (articleSettings?.defaultTitleModel) setTitleModel(articleSettings.defaultTitleModel);
     if (articleSettings?.defaultTextModel) setTextModel(articleSettings.defaultTextModel);
     if (articleSettings?.defaultImageModel) setImageModel(articleSettings.defaultImageModel);
     if (articleSettings?.presetWordCount) setCharLimit(articleSettings.presetWordCount);
@@ -178,7 +180,7 @@ export function AutopilotDashboard() {
         keyword: kw.trim(),
         persona: personaId,
         articleType: articleType === 'auto' ? undefined : articleType,
-        textModel,
+        textModel: titleModel,
         count,
         excludeTitles,
       }),

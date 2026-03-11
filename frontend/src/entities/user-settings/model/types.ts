@@ -8,7 +8,8 @@ export interface UserProfile {
 }
 
 export interface DefaultArticleSettings {
-  defaultTextModel: string; // e.g. gpt-4o-mini
+  defaultTextModel: string; // e.g. claude-sonnet-4-5
+  defaultTitleModel: string; // e.g. gpt-4o-mini
   defaultImageModel: string; // e.g. dall-e-3, nano-banana-2
   presetWordCount: number; // e.g. 3000, 5000
   openAiApiKey?: string;

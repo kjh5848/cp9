@@ -20,12 +20,15 @@ import { DEFAULT_TEXT_MODEL, DEFAULT_IMAGE_MODEL } from "@/shared/config/model-o
 import { type WritingMode, type GenerationResult, ARTICLE_TYPE_OPTIONS } from "@/entities/keyword-writing/model/types";
 import { useWriteDraftStore } from "@/entities/keyword-writing/model/useWriteDraftStore";
 import type { CoupangSearchMode } from "@/shared/constants/coupang-constants";
+import { useUserSettingsViewModel } from "@/features/user-settings/model/useUserSettingsViewModel";
 
 export function useKeywordWritingViewModel() {
   const router = useRouter();
 
   // ── 모드 ──
   const [mode, setMode] = useState<WritingMode>("keyword_first");
+
+  const { articleSettings } = useUserSettingsViewModel();
 
   // ── 공통 상태 ──
   const [keyword, setKeyword] = useState("");
@@ -281,10 +284,11 @@ export function useKeywordWritingViewModel() {
     setIsLoadingTitles(true);
     setSelectedTitleIdx(null);
     try {
-      const result = await generateTitles({ keyword: keyword.trim(), persona, articleType });
+      const textModel = articleSettings?.defaultTitleModel || 'gpt-4o-mini';
+      const result = await generateTitles({ keyword: keyword.trim(), persona, articleType, textModel });
       setTitles(result.titles);
     } catch {} finally { setIsLoadingTitles(false); }
-  }, [keyword, persona, articleType]);
+  }, [keyword, persona, articleType, articleSettings?.defaultTitleModel]);
 
   // ── 액션: 모드 B - 상품에서 키워드+제목 추출 ──
   const handleExtractFromProducts = useCallback(async () => {

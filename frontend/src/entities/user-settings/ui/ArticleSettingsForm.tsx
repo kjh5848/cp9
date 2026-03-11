@@ -23,6 +23,7 @@ export const ArticleSettingsForm: React.FC<ArticleSettingsFormProps> = ({
   // Local state for form edits, initialized from props when available
   const [formData, setFormData] = React.useState<DefaultArticleSettings>({
     defaultTextModel: '',
+    defaultTitleModel: '',
     defaultImageModel: '',
     presetWordCount: 3000,
     openAiApiKey: '',
@@ -82,7 +83,28 @@ export const ArticleSettingsForm: React.FC<ArticleSettingsFormProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <Label className="text-slate-300 font-jakarta">기본 텍스트 모델</Label>
+            <Label className="text-slate-300 font-jakarta">기본 제목 생성 모델</Label>
+            <Select 
+              value={formData.defaultTitleModel} 
+              onValueChange={(val: string) => handleChange('defaultTitleModel', val)}
+            >
+              <SelectTrigger className="bg-black/40 border-white/10 text-white font-jakarta">
+                <SelectValue placeholder="제목 모델 선택" />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-900 border-white/10 font-jakarta text-white max-h-80">
+                {getTextModelGroups().map((g) => (
+                  <optgroup key={g.group} label={g.group} className="bg-slate-800 text-slate-400 font-semibold text-[10px] tracking-wider uppercase p-2">
+                    {g.models.map((m) => (
+                      <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                    ))}
+                  </optgroup>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-slate-300 font-jakarta">기본 본문 생성 모델</Label>
             <Select 
               value={formData.defaultTextModel} 
               onValueChange={(val: string) => handleChange('defaultTextModel', val)}

@@ -20,6 +20,7 @@ export const ApiIntegrationSettingsForm: React.FC<ApiIntegrationSettingsFormProp
 }) => {
   const [formData, setFormData] = React.useState<DefaultArticleSettings>({
     defaultTextModel: '',
+    defaultTitleModel: '',
     defaultImageModel: '',
     presetWordCount: 3000,
     openAiApiKey: '',

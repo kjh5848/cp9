@@ -22,6 +22,7 @@ if (!globalMemory._userSettingsMockDb) {
     },
     articleSettings: {
       defaultTextModel: 'claude-sonnet-4-5',
+      defaultTitleModel: 'gpt-4o-mini',
       defaultImageModel: 'none',
       presetWordCount: 3000,
       openAiApiKey: '',
