@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { CoupangProductResponse } from '@/shared/types/api';
 
 interface ProductCartState {
@@ -36,6 +36,7 @@ export const useProductCartStore = create<ProductCartState>()(
     }),
     {
       name: 'cp9-product-cart-storage',
+      storage: createJSONStorage(() => localStorage),
     }
   )
 );

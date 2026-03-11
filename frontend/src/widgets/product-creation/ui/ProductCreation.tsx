@@ -94,12 +94,17 @@ export const ProductCreation = () => {
   /* ── 상품 선택 (장바구니 패턴: Zustand store로 선택 상품 데이터 영구 보존) ── */
   const router = useRouter();
   const { cartItems, toggleItem, clearCart } = useProductCartStore();
+  const [isStoreReady, setIsStoreReady] = useState(false);
+  useEffect(() => setIsStoreReady(true), []);
+
   const selectedProductMap = useMemo(() => {
     const map = new Map<number, CoupangProductResponse>();
-    Object.values(cartItems).forEach(item => map.set(item.productId, item));
+    if (isStoreReady) {
+      Object.values(cartItems).forEach(item => map.set(item.productId, item));
+    }
     return map;
-  }, [cartItems]);
-  const selectedProductIds = useMemo(() => new Set(Object.keys(cartItems).map(Number)), [cartItems]);
+  }, [cartItems, isStoreReady]);
+  const selectedProductIds = useMemo(() => isStoreReady ? new Set(Object.keys(cartItems).map(Number)) : new Set<number>(), [cartItems, isStoreReady]);
   const [isResearching, setIsResearching] = useState(false);
 
   /* ── 폴링 사용: 글 생성 완료 알림 ── */

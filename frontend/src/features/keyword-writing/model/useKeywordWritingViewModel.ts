@@ -45,40 +45,27 @@ export function useKeywordWritingViewModel() {
   const [generationResult, setGenerationResult] = useState<GenerationResult | null>(null);
 
   // ── Zustand Draft 연동 (Silent Recovery) ──
+  const draftMode = useWriteDraftStore(state => state.mode);
+  const draftStepA = useWriteDraftStore(state => state.stepA);
+  const draftStepB = useWriteDraftStore(state => state.stepB);
   const draftKeyword = useWriteDraftStore(state => state.keyword);
   const draftEditedTitle = useWriteDraftStore(state => state.editedTitle);
+  const draftTitles = useWriteDraftStore(state => state.titles);
+  const draftSelectedTitleIdx = useWriteDraftStore(state => state.selectedTitleIdx);
+  const draftCartItems = useWriteDraftStore(state => state.cartItems);
   const draftSettings = useWriteDraftStore(state => state.settings);
+
+  const setDraftMode = useWriteDraftStore(state => state.setMode);
+  const setDraftStepA = useWriteDraftStore(state => state.setStepA);
+  const setDraftStepB = useWriteDraftStore(state => state.setStepB);
   const setDraftKeyword = useWriteDraftStore(state => state.setKeyword);
   const setDraftEditedTitle = useWriteDraftStore(state => state.setEditedTitle);
+  const setDraftTitles = useWriteDraftStore(state => state.setTitles);
+  const setDraftSelectedTitleIdx = useWriteDraftStore(state => state.setSelectedTitleIdx);
+  const setDraftCartItems = useWriteDraftStore(state => state.setCartItems);
   const updateDraftSettings = useWriteDraftStore(state => state.updateSettings);
   const resetDraft = useWriteDraftStore(state => state.resetDraft);
   const [isDraftRestored, setIsDraftRestored] = useState(false);
-
-  useEffect(() => {
-    if (!isDraftRestored) {
-      if (draftKeyword) setKeyword(draftKeyword);
-      if (draftEditedTitle) setEditedTitle(draftEditedTitle);
-      if (draftSettings) {
-        setPersona(draftSettings.persona);
-        setArticleType(draftSettings.articleType);
-        setTextModel(draftSettings.textModel);
-        setImageModel(draftSettings.imageModel);
-        setCharLimit(draftSettings.charLimit);
-      }
-      setIsDraftRestored(true);
-    }
-  }, [draftKeyword, draftEditedTitle, draftSettings, isDraftRestored]);
-
-  // 입력 내용 변경 시 Draft 자동 업데이트
-  useEffect(() => {
-    if (isDraftRestored) {
-      setDraftKeyword(keyword);
-      setDraftEditedTitle(editedTitle);
-      updateDraftSettings({
-        persona, articleType, textModel, imageModel, charLimit
-      });
-    }
-  }, [keyword, editedTitle, persona, articleType, textModel, imageModel, charLimit, isDraftRestored, setDraftKeyword, setDraftEditedTitle, updateDraftSettings]);
 
 
   // ── 쿠팡 상품 (장바구니 패턴: Map으로 선택 상품 데이터를 보존) ──
@@ -121,6 +108,54 @@ export function useKeywordWritingViewModel() {
   const [stepB, setStepB] = useState(0);
   const [productSearchTerm, setProductSearchTerm] = useState("");
   const [isExtractingKeywords, setIsExtractingKeywords] = useState(false);
+
+  // ── Draft 복원 & 동기화 로직 ──
+  useEffect(() => {
+    if (!isDraftRestored) {
+      if (draftMode) setMode(draftMode);
+      if (draftStepA !== undefined) setStepA(draftStepA);
+      if (draftStepB !== undefined) setStepB(draftStepB);
+      if (draftKeyword) setKeyword(draftKeyword);
+      if (draftEditedTitle) setEditedTitle(draftEditedTitle);
+      if (draftTitles && draftTitles.length > 0) setTitles(draftTitles);
+      if (draftSelectedTitleIdx !== null && draftSelectedTitleIdx !== undefined) setSelectedTitleIdx(draftSelectedTitleIdx);
+      
+      const restoredMap = new Map<number, CoupangProductResponse>();
+      if (draftCartItems && Object.keys(draftCartItems).length > 0) {
+        Object.values(draftCartItems).forEach(item => restoredMap.set(item.productId, item));
+      }
+      setSelectedProductMap(restoredMap);
+
+      if (draftSettings) {
+        setPersona(draftSettings.persona);
+        setArticleType(draftSettings.articleType);
+        setTextModel(draftSettings.textModel);
+        setImageModel(draftSettings.imageModel);
+        setCharLimit(draftSettings.charLimit);
+      }
+      setIsDraftRestored(true);
+    }
+  }, [draftMode, draftStepA, draftStepB, draftKeyword, draftEditedTitle, draftTitles, draftSelectedTitleIdx, draftCartItems, draftSettings, isDraftRestored]);
+
+  useEffect(() => {
+    if (isDraftRestored) {
+      setDraftMode(mode);
+      setDraftStepA(stepA);
+      setDraftStepB(stepB);
+      setDraftKeyword(keyword);
+      setDraftEditedTitle(editedTitle);
+      setDraftTitles(titles);
+      setDraftSelectedTitleIdx(selectedTitleIdx);
+      
+      const newCartItems: Record<number, CoupangProductResponse> = {};
+      selectedProductMap.forEach((val, key) => { newCartItems[key] = val; });
+      setDraftCartItems(newCartItems);
+
+      updateDraftSettings({
+        persona, articleType, textModel, imageModel, charLimit
+      });
+    }
+  }, [mode, stepA, stepB, keyword, editedTitle, titles, selectedTitleIdx, selectedProductMap, persona, articleType, textModel, imageModel, charLimit, isDraftRestored, setDraftMode, setDraftStepA, setDraftStepB, setDraftKeyword, setDraftEditedTitle, setDraftTitles, setDraftSelectedTitleIdx, setDraftCartItems, updateDraftSettings]);
 
   // ── 파생 상태 (Map에서 파생) ──
   const selectedProductIds = useMemo(
