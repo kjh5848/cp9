@@ -27,6 +27,7 @@ import ReactMarkdown from "react-markdown";
 import { useJobPolling } from "@/features/research-analysis/model/useJobPolling";
 import { toast } from "react-hot-toast";
 import { SelectedProductList } from "@/shared/ui/SelectedProductList";
+import { useProductCartStore } from "@/entities/product-creation/model/useProductCartStore";
 
 type SearchMode = "keyword" | "link" | "category" | "pl_brand";
 type PersonaType = "Single_Expert" | "Compare_Master" | "Curation_Blogger";
@@ -90,10 +91,15 @@ export const ProductCreation = () => {
   const [results, setResults] = useState<CoupangProductResponse[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  /* ── 상품 선택 (장바구니 패턴: Map으로 선택 상품 데이터 보존) ── */
+  /* ── 상품 선택 (장바구니 패턴: Zustand store로 선택 상품 데이터 영구 보존) ── */
   const router = useRouter();
-  const [selectedProductMap, setSelectedProductMap] = useState<Map<number, CoupangProductResponse>>(new Map());
-  const selectedProductIds = useMemo(() => new Set(selectedProductMap.keys()), [selectedProductMap]);
+  const { cartItems, toggleItem, clearCart } = useProductCartStore();
+  const selectedProductMap = useMemo(() => {
+    const map = new Map<number, CoupangProductResponse>();
+    Object.values(cartItems).forEach(item => map.set(item.productId, item));
+    return map;
+  }, [cartItems]);
+  const selectedProductIds = useMemo(() => new Set(Object.keys(cartItems).map(Number)), [cartItems]);
   const [isResearching, setIsResearching] = useState(false);
 
   /* ── 폴링 사용: 글 생성 완료 알림 ── */
@@ -262,18 +268,13 @@ export const ProductCreation = () => {
   };
 
   const toggleSelection = (productId: number) => {
-    setSelectedProductMap((prev) => {
-      const next = new Map(prev);
-      if (next.has(productId)) {
-        next.delete(productId);
-      } else {
-        // 현재 검색 결과 + 기본 추천 상품에서 데이터 찾기
-        const allAvailable = [...results, ...defaultPlAll, ...defaultGoldbox];
-        const product = allAvailable.find((p) => p.productId === productId);
-        if (product) next.set(productId, product);
-      }
-      return next;
-    });
+    if (cartItems[productId]) {
+      useProductCartStore.getState().removeItem(productId);
+    } else {
+      const allAvailable = [...results, ...defaultPlAll, ...defaultGoldbox];
+      const product = allAvailable.find((p) => p.productId === productId);
+      if (product) toggleItem(product);
+    }
   };
 
   const handleStartResearch = async (params: {persona: string;textModel: string;imageModel: string;actionType: 'NOW' | 'SCHEDULE';scheduledAt?: string;charLimit?: number;articleType?: 'single' | 'compare' | 'curation';themeId?: string;customTitles?: Record<string, string>;}) => {
@@ -866,7 +867,7 @@ export const ProductCreation = () => {
               <SelectedProductList
                 products={Array.from(selectedProductMap.values())}
                 onRemove={toggleSelection}
-                onClearAll={() => setSelectedProductMap(new Map())}
+                onClearAll={clearCart}
                 className="p-0 border-none bg-transparent shadow-none backdrop-blur-none"
               />
 
