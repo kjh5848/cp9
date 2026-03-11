@@ -27,7 +27,8 @@ import {
   Layers,
   ChevronDown,
   X,
-  Trash2 } from
+  Trash2,
+  CheckCircle2 } from
 "lucide-react";
 import { cn } from "@/shared/lib/utils";
 
@@ -51,6 +52,8 @@ import {
   SEARCH_MODE_LABELS,
   type CoupangSearchMode } from
 "@/shared/constants/coupang-constants";
+import { useCoupangDefaults } from "@/shared/api/useCoupangDefaults";
+import { CoupangProductResponse } from "@/shared/types/api";
 
 import { SelectedProductList } from "@/shared/ui/SelectedProductList";
 
@@ -60,23 +63,142 @@ const STEP_LABELS_B = ["상품 검색", "상품 선택", "키워드/제목", "�
 
 /* ──────────────────────────── 메인 위젯 ──────────────────────────── */
 export const KeywordWriting = () => {
-  const { router, state: s, actions: a } = useKeywordWritingViewModel();
+  const { router, state: s, actions: a,
+  } = useKeywordWritingViewModel();
 
-  const renderCartBar = () => {
+  /* ── 기본 추천 상품 데이터 ── */
+  const { defaultPlAll, defaultGoldbox, isLoading: isDefaultLoading } = useCoupangDefaults();
+
+  // SelectedProductList에서 쓰이는 커스텀 장바구니 렌더링 함수
+  const renderCartBar = (actionButton?: React.ReactNode) => {
     if (s.selectedProducts.length === 0) return null;
     return (
-      <div className="sticky bottom-6 z-20 w-full animate-in slide-in-from-bottom-5">
-        <SelectedProductList
-          products={s.selectedProducts}
-          onRemove={a.removeSelectedProduct}
-          onClearAll={s.selectedProducts.length > 0 ? a.clearSelectedProducts : undefined}
-        />
+      <div className="fixed bottom-0 left-0 right-0 z-50 p-4 animate-in slide-in-from-bottom-5">
+        <div className="max-w-[1400px] mx-auto">
+          <GlassCard className="p-4 border-blue-500/30 bg-gray-900/95 backdrop-blur-xl shadow-2xl space-y-3">
+            <SelectedProductList
+              products={s.selectedProducts}
+              onRemove={a.removeSelectedProduct}
+              onClearAll={s.selectedProducts.length > 0 ? a.clearSelectedProducts : undefined}
+              className="p-0 border-none bg-transparent shadow-none backdrop-blur-none"
+            />
+            {actionButton ? (
+              <div className="flex items-center justify-end gap-3 pt-2 border-t border-white/10">
+                {actionButton}
+              </div>
+            ) : null}
+          </GlassCard>
+        </div>
       </div>
     );
   };
+  // 추천 상품 목록 렌더링 함수
+  const renderProductList = (title: string, items: CoupangProductResponse[], icon: React.ReactNode) => {
+    if (!items || !items.length) return null;
+
+    const scrollLeft = (e: React.MouseEvent<HTMLButtonElement>) => {
+      const container = e.currentTarget.parentElement?.querySelector('.scroll-container');
+      if (container) {
+        container.scrollBy({ left: -400, behavior: 'smooth' });
+      }
+    };
+
+    const scrollRight = (e: React.MouseEvent<HTMLButtonElement>) => {
+      const container = e.currentTarget.parentElement?.querySelector('.scroll-container');
+      if (container) {
+        container.scrollBy({ left: 400, behavior: 'smooth' });
+      }
+    };
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 px-2">
+          {icon}
+          <h3 className="text-xl font-bold text-white">{title}</h3>
+        </div>
+        <div className="relative group">
+          <button
+            onClick={scrollLeft}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-slate-800/90 text-white shadow-xl opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-700 backdrop-blur-md border border-white/10"
+            aria-label="왼쪽으로 스크롤"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+
+          <div className="scroll-container flex gap-4 overflow-x-auto pb-4 px-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          {items.map((product, idx) => {
+            const isSelected = s.selectedProductIds.has(product.productId);
+            return (
+              <GlassCard
+                key={`default-${product.productId}-${idx}`}
+                onClick={() => a.toggleProduct(product)}
+                className={cn(
+                  "flex-none w-44 p-0 overflow-hidden flex flex-col cursor-pointer transition-all duration-200",
+                  isSelected ?
+                  "border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)] bg-blue-500/10 ring-2 ring-blue-500 ring-inset" :
+                  "hover:border-blue-500/40 border-transparent bg-white/5"
+                )}>
+                
+                <div className="relative w-full aspect-square bg-white/5">
+                  {isSelected ?
+                  <div className="absolute top-2 right-2 z-10">
+                      <CheckCircle2 className="w-5 h-5 text-blue-500 fill-blue-500/20" />
+                    </div> : null
+                  }
+                  {product.productImage ?
+                  <Image
+                    src={product.productImage}
+                    alt={product.productName}
+                    fill
+                    sizes="176px"
+                    className="object-cover"
+                    unoptimized /> :
+
+
+                  <div className="absolute inset-0 flex items-center justify-center">
+                      <Package className="w-8 h-8 text-slate-700" />
+                    </div>
+                  }
+                  <div className="absolute top-2 left-2 flex flex-col gap-1">
+                    {product.isRocket ?
+                    <span className="text-[10px] px-1.5 py-0.5 bg-yellow-500/90 text-black rounded-full font-semibold">
+                        🚀 로켓
+                      </span> : null
+                    }
+                    {(product.isFreeShipping ? !product.isRocket : null) ?
+                    <span className="text-[10px] px-1.5 py-0.5 bg-emerald-600/90 text-white rounded-full font-semibold">
+                        무배
+                      </span> : null
+                    }
+                  </div>
+                </div>
+                <div className="p-3 flex flex-col gap-1.5 flex-1 max-h-24">
+                  <p className="text-white text-xs font-medium leading-snug line-clamp-2">
+                    {product.productName}
+                  </p>
+                  <p className="text-blue-400 font-bold text-sm mt-auto">
+                    {product.productPrice.toLocaleString()}원
+                  </p>
+                </div>
+              </GlassCard>);
+
+          })}
+          </div>
+          
+          <button
+            onClick={scrollRight}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-slate-800/90 text-white shadow-xl opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-700 backdrop-blur-md border border-white/10"
+            aria-label="오른쪽으로 스크롤"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+      </div>);
+
+  };
 
   return (
-    <div className="w-full max-w-3xl mx-auto space-y-6 py-4">
+    <div className="w-full max-w-[1400px] mx-auto space-y-8 py-8 pb-32 relative">
 
       {/* ── 모드 선택 탭 ── */}
       <div className="flex p-1 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 w-fit mx-auto gap-1">
@@ -266,7 +388,7 @@ export const KeywordWriting = () => {
                     <div className="relative flex-1">
                       <select value={s.categoryValue} onChange={(e) => a.setCategoryValue(e.target.value)} className="w-full bg-background/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-purple-500 appearance-none cursor-pointer">
                         <option value="" disabled>카테고리를 선택하세요</option>
-                        {COUPANG_CATEGORIES.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                        {COUPANG_CATEGORIES.map((cat: {id: string; name: string}) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
                       </select>
                       <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                     </div>
@@ -278,7 +400,7 @@ export const KeywordWriting = () => {
                     <div className="relative flex-1">
                       <select value={s.plBrandValue} onChange={(e) => a.setPlBrandValue(e.target.value)} className="w-full bg-background/50 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-purple-500 appearance-none cursor-pointer">
                         <option value="" disabled>PL 브랜드를 선택하세요</option>
-                        {COUPANG_PL_BRANDS.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+                        {COUPANG_PL_BRANDS.map((b: {id: string; name: string}) => <option key={b.id} value={b.id}>{b.name}</option>)}
                       </select>
                       <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                     </div>
@@ -288,7 +410,11 @@ export const KeywordWriting = () => {
               </GlassCard>
 
               {/* 선택된 상품 장바구니 바 */}
-              {renderCartBar()}
+              {renderCartBar(
+                <Button onClick={() => a.setStepA(3)} className="bg-blue-600 hover:bg-blue-500 text-white px-6">
+                  다음: 글 설정 <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              )}
 
               {/* 딥링크 변환 결과 */}
               {s.deepLinkResult ?
@@ -297,12 +423,15 @@ export const KeywordWriting = () => {
               {s.isSearchingCoupang ? <div className="flex flex-col items-center py-12 gap-3"><Loader2 className="w-8 h-8 animate-spin text-orange-500" /><p className="text-sm text-muted-foreground">쿠팡 검색 중...</p></div> : null}
               {(!s.isSearchingCoupang ? s.coupangResults.length > 0 : null) ? <ProductGrid products={s.coupangResults} selectedIds={s.selectedProductIds} onToggle={a.toggleProduct} /> : null}
               {((!s.isSearchingCoupang ? s.coupangResults.length === 0 : null) ? !s.deepLinkResult : null) ? <div className="text-center py-10"><Package className="w-10 h-10 text-muted-foreground/30 mx-auto mb-2" /><p className="text-sm text-muted-foreground">검색 결과 없음. 검색 조건을 수정해보세요.</p></div> : null}
-              <div className="flex justify-between items-center">
+              
+              {/* 이전/건너뛰기 네비게이션 */}
+              <div className="flex justify-between items-center pt-8">
                 <Button variant="ghost" onClick={() => a.setStepA(1)}><ChevronLeft className="w-4 h-4 mr-1" />이전</Button>
-                <div className="flex gap-2">
-                  {s.selectedProductIds.size === 0 ? <Button onClick={() => a.setStepA(3)} variant="ghost" className="text-muted-foreground text-sm"><SkipForward className="w-4 h-4 mr-1" />건너뛰기</Button> : null}
-                  <Button onClick={() => a.setStepA(3)} className="bg-blue-600 hover:bg-blue-500 text-white px-6">다음: 글 설정 <ChevronRight className="w-4 h-4 ml-1" /></Button>
-                </div>
+                {s.selectedProductIds.size === 0 ? (
+                  <Button onClick={() => a.setStepA(3)} variant="ghost" className="text-muted-foreground text-sm">
+                    <SkipForward className="w-4 h-4 mr-1" />건너뛰기
+                  </Button>
+                ) : null}
               </div>
             </div> : null
         }
@@ -337,76 +466,152 @@ export const KeywordWriting = () => {
           {/* Step B0: 상품 검색 — 4탭 검색 모드 */}
           {s.stepB === 0 ?
         <div className="space-y-6 animate-in fade-in duration-300">
-              <GlassCard className="p-6">
-                <div className="flex items-center gap-3 mb-5"><div className="p-2 bg-orange-500/20 rounded-lg"><ShoppingCart className="w-5 h-5 text-orange-400" /></div>
-                  <div><h3 className="text-lg font-bold text-foreground">쿠팡 상품 검색</h3><p className="text-xs text-muted-foreground mt-0.5">글을 작성할 상품을 먼저 검색하세요</p></div>
-                </div>
+          {/* 모드 선택 탭 */}
+          <div className="flex flex-wrap justify-center p-1 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 w-fit mx-auto gap-1 mb-6">
+            {(["keyword", "link", "category", "pl_brand"] as CoupangSearchMode[]).map((m) =>
+              <button
+                key={m}
+                onClick={() => {
+                  a.switchSearchMode(m);
+                  if (m === "keyword") a.setProductSearchTerm("");
+                  if (m === "link") a.setLinkValue("");
+                  if (m === "category") a.setCategoryValue("");
+                  if (m === "pl_brand") a.setPlBrandValue("");
+                }}
+                className={cn(
+                  "px-5 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap",
+                  s.searchMode === m ?
+                  "bg-blue-600 text-white shadow-lg shadow-blue-500/20" :
+                  "text-slate-400 hover:text-white hover:bg-white/5"
+                )}>
+                  {SEARCH_MODE_LABELS[m]}
+              </button>
+            )}
+          </div>
 
-                {/* 검색 모드 탭 */}
-                <div className="flex flex-wrap gap-1 p-1 bg-white/5 rounded-xl border border-white/10 mb-4">
-                  {(["keyword", "link", "category", "pl_brand"] as CoupangSearchMode[]).map((m) =>
-              <button key={m} onClick={() => a.switchSearchMode(m)} className={cn("px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap", s.searchMode === m ? "bg-orange-600 text-white shadow" : "text-muted-foreground hover:text-foreground hover:bg-white/5")}>
-                      {SEARCH_MODE_LABELS[m]}
-                    </button>
+          <GlassCard className="p-8">
+            <div className="space-y-6">
+              <div className="flex items-center gap-3 mb-2">
+                {s.searchMode === "keyword" ? <Search className="w-5 h-5 text-blue-400" /> : null}
+                {s.searchMode === "link" ? <LinkIcon className="w-5 h-5 text-emerald-400" /> : null}
+                {s.searchMode === "category" || s.searchMode === "pl_brand" ? <Layers className="w-5 h-5 text-purple-400" /> : null}
+                <h2 className="text-xl font-bold text-white uppercase tracking-tight">
+                  {s.searchMode.replace('_', ' ')} Search
+                </h2>
+              </div>
+
+              {s.searchMode === "link" ?
+                <textarea
+                  value={s.linkValue}
+                  onChange={(e) => a.setLinkValue(e.target.value)}
+                  placeholder="쿠팡 상품 URL을 입력하세요 (여러 줄 가능)"
+                  className="w-full h-32 bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all resize-none" /> :
+
+              s.searchMode === "category" ?
+                <div className="relative">
+                  <select
+                    value={s.categoryValue}
+                    onChange={(e) => a.setCategoryValue(e.target.value)}
+                    className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-6 pr-12 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all appearance-none cursor-pointer">
+                    <option value="" disabled className="text-slate-500">카테고리를 선택하세요</option>
+                    {COUPANG_CATEGORIES.map((cat: {id: string; name: string}) =>
+                      <option key={cat.id} value={cat.id} className="text-black">
+                        {cat.name}
+                      </option>
+                    )}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+                    <ChevronDown className="w-5 h-5" />
+                  </div>
+                </div> :
+
+              s.searchMode === "pl_brand" ?
+                <div className="relative">
+                  <select
+                    value={s.plBrandValue}
+                    onChange={(e) => a.setPlBrandValue(e.target.value)}
+                    className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-6 pr-12 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all appearance-none cursor-pointer">
+                    <option value="" disabled className="text-slate-500">PL 브랜드를 선택하세요</option>
+                    {COUPANG_PL_BRANDS.map((cat: {id: string; name: string}) =>
+                      <option key={cat.id} value={cat.id} className="text-black">
+                        {cat.name}
+                      </option>
+                    )}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+                    <ChevronDown className="w-5 h-5" />
+                  </div>
+                </div> :
+
+                <input
+                  type="text"
+                  value={s.productSearchTerm}
+                  onChange={(e) => a.setProductSearchTerm(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && s.productSearchTerm.trim() ? a.searchProducts("keyword", s.productSearchTerm) : null}
+                  placeholder="예: 로봇청소기, 에어프라이어, 냉장고..."
+                  className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-6 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all" />
+              }
+
+              <Button
+                onClick={() => {
+                  if (s.searchMode === "keyword") a.searchProducts("keyword", s.productSearchTerm);
+                  else if (s.searchMode === "link") a.searchProducts("link", s.linkValue);
+                  else if (s.searchMode === "category") a.searchProducts("category", s.categoryValue);
+                  else if (s.searchMode === "pl_brand") a.searchProducts("pl_brand", s.plBrandValue);
+                }}
+                disabled={s.isSearchingCoupang || 
+                  (s.searchMode === "keyword" && !s.productSearchTerm.trim()) ||
+                  (s.searchMode === "link" && !s.linkValue.trim()) ||
+                  (s.searchMode === "category" && !s.categoryValue) ||
+                  (s.searchMode === "pl_brand" && !s.plBrandValue)
+                }
+                className="w-full h-14 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold text-lg shadow-xl shadow-blue-500/20">
+                {s.isSearchingCoupang ?
+                  <><Loader2 className="w-5 h-5 animate-spin mr-2" />검색 중...</> :
+                  "상품 검색"
+                }
+              </Button>
+            </div>
+          </GlassCard>
+
+              {/* 선택된 상품 장바구니 바 (미리 렌더링되지만 fixed로 하단 고정됨) */}
+              {renderCartBar(
+                <Button onClick={() => a.setStepB(1)} disabled={s.selectedProductIds.size === 0} className="bg-blue-600 hover:bg-blue-500 text-white px-6">
+                  다음: 키워드/제목 추출 <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
               )}
-                </div>
-
-                {/* 모드별 입력 UI */}
-                {s.searchMode === "keyword" ?
-            <div className="flex gap-2">
-                    <input type="text" className="flex-1 bg-background/50 border border-border rounded-xl px-4 py-3.5 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-orange-500/40 text-[15px]" placeholder="예: 로봇청소기, 에어프라이어, 냉장고..." value={s.productSearchTerm} onChange={(e) => a.setProductSearchTerm(e.target.value)} onKeyDown={(e) => (e.key === "Enter" ? s.productSearchTerm.trim() : null) ? a.searchProducts("keyword", s.productSearchTerm) : null} />
-                    <Button onClick={() => a.searchProducts("keyword", s.productSearchTerm)} disabled={!s.productSearchTerm.trim() || s.isSearchingCoupang} className="bg-orange-600 hover:bg-orange-500 text-white px-6">{s.isSearchingCoupang ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}</Button>
-                  </div> : null
-            }
-                {s.searchMode === "link" ?
-            <div className="space-y-2">
-                    <textarea className="w-full bg-background/50 border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 text-[15px] h-28 resize-none" placeholder="쿠팡 상품 URL을 입력하세요 (여러 줄 가능)" value={s.linkValue} onChange={(e) => a.setLinkValue(e.target.value)} />
-                    <Button onClick={() => a.searchProducts("link", s.linkValue)} disabled={s.isSearchingCoupang || !s.linkValue.trim()} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white">{s.isSearchingCoupang ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <LinkIcon className="w-4 h-4 mr-2" />}딥링크 변환</Button>
-                  </div> : null
-            }
-                {s.searchMode === "category" ?
-            <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <select value={s.categoryValue} onChange={(e) => a.setCategoryValue(e.target.value)} className="w-full bg-background/50 border border-border rounded-xl px-4 py-3.5 text-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/40 text-[15px] appearance-none cursor-pointer">
-                        <option value="" disabled>카테고리를 선택하세요</option>
-                        {COUPANG_CATEGORIES.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-                      </select>
-                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                    </div>
-                    <Button onClick={() => a.searchProducts("category", s.categoryValue)} disabled={s.isSearchingCoupang || !s.categoryValue} className="bg-purple-600 hover:bg-purple-500 text-white px-6">{s.isSearchingCoupang ? <Loader2 className="w-4 h-4 animate-spin" /> : <Layers className="w-4 h-4" />}</Button>
-                  </div> : null
-            }
-                {s.searchMode === "pl_brand" ?
-            <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <select value={s.plBrandValue} onChange={(e) => a.setPlBrandValue(e.target.value)} className="w-full bg-background/50 border border-border rounded-xl px-4 py-3.5 text-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/40 text-[15px] appearance-none cursor-pointer">
-                        <option value="" disabled>PL 브랜드를 선택하세요</option>
-                        {COUPANG_PL_BRANDS.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-                      </select>
-                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                    </div>
-                    <Button onClick={() => a.searchProducts("pl_brand", s.plBrandValue)} disabled={s.isSearchingCoupang || !s.plBrandValue} className="bg-purple-600 hover:bg-purple-500 text-white px-6">{s.isSearchingCoupang ? <Loader2 className="w-4 h-4 animate-spin" /> : <Layers className="w-4 h-4" />}</Button>
-                  </div> : null
-            }
-              </GlassCard>
-
-              {/* 선택된 상품 장바구니 바 */}
-              {renderCartBar()}
 
               {/* 딥링크 변환 결과 */}
               {s.deepLinkResult ?
           <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-3 text-sm text-emerald-400 whitespace-pre-line">{s.deepLinkResult}</div> : null
           }
               {s.isSearchingCoupang ? <div className="flex flex-col items-center py-12 gap-3"><Loader2 className="w-8 h-8 animate-spin text-orange-500" /><p className="text-sm text-muted-foreground">쿠팡 검색 중...</p></div> : null}
-              {(!s.isSearchingCoupang ? s.coupangResults.length > 0 : null) ?
-          <>
-                  <div className="flex items-center justify-between px-1"><span className="text-xs text-muted-foreground">{s.coupangResults.length}개 결과</span>{s.selectedProductIds.size > 0 ? <span className="text-xs text-blue-400 font-bold">{s.selectedProductIds.size}개 선택됨</span> : null}</div>
-                  <ProductGrid products={s.coupangResults} selectedIds={s.selectedProductIds} onToggle={a.toggleProduct} />
-                  <div className="flex justify-end">
-                    <Button onClick={() => a.setStepB(1)} disabled={s.selectedProductIds.size === 0} className="bg-blue-600 hover:bg-blue-500 text-white px-6">다음: 키워드/제목 추출 <ChevronRight className="w-4 h-4 ml-1" /></Button>
+              {(!s.isSearchingCoupang && s.coupangResults.length > 0) ?
+                <div className="pb-48">
+                  <div className="flex items-center justify-between px-1 mb-2">
+                    <span className="text-xs text-muted-foreground">{s.coupangResults.length}개 결과</span>
+                    {s.selectedProductIds.size > 0 ? <span className="text-xs text-blue-400 font-bold">{s.selectedProductIds.size}개 선택됨</span> : null}
                   </div>
-                </> : null
-          }
+                  <ProductGrid products={s.coupangResults} selectedIds={s.selectedProductIds} onToggle={a.toggleProduct} />
+                </div> : null
+              }
+          
+              {/* 검색 결과가 없을 때 기본 추천 상품 표시 */}
+              {(!s.isSearchingCoupang && s.coupangResults.length === 0) ? (
+                <div className="space-y-8 mt-8 pb-48">
+                  {isDefaultLoading ? (
+                    <div className="flex justify-center p-8">
+                      <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                    </div>
+                  ) : (
+                    <>
+                      {renderProductList("오늘의 골드박스 특가", defaultGoldbox ?? [], <Layers className="w-5 h-5 text-yellow-400" />)}
+                      {renderProductList("쿠팡 전문 브랜드 (PL) 인기상품", defaultPlAll ?? [], <Layers className="w-5 h-5 text-emerald-400" />)}
+                    </>
+                  )}
+                </div>
+              ) : null}
+
             </div> : null
         }
 

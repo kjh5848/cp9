@@ -167,16 +167,14 @@ export function useKeywordWritingViewModel() {
     [selectedProductMap]
   );
 
-  // ── 액션: 상품 토글 (Map 기반 — 검색 결과에서 상품 데이터를 함께 저장) ──
-  const toggleProduct = (id: number) => {
+  // ── 액션: 상품 토글 (전체 객체를 받아 저장) ──
+  const toggleProduct = (product: CoupangProductResponse) => {
     setSelectedProductMap(prev => {
       const next = new Map(prev);
-      if (next.has(id)) {
-        next.delete(id);
+      if (next.has(product.productId)) {
+        next.delete(product.productId);
       } else {
-        // 현재 검색 결과에서 상품 데이터를 찾아 Map에 저장
-        const product = coupangResults.find(p => p.productId === id);
-        if (product) next.set(id, product);
+        next.set(product.productId, product);
       }
       return next;
     });

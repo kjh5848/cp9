@@ -15,7 +15,7 @@ interface StepIndicatorProps {
 
 export function StepIndicator({ labels, current }: StepIndicatorProps) {
   return (
-    <div className="flex items-center gap-2 mb-8">
+    <div className="flex items-center justify-center gap-2 mb-8">
       {labels.map((label, i) => (
         <React.Fragment key={i}>
           <div className={cn(

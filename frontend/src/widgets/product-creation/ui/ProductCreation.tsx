@@ -28,6 +28,7 @@ import { useJobPolling } from "@/features/research-analysis/model/useJobPolling"
 import { toast } from "react-hot-toast";
 import { SelectedProductList } from "@/shared/ui/SelectedProductList";
 import { useProductCartStore } from "@/entities/product-creation/model/useProductCartStore";
+import { useCoupangDefaults } from "@/shared/api/useCoupangDefaults";
 
 type SearchMode = "keyword" | "link" | "category" | "pl_brand";
 type PersonaType = "Single_Expert" | "Compare_Master" | "Curation_Blogger";
@@ -122,41 +123,7 @@ export const ProductCreation = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   /* ── 기본 추천 상품 데이터 ── */
-  const [defaultGoldbox, setDefaultGoldbox] = useState<CoupangProductResponse[]>([]);
-  const [defaultPlAll, setDefaultPlAll] = useState<CoupangProductResponse[]>([]);
-  const [isDefaultLoading, setIsDefaultLoading] = useState(true);
-
-  useEffect(() => {
-    let isMounted = true;
-    const fetchDefaults = async () => {
-      try {
-        setIsDefaultLoading(true);
-        const [plRes, goldRes] = await Promise.all([
-        fetch("/api/products/coupang-pl", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ limit: 50 })
-        }),
-        fetch("/api/products/goldbox", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" }
-        })]
-        );
-        if (isMounted) {
-          if (plRes.ok) setDefaultPlAll(await plRes.json());
-          if (goldRes.ok) setDefaultGoldbox(await goldRes.json());
-        }
-      } catch (err) {
-        console.error("기본 상품 불러오기 에러:", err);
-      } finally {
-        if (isMounted) setIsDefaultLoading(false);
-      }
-    };
-    fetchDefaults();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const { defaultPlAll, defaultGoldbox, isLoading: isDefaultLoading } = useCoupangDefaults();
 
   /* ── 결과 화면 상태 (제거됨 - 상세 페이지로 이동) ── */
   // generatedSEO 상태는 완전히 제거하고 라우팅으로 대체
@@ -532,7 +499,7 @@ export const ProductCreation = () => {
   const hasResults = results.length > 0;
 
   return (
-    <div className="w-full max-w-5xl mx-auto space-y-8 py-8 pb-32 relative">
+    <div className="w-full max-w-[1400px] mx-auto space-y-8 py-8 pb-32 relative">
       {/* ── 로딩 오버레이 ── */}
       {/* ── 폴링 상태 표시 (하단 토스트로 대체, 전체화면 차단 제거) ── */}
       {isPolling ?
@@ -750,7 +717,7 @@ export const ProductCreation = () => {
       }
 
       {filtered.length > 0 ?
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
           {filtered.map((product, idx) => {
           const isSelected = selectedProductIds.has(product.productId);
 
@@ -866,7 +833,7 @@ export const ProductCreation = () => {
       {/* ── 선택 상품 액션 (Sticky) + 장바구니 미리보기 ── */}
       {selectedProductIds.size > 0 ?
       <div className="fixed bottom-0 left-0 right-0 z-50 p-4 animate-in slide-in-from-bottom-5">
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-[1400px] mx-auto">
             <GlassCard className="p-4 border-blue-500/30 bg-gray-900/95 backdrop-blur-xl shadow-2xl space-y-3">
               {/* 상단: 선택 상품 썸네일 미리보기 (장바구니 바) */}
               <SelectedProductList
@@ -889,7 +856,7 @@ export const ProductCreation = () => {
                       처리 중...
                     </> :
 
-                "SEO 글 작성 설정"
+                "글 작성"
                 }
                 </Button>
               </div>

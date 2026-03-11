@@ -6,6 +6,7 @@ import Image from "next/image";
 import { CheckCircle2, Package } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { CoupangProductResponse } from "@/shared/types/api";
+import { GlassCard } from "@/shared/ui/GlassCard";
 
 interface ProductGridProps {
   /** 표시할 상품 목록 */
@@ -13,60 +14,70 @@ interface ProductGridProps {
   /** 선택된 상품 ID 집합 */
   selectedIds: Set<number>;
   /** 상품 선택/해제 토글 핸들러 */
-  onToggle: (id: number) => void;
+  onToggle: (product: CoupangProductResponse) => void;
 }
 
 export function ProductGrid({ products, selectedIds, onToggle }: ProductGridProps) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
       {products.map((product, idx) => {
         const isSelected = selectedIds.has(product.productId);
         return (
-          <button
+          <GlassCard
             key={`${product.productId}-${idx}`}
-            onClick={() => onToggle(product.productId)}
+            onClick={() => onToggle(product)}
             className={cn(
-              "text-left rounded-xl border-2 overflow-hidden transition-all duration-200 group",
+              "p-0 overflow-hidden flex flex-col cursor-pointer transition-all duration-200 text-left",
               isSelected
-                ? "border-blue-500/50 bg-blue-500/10 shadow-lg shadow-blue-500/10"
-                : "border-border/30 bg-background/30 hover:border-border hover:bg-muted/20"
+                ? "border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)] bg-blue-500/10 ring-2 ring-blue-500 ring-inset"
+                : "hover:border-blue-500/40 border-transparent bg-white/5"
             )}
           >
             <div className="relative w-full aspect-square bg-white/5">
-              {isSelected && (
-                <div className="absolute top-1.5 right-1.5 z-10">
-                  <CheckCircle2 className="w-5 h-5 text-blue-500 fill-blue-500/20" />
+              {isSelected ? (
+                <div className="absolute top-2 right-2 z-10">
+                  <CheckCircle2 className="w-6 h-6 text-blue-500 fill-blue-500/20" />
                 </div>
-              )}
+              ) : null}
               {product.productImage ? (
                 <Image
                   src={product.productImage}
                   alt={product.productName}
                   fill
-                  sizes="(max-width: 640px) 50vw, 25vw"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   className="object-cover"
                   unoptimized
                 />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <Package className="w-8 h-8 text-muted-foreground/30" />
+                  <Package className="w-12 h-12 text-slate-700" />
                 </div>
               )}
-              {product.isRocket && (
-                <span className="absolute top-1.5 left-1.5 text-[9px] px-1.5 py-0.5 bg-yellow-500/90 text-black rounded-full font-semibold">
-                  로켓
-                </span>
-              )}
+              {/* 배지 */}
+              <div className="absolute top-2 left-2 flex flex-col gap-1">
+                {product.isRocket ? (
+                  <span className="text-[10px] px-2 py-0.5 bg-yellow-500/90 text-black rounded-full font-bold shadow-sm">
+                    🚀 로켓
+                  </span>
+                ) : null}
+                {product.isFreeShipping && !product.isRocket ? (
+                  <span className="text-[10px] px-2 py-0.5 bg-emerald-600/90 text-white rounded-full font-bold shadow-sm">
+                    무료배송
+                  </span>
+                ) : null}
+              </div>
             </div>
-            <div className="p-2.5 space-y-1">
-              <p className="text-xs font-medium text-foreground leading-tight line-clamp-2">
+            
+            {/* 상품 정보 */}
+            <div className="p-4 flex flex-col gap-2 flex-1">
+              <p className="text-white text-sm font-medium leading-relaxed line-clamp-2">
                 {product.productName}
               </p>
-              <p className="text-blue-400 font-bold text-sm">
+              <p className="text-blue-400 font-bold text-lg mt-auto">
                 {product.productPrice.toLocaleString()}원
               </p>
             </div>
-          </button>
+          </GlassCard>
         );
       })}
     </div>
