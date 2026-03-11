@@ -74,6 +74,9 @@ export interface SharedArticleSettingsProps {
   themes?: import('@/entities/design/ui/ThemeSwitcher').ThemeSwitcherTheme[];
   themeId?: string | null;
   setThemeId?: (v: string | null) => void;
+  
+  // 기능 토글
+  autoLoadMySettings?: boolean;
 }
 
 export function SharedArticleSettings({
@@ -93,10 +96,30 @@ export function SharedArticleSettings({
   hideTheme = false,
   themes = [],
   themeId, setThemeId,
+  autoLoadMySettings = false,
 }: SharedArticleSettingsProps) {
   
   const { articleSettings, themeSettings } = useUserSettingsViewModel();
   const [quickPreset, setQuickPreset] = useState<string>("");
+  const [hasAutoLoaded, setHasAutoLoaded] = useState(false);
+
+  // 내 설정 자동 로딩 (1회)
+  useEffect(() => {
+    if (autoLoadMySettings && !hasAutoLoaded && articleSettings && themeSettings) {
+      setQuickPreset("my-settings");
+      if (articleSettings.defaultTextModel) setTextModel(articleSettings.defaultTextModel);
+      if (articleSettings.defaultImageModel && setImageModel) setImageModel(articleSettings.defaultImageModel);
+      if (articleSettings.presetWordCount) {
+        setCharLimit(articleSettings.presetWordCount);
+        if (setCharLimitMode) setCharLimitMode("custom");
+      }
+      if (themeSettings.personaId) setPersona(themeSettings.personaId);
+      if (themeSettings.personaName && setPersonaName) setPersonaName(themeSettings.personaName);
+      if (themeSettings.themeId && setThemeId) setThemeId(themeSettings.themeId);
+      
+      setHasAutoLoaded(true);
+    }
+  }, [autoLoadMySettings, hasAutoLoaded, articleSettings, themeSettings, setTextModel, setImageModel, setCharLimit, setCharLimitMode, setPersona, setPersonaName, setThemeId]);
 
   // 페르소나 데이터 가공 (Fallback 처리)
   const displayPersonas = personas.length > 0 
@@ -346,7 +369,10 @@ export function SharedArticleSettings({
               <button
                 key={theme.id}
                 type="button"
-                onClick={() => setThemeId(theme.id)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (setThemeId) setThemeId(theme.id);
+                }}
                 className={cn(
                   "relative p-4 rounded-xl border flex flex-col items-start justify-between gap-3 text-left transition-all duration-300 overflow-hidden group min-h-[100px]",
                   themeId === theme.id

@@ -49,6 +49,33 @@ export function AutopilotDashboard() {
   const [researchResults, setResearchResults] = useState<AiResearchKeyword[]>([]);
   const [selectedKeywords, setSelectedKeywords] = useState<Set<string>>(new Set());
   const [isResearching, setIsResearching] = useState(false);
+  const [topic, setTopic] = useState('');
+
+  const handleResearch = async () => {
+    setIsResearching(true);
+    // TODO: Implement bulk research logic
+    setTimeout(() => setIsResearching(false), 1000);
+  };
+
+  const toggleAllKeywords = () => {
+    if (selectedKeywords.size === researchResults.length) {
+      setSelectedKeywords(new Set());
+    } else {
+      setSelectedKeywords(new Set(researchResults.map(r => r.keyword)));
+    }
+  };
+
+  const toggleKeywordSelection = (kw: string) => {
+    const next = new Set(selectedKeywords);
+    if (next.has(kw)) next.delete(kw);
+    else next.add(kw);
+    setSelectedKeywords(next);
+  };
+
+  const handleBulkSubmit = async () => {
+    // TODO: Implement bulk submit logic
+  };
+
 
   // Phase 3 Configuration States (Shared)
   const [articleType, setArticleType] = useState('auto');
@@ -768,6 +795,7 @@ export function AutopilotDashboard() {
                 hideArticleType={true}
                 hideTone={true}
                 hidePersona={true}
+                autoLoadMySettings={true}
               />
             </div>
 
@@ -968,10 +996,53 @@ export function AutopilotDashboard() {
               </div>
             </div>
 
-            {/* 단일 키워드 Step 3: 스케줄 미리보기 테이블 */}
+            {/* 단일 키워드 Step 3: 예상 발행 횟수 및 스케줄 요약 */}
             {inputMode === 'single' && wizardStep === 3 && cartTitles.length > 0 && (
               <div className="mt-6 pt-6 border-t border-slate-800/50">
-                <h3 className="text-sm font-semibold text-slate-300 tracking-tight mb-3 flex items-center gap-2">
+                <div className="bg-gradient-to-r from-blue-900/20 to-indigo-900/20 rounded-xl p-5 border border-blue-500/20 shadow-inner mb-6 flex items-center justify-between">
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-bold text-blue-200 flex items-center gap-2">
+                      <svg className="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                      예상 발행 횟수 및 스케줄 요약
+                    </h4>
+                    <p className="text-xs text-blue-300/80">
+                      설정하신 주기에 따라 동작 시간 내에 발행되는 산술적 예상치입니다.
+                    </p>
+                  </div>
+                  
+                  {(() => {
+                    const startH = Number(activeTimeStart);
+                    const endH = Number(activeTimeEnd);
+                    const hoursPerDay = endH >= startH ? endH - startH : (24 - startH + endH);
+                    const activeMinutes = hoursPerDay * 60;
+                    
+                    const intervalMins = Number(intervalHours) || 1440;
+                    const postsPerDay = Math.floor(activeMinutes / intervalMins);
+                    
+                    let totalVal = "무제한";
+                    if (maxRuns && Number(maxRuns) > 0) {
+                      totalVal = `${maxRuns}회`;
+                    } else {
+                      totalVal = cartTitles.length > 0 ? `최대 ${cartTitles.length}회` : "제한없음";
+                    }
+
+                    return (
+                      <div className="flex items-center gap-6 text-right">
+                        <div>
+                          <p className="text-[10px] text-slate-400 font-medium mb-1">하루 예상 발행</p>
+                          <p className="text-xl font-bold text-white tracking-tight">약 {postsPerDay}<span className="text-sm font-medium text-slate-400 ml-1">회</span></p>
+                        </div>
+                        <div className="w-px h-10 bg-slate-700/50"></div>
+                        <div>
+                          <p className="text-[10px] text-slate-400 font-medium mb-1">총 제한 (목표)</p>
+                          <p className="text-xl font-bold text-blue-300 tracking-tight">{totalVal}</p>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+                
+                <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2 mb-4">
                   <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
