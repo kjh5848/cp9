@@ -8,14 +8,25 @@ export interface AutopilotSettings {
   activeTimeEnd: string;
 }
 
+export interface AutopilotDraftState {
+  inputMode: 'single' | 'bulk';
+  wizardStep: number;
+  keyword: string;
+  topic: string;
+  suggestedTitles: SuggestedTitle[];
+}
+
 interface AutopilotState {
   cartTitles: SuggestedTitle[];
   settings: AutopilotSettings;
+  draftState: Partial<AutopilotDraftState>;
 
   // Actions
   setCartTitles: (titles: SuggestedTitle[]) => void;
   updateSettings: (settings: Partial<AutopilotSettings>) => void;
+  updateDraftState: (draft: Partial<AutopilotDraftState>) => void;
   clearCart: () => void;
+  clearDraft: () => void;
 }
 
 const initialSettings: AutopilotSettings = {
@@ -29,12 +40,18 @@ export const useAutopilotStore = create<AutopilotState>()(
     (set) => ({
       cartTitles: [],
       settings: initialSettings,
+      draftState: {},
 
       setCartTitles: (cartTitles) => set({ cartTitles }),
       clearCart: () => set({ cartTitles: [] }),
-      
+      clearDraft: () => set({ draftState: {} }),
+
       updateSettings: (newSettings) => set((state) => ({
         settings: { ...state.settings, ...newSettings }
+      })),
+      
+      updateDraftState: (draft) => set((state) => ({
+        draftState: { ...state.draftState, ...draft }
       })),
     }),
     {

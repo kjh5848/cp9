@@ -45,7 +45,7 @@ export function AutopilotDashboard() {
   const [bulkTitleCountPerKeyword, setBulkTitleCountPerKeyword] = useState(2);
   const [isBulkGenerating, setIsBulkGenerating] = useState(false);
   const [personaId, setPersonaId] = useState<string>('');
-  const [personaName, setPersonaName] = useState('');('');
+  const [personaName, setPersonaName] = useState('');
   const [researchResults, setResearchResults] = useState<AiResearchKeyword[]>([]);
   const [selectedKeywords, setSelectedKeywords] = useState<Set<string>>(new Set());
   const [isResearching, setIsResearching] = useState(false);
@@ -107,7 +107,7 @@ export function AutopilotDashboard() {
   
 
   // ── Zustand Draft 연동 (Silent Recovery) ──
-  const { cartTitles: storeCartTitles, settings: storeSettings, setCartTitles: setStoreCartTitles, updateSettings: setStoreSettings, clearCart: storeClearCart } = useAutopilotStore();
+  const { cartTitles: storeCartTitles, settings: storeSettings, draftState, setCartTitles: setStoreCartTitles, updateSettings: setStoreSettings, updateDraftState, clearCart: storeClearCart } = useAutopilotStore();
   const [isStoreRestored, setIsStoreRestored] = useState(false);
 
   useEffect(() => {
@@ -119,6 +119,13 @@ export function AutopilotDashboard() {
         setIntervalHours(storeSettings.intervalHours);
         setActiveTimeStart(storeSettings.activeTimeStart);
         setActiveTimeEnd(storeSettings.activeTimeEnd);
+      }
+      if (draftState) {
+        if (draftState.inputMode) setInputMode(draftState.inputMode);
+        if (draftState.wizardStep) setWizardStep(draftState.wizardStep);
+        if (draftState.keyword) setKeyword(draftState.keyword);
+        if (draftState.topic) setTopic(draftState.topic);
+        if (draftState.suggestedTitles) setSuggestedTitles(draftState.suggestedTitles);
       }
       setIsStoreRestored(true);
     }
@@ -132,9 +139,16 @@ export function AutopilotDashboard() {
       setStoreSettings({
         intervalHours, activeTimeStart, activeTimeEnd
       });
+      updateDraftState({
+        inputMode,
+        wizardStep,
+        keyword,
+        topic,
+        suggestedTitles
+      });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cartTitles, intervalHours, activeTimeStart, activeTimeEnd, isStoreRestored]);
+  }, [cartTitles, intervalHours, activeTimeStart, activeTimeEnd, inputMode, wizardStep, keyword, topic, suggestedTitles, isStoreRestored]);
 
 
   // Theme State

@@ -168,7 +168,7 @@ export const WriteActionModal = ({
   // DB 연동된 초기값 할당
   const defaultPersonaId = themeSettings?.personaId || (displayPersonas[0]?.id || "IT");
   const [selectedPersona, setSelectedPersona] = useState(defaultPersonaId);
-  const [personaName, setPersonaName] = useState(profile?.name || "마스터 큐레이터 H");
+  const [personaName, setPersonaName] = useState(themeSettings?.personaName || profile?.name || "마스터 큐레이터 H");
   const [selectedTextModel, setSelectedTextModel] = useState(articleSettings?.defaultTextModel || DEFAULT_TEXT_MODEL);
   const [selectedImageModel, setSelectedImageModel] = useState(articleSettings?.defaultImageModel || DEFAULT_IMAGE_MODEL);
   const [charLimit, setCharLimit] = useState(articleSettings?.presetWordCount || 2000);
@@ -178,12 +178,16 @@ export const WriteActionModal = ({
     // 모달이 열릴 때(또는 설정이 로드될 때) 마이페이지 설정을 최우선 반영하여 초기화
     if (isOpen) {
       if (themeSettings?.personaId) setSelectedPersona(themeSettings.personaId);
-      if (profile?.name) setPersonaName(profile.name);
+      if (themeSettings?.personaName) {
+        setPersonaName(themeSettings.personaName);
+      } else if (profile?.name) {
+        setPersonaName(profile.name);
+      }
       if (articleSettings?.defaultTextModel) setSelectedTextModel(articleSettings.defaultTextModel);
       if (articleSettings?.defaultImageModel) setSelectedImageModel(articleSettings.defaultImageModel);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, profile?.name, themeSettings?.personaId, articleSettings?.defaultTextModel, articleSettings?.defaultImageModel]);
+  }, [isOpen, profile?.name, themeSettings?.personaId, themeSettings?.personaName, articleSettings?.defaultTextModel, articleSettings?.defaultImageModel]);
 
   useEffect(() => {
     if (displayPersonas.length > 0 && !displayPersonas.find(p => p.id === selectedPersona)) {
