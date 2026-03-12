@@ -171,7 +171,7 @@ export const ScheduleManagement = () => {
   const calendarEvents: ScheduleEvent[] = [
     ...displayScheduledItems.map(item => {
       const d = new Date(item.date);
-      const endDate = new Date(d.getTime() + 60 * 60 * 1000); // 1시간 블록
+      const endDate = new Date(d.getTime() + 30 * 60 * 1000); // 30분 블록
       return {
         id: item.id,
         title: item.isAutopilot ? `[오토파일럿] ${item.title}` : item.title,
@@ -187,7 +187,7 @@ export const ScheduleManagement = () => {
     }),
     ...displayCompletedItems.map(item => {
       const d = new Date(item.date);
-      const endDate = new Date(d.getTime() + 60 * 60 * 1000); // 1시간 블록
+      const endDate = new Date(d.getTime() + 30 * 60 * 1000); // 30분 블록
       return {
         id: item.id,
         title: item.isAutopilot ? `[오토파일럿] ${item.title}` : item.title,

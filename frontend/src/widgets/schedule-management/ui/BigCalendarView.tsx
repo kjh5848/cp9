@@ -149,13 +149,15 @@ export const BigCalendarView: React.FC<BigCalendarViewProps> = ({
       <Calendar<ScheduleEvent>
         culture="ko"
         localizer={localizer}
-        events={events}
+        events={events.filter(e => !isNaN(e.start.getTime()) && !isNaN(e.end.getTime()))}
         date={date}
         view={view}
         views={views}
         defaultView="month"
         startAccessor="start"
         endAccessor="end"
+        allDayAccessor="allDay"
+        showMultiDayTimes={true}
         step={30}
         timeslots={2}
         onNavigate={handleNavigate}
