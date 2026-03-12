@@ -61,6 +61,18 @@ export function BulkKeywordWizard({
             className="w-full p-3 bg-slate-950/50 border border-slate-800/50 rounded-xl focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500 transition-colors text-slate-200 placeholder:text-slate-500 outline-none shadow-inner resize-none min-h-[250px] leading-relaxed"
           />
         </div>
+
+        {/* 사용 가이드라인 (Pro Tip) */}
+        <div className="bg-indigo-950/30 border border-indigo-500/20 rounded-xl p-4 text-sm text-indigo-200/80 space-y-2 mt-2">
+          <p className="font-semibold text-indigo-300 flex items-center gap-2">
+            <span>💡</span> AI 엔진 200% 활용 비법 (Pro Tip)
+          </p>
+          <ul className="list-disc list-inside space-y-1.5 ml-1">
+            <li>단일 단어 하나만 입력하기보다, <strong>[타겟 + 예산 + 상황]</strong>이 결합된 구체적인 주제를 여러 개 적어주세요.</li>
+            <li>예시: <code className="bg-slate-900/80 px-1.5 py-0.5 rounded text-indigo-300 font-mono text-xs shadow-sm">30만원대 헤드폰, 20대 여자친구 생일선물, 신혼 가전제품</code></li>
+            <li>쉼표(,)나 줄바꿈으로 다양한 카테고리를 섞어 쓰시면, AI가 스스로 파이를 나누어 골고루 최적의 트래픽 키워드를 대량 발굴해 옵니다.</li>
+          </ul>
+        </div>
         
         <div className="flex justify-end pt-2">
           <button
