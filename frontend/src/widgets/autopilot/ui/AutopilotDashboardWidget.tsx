@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { RefreshCw } from 'lucide-react';
 import { SharedArticleSettings } from '@/shared/ui/SharedArticleSettings';
 import { SingleKeywordWizard } from '@/features/autopilot/ui/SingleKeywordWizard';
 import { BulkKeywordWizard } from '@/features/autopilot/ui/BulkKeywordWizard';
@@ -16,15 +17,23 @@ export function AutopilotDashboardWidget() {
 
   // Quick Preset
   const quickPresetNode = (
-    <div className="flex items-center gap-2">
-      <span className="text-[10px] text-slate-500 hidden sm:inline-block">클릭 시 내 기본 설정값이 자동 입력됩니다.</span>
+    <div className="flex items-center gap-1.5">
+      <span className="text-[10px] text-slate-500 hidden xl:inline-block mr-1">미리 저장된 설정을 불러옵니다.</span>
+      <select
+        className="bg-slate-800 text-slate-200 text-xs font-medium rounded-lg px-2 py-1.5 outline-none border border-slate-700/50 focus:border-blue-500 transition-colors cursor-pointer"
+        value={vm.quickPreset}
+        onChange={(e) => vm.handleQuickPresetChange(e.target.value)}
+      >
+        <option value="">설정 프리셋 선택</option>
+        <option value="my-settings">마이페이지 기본 설정</option>
+      </select>
       <button
         type="button"
-        className="bg-slate-800 text-slate-200 text-xs font-medium rounded-lg px-3 py-1.5 border border-slate-700/50 hover:bg-slate-700 hover:text-white transition-colors flex items-center gap-1.5"
-        onClick={() => vm.handleQuickPresetChange('my-settings')}
+        onClick={() => vm.handleRefreshSettings()}
+        className="text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-md border border-slate-700/50 transition-colors flex items-center justify-center cursor-pointer min-h-[30px] min-w-[30px]"
+        title="설정 새로고침 & 적용"
       >
-        <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-        내 기본 설정 불러오기
+        <RefreshCw className="w-3.5 h-3.5" />
       </button>
     </div>
   );

@@ -19,7 +19,7 @@ export function useAutopilotDashboardViewModel() {
   } = useAutopilotViewModel();
 
   const { personas, fetchPersonas } = usePersonaViewModel();
-  const { themeSettings, articleSettings, profile, autopilotSettings } = useUserSettingsViewModel();
+  const { themeSettings, articleSettings, profile, autopilotSettings, refreshSettings } = useUserSettingsViewModel();
 
   // Mode state
   const [inputMode, setInputMode] = useState<'single' | 'bulk'>('single');
@@ -438,6 +438,13 @@ export function useAutopilotDashboardViewModel() {
     }
   };
 
+  const handleRefreshSettings = async () => {
+    // 1. SWR Revalidate를 통해 마이페이지 최신 설정을 강제로 불러옵니다.
+    if (refreshSettings) await refreshSettings();
+    // 2. 현재 선택된 프리셋(my-settings)을 기준으로 다시 폼에 덮어씌웁니다.
+    handleQuickPresetChange('my-settings');
+  };
+
   return {
     queueError,
     triggerCronManually,
@@ -481,6 +488,7 @@ export function useAutopilotDashboardViewModel() {
     activeTimeStart, setActiveTimeStart,
     activeTimeEnd, setActiveTimeEnd,
     startDate, setStartDate,
-    expiresAt, setExpiresAt
+    expiresAt, setExpiresAt,
+    handleRefreshSettings
   };
 }

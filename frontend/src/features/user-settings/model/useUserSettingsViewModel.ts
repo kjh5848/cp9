@@ -99,5 +99,6 @@ export const useUserSettingsViewModel = () => {
     saveProfile,
     handleChangePassword,
     handleUpgradeSubscription,
+    refreshSettings: () => mutate(),
   };
 };
