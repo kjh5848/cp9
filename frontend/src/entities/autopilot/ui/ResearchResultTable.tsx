@@ -44,39 +44,35 @@ export function ResearchResultTable({
                     className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-purple-600 focus:ring-purple-500/50 focus:ring-offset-0"
                   />
                 </th>
-                <th className="px-4 py-3 border-b border-slate-800">분류</th>
-                <th className="px-4 py-3 border-b border-slate-800">키워드</th>
-                <th className="px-4 py-3 border-b border-slate-800">검색 의도 / 방향</th>
-              </tr>
+                <th className="px-4 py-3 border-b border-slate-800">블로그 제목</th>
+                  <th className="px-4 py-3 border-b border-slate-800">추천 키워드 (유입)</th>
+                  <th className="px-4 py-3 border-b border-slate-800">소싱 검색어</th>
+                  <th className="px-4 py-3 border-b border-slate-800">큐레이션</th>
+                  <th className="px-4 py-3 border-b border-slate-800">검색 의도 / 방향</th>
+                </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/50">
               {researchResults.map((res, i) => (
-                <tr 
-                  key={i} 
-                  className={`hover:bg-slate-800/40 transition-colors cursor-pointer ${selectedKeywords.has(res.keyword) ? 'bg-purple-500/5' : ''}`}
-                  onClick={() => toggleKeywordSelection(res.keyword)}
-                >
-                  <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>
-                    <input 
-                      type="checkbox" 
-                      checked={selectedKeywords.has(res.keyword)}
-                      onChange={() => toggleKeywordSelection(res.keyword)}
-                      className="w-4 h-4 rounded appearance-none border border-slate-600 checked:bg-purple-500 checked:border-purple-500 relative transition-colors before:content-[''] before:absolute before:hidden checked:before:block before:w-[4px] before:h-[8px] before:border-r-2 before:border-b-2 before:border-white before:rotate-45 before:top-[2px] before:left-[5.5px]"
-                    />
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    {res.type === 'long-tail' ? (
-                      <span className="bg-indigo-500/10 text-indigo-400 text-[11px] px-2 py-1 rounded border border-indigo-500/20 font-medium tracking-wide">롱테일</span>
-                    ) : res.type === 'short-tail' ? (
-                      <span className="bg-pink-500/10 text-pink-400 text-[11px] px-2 py-1 rounded border border-pink-500/20 font-medium tracking-wide">숏테일</span>
-                    ) : (
-                      <span className="text-slate-500">-</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 font-medium text-white">{res.keyword}</td>
-                  <td className="px-4 py-3 text-[13px] text-slate-400 max-w-md truncate">{res.intent}</td>
-                </tr>
-              ))}
+                  <tr 
+                    key={i} 
+                    className={`hover:bg-slate-800/40 transition-colors cursor-pointer ${selectedKeywords.has(res.trafficKeyword) ? 'bg-purple-500/5' : ''}`}
+                    onClick={() => toggleKeywordSelection(res.trafficKeyword)}
+                  >
+                    <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>
+                      <input 
+                        type="checkbox" 
+                        checked={selectedKeywords.has(res.trafficKeyword)}
+                        onChange={() => toggleKeywordSelection(res.trafficKeyword)}
+                        className="w-4 h-4 rounded appearance-none border border-slate-600 checked:bg-purple-500 checked:border-purple-500 relative transition-colors before:content-[''] before:absolute before:hidden checked:before:block before:w-[4px] before:h-[8px] before:border-r-2 before:border-b-2 before:border-white before:rotate-45 before:top-[2px] before:left-[5.5px]"
+                      />
+                    </td>
+                  <td className="px-4 py-3 font-medium text-white max-w-[200px] truncate" title={res.blogTitle}>{res.blogTitle}</td>
+                    <td className="px-4 py-3 font-semibold text-emerald-400 whitespace-nowrap">{res.trafficKeyword}</td>
+                    <td className="px-4 py-3 text-slate-300 font-medium">{res.coupangSearchTerm}</td>
+                    <td className="px-4 py-3 text-[13px] text-indigo-400 font-bold tracking-wide">TOP {res.recommendedItemCount}</td>
+                    <td className="px-4 py-3 text-[12px] text-slate-400 max-w-[200px] truncate" title={res.intent}>{res.intent}</td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>

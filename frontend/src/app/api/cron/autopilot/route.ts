@@ -78,12 +78,28 @@ export async function GET(request: Request) {
       // 4.1 의도 기획 에이전트 (Intent Planner)
       const { runIntentPlanner } = await import('@/features/autopilot/lib/agent/intent-planner');
       console.log(`🧠 [Autopilot] Intent Planner 시작 (키워드: ${pendingItem.keyword})`);
-      intentContent = await runIntentPlanner({
-        keyword: pendingItem.keyword,
-        articleType: pendingItem.articleType || 'single',
-        personaName,
-        personaPrompt
-      });
+      
+      const pendingItemAny = pendingItem as any;
+      
+      if (pendingItemAny.coupangSearchTerm && pendingItemAny.searchIntent) {
+        // 이미 Perplexity API를 통해 최적화된 기획 데이터가 있는 경우 (Bulk 모드)
+        console.log(`⚡ [Autopilot] Perplexity 검색 인텐트 감지. Intent Planner 단계를 바이패스합니다.`);
+        intentContent = {
+          title: pendingItem.keyword, // Bulk 모드에서는 keyword 필드에 blogTitle 이 저장됨
+          searchIntent: pendingItemAny.searchIntent,
+          recommendedArticleType: pendingItem.articleType || 'single',
+          requiredItemCount: pendingItemAny.recommendedItemCount || 3,
+          suggestedSearchQueries: [pendingItemAny.coupangSearchTerm, pendingItemAny.trafficKeyword].filter(Boolean) as string[]
+        };
+      } else {
+        intentContent = await runIntentPlanner({
+          keyword: pendingItem.keyword,
+          articleType: pendingItem.articleType || 'single',
+          personaName,
+          personaPrompt
+        });
+      }
+      
       console.log(`📝 [Autopilot] 기획 완료: ${intentContent.title}`);
 
       // 4.2 소싱 에이전트 (Sourcing Agent)

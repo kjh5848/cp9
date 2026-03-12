@@ -12,7 +12,7 @@ export interface BulkKeywordWizardProps {
   selectedKeywords: Set<string>;
   toggleAllKeywords: () => void;
   toggleKeywordSelection: (kw: string) => void;
-  handleBulkSubmit: () => void;
+  handleBulkSubmit: (selectedItems: AiResearchKeyword[]) => void;
   isQueueLoading: boolean;
   configNode?: React.ReactNode;
   quickPresetNode?: React.ReactNode;
@@ -76,7 +76,10 @@ export function BulkKeywordWizard({
         <div className="flex justify-end pt-8 mt-2 border-t border-slate-800/50">
           <button
             type="button"
-            onClick={handleBulkSubmit}
+            onClick={() => {
+              const selectedItems = researchResults.filter(r => selectedKeywords.has(r.trafficKeyword));
+              handleBulkSubmit(selectedItems);
+            }}
             disabled={isQueueLoading || selectedKeywords.size === 0}
             className="px-8 py-4 text-sm font-bold text-white bg-emerald-600 rounded-xl hover:bg-emerald-500 disabled:opacity-50 shadow-[inset_0_1px_0px_rgba(255,255,255,0.2),0_4px_10px_rgba(16,185,129,0.4)] active:scale-[0.98] transition-all flex items-center justify-center min-w-[200px]"
           >

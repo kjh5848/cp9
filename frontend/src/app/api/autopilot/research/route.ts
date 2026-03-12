@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/infrastructure/clients/prisma';
-import { openAiSdk } from '@/infrastructure/clients/openai';
+import { perplexityModel } from '@/infrastructure/clients/perplexity';
+import { AiResearchKeyword } from '@/entities/autopilot/model/types';
 
 export const maxDuration = 120; // Maximum timeout for long OpenAI requests
 
@@ -20,79 +21,110 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Persona not found' }, { status: 404 });
     }
 
-    const systemPrompt = `당신은 최고의 SEO 전문가이자 블로그 콘텐츠 기획자입니다.
-대상이 되는 블로거의 페르소나와 작성하려는 메인 주제(데이터셋)를 기반으로, 
-다음 조건에 맞춰 실질적인 트래픽을 유도할 수 있는 고부가가치 롱테일 및 숏테일 키워드를 정확히 ${count}개 리서치하여 반환하세요.
+    // Perplexity API limitation: Better quality with ~5 items per request.
+    const CHUNK_SIZE = 5;
+    const numRequests = Math.ceil(count / CHUNK_SIZE);
+    
+    // Create parallel promises
+    const promises = Array.from({ length: numRequests }).map(async (_, idx) => {
+      // For each request, calculate how many items we need (last chunk might be smaller)
+      const isLastChunk = idx === numRequests - 1;
+      const itemsToFetch = isLastChunk && count % CHUNK_SIZE !== 0 ? count % CHUNK_SIZE : CHUNK_SIZE;
+
+      const systemPrompt = `당신은 대한민국 최고 수준의 데이터 기반 SEO 마케터이자 커머스 전문가입니다.
+사용자의 [초기 주제]를 실시간 웹 트렌드와 빙/구글 검색 결과를 통해 심층 분석하여, 결과적으로 가장 구매 전환율이 높은 ${itemsToFetch}개의 완벽한 "오토파일럿 블로그 발행 세트"를 JSON 형태로 반환하는 것입니다.
 
 [블로거 페르소나 정보]
 - 이름: ${persona.name}
 - 역할 및 프롬프트: ${persona.systemPrompt}
-- 톤앤매너: ${persona.toneDescription}
 
-[작성 주제 (데이터셋)]
+[초기 주제]
 "${topic}"
 
-[요구사항]
-1. 위 주제와 페르소나에 부합하는 세부 키워드를 추출합니다.
-2. 각 키워드는 사람들이 쿠팡이나 네이버 등에서 상품을 찾을 때 실제로 입력할 법한 구체적이고 구매 의도가 담긴 롱테일/숏테일 키워드여야 합니다. (예: "30대 직장인 무선 이어폰 추천", "가성비 노이즈 캔슬링 헤드폰 비교")
+💡 필수 과제 (반드시 실시간 검색을 선행할 것)
+1. 최근 한 달간 한국 시장에서 사람들이 이 주제와 관련하여 진짜 빈번하게 치는 구체적 검색어(트렌드/모델명 포함)를 파악하세요.
+2. 구글, 네이버 상위 노출 블로그들의 어그로성 제목 구조와 그들이 비교/추천하는 아이템 개수(BEST 3 등)를 분석 및 벤치마킹하세요.
+
+[5종 세트 구성 규칙]
+- trafficKeyword: 서술어 금지. 일반 소비자가 검색창에 타이핑하는 2~4단어의 명사형 롱테일 키워드.
+- coupangSearchTerm: 위 트래픽 키워드의 의도를 담되, 쿠팡 검색 시 검색결과가 나오도록 군더더기를 뺀 핵심 명사.
+- blogTitle: 클릭률(CTR)이 높도록 도발적이고 매력적인 서술형 제목.
+- recommendedItemCount: 리뷰글에 소개할 추천 상품 개수 (정수 1~5).
+- intent: 대상 타겟 고객층과 검색 의도 요약.
+
+[Output Format (Strict JSON Only)]
+반드시 아래 JSON 구조로만 응답하세요. 백틱(\`\`\`)이나 추가 설명 텍스트 없이 순수 JSON만 반환해야 합니다.
+
+{
+  "recommendedSets": [
+    {
+      "trafficKeyword": "유입용 명사형 롱테일 키워드",
+      "coupangSearchTerm": "쿠팡 소싱용 핵심 명사",
+      "blogTitle": "클릭을 유발하는 강력한 제목",
+      "recommendedItemCount": 3,
+      "intent": "검색 의도 요약"
+    }
+  ]
+}
 `;
 
-    const response = await openAiSdk.chat.completions.create({
-      model: 'gpt-4o-2024-08-06',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: '키워드를 추출해주세요.' }
-      ],
-      response_format: {
-        type: 'json_schema',
-        json_schema: {
-          name: 'keyword_research_result',
-          strict: true,
-          schema: {
-            type: 'object',
-            properties: {
-              keywords: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  properties: {
-                    keyword: {
-                      type: 'string',
-                      description: '추출된 구체적인 검색 키워드'
-                    },
-                    intent: {
-                      type: 'string',
-                      description: '해당 키워드를 검색하는 사용자의 의도나 작성해야 할 글의 방향성 요약'
-                    },
-                    type: {
-                      type: 'string',
-                      enum: ['long-tail', 'short-tail'],
-                      description: '해당 키워드가 롱테일인지 숏테일인지 구분'
-                    }
-                  },
-                  required: ['keyword', 'intent', 'type'],
-                  additionalProperties: false
-                }
-              }
-            },
-            required: ['keywords'],
-            additionalProperties: false
+      try {
+        const response = await perplexityModel.invoke([
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `[${topic}]에 대한 기획 세트 ${itemsToFetch}개를 정확한 JSON 형식으로 배열에 담아 응답해주세요.` }
+        ]);
+        
+        const rawContent = response.content.toString();
+        
+        // JSON 파싱 (마크다운 코드블록 등 제거)
+        const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          return parsed.recommendedSets || [];
+        } else {
+          try {
+             const parsed = JSON.parse(rawContent);
+             return parsed.recommendedSets || [];
+          } catch(e) {
+             console.warn('Failed to parse single Perplexity response:', rawContent);
+             return [];
           }
         }
-      },
-      temperature: 0.7,
+      } catch (err) {
+        console.error('Perplexity AI chunk error:', err);
+        return [];
+      }
     });
 
-    if (!response.choices[0].message.content) {
-      throw new Error('No content returned from OpenAI');
-    }
-
-    const parsedContent = JSON.parse(response.choices[0].message.content);
+    const resultsArray = await Promise.all(promises);
+    // Flatten array
+    let finalKeywords: AiResearchKeyword[] = resultsArray.flat().filter(item => 
+      item && item.trafficKeyword && item.coupangSearchTerm && item.blogTitle
+    ).map(item => ({
+      trafficKeyword: String(item.trafficKeyword),
+      coupangSearchTerm: String(item.coupangSearchTerm),
+      blogTitle: String(item.blogTitle),
+      recommendedItemCount: Number(item.recommendedItemCount) || 3,
+      intent: String(item.intent)
+    }));
     
+    // Deduplicate by trafficKeyword
+    const uniqueKeywords = [];
+    const seen = new Set();
+    for (const kw of finalKeywords) {
+      if (!seen.has(kw.trafficKeyword)) {
+        seen.add(kw.trafficKeyword);
+        uniqueKeywords.push(kw);
+      }
+    }
+    
+    // Ensure we don't exceed the originally requested count (in case extra were generated)
+    uniqueKeywords.splice(count);
+
     return NextResponse.json({ 
       success: true, 
-      count: parsedContent.keywords?.length || 0, 
-      data: parsedContent.keywords 
+      count: uniqueKeywords.length, 
+      data: uniqueKeywords 
     });
 
   } catch (error: any) {

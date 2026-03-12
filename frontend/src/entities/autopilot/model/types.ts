@@ -36,6 +36,10 @@ export interface AutopilotQueueItem {
 
 export interface CreateAutopilotQueuePayload {
   keyword: string;
+  trafficKeyword?: string;
+  coupangSearchTerm?: string;
+  recommendedItemCount?: number;
+  searchIntent?: string;
   personaId?: string;
   personaName?: string;
   themeId?: string;
@@ -63,9 +67,11 @@ export interface CreateAutopilotQueuePayload {
 }
 
 export interface AiResearchKeyword {
-  keyword: string;
+  trafficKeyword: string;
+  coupangSearchTerm: string;
+  blogTitle: string;
+  recommendedItemCount: number;
   intent: string;
-  type?: 'long-tail' | 'short-tail';
 }
 
 /** AI 키워드 기반 제목 제안 결과 */

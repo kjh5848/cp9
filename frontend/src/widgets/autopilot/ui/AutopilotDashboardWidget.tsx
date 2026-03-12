@@ -301,8 +301,66 @@ export function AutopilotDashboardWidget() {
     }
   };
 
-  const handleBulkSubmit = async () => {
-    // TODO: Implement Bulk submission
+  const handleBulkSubmit = async (selectedItems: AiResearchKeyword[]) => {
+    if (selectedItems.length === 0) return;
+
+    const preview = calculateSchedulePreview();
+    if (preview.length === 0) {
+       // 대량의 경우 cartTitles가 아니라 선택된 키워드들에 직접 매핑합니다.
+       const base = startDate ? new Date(startDate) : new Date();
+       const interval = parseInt(intervalHours || '24', 10);
+       const activeStart = parseInt(activeTimeStart || '9', 10);
+       const activeEnd = parseInt(activeTimeEnd || '22', 10);
+
+       selectedItems.forEach((_, i) => {
+         const runTime = new Date(base.getTime() + i * interval * 60 * 60 * 1000);
+         const hour = runTime.getHours();
+         if (activeEnd > activeStart) {
+           if (hour < activeStart) runTime.setHours(activeStart, 0, 0, 0);
+           else if (hour >= activeEnd) {
+             runTime.setDate(runTime.getDate() + 1);
+             runTime.setHours(activeStart, 0, 0, 0);
+           }
+         }
+         preview.push({ index: i, title: selectedItems[i].blogTitle, scheduledAt: runTime });
+       });
+    }
+
+    const payloads: CreateAutopilotQueuePayload[] = preview.map((item, i) => {
+      const researchItem = selectedItems[i];
+      return {
+        keyword: item.title,
+        trafficKeyword: researchItem?.trafficKeyword,
+        coupangSearchTerm: researchItem?.coupangSearchTerm,
+        recommendedItemCount: researchItem?.recommendedItemCount,
+        searchIntent: researchItem?.intent,
+        
+        personaId: personaId || undefined,
+        themeId: themeId || undefined,
+        articleType,
+        textModel,
+        imageModel,
+        charLimit: parseInt(charLimit as string, 10),
+        sortCriteria,
+        minPrice: minPrice ? parseInt(minPrice, 10) : undefined,
+        maxPrice: maxPrice ? parseInt(maxPrice, 10) : undefined,
+        isRocketOnly,
+        intervalHours: undefined, 
+        activeTimeStart: activeTimeStart ? parseInt(activeTimeStart, 10) : undefined,
+        activeTimeEnd: activeTimeEnd ? parseInt(activeTimeEnd, 10) : undefined,
+        startDate: item.scheduledAt.toISOString(),
+        expiresAt: expiresAt || undefined,
+      };
+    });
+
+    const success = await addBulkToQueue(payloads);
+    if (success) {
+      alert(`${payloads.length}개 AI 리서치 항목이 큐에 일괄 등록되었습니다.`);
+      setTopic('');
+      setResearchResults([]);
+      setSelectedKeywords(new Set());
+      router.push('/schedule');
+    }
   };
 
   const quickPresetNode = (

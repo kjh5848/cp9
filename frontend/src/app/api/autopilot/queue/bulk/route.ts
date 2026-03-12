@@ -28,6 +28,11 @@ export async function POST(request: Request) {
 
       return {
         keyword: payload.keyword,
+        trafficKeyword: payload.trafficKeyword || null,
+        coupangSearchTerm: payload.coupangSearchTerm || null,
+        recommendedItemCount: payload.recommendedItemCount || null,
+        searchIntent: payload.searchIntent || null,
+        
         status: 'PENDING',
         personaId: payload.personaId || null,
         themeId: payload.themeId || null,

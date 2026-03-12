@@ -89,6 +89,12 @@ model AutopilotQueue {
   titleRegenRule String?   @default("reuse") // 재생성 규칙 (reuse | generate)
   expiresAt      DateTime? @map("expires_at") // 발행 종료 일시
 
+  // Phase 8: Perplexity 트렌드 메타데이터
+  trafficKeyword       String?
+  coupangSearchTerm    String?
+  recommendedItemCount Int?
+  searchIntent         String?
+
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
 
