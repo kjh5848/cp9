@@ -41,6 +41,7 @@ export function useAutopilotDashboardViewModel() {
 
   // Bulk Keyword State
   const [topic, setTopic] = useState('');
+  const [bulkCount, setBulkCount] = useState(30);
   const [researchResults, setResearchResults] = useState<AiResearchKeyword[]>([]);
   const [selectedKeywords, setSelectedKeywords] = useState<Set<string>>(new Set());
   const [isResearching, setIsResearching] = useState(false);
@@ -234,9 +235,34 @@ export function useAutopilotDashboardViewModel() {
   };
 
   const handleResearch = async () => {
+    if (!topic.trim()) {
+      alert('주제어를 입력해주세요.');
+      return;
+    }
     setIsResearching(true);
-    // TODO: MOCK Data or API Call logic
-    setTimeout(() => setIsResearching(false), 1000);
+    try {
+      const res = await fetch('/api/autopilot/research', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topic: topic.trim(),
+          personaId,
+          count: bulkCount,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        setResearchResults(data.data);
+        setSelectedKeywords(new Set(data.data.map((r: any) => r.trafficKeyword)));
+      } else {
+        alert(data.error || '리서치에 실패했습니다.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('오류가 발생했습니다.');
+    } finally {
+      setIsResearching(false);
+    }
   };
 
   const toggleAllKeywords = () => {
@@ -427,6 +453,7 @@ export function useAutopilotDashboardViewModel() {
     isQueueLoading,
     
     topic, setTopic,
+    bulkCount, setBulkCount,
     researchResults, setResearchResults,
     selectedKeywords, setSelectedKeywords,
     isResearching,

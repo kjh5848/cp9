@@ -192,6 +192,8 @@ export function AutopilotDashboardWidget() {
               <BulkKeywordWizard 
                 topic={vm.topic}
                 setTopic={vm.setTopic}
+                bulkCount={vm.bulkCount}
+                setBulkCount={vm.setBulkCount}
                 personaId={vm.personaId}
                 handleResearch={vm.handleResearch}
                 isResearching={vm.isResearching}

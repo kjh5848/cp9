@@ -5,6 +5,8 @@ import { ResearchResultTable } from '@/entities/autopilot/ui/ResearchResultTable
 export interface BulkKeywordWizardProps {
   topic: string;
   setTopic: (topic: string) => void;
+  bulkCount: number;
+  setBulkCount: (count: number) => void;
   personaId: string;
   handleResearch: () => void;
   isResearching: boolean;
@@ -21,6 +23,8 @@ export interface BulkKeywordWizardProps {
 export function BulkKeywordWizard({
   topic,
   setTopic,
+  bulkCount,
+  setBulkCount,
   personaId,
   handleResearch,
   isResearching,
@@ -36,8 +40,21 @@ export function BulkKeywordWizard({
   return (
     <div className="space-y-4">
       <div className="space-y-4 bg-slate-950/30 p-6 rounded-xl border border-slate-800/50">
-        <div className="space-y-2">
+        <div className="flex justify-between items-center">
           <label className="block text-sm font-medium text-slate-300 tracking-tight">리서치 주제어 (데이터셋)</label>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-400">발굴 개수:</span>
+            <input
+              type="number"
+              min={1}
+              max={100}
+              value={bulkCount}
+              onChange={(e) => setBulkCount(Number(e.target.value))}
+              className="w-16 p-1 bg-slate-950/50 border border-slate-800/50 rounded-lg focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500 transition-colors text-slate-200 text-sm text-center outline-none"
+            />
+          </div>
+        </div>
+        <div className="space-y-2">
           <textarea
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
@@ -58,7 +75,7 @@ export function BulkKeywordWizard({
 • 속건조 꽉 잡아주는 겨울철 악건성 수분크림 극약처방
 • 직장인 다이어트 도시락 싸기 좋은 보온 용기
 • 부모님 명절 효도 선물 100만원대 안마의자 비교`}
-            className="w-full p-3 bg-slate-950/50 border border-slate-800/50 rounded-xl focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500 transition-colors text-slate-200 placeholder:text-slate-500 outline-none shadow-inner resize-none min-h-[250px] leading-relaxed"
+            className="w-full p-3 bg-slate-950/50 border border-slate-800/50 rounded-xl focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500 transition-colors text-slate-200 placeholder:text-slate-500 outline-none shadow-inner resize-none min-h-[250px] leading-relaxed [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
           />
         </div>
 
@@ -67,10 +84,14 @@ export function BulkKeywordWizard({
           <p className="font-semibold text-indigo-300 flex items-center gap-2">
             <span>💡</span> AI 엔진 200% 활용 비법 (Pro Tip)
           </p>
-          <ul className="list-disc list-inside space-y-1.5 ml-1">
+          <ul className="list-disc list-inside space-y-2 ml-1">
             <li>단일 단어 하나만 입력하기보다, <strong>[타겟 + 예산 + 상황]</strong>이 결합된 구체적인 주제를 여러 개 적어주세요.</li>
             <li>예시: <code className="bg-slate-900/80 px-1.5 py-0.5 rounded text-indigo-300 font-mono text-xs shadow-sm">30만원대 헤드폰, 20대 여자친구 생일선물, 신혼 가전제품</code></li>
-            <li>쉼표(,)나 줄바꿈으로 다양한 카테고리를 섞어 쓰시면, AI가 스스로 파이를 나누어 골고루 최적의 트래픽 키워드를 대량 발굴해 옵니다.</li>
+            <li>쉼표(,)나 줄바꿈으로 다양한 카테고리를 섞어 쓰시면, AI가 스스로 개수를 나누어 골고루 최적의 트래픽 키워드를 대량 발굴해 옵니다.</li>
+            <li className="text-indigo-300/90 text-[13px] bg-indigo-900/20 p-2 rounded border border-indigo-500/10 list-none -ml-1 mt-1">
+              💬 <span className="italic">"요즘 공기청정기, 우리집 고양이 사료 추천, 넷플릭스 빔프로젝터 비교"</span><br/>
+              👉 AI가 이 난해한 목록을 보고 <span className="font-semibold text-indigo-200">"아, 이 사람은 가전, 반려동물, 홈시네마 총 3가지 타겟군을 원하네"</span> 라고 찰떡같이 파악해서 가장 최적화된 결과물을 뽑아냅니다!
+            </li>
           </ul>
         </div>
         
