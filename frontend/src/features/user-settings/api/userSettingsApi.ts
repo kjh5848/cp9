@@ -1,4 +1,4 @@
-import { UserSettingsDTO, DefaultArticleSettings, DefaultThemeSettings, UserProfile } from '@/entities/user-settings/model/types';
+import { UserSettingsDTO, DefaultArticleSettings, DefaultThemeSettings, DefaultAutopilotSettings, UserProfile } from '@/entities/user-settings/model/types';
 
 const API_BASE_URL = '/api/user-settings';
 
@@ -34,6 +34,17 @@ export const userSettingsApi = {
     });
     
     if (!response.ok) throw new Error('Failed to update theme settings');
+    return response.json();
+  },
+
+  updateAutopilotSettings: async (settings: DefaultAutopilotSettings): Promise<DefaultAutopilotSettings> => {
+    const response = await fetch(`${API_BASE_URL}/autopilot`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings),
+    });
+    
+    if (!response.ok) throw new Error('Failed to update autopilot settings');
     return response.json();
   },
 

@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 import { userSettingsApi } from '@/features/user-settings/api/userSettingsApi';
-import { DefaultArticleSettings, DefaultThemeSettings, UserSettingsDTO, UserProfile } from '@/entities/user-settings/model/types';
+import { DefaultArticleSettings, DefaultThemeSettings, DefaultAutopilotSettings, UserSettingsDTO, UserProfile } from '@/entities/user-settings/model/types';
 
 export const useUserSettingsViewModel = () => {
   // SWR을 사용하여 데이터 패칭 및 Stale-While-Revalidate 캐싱 적용
@@ -46,6 +46,19 @@ export const useUserSettingsViewModel = () => {
     }
   };
 
+  const saveAutopilotSettings = async (newSettings: DefaultAutopilotSettings) => {
+    try {
+      mutate((prev: UserSettingsDTO | undefined) => prev ? { ...prev, autopilotSettings: newSettings } : undefined, false);
+      const updatedData = await userSettingsApi.updateAutopilotSettings(newSettings);
+      mutate((prev: UserSettingsDTO | undefined) => prev ? { ...prev, autopilotSettings: updatedData } : undefined, true);
+      return { success: true };
+    } catch (err) {
+      console.error('Failed to save autopilot settings', err);
+      mutate();
+      return { success: false, error: err };
+    }
+  };
+
   const saveProfile = async (newProfile: Partial<UserProfile>) => {
     try {
       mutate((prev: UserSettingsDTO | undefined) => prev ? { ...prev, profile: { ...prev.profile, ...newProfile } as UserProfile } : undefined, false);
@@ -77,10 +90,12 @@ export const useUserSettingsViewModel = () => {
     profile: data?.profile,
     articleSettings: data?.articleSettings,
     themeSettings: data?.themeSettings,
+    autopilotSettings: data?.autopilotSettings,
 
     // Actions
     saveArticleSettings,
     saveThemeSettings,
+    saveAutopilotSettings,
     saveProfile,
     handleChangePassword,
     handleUpgradeSubscription,

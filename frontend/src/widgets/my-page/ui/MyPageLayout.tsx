@@ -5,6 +5,7 @@ import { UserProfileWidget } from './UserProfileWidget';
 import { DefaultArticleSettingsWidget } from './DefaultArticleSettingsWidget';
 import { DefaultThemeWidget } from './DefaultThemeWidget';
 import { ApiIntegrationSettingsWidget } from './ApiIntegrationSettingsWidget';
+import { DefaultAutopilotSettingsWidget } from './DefaultAutopilotSettingsWidget';
 
 export const MyPageLayout: React.FC = () => {
   return (
@@ -42,6 +43,11 @@ export const MyPageLayout: React.FC = () => {
           </section>
 
           <section className="animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+             <h2 className="text-sm font-syne font-bold text-cyan-400 uppercase tracking-widest mb-4 ml-2">오토파일럿 기본 설정</h2>
+             <DefaultAutopilotSettingsWidget />
+          </section>
+
+          <section className="animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
              <h2 className="text-sm font-syne font-bold text-cyan-400 uppercase tracking-widest mb-4 ml-2">API 연동</h2>
              <ApiIntegrationSettingsWidget />
           </section>
