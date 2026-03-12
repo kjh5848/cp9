@@ -45,6 +45,12 @@ export function AutopilotDashboardWidget() {
   const [suggestedTitles, setSuggestedTitles] = useState<SuggestedTitle[]>([]);
   const [cartTitles, setCartTitles] = useState<SuggestedTitle[]>([]); 
   const [customTitleInput, setCustomTitleInput] = useState('');
+  const [singleKeywordResearchMeta, setSingleKeywordResearchMeta] = useState<{
+    trafficKeyword: string;
+    coupangSearchTerm: string;
+    recommendedItemCount: number;
+    intent: string;
+  } | null>(null);
 
   // Bulk Keyword State
   const [topic, setTopic] = useState('');
@@ -189,23 +195,44 @@ export function AutopilotDashboardWidget() {
       return;
     }
     setIsGeneratingTitles(true);
+    setSingleKeywordResearchMeta(null); // Reset previous meta
     try {
       const excludeTitles = cartTitles.map((t) => t.title);
-      const res = await fetch('/api/keyword-titles', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          keyword: keyword.trim(),
-          persona: personaId,
-          articleType: articleType === 'auto' ? undefined : articleType,
-          textModel: titleModel,
-          titleExamples: titleExamples.trim(),
-          titleExclusions: titleExclusions.trim(),
-          count: titleCount,
-          excludeTitles,
+      
+      const [titlesRes, metaRes] = await Promise.all([
+        fetch('/api/keyword-titles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            keyword: keyword.trim(),
+            persona: personaId,
+            articleType: articleType === 'auto' ? undefined : articleType,
+            textModel: titleModel,
+            titleExamples: titleExamples.trim(),
+            titleExclusions: titleExclusions.trim(),
+            count: titleCount,
+            excludeTitles,
+          }),
         }),
-      });
-      const result = await res.json();
+        fetch('/api/autopilot/research-single', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            keyword: keyword.trim(),
+            personaId: personaId,
+          }),
+        })
+      ]);
+
+      const [result, metaResult] = await Promise.all([
+        titlesRes.json(),
+        metaRes.json()
+      ]);
+
+      if (metaResult && metaResult.result) {
+        setSingleKeywordResearchMeta(metaResult.result);
+      }
+
       if (result && result.titles && result.titles.length > 0) {
         setSuggestedTitles(result.titles);
         setWizardStep(2);
@@ -229,7 +256,7 @@ export function AutopilotDashboardWidget() {
     if (selectedKeywords.size === researchResults.length) {
       setSelectedKeywords(new Set());
     } else {
-      setSelectedKeywords(new Set(researchResults.map(r => r.keyword)));
+      setSelectedKeywords(new Set(researchResults.map(r => r.trafficKeyword)));
     }
   };
 
@@ -286,6 +313,10 @@ export function AutopilotDashboardWidget() {
         activeTimeEnd: activeTimeEnd ? parseInt(activeTimeEnd, 10) : undefined,
         startDate: item.scheduledAt.toISOString(),
         expiresAt: expiresAt || undefined,
+        trafficKeyword: singleKeywordResearchMeta?.trafficKeyword,
+        coupangSearchTerm: singleKeywordResearchMeta?.coupangSearchTerm,
+        recommendedItemCount: singleKeywordResearchMeta?.recommendedItemCount,
+        searchIntent: singleKeywordResearchMeta?.intent,
       };
     });
 
