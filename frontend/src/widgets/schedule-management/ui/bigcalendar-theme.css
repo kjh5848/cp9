@@ -234,6 +234,48 @@
   background: rgba(59, 130, 246, 0.05) !important;
 }
 
+/* Agenda (목록) 뷰 스타일 */
+.rbc-agenda-view table.rbc-agenda-table {
+  border-color: var(--border);
+}
+
+.rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
+  border-top-color: var(--border);
+  padding: 8px 12px;
+  color: var(--foreground);
+}
+
+.rbc-agenda-view table.rbc-agenda-table tbody > tr > td + td {
+  border-left-color: var(--border);
+}
+
+.rbc-agenda-view table.rbc-agenda-table thead > tr > th {
+  border-bottom-color: var(--border);
+  background: var(--muted);
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+}
+
+.rbc-agenda-time-cell {
+  text-transform: lowercase;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+}
+
+.rbc-agenda-event-cell {
+  font-weight: 500;
+  font-size: 0.85rem;
+  color: var(--foreground);
+}
+
+.rbc-agenda-date-cell {
+  font-weight: 600;
+  color: var(--foreground);
+  font-size: 0.85rem;
+}
+
 /* 반응형 */
 @media (max-width: 768px) {
   .rbc-toolbar {

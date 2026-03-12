@@ -389,7 +389,7 @@ export function useAutopilotDashboardViewModel() {
         minPrice: minPrice ? parseInt(minPrice, 10) : undefined,
         maxPrice: maxPrice ? parseInt(maxPrice, 10) : undefined,
         isRocketOnly,
-        intervalHours: undefined, 
+        intervalHours: intervalHours ? parseInt(intervalHours, 10) : undefined,
         activeTimeStart: activeTimeStart ? parseInt(activeTimeStart, 10) : undefined,
         activeTimeEnd: activeTimeEnd ? parseInt(activeTimeEnd, 10) : undefined,
         startDate: item.scheduledAt.toISOString(),

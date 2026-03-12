@@ -142,7 +142,7 @@ export const BigCalendarView: React.FC<BigCalendarViewProps> = ({
   }, []);
 
   /** 사용할 뷰 목록 */
-  const views = useMemo<View[]>(() => ["month", "week"], []);
+  const views = useMemo<View[]>(() => ["month", "week", "day", "agenda"], []);
 
   return (
     <div style={{ height: "70vh", minHeight: "500px" }}>
