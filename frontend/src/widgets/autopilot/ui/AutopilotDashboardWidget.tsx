@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Settings } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { SharedArticleSettings } from '@/shared/ui/SharedArticleSettings';
 import { SingleKeywordWizard } from '@/features/autopilot/ui/SingleKeywordWizard';
 import { BulkKeywordWizard } from '@/features/autopilot/ui/BulkKeywordWizard';
@@ -14,6 +15,7 @@ import { useAutopilotDashboardViewModel } from '@/widgets/autopilot/model/useAut
 
 export function AutopilotDashboardWidget() {
   const vm = useAutopilotDashboardViewModel();
+  const router = useRouter();
 
   // Quick Preset
   const quickPresetNode = (
@@ -34,6 +36,14 @@ export function AutopilotDashboardWidget() {
         title="설정 새로고침 & 적용"
       >
         <RefreshCw className="w-3.5 h-3.5" />
+      </button>
+      <button
+        type="button"
+        onClick={() => router.push('/my-page')}
+        className="text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-md border border-slate-700/50 transition-colors flex items-center justify-center cursor-pointer min-h-[30px] min-w-[30px]"
+        title="마이페이지 설정으로 이동"
+      >
+        <Settings className="w-3.5 h-3.5" />
       </button>
     </div>
   );
