@@ -17,15 +17,15 @@ export function AutopilotDashboardWidget() {
   // Quick Preset
   const quickPresetNode = (
     <div className="flex items-center gap-2">
-      <span className="text-[10px] text-slate-500 hidden sm:inline-block">선택 시 설정값이 자동 입력됩니다.</span>
-      <select
-        className="bg-slate-800 text-slate-200 text-xs font-medium rounded-lg px-2 py-1.5 outline-none border border-slate-700/50 focus:border-blue-500 transition-colors"
-        value={vm.quickPreset}
-        onChange={(e) => vm.handleQuickPresetChange(e.target.value)}
+      <span className="text-[10px] text-slate-500 hidden sm:inline-block">클릭 시 내 기본 설정값이 자동 입력됩니다.</span>
+      <button
+        type="button"
+        className="bg-slate-800 text-slate-200 text-xs font-medium rounded-lg px-3 py-1.5 border border-slate-700/50 hover:bg-slate-700 hover:text-white transition-colors flex items-center gap-1.5"
+        onClick={() => vm.handleQuickPresetChange('my-settings')}
       >
-        <option value="">간편설정 불러오기</option>
-        <option value="my-settings">마이페이지 내 설정</option>
-      </select>
+        <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+        내 기본 설정 불러오기
+      </button>
     </div>
   );
 
@@ -82,6 +82,7 @@ export function AutopilotDashboardWidget() {
             setMaxPrice={vm.setMaxPrice}
             isRocketOnly={vm.isRocketOnly}
             setIsRocketOnly={vm.setIsRocketOnly}
+            hideLoadMySettings={true}
           />
         </AccordionContent>
       </AccordionItem>
@@ -105,6 +106,7 @@ export function AutopilotDashboardWidget() {
             setStartDate={vm.setStartDate}
             expiresAt={vm.expiresAt}
             setExpiresAt={vm.setExpiresAt}
+            hideLoadMySettings={true}
           />
         </AccordionContent>
       </AccordionItem>
