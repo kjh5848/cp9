@@ -77,7 +77,10 @@ export async function POST(request: Request) {
 ${excludeText}
 ${titleExamples?.trim() ? `[참고할 제목 스타일 예제 (Positive)]:\n${titleExamples}\n위 예제의 톤앤매너와 스타일을 참고하여 이와 비슷한 느낌으로 작성하세요.\n` : ''}
 ${titleExclusions?.trim() ? `[절대 사용 금지 포맷/단어 (Negative)]:\n${titleExclusions}\n위 포맷이나 단어는 어떠한 경우에도 제목에 포함하지 마세요.\n` : ''}
-위 키워드로 SEO에 최적화된 블로그 제목 후보를 정확히 ${count}개 생성하세요.
+
+[필수 사항]
+위 키워드로 SEO에 최적화된 블로그 제목 후보를 하나도 빠짐없이 **정확히 ${count}개** 생성하세요. 
+내가 요청한 개수(${count}개)보다 적게 주거나 많이 주면 절대 안 됩니다. 반드시 ${count}개의 배열 객체를 꽉 채워서 응답하세요.
 각 제목은 서로 다른 앵글(관점/접근법)을 가져야 합니다.
 `
 
