@@ -41,8 +41,24 @@ export function BulkKeywordWizard({
           <textarea
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            placeholder="예: 헤드폰 추천, 노트북 비교"
-            className="w-full p-3 bg-slate-950/50 border border-slate-800/50 rounded-xl focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500 transition-colors text-slate-200 placeholder:text-slate-600 outline-none shadow-inner resize-none min-h-[120px]"
+            placeholder={`[주제어 입력 예시 - 구체적인 타겟/가격대/상황을 적어주시면 AI가 더 예리하게 분석합니다]
+
+• 30만원대 노이즈캔슬링 헤드폰 추천
+• 20대 여자친구 1주년 생일선물 베스트 5
+• 1인가구 원룸 가성비 소형 가습기 비교
+• 신혼부부 혼수 프리미엄 로봇청소기
+• 반응속도 빠른 가성비 무선 게이밍 마우스
+• 아이패드 프로 M4 생산성 높여주는 꿀템 케이스
+• 직장인 손목 보호 버티컬 마우스 진짜 후기
+• 자취방 밤 감성 살려주는 인테리어 무드등
+• 50만원 이하 대학생 가성비 인강용 노트북
+• 슬개골 탈구 예방용 미끄럼방지 강아지 매트
+• 초보 캠퍼를 위한 10만원대 초경량 백패킹 텐트
+• 홈카페 입문용 가성비 캡슐 에스프레소 머신
+• 속건조 꽉 잡아주는 겨울철 악건성 수분크림 극약처방
+• 직장인 다이어트 도시락 싸기 좋은 보온 용기
+• 부모님 명절 효도 선물 100만원대 안마의자 비교`}
+            className="w-full p-3 bg-slate-950/50 border border-slate-800/50 rounded-xl focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500 transition-colors text-slate-200 placeholder:text-slate-500 outline-none shadow-inner resize-none min-h-[250px] leading-relaxed"
           />
         </div>
         
