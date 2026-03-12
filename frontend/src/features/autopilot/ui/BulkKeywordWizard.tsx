@@ -41,7 +41,7 @@ export function BulkKeywordWizard({
           <textarea
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            placeholder="예: 2024년 최신 가전제품 리뷰 및 비교"
+            placeholder="예: 헤드폰 추천, 노트북 비교"
             className="w-full p-3 bg-slate-950/50 border border-slate-800/50 rounded-xl focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500 transition-colors text-slate-200 placeholder:text-slate-600 outline-none shadow-inner resize-none min-h-[120px]"
           />
         </div>
