@@ -3,7 +3,7 @@
 import React from "react";
 import { GlassCard } from "@/shared/ui/GlassCard";
 import { Button } from "@/shared/ui/button";
-import { X, Settings, Clock, Tag, ShoppingCart, UserCircle, AlignLeft, Bot, Rocket } from "lucide-react";
+import { X, Settings, Clock, Tag, ShoppingCart, UserCircle, AlignLeft, Bot, Rocket, Database } from "lucide-react";
 
 interface AutopilotConfigModalProps {
   isOpen: boolean;
@@ -39,6 +39,41 @@ export const AutopilotConfigModal: React.FC<AutopilotConfigModalProps> = ({ isOp
           </div>
 
           <div className="grid grid-cols-2 gap-4">
+            {/* AI 리서치 메타데이터 (있을 경우만 표시) */}
+            {(config.trafficKeyword || config.coupangSearchTerm || config.searchIntent) && (
+              <div className="col-span-2 flex flex-col gap-3 p-4 rounded-xl bg-indigo-950/20 border border-indigo-500/20">
+                <div className="flex items-center gap-2 text-sm font-semibold text-indigo-300">
+                  <Database className="w-4 h-4 text-indigo-400" />
+                  <span>AI 리서치 메타데이터 (Metadata)</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                  {config.trafficKeyword && (
+                    <div className="flex flex-col gap-1">
+                      <span className="text-muted-foreground">SEO 트래픽 타겟 키워드</span>
+                      <span className="font-semibold text-indigo-100">{config.trafficKeyword}</span>
+                    </div>
+                  )}
+                  {config.coupangSearchTerm && (
+                    <div className="flex flex-col gap-1">
+                      <span className="text-muted-foreground">쿠팡 소싱용 상품명</span>
+                      <span className="font-semibold text-indigo-100">{config.coupangSearchTerm}</span>
+                    </div>
+                  )}
+                  {config.searchIntent && (
+                    <div className="flex flex-col gap-1 col-span-1 md:col-span-2">
+                      <span className="text-muted-foreground">유저 검색 의도 (Intent)</span>
+                      <span className="font-medium text-indigo-200/80 leading-relaxed">{config.searchIntent}</span>
+                    </div>
+                  )}
+                  {config.recommendedItemCount && (
+                    <div className="flex flex-col gap-1">
+                      <span className="text-muted-foreground">추천 상품 개수</span>
+                      <span className="font-semibold text-indigo-100">{config.recommendedItemCount}개 세팅</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
             {/* 소싱 기준 */}
             <div className="flex flex-col gap-3 p-4 rounded-xl bg-slate-900/50 border border-border">
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-300">
