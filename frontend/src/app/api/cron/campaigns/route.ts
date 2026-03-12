@@ -1,0 +1,139 @@
+import { NextResponse } from 'next/server';
+import { prisma } from '@/infrastructure/clients/prisma';
+import { ChatOpenAI } from '@langchain/openai';
+
+export const dynamic = 'force-dynamic';
+export const maxDuration = 300; // 5 minutes Max for Vercel Cron
+
+const perplexityKey = process.env.PERPLEXITY_API_KEY || process.env.OPENAI_API_KEY || 'placeholder';
+const suggestModel = new ChatOpenAI({
+  apiKey: perplexityKey,
+  modelName: 'sonar-pro',
+  configuration: { baseURL: 'https://api.perplexity.ai' },
+  maxRetries: 1,
+  temperature: 0.8,
+});
+
+export async function GET(request: Request) {
+  try {
+    const authHeader = request.headers.get('authorization');
+    // Optional basic auth for cron, skip for local
+    // if (process.env.NODE_ENV === 'production' && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    //   return new NextResponse('Unauthorized', { status: 401 });
+    // }
+
+    const campaigns = await prisma.categoryCampaign.findMany();
+    let generatedCount = 0;
+    const results = [];
+
+    for (const campaign of campaigns) {
+      // 1. 현재 대기중인 큐 카운트 확인
+      const pendingCount = await prisma.autopilotQueue.count({
+        where: {
+          campaignId: campaign.id,
+          status: { in: ['WAITING_APPROVAL', 'PENDING', 'PROCESSING'] }
+        }
+      });
+
+      // 큐가 부족하면 (임계치 예: 3개 미만) 새로 batchSize만큼 생성
+      if (pendingCount <= 3) {
+        console.log(`[Cron] 캠페인 ${campaign.categoryName} 큐 보충 필요. (현재: ${pendingCount})`);
+        
+        const now = new Date();
+        const month = now.getMonth() + 1;
+        const countToGenerate = campaign.batchSize || 15;
+
+        const CHUNK_SIZE = 5;
+        const iterations = Math.ceil(countToGenerate / CHUNK_SIZE);
+        const allKeywords: Array<{ keyword: string, articleType: string }> = [];
+
+        for (let i = 0; i < iterations; i++) {
+          const currentChunkSize = (i === iterations - 1 && countToGenerate % CHUNK_SIZE !== 0)
+            ? countToGenerate % CHUNK_SIZE
+            : CHUNK_SIZE;
+          const prompt = buildSuggestPrompt(campaign.categoryName, month, currentChunkSize);
+          try {
+            const res = await suggestModel.invoke(prompt);
+            const rawText = res.content.toString();
+            const chunkKeywords = parseKeywords(rawText).slice(0, currentChunkSize);
+            allKeywords.push(...chunkKeywords);
+          } catch (aiError) {
+            console.error(`[Cron] 캠페인 ${campaign.categoryName} AI 생성 에러 (Chunk ${i}):`, aiError);
+          }
+        }
+
+        // 중복 제거 및 최종 개수 맞춤
+        const uniqueMap = new Map();
+        for (const k of allKeywords) {
+          if (!uniqueMap.has(k.keyword)) uniqueMap.set(k.keyword, k);
+        }
+        const finalKeywords = Array.from(uniqueMap.values()).slice(0, countToGenerate);
+
+        if (finalKeywords.length > 0) {
+          const createData = finalKeywords.map(k => ({
+            keyword: k.keyword,
+            status: campaign.isAutoApprove ? 'PENDING' : 'WAITING_APPROVAL',
+            campaignId: campaign.id,
+            personaId: campaign.personaId,
+            themeId: campaign.themeId,
+            articleType: k.articleType || 'single',
+            intervalHours: campaign.intervalHours,
+            activeTimeStart: campaign.activeTimeStart,
+            activeTimeEnd: campaign.activeTimeEnd,
+            // 기타 기본 설정
+            textModel: 'gpt-4o',
+            imageModel: 'dall-e-3',
+          }));
+
+          await prisma.autopilotQueue.createMany({
+            data: createData
+          });
+
+          generatedCount += createData.length;
+          results.push({ campaignId: campaign.id, category: campaign.categoryName, generated: createData.length });
+        }
+      }
+    }
+
+    return NextResponse.json({ success: true, processedCampaigns: campaigns.length, generatedCount, results });
+  } catch (error) {
+    console.error('[cron/campaigns] 에러:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+function buildSuggestPrompt(category: string, month: number, count: number): string {
+  return `당신은 대한민국 전문 SEO 마케터입니다.
+현재 ${month}월입니다. 시즌 특성과 트렌드를 반영하여 "${category}" 카테고리에 해당하는 수익성 높은 블로그용 상품 키워드를 정확히 ${count}개 추천해주세요.
+
+추천 기준:
+1. 검색 의도가 분명한 롱테일 키워드 (예: "다이슨 에어랩 비교", "20대 여성 선물 추천")
+2. 고단가/고수익 상품 위주
+3. 겹치지 않는 다양한 키워드 구성
+
+반드시 아래 JSON 형식으로만 응답하세요. 다른 설명은 출력하지 마세요:
+[
+  {
+    "keyword": "키워드",
+    "articleType": "single | compare | curation"
+  }
+]
+`;
+}
+
+function parseKeywords(rawText: string): Array<{ keyword: string, articleType: string }> {
+  try {
+    const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      return parsed.filter((i: any) => i && typeof i.keyword === 'string')
+        .map((i: any) => ({
+          keyword: i.keyword,
+          articleType: ['single', 'compare', 'curation'].includes(i.articleType) ? i.articleType : 'single'
+        }));
+    }
+  } catch (e) {
+    console.warn('[cron/campaigns] JSON 파싱 실패');
+  }
+  return [];
+}

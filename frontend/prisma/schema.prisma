@@ -47,6 +47,7 @@ model Persona {
   negativePrompt  String?
 
   autopilotQueues AutopilotQueue[]
+  categoryCampaigns CategoryCampaign[]
 
   createdAt       DateTime         @default(now()) @map("created_at")
   updatedAt       DateTime         @default(now()) @updatedAt @map("updated_at")
@@ -57,10 +58,13 @@ model Persona {
 model AutopilotQueue {
   id           String   @id @default(uuid())
   keyword      String
-  status       String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED, EXPIRED
+  status       String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED, EXPIRED, WAITING_APPROVAL
   resultUrl    String?
   errorMessage String?
   
+  campaignId   String?
+  campaign     CategoryCampaign? @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
   personaId    String?
   themeId      String? // Phase 7: 디자인 테마 ID
   persona      Persona?  @relation(fields: [personaId], references: [id])
@@ -99,4 +103,27 @@ model AutopilotQueue {
   updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@map("autopilot_queue")
+}
+
+model CategoryCampaign {
+  id             String   @id @default(uuid())
+  categoryName   String   // 카테고리 (예: 전자기기, 건강식품 등)
+  
+  personaId      String?
+  persona        Persona? @relation(fields: [personaId], references: [id])
+  themeId        String?  // 테마 연결
+  
+  intervalHours  Int      @default(24) // 발행 주기 (시간)
+  activeTimeStart Int?
+  activeTimeEnd   Int?
+  
+  batchSize      Int      @default(15) // 한 번에 생성할 키워드 수
+  isAutoApprove  Boolean  @default(false) @map("is_auto_approve") // 자동 승인 여부 (추후 확장)
+
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at")
+
+  queues         AutopilotQueue[]
+
+  @@map("category_campaign")
 }

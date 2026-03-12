@@ -31,6 +31,8 @@ type SchedulePendingCardProps = {
   onSetEditTime: (val: string) => void;
   onSaveEdit: (item: ScheduleItem) => void;
   onOpenAutopilotSettings: (rawItem: any) => void;
+  isSelected?: boolean;
+  onToggleSelect?: (id: string, checked: boolean) => void;
 };
 
 export const SchedulePendingCard = ({
@@ -46,6 +48,8 @@ export const SchedulePendingCard = ({
   onSetEditTime,
   onSaveEdit,
   onOpenAutopilotSettings,
+  isSelected = false,
+  onToggleSelect,
 }: SchedulePendingCardProps) => {
   const renderStatusBadge = (status: string) => {
     return (
@@ -70,17 +74,27 @@ export const SchedulePendingCard = ({
   };
 
   return (
-    <GlassCard className="p-4 border-border bg-card hover:bg-muted/50 transition-colors">
+    <GlassCard className={`p-4 border transition-colors ${isSelected ? 'border-blue-500/50 bg-blue-500/5' : 'border-border bg-card hover:bg-muted/50'}`}>
       <div className="flex flex-col gap-3">
         <div className="flex justify-between items-start">
-          <h4 className="font-semibold text-foreground line-clamp-1 flex-1 pr-4 flex items-center gap-2">
-            {item.isAutopilot && (
-              <span className="bg-blue-500/10 text-blue-400 text-[10px] px-1.5 py-0.5 rounded border border-blue-500/20 font-bold tracking-tight shrink-0">
-                Auto
-              </span>
+          <div className="flex items-center gap-3 flex-1 pr-4">
+            {onToggleSelect && (
+              <input
+                type="checkbox"
+                checked={isSelected}
+                onChange={(e) => onToggleSelect(item.id, e.target.checked)}
+                className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-blue-500 cursor-pointer focus:ring-0 focus:ring-offset-0"
+              />
             )}
-            {item.title}
-          </h4>
+            <h4 className="font-semibold text-foreground line-clamp-1 flex items-center gap-2">
+              {item.isAutopilot && (
+                <span className="bg-blue-500/10 text-blue-400 text-[10px] px-1.5 py-0.5 rounded border border-blue-500/20 font-bold tracking-tight shrink-0">
+                  Auto
+                </span>
+              )}
+              {item.title}
+            </h4>
+          </div>
           {renderStatusBadge(item.status)}
         </div>
         <div className="flex items-center justify-between text-sm">

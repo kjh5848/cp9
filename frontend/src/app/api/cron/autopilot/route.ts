@@ -55,7 +55,22 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: 'Items are pending but outside of allowed active hour window.', count: 0 });
     }
 
-    console.log(`🚀 [Autopilot] 큐 처리 시작: ${pendingItem.keyword} (ID: ${pendingItem.id})`);
+    const replaceDatePlaceholders = (text: string, d: Date = new Date()) => {
+      const year = d.getFullYear();
+      const month = d.getMonth() + 1;
+      const day = d.getDate();
+      return text
+        .replace(/\{YYYY\}/g, String(year))
+        .replace(/\{YY\}/g, String(year).slice(2))
+        .replace(/\{MM\}/g, String(month).padStart(2, '0'))
+        .replace(/\{M\}/g, String(month))
+        .replace(/\{DD\}/g, String(day).padStart(2, '0'))
+        .replace(/\{D\}/g, String(day));
+    };
+
+    const currentExecuteKeyword = replaceDatePlaceholders(pendingItem.keyword, now);
+
+    console.log(`🚀 [Autopilot] 큐 처리 시작: ${currentExecuteKeyword} (ID: ${pendingItem.id})`);
 
     // 3. 상태를 PROCESSING으로 변경하여 중복 실행 방지
     await prisma.autopilotQueue.update({
@@ -77,7 +92,7 @@ export async function GET(request: Request) {
     try {
       // 4.1 의도 기획 에이전트 (Intent Planner)
       const { runIntentPlanner } = await import('@/features/autopilot/lib/agent/intent-planner');
-      console.log(`🧠 [Autopilot] Intent Planner 시작 (키워드: ${pendingItem.keyword})`);
+      console.log(`🧠 [Autopilot] Intent Planner 시작 (키워드: ${currentExecuteKeyword})`);
       
       const pendingItemAny = pendingItem as any;
       
@@ -85,7 +100,7 @@ export async function GET(request: Request) {
         // 이미 Perplexity API를 통해 최적화된 기획 데이터가 있는 경우 (Bulk 모드)
         console.log(`⚡ [Autopilot] Perplexity 검색 인텐트 감지. Intent Planner 단계를 바이패스합니다.`);
         intentContent = {
-          title: pendingItem.keyword, // Bulk 모드에서는 keyword 필드에 blogTitle 이 저장됨
+          title: currentExecuteKeyword, // Bulk 모드에서는 keyword 필드에 blogTitle 이 저장됨
           searchIntent: pendingItemAny.searchIntent,
           recommendedArticleType: pendingItem.articleType || 'single',
           requiredItemCount: pendingItemAny.recommendedItemCount || 3,
@@ -93,7 +108,7 @@ export async function GET(request: Request) {
         };
       } else {
         intentContent = await runIntentPlanner({
-          keyword: pendingItem.keyword,
+          keyword: currentExecuteKeyword,
           articleType: pendingItem.articleType || 'single',
           personaName,
           personaPrompt
@@ -169,8 +184,8 @@ export async function GET(request: Request) {
         isFreeShipping: p.isFreeShipping || false
       })),
       keywordMode: {
-        keyword: pendingItem.keyword,
-        selectedTitle: intentContent?.title || pendingItem.keyword
+        keyword: currentExecuteKeyword,
+        selectedTitle: intentContent?.title || currentExecuteKeyword
       },
       seoConfig: {
         persona: personaId,
@@ -256,7 +271,7 @@ export async function GET(request: Request) {
         });
 
         if (isMaxRunsReached || isExpired) {
-          console.log(`🏁 [Autopilot] 큐 종결 (${isMaxRunsReached ? '횟수 제한' : '기간 만료'}): ${pendingItem.keyword}`);
+          console.log(`🏁 [Autopilot] 큐 종결 (${isMaxRunsReached ? '횟수 제한' : '기간 만료'}): ${currentExecuteKeyword}`);
         } else {
           // --- 다음 턴을 위해 동일 설정의 새 PENDING 레코드 생성 ---
           // 제목 재생성 로직 적용
@@ -343,8 +358,8 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ 
       success: true, 
-      message: `Started autopilot processing for keyword: ${pendingItem.keyword}`,
-      keyword: pendingItem.keyword,
+      message: `Started autopilot processing for keyword: ${currentExecuteKeyword}`,
+      keyword: currentExecuteKeyword,
       itemId
     });
 

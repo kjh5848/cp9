@@ -52,21 +52,46 @@ export async function POST(request: Request) {
     // 카테고리 한국어 변환
     const categoryKorean = category ? CATEGORY_NAME_MAP[category] : undefined
 
-    const prompt = buildSuggestPrompt({ category: categoryKorean, baseKeyword, seasonInfo, month, count: requestedCount, interests, excludeKeywords })
+    const CHUNK_SIZE = 5
+    const iterations = Math.ceil(requestedCount / CHUNK_SIZE)
+    const allKeywords: Array<{
+      keyword: string
+      category: string
+      estimatedVolume: string
+      articleType: string
+      reason: string
+    }> = []
 
-    // temperature를 0.8로 설정하여 매번 다양한 결과 생성
-    const res = await suggestModel.invoke(prompt)
-    const rawText = res.content.toString()
+    for (let i = 0; i < iterations; i++) {
+        const currentChunkSize = (i === iterations - 1 && requestedCount % CHUNK_SIZE !== 0)
+          ? requestedCount % CHUNK_SIZE
+          : CHUNK_SIZE
 
-    // JSON 파싱 + 개수 클램핑
-    let keywords = parseKeywords(rawText)
-    keywords = keywords.slice(0, requestedCount)
+        const prompt = buildSuggestPrompt({ category: categoryKorean, baseKeyword, seasonInfo, month, count: currentChunkSize, interests, excludeKeywords })
+        try {
+          // temperature를 0.8로 설정하여 매번 다양한 결과 생성
+          const res = await suggestModel.invoke(prompt)
+          const rawText = res.content.toString()
+          const chunkKeywords = parseKeywords(rawText).slice(0, currentChunkSize)
+          allKeywords.push(...chunkKeywords)
+        } catch (aiError) {
+          console.error(`[AI Research] Chunk ${i} Error:`, aiError)
+        }
+    }
+
+    // 중복 제거 및 최종 개수 맞춤
+    const uniqueMap = new Map()
+    for (const k of allKeywords) {
+      if (!uniqueMap.has(k.keyword)) uniqueMap.set(k.keyword, k)
+    }
+    const finalKeywords = Array.from(uniqueMap.values()).slice(0, requestedCount)
 
     return NextResponse.json({
-      keywords,
+      success: true,
+      data: finalKeywords,
       season: seasonInfo,
       requestedCount,
-      actualCount: keywords.length,
+      actualCount: finalKeywords.length,
     })
   } catch (error) {
     console.error('[keyword-suggest] 에러:', error)

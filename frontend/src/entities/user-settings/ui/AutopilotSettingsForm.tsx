@@ -30,7 +30,7 @@ export const AutopilotSettingsForm: React.FC<AutopilotSettingsFormProps> = ({
     minPrice: undefined,
     maxPrice: undefined,
     isRocketOnly: false,
-    intervalHours: 6,
+    intervalHours: 360,
     activeTimeStart: 9,
     activeTimeEnd: 22,
   });

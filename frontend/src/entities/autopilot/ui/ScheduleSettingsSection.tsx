@@ -6,6 +6,7 @@ import { Button } from '@/shared/ui/button';
 import { Settings2 } from 'lucide-react';
 import Link from 'next/link';
 import { useUserSettingsViewModel } from '@/features/user-settings/model/useUserSettingsViewModel';
+import { calcMinutesFromUnit, parseMinutesToUnitAndValue, IntervalUnit, INTERVAL_LABELS } from '@/shared/lib/interval';
 
 export interface ScheduleSettingsSectionProps {
   intervalHours: string;
@@ -39,8 +40,29 @@ export function ScheduleSettingsSection({
 
   const { autopilotSettings } = useUserSettingsViewModel();
 
-  const applySchedulePreset = (interval: string, start: string, end: string) => {
-    setIntervalHours(interval);
+  const [intervalVal, setIntervalVal] = React.useState<number>(0);
+  const [intervalUnit, setIntervalUnit] = React.useState<IntervalUnit>('hour');
+
+  React.useEffect(() => {
+    const minutes = parseInt(intervalHours || '0', 10);
+    const { value, unit } = parseMinutesToUnitAndValue(minutes);
+    setIntervalVal(value);
+    setIntervalUnit(unit);
+  }, [intervalHours]);
+
+  const handleIntervalChange = (newVal: number, newUnit: IntervalUnit) => {
+    setIntervalVal(newVal);
+    setIntervalUnit(newUnit);
+    if (newVal === 0) {
+      setIntervalHours('0');
+    } else {
+      const totalMinutes = calcMinutesFromUnit(newVal, newUnit);
+      setIntervalHours(String(totalMinutes));
+    }
+  };
+
+  const applySchedulePreset = (intervalMinutes: string, start: string, end: string) => {
+    setIntervalHours(intervalMinutes);
     setActiveTimeStart(start);
     setActiveTimeEnd(end);
   };
@@ -77,13 +99,13 @@ export function ScheduleSettingsSection({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <h3 className="text-sm font-semibold text-slate-300 tracking-tight shrink-0">발행 스케줄링</h3>
         <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={() => applySchedulePreset('24', '14', '22')} className="px-2 py-1 text-[11px] font-medium bg-slate-800/50 text-slate-300 rounded border border-slate-700/50 hover:bg-blue-500/20 hover:text-blue-300 transition-colors">
+          <button type="button" onClick={() => applySchedulePreset('1440', '14', '22')} className="px-2 py-1 text-[11px] font-medium bg-slate-800/50 text-slate-300 rounded border border-slate-700/50 hover:bg-blue-500/20 hover:text-blue-300 transition-colors">
             오후 (14~22시)
           </button>
-          <button type="button" onClick={() => applySchedulePreset('12', '22', '6')} className="px-2 py-1 text-[11px] font-medium bg-slate-800/50 text-slate-300 rounded border border-slate-700/50 hover:bg-purple-500/20 hover:text-purple-300 transition-colors">
+          <button type="button" onClick={() => applySchedulePreset('720', '22', '6')} className="px-2 py-1 text-[11px] font-medium bg-slate-800/50 text-slate-300 rounded border border-slate-700/50 hover:bg-purple-500/20 hover:text-purple-300 transition-colors">
             심야 (밤샘)
           </button>
-          <button type="button" onClick={() => applySchedulePreset('6', '-1', '-1')} className="px-2 py-1 text-[11px] font-medium bg-slate-800/50 text-slate-300 rounded border border-slate-700/50 hover:bg-emerald-500/20 hover:text-emerald-300 transition-colors">
+          <button type="button" onClick={() => applySchedulePreset('360', '-1', '-1')} className="px-2 py-1 text-[11px] font-medium bg-slate-800/50 text-slate-300 rounded border border-slate-700/50 hover:bg-emerald-500/20 hover:text-emerald-300 transition-colors">
             종일 (제한없음)
           </button>
         </div>
@@ -91,26 +113,53 @@ export function ScheduleSettingsSection({
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-slate-800/20 rounded-xl border border-slate-800/50">
         
+        <div className="space-y-2 md:col-span-2">
+          <Label className="text-slate-300 text-sm">첫 발행 예약 일시 (Start Date)</Label>
+          <Input 
+            type="datetime-local"
+            value={startDate ? new Date(new Date(startDate).getTime() - new Date(startDate).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''}
+            onChange={(e) => {
+              if (e.target.value) {
+                setStartDate(new Date(e.target.value).toISOString());
+              } else {
+                setStartDate("");
+              }
+            }}
+            className="bg-slate-950/50 border-slate-800/50 text-white h-10 [color-scheme:dark]"
+          />
+          {startDateError && <p className="text-xs text-red-400 mt-1">{startDateError}</p>}
+        </div>
 
         <div className="space-y-2 md:col-span-2">
           <Label className="text-slate-300 text-sm">발행 주기/빈도 (Interval)</Label>
-          <Select 
-            value={intervalHours || '0'} 
-            onValueChange={(val: string) => setIntervalHours(val)}
-          >
-            <SelectTrigger className="bg-slate-950/50 border-slate-800/50 text-white cursor-pointer h-11">
-              <SelectValue placeholder="지금 즉시 실행" />
-            </SelectTrigger>
-            <SelectContent className="bg-slate-900 border-white/10 text-white">
-              <SelectItem value="0">스케줄 없음 (즉시 1회성 발행)</SelectItem>
-              <SelectItem value="1">1시간마다 실행</SelectItem>
-              <SelectItem value="3">3시간마다 실행</SelectItem>
-              <SelectItem value="6">6시간마다 실행</SelectItem>
-              <SelectItem value="12">12시간마다 실행</SelectItem>
-              <SelectItem value="24">매일 1회 (24시간) 실행</SelectItem>
-              <SelectItem value="168">매주 1회 (168시간) 실행</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex gap-2">
+            <Input 
+              type="number"
+              min={0}
+              value={intervalVal}
+              onChange={(e) => handleIntervalChange(Number(e.target.value), intervalUnit)}
+              className="bg-slate-950/50 border-slate-800/50 text-white h-10 flex-1"
+              placeholder="0 (즉시 실행)"
+            />
+            <div className="w-32 shrink-0">
+              <Select 
+                value={intervalUnit} 
+                onValueChange={(val: string) => handleIntervalChange(intervalVal, val as IntervalUnit)}
+              >
+                <SelectTrigger className="bg-slate-950/50 border-slate-800/50 text-white cursor-pointer h-10">
+                  <SelectValue placeholder="단위" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-900 border-white/10 text-white">
+                  <SelectItem value="minute">분 마다</SelectItem>
+                  <SelectItem value="hour">시간 마다</SelectItem>
+                  <SelectItem value="day">일 마다</SelectItem>
+                  <SelectItem value="week">주 마다</SelectItem>
+                  <SelectItem value="month">개월 마다</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <p className="text-xs text-slate-500 mt-1">※ '0' 입력 시 단발성 즉시 발행으로 예약됩니다.</p>
         </div>
 
         <div className="space-y-2">

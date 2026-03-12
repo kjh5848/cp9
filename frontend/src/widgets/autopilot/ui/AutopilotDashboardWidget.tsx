@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { SharedArticleSettings } from '@/shared/ui/SharedArticleSettings';
 import { SingleKeywordWizard } from '@/features/autopilot/ui/SingleKeywordWizard';
 import { BulkKeywordWizard } from '@/features/autopilot/ui/BulkKeywordWizard';
+import { CategoryCampaignWizard } from '@/features/autopilot/ui/CategoryCampaignWizard';
+import { ApprovalInbox } from '@/features/autopilot/ui/ApprovalInbox';
 import { SourcingCriteriaSection } from '@/entities/autopilot/ui/SourcingCriteriaSection';
 import { ScheduleSettingsSection } from '@/entities/autopilot/ui/ScheduleSettingsSection';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/shared/ui/accordion';
@@ -174,6 +176,25 @@ export function AutopilotDashboardWidget() {
           >
             주제 기반 AI 리서치
           </button>
+          <button 
+            type="button"
+            onClick={() => vm.setInputMode('campaign')}
+            className={`flex-1 py-3 text-sm font-semibold tracking-tight transition-colors border-b-2 ${vm.inputMode === 'campaign' ? 'border-emerald-500 text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-300 text-center'}`}
+          >
+            카테고리 캠페인
+          </button>
+          <button 
+            type="button"
+            onClick={() => vm.setInputMode('inbox')}
+            className={`flex-1 py-3 text-sm font-semibold tracking-tight transition-colors border-b-2 ${vm.inputMode === 'inbox' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-300 text-center'}`}
+          >
+            승인 대기함
+            {vm.queue.filter(q => q.status === 'WAITING_APPROVAL').length > 0 && (
+              <span className="ml-2 inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold text-white bg-blue-500 rounded-full">
+                {vm.queue.filter(q => q.status === 'WAITING_APPROVAL').length}
+              </span>
+            )}
+          </button>
         </div>
 
         <div className="relative z-10 space-y-6">
@@ -208,7 +229,7 @@ export function AutopilotDashboardWidget() {
               configNode={configNodes}
               quickPresetNode={quickPresetNode}
             />
-          ) : (
+          ) : vm.inputMode === 'bulk' ? (
             <>
               <BulkKeywordWizard 
                 topic={vm.topic}
@@ -238,6 +259,21 @@ export function AutopilotDashboardWidget() {
                 {configNodes}
               </div>
             </>
+          ) : vm.inputMode === 'campaign' ? (
+            <CategoryCampaignWizard 
+              personaId={vm.personaId}
+              themeId={vm.themeId}
+              intervalHours={vm.intervalHours}
+              activeTimeStart={vm.activeTimeStart}
+              activeTimeEnd={vm.activeTimeEnd}
+              configNode={configNodes}
+              quickPresetNode={quickPresetNode}
+            />
+          ) : (
+            <ApprovalInbox 
+              queue={vm.queue}
+              onApproveSuccess={vm.fetchQueue}
+            />
           )}
         </div>
 

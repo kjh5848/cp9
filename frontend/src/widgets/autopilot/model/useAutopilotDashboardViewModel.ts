@@ -11,9 +11,10 @@ import { ThemeSwitcherTheme } from '@/entities/design/ui/ThemeSwitcher';
 export function useAutopilotDashboardViewModel() {
   const router = useRouter();
   const {
+    queue,
+    fetchQueue,
     isLoading: isQueueLoading,
     error: queueError,
-    fetchQueue,
     triggerCronManually,
     addBulkToQueue
   } = useAutopilotViewModel();
@@ -22,7 +23,7 @@ export function useAutopilotDashboardViewModel() {
   const { themeSettings, articleSettings, profile, autopilotSettings, refreshSettings } = useUserSettingsViewModel();
 
   // Mode state
-  const [inputMode, setInputMode] = useState<'single' | 'bulk'>('single');
+  const [inputMode, setInputMode] = useState<'single' | 'bulk' | 'campaign' | 'inbox'>('single');
   const [wizardStep, setWizardStep] = useState(1);
 
   // Single Keyword State
@@ -489,6 +490,7 @@ export function useAutopilotDashboardViewModel() {
     activeTimeEnd, setActiveTimeEnd,
     startDate, setStartDate,
     expiresAt, setExpiresAt,
-    handleRefreshSettings
+    handleRefreshSettings,
+    queue, fetchQueue
   };
 }

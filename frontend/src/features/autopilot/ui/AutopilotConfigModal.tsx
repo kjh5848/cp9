@@ -1,18 +1,50 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { GlassCard } from "@/shared/ui/GlassCard";
 import { Button } from "@/shared/ui/button";
-import { X, Settings, Clock, Tag, ShoppingCart, UserCircle, AlignLeft, Bot, Rocket, Database } from "lucide-react";
+import { X, Settings, Clock, Tag, ShoppingCart, UserCircle, AlignLeft, Bot, Rocket, Database, Trash2, CalendarHeart } from "lucide-react";
+import { toast } from "react-hot-toast";
+import { formatInterval } from "@/shared/lib/interval";
 
 interface AutopilotConfigModalProps {
   isOpen: boolean;
   onClose: () => void;
   config: any; // AutopilotQueue item
+  onDelete?: (id: string) => void;
+  onReschedule?: (id: string, newDate: string) => void;
 }
 
-export const AutopilotConfigModal: React.FC<AutopilotConfigModalProps> = ({ isOpen, onClose, config }) => {
+export const AutopilotConfigModal: React.FC<AutopilotConfigModalProps> = ({ isOpen, onClose, config, onDelete, onReschedule }) => {
+  const [editDate, setEditDate] = useState("");
+  const [editTime, setEditTime] = useState("");
+
+  useEffect(() => {
+    if (config?.nextRunAt || config?.createdAt) {
+      const d = new Date(config.nextRunAt || config.createdAt);
+      setEditDate(d.toISOString().split('T')[0]);
+      setEditTime(d.toTimeString().slice(0, 5));
+    }
+  }, [config]);
+
   if (!isOpen || !config) return null;
+
+  const isPending = config.status === 'PENDING';
+
+  const handleDelete = () => {
+    if (window.confirm("정말로 이 스케줄을 삭제하시겠습니까?")) {
+      onDelete?.(config.id);
+    }
+  };
+
+  const handleReschedule = () => {
+    if (!editDate || !editTime) {
+      toast.error('변경할 날짜와 시간을 지정해주세요.');
+      return;
+    }
+    const newScheduledAt = new Date(`${editDate}T${editTime}:00`).toISOString();
+    onReschedule?.(config.id, newScheduledAt);
+  };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
@@ -33,7 +65,11 @@ export const AutopilotConfigModal: React.FC<AutopilotConfigModalProps> = ({ isOp
           <div className="flex flex-col gap-2">
             <h3 className="text-xl font-bold text-foreground px-1">{config.keyword}</h3>
             <div className="flex flex-wrap gap-2 text-xs">
-              <span className="bg-blue-500/10 text-blue-400 px-2 py-1 rounded border border-blue-500/20 font-medium">대기중</span>
+              {isPending ? (
+                <span className="bg-blue-500/10 text-blue-400 px-2 py-1 rounded border border-blue-500/20 font-medium">대기중</span>
+              ) : (
+                <span className="bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded border border-emerald-500/20 font-medium">{config.status}</span>
+              )}
               {config.isAutopilot && <span className="bg-purple-500/10 text-purple-400 px-2 py-1 rounded border border-purple-500/20 font-medium">자동화 엔진</span>}
             </div>
           </div>
@@ -149,28 +185,61 @@ export const AutopilotConfigModal: React.FC<AutopilotConfigModalProps> = ({ isOp
             </div>
 
             {/* 스케줄러 정보 */}
-            <div className="col-span-2 flex items-center justify-between p-4 rounded-xl bg-slate-900/50 border border-border mt-2">
-              <div className="flex items-center gap-2 text-sm">
-                <Clock className="w-4 h-4 text-amber-500" />
-                <span className="text-muted-foreground">예정된 실행 시간</span>
+            <div className="col-span-2 flex flex-col gap-3 p-4 rounded-xl bg-slate-900/50 border border-border mt-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm">
+                  <Clock className="w-4 h-4 text-amber-500" />
+                  <span className="text-slate-300 font-semibold">발행 스케줄</span>
+                </div>
+                {!isPending && (
+                  <div className="text-sm font-semibold text-foreground bg-muted px-3 py-1 rounded-lg border border-border">
+                    {new Date(config.nextRunAt || config.createdAt).toLocaleString('ko-KR', {
+                      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                    })}
+                  </div>
+                )}
               </div>
-              <div className="text-sm font-semibold text-foreground bg-amber-500/10 text-amber-400 px-3 py-1 rounded-lg border border-amber-500/20">
-                {new Date(config.nextRunAt || config.createdAt).toLocaleString('ko-KR', {
-                  month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                })}
-              </div>
+              
+              {isPending && (
+                <div className="flex flex-col sm:flex-row items-center gap-3">
+                  <input
+                    type="date"
+                    value={editDate}
+                    onChange={(e) => setEditDate(e.target.value)}
+                    className="flex-1 w-full bg-slate-950 border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                  <input
+                    type="time"
+                    value={editTime}
+                    onChange={(e) => setEditTime(e.target.value)}
+                    className="flex-1 w-full bg-slate-950 border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                  <Button onClick={handleReschedule} size="sm" className="w-full sm:w-auto mt-2 sm:mt-0 whitespace-nowrap bg-blue-600 hover:bg-blue-700">
+                    <CalendarHeart className="w-4 h-4 mr-1.5" />시간 변경
+                  </Button>
+                </div>
+              )}
+
+              {config.intervalHours && config.intervalHours > 0 && (
+                <div className="flex items-center justify-between text-xs text-muted-foreground mt-2 pt-2 border-t border-border/50">
+                  <span>반복 주기</span>
+                  <span>{formatInterval(config.intervalHours)} 간격으로 처리</span>
+                </div>
+              )}
             </div>
-            {config.intervalHours && config.intervalHours > 0 && (
-              <div className="col-span-2 flex items-center justify-between px-4 pb-2 text-xs text-muted-foreground -mt-3">
-                <span>반복 주기</span>
-                <span>{config.intervalHours}시간 간격으로 처리</span>
-              </div>
-            )}
+            
           </div>
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-border bg-card/50 flex justify-end gap-2">
+        <div className="p-4 border-t border-border bg-card/50 flex justify-between items-center gap-2 rounded-b-xl">
+          <div>
+            {isPending && (
+              <Button variant="ghost" onClick={handleDelete} className="text-red-500 hover:text-red-400 hover:bg-red-500/10 h-9 px-3">
+                <Trash2 className="w-4 h-4 mr-2" /> 삭제하기
+              </Button>
+            )}
+          </div>
           <Button variant="outline" onClick={onClose} className="px-6 h-9">
             닫기
           </Button>

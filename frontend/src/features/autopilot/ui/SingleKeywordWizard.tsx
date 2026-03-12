@@ -73,25 +73,65 @@ export function SingleKeywordWizard({
   // 스케줄 미리보기 계산
   const calculateSchedulePreview = () => {
     const base = startDate ? new Date(startDate) : new Date();
-    const interval = parseInt(intervalHours || '24', 10);
-    const activeStart = parseInt(activeTimeStart || '9', 10);
-    const activeEnd = parseInt(activeTimeEnd || '22', 10);
+    const intervalMinutes = parseInt(intervalHours || '360', 10); // 분 단위
+    const activeStart = parseInt(activeTimeStart || '-1', 10);
+    const activeEnd = parseInt(activeTimeEnd || '-1', 10);
 
-    return cartTitles.map((item, i) => {
-      // interval은 시간 단위이므로 밀리초로 변환 시 i * interval * 60 * 60 * 1000
-      const runTime = new Date(base.getTime() + i * interval * 60 * 60 * 1000);
-      const hour = runTime.getHours();
-      if (activeEnd > activeStart) {
-        if (hour < activeStart) runTime.setHours(activeStart, 0, 0, 0);
-        else if (hour >= activeEnd) {
-          runTime.setDate(runTime.getDate() + 1);
-          runTime.setHours(activeStart, 0, 0, 0);
+    let currentTime = new Date(base.getTime());
+
+    // 현재 시간이 스케줄 시작으로 적합한지 판단, 아니면 앞당기기
+    const adjustToAllowedTime = (time: Date) => {
+      if (activeStart === -1 || activeEnd === -1) return;
+      const hour = time.getHours();
+
+      if (activeStart < activeEnd) {
+        // 주간 (예: 09:00 ~ 22:00)
+        if (hour < activeStart) {
+          time.setHours(activeStart, 0, 0, 0);
+        } else if (hour >= activeEnd) {
+          time.setDate(time.getDate() + 1);
+          time.setHours(activeStart, 0, 0, 0);
+        }
+      } else if (activeStart > activeEnd) {
+        // 야간/밤샘 (예: 22:00 ~ 06:00)
+        // 06:00 <= hour < 22:00 이라면 제외되는 시간임
+        if (hour >= activeEnd && hour < activeStart) {
+          time.setHours(activeStart, 0, 0, 0);
         }
       }
+    };
+
+    // 첫 시작 시간 교정
+    adjustToAllowedTime(currentTime);
+
+    // 템플릿 치환 로직 (예: {YYYY}, {MM}, {DD})
+    const replaceDatePlaceholders = (titleText: string, d: Date) => {
+      const year = d.getFullYear();
+      const month = d.getMonth() + 1;
+      const day = d.getDate();
+      return titleText
+        .replace(/\{YYYY\}/g, String(year))
+        .replace(/\{YY\}/g, String(year).slice(2))
+        .replace(/\{MM\}/g, String(month).padStart(2, '0'))
+        .replace(/\{M\}/g, String(month))
+        .replace(/\{DD\}/g, String(day).padStart(2, '0'))
+        .replace(/\{D\}/g, String(day));
+    };
+
+    return cartTitles.map((item, i) => {
+      if (i > 0) {
+        // 기존 시간에 단순히 Interval을 더함
+        currentTime = new Date(currentTime.getTime() + intervalMinutes * 60 * 1000);
+        // 더해진 결과가 금지시간대(주간/야간)라면 다시 교정
+        adjustToAllowedTime(currentTime);
+      }
+
+      const scheduledTime = new Date(currentTime.getTime());
+
       return {
         index: i,
-        title: item.title,
-        scheduledAt: runTime,
+        title: replaceDatePlaceholders(item.title, scheduledTime),
+        scheduledAt: scheduledTime,
       };
     });
   };

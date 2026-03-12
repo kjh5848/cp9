@@ -9,7 +9,7 @@ export interface AutopilotSettings {
 }
 
 export interface AutopilotDraftState {
-  inputMode: 'single' | 'bulk';
+  inputMode: 'single' | 'bulk' | 'campaign' | 'inbox';
   wizardStep: number;
   keyword: string;
   topic: string;

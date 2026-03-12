@@ -99,15 +99,21 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const body = await request.json();
-    const { id } = body;
+    const { id, ids } = body;
     
-    if (!id) {
-      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    if (!id && (!ids || ids.length === 0)) {
+      return NextResponse.json({ error: 'ID or IDs array is required' }, { status: 400 });
     }
 
-    await prisma.autopilotQueue.delete({
-      where: { id }
-    });
+    if (ids && Array.isArray(ids) && ids.length > 0) {
+      await prisma.autopilotQueue.deleteMany({
+        where: { id: { in: ids } }
+      });
+    } else {
+      await prisma.autopilotQueue.delete({
+        where: { id }
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

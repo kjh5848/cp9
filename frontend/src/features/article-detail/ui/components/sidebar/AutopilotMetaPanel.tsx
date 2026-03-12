@@ -2,6 +2,7 @@ import React from 'react';
 import { AccordionItem, AccordionTrigger, AccordionContent } from '@/shared/ui/accordion';
 import { GlassCard } from '@/shared/ui/GlassCard';
 import { Activity, Search } from 'lucide-react';
+import { formatInterval } from '@/shared/lib/interval';
 
 interface AutopilotMetaPanelProps {
   pack: any;
@@ -50,7 +51,7 @@ export function AutopilotMetaPanel({ pack }: AutopilotMetaPanelProps) {
             <div className="flex flex-col gap-1">
               <span className="text-muted-foreground">발행 주기</span>
               <span className="font-medium text-slate-300">
-                {pack.autopilotData.intervalHours ? `${pack.autopilotData.intervalHours}시간 마다` : '단발성'}
+                {formatInterval(pack.autopilotData.intervalHours)}
               </span>
             </div>
           </div>

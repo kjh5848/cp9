@@ -76,6 +76,59 @@ export function useAutopilotViewModel() {
     }
   };
 
+  const bulkDeleteFromQueue = async (ids: string[]) => {
+    if (!ids || ids.length === 0) return false;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/autopilot/queue', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ids }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchQueue(); // 큐 목록 리로드
+        return true;
+      } else {
+        throw new Error(data.error || 'Failed to bulk delete items from queue');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const rescheduleQueue = async (id: string, newDate: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/autopilot/queue', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id, nextRunAt: newDate }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchQueue(); // 큐 목록 리로드
+        return true;
+      } else {
+        throw new Error(data.error || 'Failed to reschedule item in queue');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const triggerCronManually = async () => {
     try {
       // 보안 헤더 미적용 로컬 테스트용 옵션 - 실제 운영에선 Secret 필요할 수 있음
@@ -149,6 +202,8 @@ export function useAutopilotViewModel() {
     fetchQueue,
     addToQueue,
     deleteFromQueue,
+    bulkDeleteFromQueue,
+    rescheduleQueue,
     triggerCronManually,
     researchKeywords,
     addBulkToQueue,

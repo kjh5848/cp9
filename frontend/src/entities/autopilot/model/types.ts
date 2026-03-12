@@ -1,7 +1,7 @@
 export interface AutopilotQueueItem {
   id: string;
   keyword: string;
-  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'EXPIRED';
+  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'EXPIRED' | 'WAITING_APPROVAL';
   resultUrl?: string | null;
   errorMessage?: string | null;
   personaId?: string | null;
