@@ -26,6 +26,7 @@ export interface AutopilotQueueItem {
   activeTimeStart?: number | null;
   activeTimeEnd?: number | null;
   nextRunAt?: string | null;
+  titleRegenRule?: string | null;
 
   // Phase 4: 반복 횟수 제한
   maxRuns?: number | null;
@@ -58,6 +59,7 @@ export interface CreateAutopilotQueuePayload {
   // Phase 4: 반복 횟수 제한
   maxRuns?: number;
   expiresAt?: string;
+  titleRegenRule?: string;
 }
 
 export interface AiResearchKeyword {
