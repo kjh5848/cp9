@@ -1,5 +1,3 @@
-'use client';
-
 import { ArticleDetail } from '@/widgets/article-detail/ui/ArticleDetail';
 
 /**

@@ -48,6 +48,7 @@ export async function POST(request: Request) {
         nextRunAt,
         maxRuns: payload.maxRuns ? parseInt(payload.maxRuns, 10) : null,
         expiresAt: payload.expiresAt ? new Date(payload.expiresAt) : null,
+        titleRegenRule: payload.titleRegenRule || 'reuse',
       };
     });
 

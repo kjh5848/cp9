@@ -41,6 +41,16 @@ export function useKeywordWritingViewModel() {
   const [textModel, setTextModel] = useState(DEFAULT_TEXT_MODEL);
   const [imageModel, setImageModel] = useState(DEFAULT_IMAGE_MODEL);
   const [charLimit, setCharLimit] = useState("5000");
+  const [titleModel, setTitleModel] = useState(DEFAULT_TEXT_MODEL);
+  const [titleExamples, setTitleExamples] = useState("");
+  const [titleExclusions, setTitleExclusions] = useState("");
+  const [themeId, setThemeId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (articleSettings?.defaultTitleModel) {
+      setTitleModel(prev => prev === DEFAULT_TEXT_MODEL ? articleSettings.defaultTitleModel! : prev);
+    }
+  }, [articleSettings?.defaultTitleModel]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationResult, setGenerationResult] = useState<GenerationResult | null>(null);
 
@@ -323,11 +333,17 @@ export function useKeywordWritingViewModel() {
     setIsLoadingTitles(true);
     setSelectedTitleIdx(null);
     try {
-      const textModel = articleSettings?.defaultTitleModel || 'gpt-4o-mini';
-      const result = await generateTitles({ keyword: keyword.trim(), persona, articleType, textModel });
+      const result = await generateTitles({ 
+        keyword: keyword.trim(), 
+        persona, 
+        articleType, 
+        textModel: titleModel,
+        titleExamples,
+        titleExclusions
+      });
       setTitles(result.titles);
     } catch {} finally { setIsLoadingTitles(false); }
-  }, [keyword, persona, articleType, articleSettings?.defaultTitleModel]);
+  }, [keyword, persona, articleType, titleModel, titleExamples, titleExclusions]);
 
   // ── 액션: 모드 B - 상품에서 키워드+제목 추출 ──
   const handleExtractFromProducts = useCallback(async () => {
@@ -361,7 +377,15 @@ export function useKeywordWritingViewModel() {
         itemName: finalTitle,
         projectId,
         itemId,
-        seoConfig: { persona, textModel, imageModel, charLimit: parseInt(charLimit), articleType, publishTarget: "DB_ONLY" },
+        seoConfig: { 
+          persona, 
+          textModel, 
+          imageModel, 
+          charLimit: parseInt(charLimit), 
+          articleType, 
+          publishTarget: "DB_ONLY",
+          ...(themeId && { themeId })
+        },
         keywordMode: { keyword: keyword.trim() || finalTitle, selectedTitle: finalTitle },
       };
       if (leadProduct) {
@@ -412,6 +436,10 @@ export function useKeywordWritingViewModel() {
       textModel,
       imageModel,
       charLimit,
+      titleModel,
+      titleExamples,
+      titleExclusions,
+      themeId,
       isGenerating,
       generationResult,
       coupangResults,
@@ -452,6 +480,10 @@ export function useKeywordWritingViewModel() {
       setTextModel,
       setImageModel,
       setCharLimit,
+      setTitleModel,
+      setTitleExamples,
+      setTitleExclusions,
+      setThemeId,
       setCoupangSearchTerm,
       setStepA,
       setCategory,

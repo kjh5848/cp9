@@ -1,5 +1,3 @@
-'use client';
-
 import { AuthCallback } from '@/widgets/auth-callback/ui/AuthCallback';
 
 /**

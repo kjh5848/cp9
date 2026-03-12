@@ -60,6 +60,8 @@ export async function generateTitles(params: {
   persona?: string;
   articleType?: string;
   textModel?: string;
+  titleExamples?: string;
+  titleExclusions?: string;
 }): Promise<{ titles: TitleCandidate[]; keyword: string }> {
   const response = await fetch('/api/keyword-titles', {
     method: 'POST',

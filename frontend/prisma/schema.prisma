@@ -84,9 +84,10 @@ model AutopilotQueue {
   nextRunAt       DateTime? @map("next_run_at") // 연산된 다음 실행 예정 시간
 
   // Phase 4: 반복 횟수 제한 및 종료일 설정
-  maxRuns      Int?      // 최대 발행 횟수 (null → 무제한)
-  currentRuns  Int       @default(0) // 현재까지 실행된 횟수
-  expiresAt    DateTime? @map("expires_at") // 발행 종료 일시
+  maxRuns        Int?      // 최대 발행 횟수 (null → 무제한)
+  currentRuns    Int       @default(0) // 현재까지 실행된 횟수
+  titleRegenRule String?   @default("reuse") // 재생성 규칙 (reuse | generate)
+  expiresAt      DateTime? @map("expires_at") // 발행 종료 일시
 
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")

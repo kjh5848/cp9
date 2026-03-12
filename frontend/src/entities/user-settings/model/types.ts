@@ -25,8 +25,22 @@ export interface DefaultThemeSettings {
   personaName?: string;
 }
 
+export interface DefaultAutopilotSettings {
+  // Sourcing Criteria
+  sortCriteria: string; // e.g. 'salePriceAsc'
+  minPrice?: number;
+  maxPrice?: number;
+  isRocketOnly: boolean;
+
+  // Publish Settings
+  intervalHours?: number; 
+  activeTimeStart?: number;
+  activeTimeEnd?: number;
+}
+
 export interface UserSettingsDTO {
   profile: UserProfile;
   articleSettings: DefaultArticleSettings;
   themeSettings: DefaultThemeSettings;
+  autopilotSettings: DefaultAutopilotSettings;
 }

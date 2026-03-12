@@ -5,11 +5,14 @@
  */
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
+import useSWR from "swr";
 import { Settings } from "lucide-react";
 import { GlassCard } from "@/shared/ui/GlassCard";
 import { usePersonaViewModel } from "@/features/persona/model/usePersonaViewModel";
+import { useUserSettingsViewModel } from "@/features/user-settings/model/useUserSettingsViewModel";
 import { SharedArticleSettings } from "@/shared/ui/SharedArticleSettings";
+import { ThemeSwitcherTheme } from "@/entities/design/ui/ThemeSwitcher";
 
 interface WritingSettingsFormProps {
   persona: string;
@@ -22,15 +25,44 @@ interface WritingSettingsFormProps {
   setImageModel: (v: string) => void;
   charLimit: string;
   setCharLimit: (v: string) => void;
+  themeId: string | null;
+  setThemeId: (v: string | null) => void;
   itemCount?: number;
 }
 
 export function WritingSettingsForm(props: WritingSettingsFormProps) {
   const { personas, fetchPersonas } = usePersonaViewModel();
+  const { themeSettings } = useUserSettingsViewModel();
+
+  const [themes, setThemes] = useState<ThemeSwitcherTheme[]>([]);
+
+  const fetchThemes = useCallback(async () => {
+    try {
+      const res = await fetch('/api/design');
+      const data = await res.json();
+      const list = data.themes || [];
+      setThemes(list);
+      
+      // 사용자 설정(themeSettings)에 themeId가 있으면 최우선으로 적용, 없으면 default 지정된 테마 사용
+      if (!props.themeId) {
+        if (themeSettings?.themeId && list.some((t: any) => t.id === themeSettings.themeId)) {
+          props.setThemeId(themeSettings.themeId);
+        } else {
+          const defaultTheme = list.find((t: any) => t.isDefault);
+          if (defaultTheme) {
+            props.setThemeId(defaultTheme.id);
+          } else if (list.length > 0) {
+            props.setThemeId(list[0].id);
+          }
+        }
+      }
+    } catch { /* 조용히 실패 */ }
+  }, [themeSettings?.themeId, props.themeId, props.setThemeId]);
 
   useEffect(() => {
     fetchPersonas();
-  }, [fetchPersonas]);
+    fetchThemes();
+  }, [fetchPersonas, fetchThemes]);
 
   return (
     <GlassCard className="p-6">
@@ -52,6 +84,9 @@ export function WritingSettingsForm(props: WritingSettingsFormProps) {
         imageModel={props.imageModel} setImageModel={props.setImageModel}
         charLimit={props.charLimit} setCharLimit={(v) => props.setCharLimit(String(v))}
         itemCount={props.itemCount}
+        themes={themes}
+        themeId={props.themeId}
+        setThemeId={props.setThemeId}
       />
     </GlassCard>
   );

@@ -242,7 +242,36 @@ export async function GET(request: Request) {
         if (isMaxRunsReached || isExpired) {
           console.log(`🏁 [Autopilot] 큐 종결 (${isMaxRunsReached ? '횟수 제한' : '기간 만료'}): ${pendingItem.keyword}`);
         } else {
-          // 다음 턴을 위해 동일 설정의 새 PENDING 레코드 생성
+          // --- 다음 턴을 위해 동일 설정의 새 PENDING 레코드 생성 ---
+          // 제목 재생성 로직 적용
+          let nextKeyword = pendingItem.keyword;
+          
+          if ((pendingItem as any).titleRegenRule === 'generate') {
+            try {
+              console.log(`[Autopilot] 제목 재생성 로직 진입: 기존 제목 '${pendingItem.keyword}'`);
+              const { createTextModel } = await import('../../item-research/pipeline/config');
+              const model = createTextModel('claude-sonnet-4-5');
+              
+              const systemPrompt = "당신은 SEO 블로그 제목 전문가입니다. 주어진 기존 블로그 제목과 의미적으로 연관성이 높으면서도, 문장 구조나 후킹 포인트(관점)가 전혀 다른 새로운 종류의 SEO 최적화 제목을 1개만 만들어주세요. 오직 새로 생성된 제목 텍스트 한 줄만 반환하고, 따옴표나 특수기호를 제목 맨 앞뒤에 붙이지 마세요. 이모지는 금지입니다.";
+              const userPrompt = `기존 제목: ${pendingItem.keyword}\n\n새로운 제목:`;
+              
+              const aiResponse = await model.invoke([
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: userPrompt }
+              ]);
+              
+              const generated = aiResponse.content.toString().trim().replace(/^["']|["']$/g, '');
+              if (generated) {
+                nextKeyword = generated;
+                console.log(`✅ [Autopilot] 제목 재생성 성공: ${nextKeyword}`);
+              } else {
+                console.warn(`⚠️ [Autopilot] 제목 재생성 실패 (빈 결과), 기존 제목 유지`);
+              }
+            } catch (e) {
+              console.error('❌ [Autopilot] 제목 재생성 오류, 기존 제목 유지:', e);
+            }
+          }
+
           const nextTime = getNextRunAtKST(
             pendingItem.intervalHours,
             pendingItem.activeTimeStart,
@@ -253,7 +282,7 @@ export async function GET(request: Request) {
 
           await (prisma.autopilotQueue as any).create({
             data: {
-              keyword: pendingItem.keyword,
+              keyword: nextKeyword,
               status: 'PENDING',
               personaId: pendingItem.personaId || null,
               themeId: (pendingItem as any).themeId || null,
@@ -272,6 +301,7 @@ export async function GET(request: Request) {
               maxRuns: pendingItem.maxRuns,
               currentRuns: newRunCount,
               expiresAt: pendingItem.expiresAt,
+              titleRegenRule: (pendingItem as any).titleRegenRule,
             },
           });
           console.log(`🔄 [Autopilot] 다음 실행 예약 (새 레코드): ${nextTime.toISOString()} (${newRunCount}/${pendingItem.maxRuns ?? '∞'}회)`);

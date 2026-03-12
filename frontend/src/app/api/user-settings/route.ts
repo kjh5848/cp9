@@ -14,7 +14,8 @@ export async function GET() {
     const dto: UserSettingsDTO = {
       profile: mockDb.profile,
       articleSettings: mockDb.articleSettings,
-      themeSettings: mockDb.themeSettings
+      themeSettings: mockDb.themeSettings,
+      autopilotSettings: mockDb.autopilotSettings
     };
 
     return NextResponse.json(dto);

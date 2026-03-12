@@ -7,7 +7,7 @@ import { Calendar as CalendarIcon, Clock, PenTool, CheckCircle2, Loader2, AlertC
 import { DraftDetailModal } from "@/features/research-analysis/ui/DraftDetailModal";
 import { useResearchViewModel } from "@/features/research-analysis/model/useResearchViewModel";
 import { BigCalendarView, type ScheduleEvent } from "./BigCalendarView";
-import { Input } from "@/shared/ui/input";
+import { ScheduleBoardView } from "./ScheduleBoardView";
 import { toast } from "react-hot-toast";
 import { cn } from "@/shared/lib/utils";
 
@@ -486,161 +486,33 @@ export const ScheduleManagement = () => {
 
       {/* 보드 뷰 */}
       {viewMode === 'board' && (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        
-        {/* 대기중 (예약) 목록 */}
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between pb-2 border-b border-border">
-            <h3 className="text-lg font-semibold flex items-center gap-2 text-foreground">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
-              발행 대기중
-            </h3>
-            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-              {displayScheduledItems.length}
-            </span>
-          </div>
-          
-          <div className="flex flex-col gap-4">
-            {displayScheduledItems.map(item => (
-              <GlassCard key={item.id} className="p-4 border-border bg-card hover:bg-muted/50 transition-colors">
-                <div className="flex flex-col gap-3">
-                  <div className="flex justify-between items-start">
-                    <h4 className="font-semibold text-foreground line-clamp-1 flex-1 pr-4 flex items-center gap-2">
-                      {item.isAutopilot && (
-                        <span className="bg-blue-500/10 text-blue-400 text-[10px] px-1.5 py-0.5 rounded border border-blue-500/20 font-bold tracking-tight shrink-0">
-                          Auto
-                        </span>
-                      )}
-                      {item.title}
-                    </h4>
-                    {renderStatusBadge(item.status)}
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    {renderPersonaBadge(item.persona)}
-                    <div className="flex items-center gap-1.5 bg-muted px-2.5 py-1 rounded-md text-xs font-medium text-muted-foreground">
-                      <Clock className="w-3.5 h-3.5 text-amber-500" />
-                      {new Date(item.date).toLocaleString('ko-KR', { 
-                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
-                      })}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2 mt-4 pt-3 border-t border-border">
-                  {cancelConfirmId === item.id ? (
-                    <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-red-500/10 border border-red-500/20">
-                      <span className="text-xs text-red-400">정말 취소하시겠습니까?</span>
-                      <div className="flex gap-1.5">
-                        <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 border-red-500/30 text-red-400 hover:bg-red-500/20"
-                          onClick={() => executeCancelSchedule(item)}>삭제</Button>
-                        <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 border-border text-muted-foreground hover:bg-muted"
-                          onClick={() => setCancelConfirmId(null)}>아니오</Button>
-                      </div>
-                    </div>
-                  ) : editingId === item.id ? (
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 flex items-center gap-2">
-                        <Input type="date" value={editDate} onChange={e => setEditDate(e.target.value)}
-                          className="h-7 text-xs bg-slate-900 border-slate-700 text-slate-200 [color-scheme:dark]" />
-                        <Input type="time" value={editTime} onChange={e => setEditTime(e.target.value)}
-                          className="h-7 text-xs bg-slate-900 border-slate-700 text-slate-200 w-24 [color-scheme:dark]" />
-                      </div>
-                      <Button size="sm" variant="outline" className="h-7 text-xs border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10"
-                        onClick={() => handleSaveEdit(item)}>저장</Button>
-                      <Button size="sm" variant="outline" className="h-7 text-xs border-border text-muted-foreground hover:bg-muted"
-                        onClick={() => setEditingId(null)}>닫기</Button>
-                    </div>
-                  ) : (
-                    <div className="flex justify-end gap-2">
-                      {item.isAutopilot && (
-                        <Button size="sm" variant="outline" className="h-7 text-xs border-blue-500/30 text-blue-500 hover:bg-blue-500/10 gap-1"
-                          onClick={() => setAutopilotModal({ isOpen: true, item: item.rawItem })}>
-                          <Settings className="w-3 h-3" />설정
-                        </Button>
-                      )}
-                      <Button size="sm" variant="outline" className="h-7 text-xs border-border text-muted-foreground hover:bg-muted gap-1"
-                        onClick={() => handleStartEdit(item.id, item.date)}>
-                        <Edit3 className="w-3 h-3" />수정
-                      </Button>
-                      <Button size="sm" variant="outline" className="h-7 text-xs border-destructive/20 text-destructive hover:bg-destructive/10 gap-1"
-                        onClick={() => setCancelConfirmId(item.id)}>
-                        <Trash2 className="w-3 h-3" />취소
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </GlassCard>
-            ))}
-            {scheduledItems.length === 0 && (
-              <div className="py-10 text-center text-muted-foreground bg-muted/30 rounded-xl border border-border">
-                예정된 스케줄이 없습니다.
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* 완료 목록 */}
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between pb-2 border-b border-border">
-            <h3 className="text-lg font-semibold flex items-center gap-2 text-foreground">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-              발행 완료
-            </h3>
-            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-              {displayCompletedItems.length}
-            </span>
-          </div>
-
-          <div className="flex flex-col gap-4">
-            {completedItems.map(item => (
-              <GlassCard key={item.id} className="p-4 border-emerald-500/20 bg-emerald-500/5">
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-start justify-between">
-                    <h4 className="font-semibold text-foreground opacity-90 line-clamp-1 flex-1 pr-4">{item.title}</h4>
-                    {renderStatusBadge(item.status)}
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    {renderPersonaBadge(item.persona)}
-                    <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                      {new Date(item.date).toLocaleString('ko-KR', { 
-                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
-                      })}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex justify-end mt-4 pt-3 border-t border-emerald-500/10">
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="h-7 text-xs border-blue-500/30 text-blue-500 hover:bg-blue-500/10"
-                    onClick={() => {
-                      // 유효한 resultUrl이 있으면 새 탭으로 열기, 없으면 본문 모달
-                      const url = (item as any).resultUrl;
-                      if (url && url !== 'undefined') {
-                        window.open(url, '_blank');
-                      } else {
-                        setPreviewItem({
-                          isOpen: true,
-                          title: item.title,
-                          markdown: item.content || '생성된 본문이 없습니다.'
-                        });
-                      }
-                    }}
-                  >
-                    <PenTool className="w-3 h-3 mr-1" />
-                    결과 보기
-                  </Button>
-                </div>
-              </GlassCard>
-            ))}
-            {completedItems.length === 0 && (
-              <div className="py-10 text-center text-muted-foreground bg-muted/30 rounded-xl border border-border">
-                발행 완료된 스케줄이 없습니다.
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+        <ScheduleBoardView
+          displayScheduledItems={displayScheduledItems as any}
+          displayCompletedItems={displayCompletedItems as any}
+          cancelConfirmId={cancelConfirmId}
+          editingId={editingId}
+          editDate={editDate}
+          editTime={editTime}
+          onSetCancelConfirmId={setCancelConfirmId}
+          onExecuteCancel={executeCancelSchedule}
+          onStartEdit={handleStartEdit}
+          onSetEditDate={setEditDate}
+          onSetEditTime={setEditTime}
+          onSaveEdit={handleSaveEdit}
+          onOpenAutopilotSettings={(item) => setAutopilotModal({ isOpen: true, item })}
+          onViewResult={(item) => {
+            const url = item.resultUrl;
+            if (url && url !== 'undefined') {
+              window.open(url, '_blank');
+            } else {
+              setPreviewItem({
+                isOpen: true,
+                title: item.title,
+                markdown: item.content || '생성된 본문이 없습니다.'
+              });
+            }
+          }}
+        />
       )}
       
       <DraftDetailModal

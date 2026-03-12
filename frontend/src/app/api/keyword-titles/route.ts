@@ -9,13 +9,15 @@ import { createTextModel } from '../item-research/pipeline/config'
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { keyword, persona, articleType, textModel: requestedModel, count: requestedCount, excludeTitles } = body as {
+    const { keyword, persona, articleType, textModel: requestedModel, count: requestedCount, excludeTitles, titleExamples, titleExclusions } = body as {
       keyword: string
       persona?: string
       articleType?: string
       textModel?: string
       count?: number
       excludeTitles?: string[]
+      titleExamples?: string
+      titleExclusions?: string
     }
 
     const count = Math.min(Math.max(requestedCount || 5, 1), 30) // 1~30개 제한
@@ -45,6 +47,8 @@ export async function POST(request: Request) {
 4. 30~50자 내외로 간결하게
 5. 메인 키워드를 제목 앞부분에 자연스럽게 배치
 6. 이모지/아이콘 절대 사용 금지
+7. [중요] 제목에 콜론(:) 기호 밎 "OO추천:" 같은 표현을 절대 사용하지 마세요. (예: "다이슨 청소기 추천: 한달 후기" -> "다이슨 청소기 한달 직접 써본 솔직 후기")
+8. [중요] AI가 작성한 것 같은 딱딱한 문어체를 피하고, 실제 사람이 쓴 듯한 자연스러운 구어체와 친근한 블로그 말투를 사용하세요.
 
 [글 유형별 특성]
 - single(딥다이브): 하나의 제품/주제를 깊이 파헤치는 전문 리뷰
@@ -71,6 +75,8 @@ export async function POST(request: Request) {
 [글 유형]: ${articleType || '자유 (가장 적합한 유형으로 추천)'}
 [페르소나]: ${persona || '범용'}
 ${excludeText}
+${titleExamples?.trim() ? `[참고할 제목 스타일 예제 (Positive)]:\n${titleExamples}\n위 예제의 톤앤매너와 스타일을 참고하여 이와 비슷한 느낌으로 작성하세요.\n` : ''}
+${titleExclusions?.trim() ? `[절대 사용 금지 포맷/단어 (Negative)]:\n${titleExclusions}\n위 포맷이나 단어는 어떠한 경우에도 제목에 포함하지 마세요.\n` : ''}
 위 키워드로 SEO에 최적화된 블로그 제목 후보를 정확히 ${count}개 생성하세요.
 각 제목은 서로 다른 앵글(관점/접근법)을 가져야 합니다.
 `

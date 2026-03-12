@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 import { DesignTheme } from '@/widgets/design-theme/ui/DesignTheme';
 

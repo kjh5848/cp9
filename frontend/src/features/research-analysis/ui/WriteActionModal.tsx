@@ -21,6 +21,13 @@ import { usePersonaViewModel } from "@/features/persona/model/usePersonaViewMode
 import { SharedArticleSettings } from "@/shared/ui/SharedArticleSettings";
 import { SelectedProductList } from "@/shared/ui/SelectedProductList";
 import { useUserSettingsViewModel } from "@/features/user-settings/model/useUserSettingsViewModel";
+import { TitleSettingsStep } from "./steps/TitleSettingsStep";
+import { PublishActionStep } from "./steps/PublishActionStep";
+import { 
+  ArticleTypeSelectionStep, 
+  ArticleTypeOptionWithStatus, 
+  getCurationCharLimit 
+} from "./steps/ArticleTypeSelectionStep";
 
 /* ──────────────────────────── 타입 정의 ──────────────────────────── */
 
@@ -67,27 +74,7 @@ const CHAR_LIMIT_PRESETS = [
   { value: "custom", label: "직접 입력", desc: "원하는 글자수" },
 ];
 
-/** 큐레이션 아이템 수별 권장 글자수 가이드 */
-const CURATION_GUIDE = [
-  { min: 3, max: 10, perItem: 300, desc: "상세 소개", label: "TOP 10 추천 — SEO 최적 포맷" },
-  { min: 11, max: 20, perItem: 200, desc: "핵심 요약", label: "TOP 20 리스트 — 표준 큐레이션" },
-  { min: 21, max: 30, perItem: 150, desc: "간략 소개", label: "대량 추천 — 빠른 탐색용" },
-  { min: 31, max: 40, perItem: 120, desc: "한줄 소개", label: "카탈로그형 — 가격/특징 중심" },
-  { min: 41, max: 50, perItem: 100, desc: "초간략", label: "대형 리스트 — 이름+가격+한줄평" },
-];
-
-/** 아이템 수에 따라 큐레이션 추천 글자수 산정 */
-function getCurationCharLimit(count: number): number {
-  const guide = CURATION_GUIDE.find((g) => count >= g.min && count <= g.max);
-  if (!guide) return 5000;
-  // 도입+결론 약 1000자 + (아이템당 권장 글자수 × 개수)
-  return 1000 + guide.perItem * count;
-}
-
-/** 현재 아이템 수에 해당하는 큐레이션 가이드 */
-function getCurationGuideForCount(count: number) {
-  return CURATION_GUIDE.find((g) => count >= g.min && count <= g.max) ?? CURATION_GUIDE[0];
-}
+// Curation guides are imported from steps/ArticleTypeSelectionStep.tsx
 
 /* ──────────────────────────── 글 유형 정의 ──────────────────────────── */
 
@@ -171,6 +158,9 @@ export const WriteActionModal = ({
   const [personaName, setPersonaName] = useState(themeSettings?.personaName || profile?.name || "마스터 큐레이터 H");
   const [selectedTextModel, setSelectedTextModel] = useState(articleSettings?.defaultTextModel || DEFAULT_TEXT_MODEL);
   const [selectedImageModel, setSelectedImageModel] = useState(articleSettings?.defaultImageModel || DEFAULT_IMAGE_MODEL);
+  const [titleModel, setTitleModel] = useState(articleSettings?.defaultTitleModel || DEFAULT_TEXT_MODEL);
+  const [titleExamples, setTitleExamples] = useState("");
+  const [titleExclusions, setTitleExclusions] = useState("");
   const [charLimit, setCharLimit] = useState(articleSettings?.presetWordCount || 2000);
   const [charLimitMode, setCharLimitMode] = useState(articleSettings?.presetWordCount ? "custom" : "2000");
 
@@ -185,9 +175,10 @@ export const WriteActionModal = ({
       }
       if (articleSettings?.defaultTextModel) setSelectedTextModel(articleSettings.defaultTextModel);
       if (articleSettings?.defaultImageModel) setSelectedImageModel(articleSettings.defaultImageModel);
+      if (articleSettings?.defaultTitleModel) setTitleModel(articleSettings.defaultTitleModel);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, profile?.name, themeSettings?.personaId, themeSettings?.personaName, articleSettings?.defaultTextModel, articleSettings?.defaultImageModel]);
+  }, [isOpen, profile?.name, themeSettings?.personaId, themeSettings?.personaName, articleSettings?.defaultTextModel, articleSettings?.defaultImageModel, articleSettings?.defaultTitleModel]);
 
   useEffect(() => {
     if (displayPersonas.length > 0 && !displayPersonas.find(p => p.id === selectedPersona)) {
@@ -256,7 +247,10 @@ export const WriteActionModal = ({
           articleType,
           items: itemsForPrompt,
           persona: currentPersona,
-          textModel: currentTextModel
+          textModel: currentTextModel,
+          titleModel,
+          titleExamples,
+          titleExclusions
         })
       });
 
@@ -280,7 +274,7 @@ export const WriteActionModal = ({
   const [scheduleTime, setScheduleTime] = useState("");
 
   // ── 유형별 활성/비활성 판단 ──
-  const articleTypeAvailability = useMemo(() => {
+  const articleTypeAvailability = useMemo<ArticleTypeOptionWithStatus[]>(() => {
     return ARTICLE_TYPES.map((t) => ({
       ...t,
       enabled: itemCount >= t.minItems && itemCount <= t.maxItems,
@@ -430,72 +424,12 @@ export const WriteActionModal = ({
         <div className="py-2 space-y-5 min-h-[280px]">
           {/* ════════ Step 1: 글 유형 선택 ════════ */}
           {step === 0 && (
-            <div className="space-y-4">
-              <h4 className="text-sm font-semibold text-slate-300">글 유형 선택</h4>
-              <div className="grid grid-cols-1 gap-3">
-                {articleTypeAvailability.map((type) => (
-                  <div
-                    key={type.id}
-                    onClick={() => type.enabled && setArticleType(type.id)}
-                    className={cn(
-                      "p-4 rounded-xl border cursor-pointer transition-all duration-200 flex items-start gap-3",
-                      !type.enabled && "opacity-70 cursor-not-allowed",
-                      type.enabled && articleType === type.id
-                        ? "bg-blue-600/20 border-blue-500 text-blue-100"
-                        : type.enabled
-                          ? "bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-500"
-                          : "bg-slate-900/50 border-slate-800 text-slate-500",
-                    )}
-                  >
-                    <div className="mt-0.5">{type.icon}</div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold">{type.label}</span>
-                        <span className="text-xs text-slate-500">
-                          {type.minItems}~{type.maxItems}개
-                        </span>
-                      </div>
-                      <span className="text-sm opacity-80">{type.desc}</span>
-                      {!type.enabled && type.reason && (
-                        <span className="block text-xs font-semibold text-red-400 mt-1.5">{type.reason}</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* 큐레이션 가이드 */}
-              {articleType === "curation" && (
-                <div className="mt-3 p-3 rounded-lg bg-purple-500/10 border border-purple-500/30">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Info className="w-4 h-4 text-purple-400" />
-                    <span className="text-xs font-semibold text-purple-300">큐레이션 글자수 가이드</span>
-                  </div>
-                  <div className="space-y-1">
-                    {CURATION_GUIDE.map((guide) => {
-                      const isCurrent = itemCount >= guide.min && itemCount <= guide.max;
-                      return (
-                        <div
-                          key={guide.min}
-                          className={cn(
-                            "flex items-center justify-between text-[11px] px-2 py-1 rounded",
-                            isCurrent ? "bg-purple-500/20 text-purple-200 font-semibold" : "text-slate-500",
-                          )}
-                        >
-                          <span>{guide.min}~{guide.max}개</span>
-                          <span>~{guide.perItem}자/아이템 ({guide.desc})</span>
-                          <span>{guide.label.split("—")[0].trim()}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <p className="text-[10px] text-purple-400/80 mt-2">
-                    현재 {itemCount}개 선택 → 아이템당 ~{getCurationGuideForCount(itemCount).perItem}자,
-                    총 ~{getCurationCharLimit(itemCount).toLocaleString()}자 예상
-                  </p>
-                </div>
-              )}
-            </div>
+            <ArticleTypeSelectionStep
+              articleType={articleType}
+              setArticleType={(v) => setArticleType(v as ArticleType)}
+              articleTypeAvailability={articleTypeAvailability}
+              itemCount={itemCount}
+            />
           )}
 
           {/* ════════ Step 2: 발행 예시 미리보기 ════════ */}
@@ -548,6 +482,8 @@ export const WriteActionModal = ({
                 charLimit={charLimit} setCharLimit={(v) => setCharLimit(Number(v))}
                 charLimitMode={charLimitMode} setCharLimitMode={setCharLimitMode}
                 itemCount={itemCount}
+                themeId={themeId} setThemeId={setThemeId}
+                hideTheme={true}
               />
 
               {/* 아티클 디자인 테마 */}
@@ -587,198 +523,36 @@ export const WriteActionModal = ({
 
           {/* ════════ Step 4: 제목 설정 ════════ */}
           {step === 3 && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-semibold text-slate-300">포스팅 제목 설정</h4>
-                <div className="text-[10px] text-slate-500">
-                  작성자: <span className="font-semibold text-blue-400">{personaName || profile?.name || "마스터 큐레이터 H"}</span>
-                </div>
-              </div>
-
-              {articleType === 'single' ? (
-                <div className="space-y-4">
-                  {selectedItems.map((item) => {
-                    const key = item.productId.toString();
-                    const suggestions = suggestedTitles[key] || [];
-                    const isLoading = isGeneratingTitle[key];
-                    
-                    return (
-                      <div key={key} className="p-3 bg-slate-800/50 rounded-lg border border-slate-700/50 space-y-3">
-                        <div className="flex items-center gap-2">
-                          <Package className="w-4 h-4 text-emerald-400" />
-                          <span className="text-xs font-medium text-slate-300 truncate flex-1">{item.productName}</span>
-                        </div>
-                        
-                        <div>
-                          <input
-                            type="text"
-                            value={customTitles[key] || ''}
-                            onChange={(e) => setCustomTitles(prev => ({ ...prev, [key]: e.target.value }))}
-                            className="w-full bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-md px-3 py-2 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50"
-                            placeholder="포스팅 제목을 입력하세요"
-                          />
-                        </div>
-
-                        <div className="flex items-start gap-2">
-                          <Button
-                            onClick={() => handleSuggestTitle(key, [item])}
-                            disabled={isLoading}
-                            variant="secondary"
-                            size="sm"
-                            className="text-xs shrink-0 py-1.5 h-auto bg-slate-700/50 hover:bg-emerald-600/20 hover:text-emerald-400 border border-transparent hover:border-emerald-500/30"
-                          >
-                            {isLoading ? (
-                              <><Loader2 className="w-3 h-3 mr-1.5 animate-spin" /> 생성 중...</>
-                            ) : (
-                              <>✨ AI 추천받기</>
-                            )}
-                          </Button>
-                          
-                          {suggestions.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5 flex-1">
-                              {suggestions.map((title, idx) => (
-                                <button
-                                  key={idx}
-                                  onClick={() => setCustomTitles(prev => ({ ...prev, [key]: title }))}
-                                  className="text-[11px] text-left px-2.5 py-1.5 rounded bg-slate-900 border border-slate-700 hover:border-emerald-500/50 hover:text-emerald-300 transition-colors text-slate-400"
-                                >
-                                  {title}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700/50 space-y-4">
-                  <div className="flex items-center gap-2">
-                    {articleType === 'compare' ? <GitCompare className="w-4 h-4 text-purple-400" /> : <LayoutList className="w-4 h-4 text-orange-400" />}
-                    <span className="text-xs font-medium text-slate-300">
-                      {articleType === 'compare' ? '비교 분석 그룹' : '큐레이션 리스트'} ({itemCount}개 상품)
-                    </span>
-                  </div>
-                  
-                  <div>
-                    <input
-                      type="text"
-                      value={customTitles['main'] || ''}
-                      onChange={(e) => setCustomTitles(prev => ({ ...prev, ['main']: e.target.value }))}
-                      className="w-full bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-md px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
-                      placeholder="포스팅 제목을 입력하세요"
-                    />
-                  </div>
-
-                  <div className="space-y-3">
-                    <Button
-                      onClick={() => handleSuggestTitle('main', selectedItems)}
-                      disabled={isGeneratingTitle['main']}
-                      variant="secondary"
-                      size="sm"
-                      className="w-full text-xs py-2 h-auto bg-slate-700/50 hover:bg-blue-600/20 hover:text-blue-400 border border-transparent hover:border-blue-500/30"
-                    >
-                      {isGeneratingTitle['main'] ? (
-                        <><Loader2 className="w-3 h-3 mr-1.5 animate-spin" /> AI가 매력적인 제목을 고민 중입니다...</>
-                      ) : (
-                        <>✨ 현재 설정(작성자, 모델) 기반 AI 제목 생생 추천받기</>
-                      )}
-                    </Button>
-                    
-                    {suggestedTitles['main']?.length > 0 && (
-                      <div className="grid grid-cols-1 gap-2 mt-2">
-                        {suggestedTitles['main'].map((title, idx) => (
-                          <button
-                            key={idx}
-                            onClick={() => setCustomTitles(prev => ({ ...prev, ['main']: title }))}
-                            className="text-xs text-left px-3 py-2.5 rounded-md bg-slate-900 border border-slate-700 hover:border-blue-500 hover:bg-blue-500/5 hover:text-blue-300 transition-all font-medium text-slate-300"
-                          >
-                            {title}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
+            <TitleSettingsStep
+              articleType={articleType}
+              selectedItems={selectedItems}
+              itemCount={itemCount}
+              personaName={personaName || profile?.name || "마스터 큐레이터 H"}
+              customTitles={customTitles}
+              setCustomTitles={setCustomTitles}
+              suggestedTitles={suggestedTitles}
+              isGeneratingTitle={isGeneratingTitle}
+              handleSuggestTitle={handleSuggestTitle}
+              titleModel={titleModel}
+              setTitleModel={setTitleModel}
+              titleExamples={titleExamples}
+              setTitleExamples={setTitleExamples}
+              titleExclusions={titleExclusions}
+              setTitleExclusions={setTitleExclusions}
+            />
           )}
 
           {/* ════════ Step 5: 발행 방식 & 주기 ════════ */}
           {step === 4 && (
-            <div className="space-y-5">
-              <h4 className="text-sm font-semibold text-slate-300">발행 방식</h4>
-              {/* 즉시/예약 탭 */}
-              <div className="flex bg-slate-800 rounded-lg p-1 gap-1">
-                <button
-                  onClick={() => setActionType("NOW")}
-                  className={cn(
-                    "flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-md transition-colors",
-                    actionType === "NOW" ? "bg-slate-700 text-white shadow-sm" : "text-slate-400 hover:text-slate-200",
-                  )}
-                >
-                  <PenTool className="w-4 h-4" />
-                  즉시 작성
-                </button>
-                <button
-                  onClick={() => setActionType("SCHEDULE")}
-                  className={cn(
-                    "flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-md transition-colors",
-                    actionType === "SCHEDULE" ? "bg-slate-700 text-white shadow-sm" : "text-slate-400 hover:text-slate-200",
-                  )}
-                >
-                  <CalendarPlus className="w-4 h-4" />
-                  스케줄 예약
-                </button>
-              </div>
-
-              {/* 예약 일시 설정 */}
-              {actionType === "SCHEDULE" && (
-                <div className="space-y-4 pt-2 border-t border-slate-800 animate-in fade-in slide-in-from-top-2">
-                  <h4 className="text-sm font-semibold text-slate-300">발행 예정 일시</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <label className="text-xs text-slate-500">날짜</label>
-                      <div className="relative">
-                        <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
-                        <Input
-                          type="date"
-                          value={scheduleDate}
-                          onChange={(e) => setScheduleDate(e.target.value)}
-                          className="pl-9 bg-slate-900 border-slate-700 text-slate-200 [color-scheme:dark]"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-xs text-slate-500">시간</label>
-                      <div className="relative">
-                        <Clock className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
-                        <Input
-                          type="time"
-                          value={scheduleTime}
-                          onChange={(e) => setScheduleTime(e.target.value)}
-                          className="pl-9 bg-slate-900 border-slate-700 text-slate-200 [color-scheme:dark]"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* 즉시 발행 시 요약 */}
-              {actionType === "NOW" && (
-                <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
-                  <p className="text-sm text-emerald-200">
-                    {publishPreview.totalArticles}편의 글을 즉시 생성합니다.
-                    {publishPreview.totalArticles > 1 && " 모든 글이 동시에 병렬 처리됩니다."}
-                  </p>
-                  <p className="text-[10px] text-emerald-400 mt-1">
-                    예상 소요: ~{publishPreview.estimatedMinutes}분 | 예상 비용: ~${publishPreview.estimatedCost}
-                  </p>
-                </div>
-              )}
-            </div>
+            <PublishActionStep
+              actionType={actionType}
+              setActionType={setActionType}
+              scheduleDate={scheduleDate}
+              setScheduleDate={setScheduleDate}
+              scheduleTime={scheduleTime}
+              setScheduleTime={setScheduleTime}
+              publishPreview={publishPreview}
+            />
           )}
         </div>
 

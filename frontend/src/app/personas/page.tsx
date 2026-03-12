@@ -17,9 +17,7 @@ export default function PersonasPage() {
           <p className="text-slate-400 font-jakarta">오토파일럿 봇이나 수동 글 작성 시 적용될 나만의 AI 자아(페르소나)를 커스텀하고 관리하세요.</p>
         </header>
 
-        <React.Suspense fallback={<div className="text-center py-20 text-slate-400">Loading Persona Bank...</div>}>
-          <PersonaManager />
-        </React.Suspense>
+        <PersonaManager />
       </div>
     </div>
   );

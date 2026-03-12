@@ -33,6 +33,6 @@ export const SelectContent = ({ children, className }: { children?: React.ReactN
   return <>{children}</>;
 };
 
-export const SelectItem = ({ value, children }: { value: string, children?: React.ReactNode }) => {
-  return <option value={value} className="bg-slate-900 text-white">{children}</option>;
+export const SelectItem = ({ value, children, className }: { value: string, children?: React.ReactNode, className?: string }) => {
+  return <option value={value} className={`bg-slate-900 text-white ${className || ''}`}>{children}</option>;
 };

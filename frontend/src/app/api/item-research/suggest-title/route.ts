@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { articleType, items, persona, textModel } = body;
+    const { articleType, items, persona, textModel, titleModel, titleExamples, titleExclusions } = body;
 
     if (!items || items.length === 0) {
       return NextResponse.json({ error: '상품 목록이 비어있습니다.' }, { status: 400 });
@@ -78,15 +78,24 @@ ${itemsList}
       `.trim();
     }
 
+    if (titleExamples?.trim()) {
+      userPrompt += `\n\n[참고할 제목 스타일 예제 (Positive)]:\n${titleExamples}\n위 예제의 톤앤매너와 스타일을 참고하여 이와 비슷한 느낌으로 작성하세요.`;
+    }
+    if (titleExclusions?.trim()) {
+      userPrompt += `\n\n[절대 사용 금지 포맷/단어 (Negative)]:\n${titleExclusions}\n위 포맷이나 단어는 어떠한 경우에도 제목에 포함하지 마세요.`;
+    }
+
+    const targetModel = titleModel || textModel || 'gpt-4o';
+
     const generation = trace?.generation({
       name: 'generate-suggested-titles',
-      model: textModel || 'gpt-4o',
+      model: targetModel,
       input: { items: itemsList, articleType },
     });
 
-    console.log(`💡 [Suggest-Title] ${textModel || 'gpt-4o'}를 사용하여 제목 추천 생성 중... (${articleType})`);
+    console.log(`💡 [Suggest-Title] ${targetModel}를 사용하여 제목 추천 생성 중... (${articleType})`);
 
-    const modelInstance = createTextModel(textModel || 'gpt-4o');
+    const modelInstance = createTextModel(targetModel);
     const aiResponse = await modelInstance.invoke([
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt }
