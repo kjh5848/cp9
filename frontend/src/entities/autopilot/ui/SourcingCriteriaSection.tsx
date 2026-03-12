@@ -80,8 +80,8 @@ export function SourcingCriteriaSection({
         <button type="button" onClick={() => applySourcingPreset('salePriceAsc', true, '', '50000')} className="px-2 py-1 text-[11px] font-medium bg-slate-800/50 text-slate-300 rounded border border-slate-700/50 hover:bg-blue-500/20 hover:text-blue-300 transition-colors">
           인기 로켓 가성비 (5만↓)
         </button>
-        <button type="button" onClick={() => applySourcingPreset('RANK', true, '50000', '')} className="px-2 py-1 text-[11px] font-medium bg-slate-800/50 text-slate-300 rounded border border-slate-700/50 hover:bg-emerald-500/20 hover:text-emerald-300 transition-colors">
-          인기 로켓 프리미엄 (5만↑)
+        <button type="button" onClick={() => applySourcingPreset('salePriceDesc', true, '50000', '')} className="px-2 py-1 text-[11px] font-medium bg-slate-800/50 text-slate-300 rounded border border-slate-700/50 hover:bg-emerald-500/20 hover:text-emerald-300 transition-colors">
+          프리미엄 로켓 (5만↑)
         </button>
       </div>
       
@@ -98,8 +98,8 @@ export function SourcingCriteriaSection({
             <SelectContent className="bg-slate-900 border-white/10 text-white">
               <SelectItem value="salePriceAsc">낮은 가격순</SelectItem>
               <SelectItem value="salePriceDesc">높은 가격순</SelectItem>
-              <SelectItem value="RANK">판매량순 (랭킹순)</SelectItem>
-              <SelectItem value="latestAsc">최신순</SelectItem>
+              <SelectItem value="RANK" disabled>판매량 랭킹순 (준비중)</SelectItem>
+              <SelectItem value="latestAsc" disabled>최신순 (준비중)</SelectItem>
             </SelectContent>
           </Select>
         </div>
