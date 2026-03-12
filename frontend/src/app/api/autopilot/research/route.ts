@@ -24,15 +24,18 @@ export async function POST(req: Request) {
     // Create dynamic current year variable for prompts
     const currentYear = new Date().getFullYear();
 
+    // 중복 제거(Deduplication)로 인해 결과가 줄어들 수 있으므로 넉넉하게(20% + 최소 3개 추가) 요청합니다.
+    const targetCount = count + Math.max(2, Math.ceil(count * 0.2));
+
     // Perplexity API limitation: Better quality with ~5 items per request.
     const CHUNK_SIZE = 5;
-    const numRequests = Math.ceil(count / CHUNK_SIZE);
+    const numRequests = Math.ceil(targetCount / CHUNK_SIZE);
     
     // Create parallel promises
     const promises = Array.from({ length: numRequests }).map(async (_, idx) => {
       // For each request, calculate how many items we need (last chunk might be smaller)
       const isLastChunk = idx === numRequests - 1;
-      const itemsToFetch = isLastChunk && count % CHUNK_SIZE !== 0 ? count % CHUNK_SIZE : CHUNK_SIZE;
+      const itemsToFetch = isLastChunk && targetCount % CHUNK_SIZE !== 0 ? targetCount % CHUNK_SIZE : CHUNK_SIZE;
 
       const systemPrompt = `당신은 대한민국 최고 수준의 데이터 기반 SEO 마케터이자 커머스 전문가입니다.
 사용자의 [초기 주제]를 실시간 웹 트렌드와 빙/구글 검색 결과를 통해 심층 분석하여, 결과적으로 가장 구매 전환율이 높은 ${itemsToFetch}개의 완벽한 "오토파일럿 블로그 발행 세트"를 JSON 형태로 반환하는 것입니다.
