@@ -9,6 +9,7 @@ import {
 } from "react-big-calendar";
 import { format, getDay, parse, startOfWeek } from "date-fns";
 import { ko } from "date-fns/locale";
+import { Clock, CheckCircle2, XCircle } from "lucide-react";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./bigcalendar-theme.css";
 
@@ -144,6 +145,39 @@ export const BigCalendarView: React.FC<BigCalendarViewProps> = ({
   /** 사용할 뷰 목록 */
   const views = useMemo<View[]>(() => ["month", "week", "day", "agenda"], []);
 
+  /** 커스텀 이벤트 렌더링 컴포넌트 */
+  const CustomEventComponent = useCallback(
+    ({ event }: { event: ScheduleEvent }) => {
+      // 주간, 일간 뷰에서는 좁은 영역이므로 아이콘만 렌더링하고, 툴팁(title)으로 전체 제목 표시
+      if (view === "week" || view === "day") {
+        let IconElement = Clock;
+        let iconClass = "text-blue-500";
+
+        if (event.status === "COMPLETED") {
+          IconElement = CheckCircle2;
+          iconClass = "text-emerald-500";
+        } else if (event.status === "FAILED") {
+          IconElement = XCircle;
+          iconClass = "text-red-500";
+        }
+
+        return (
+          <div className="flex flex-col items-center justify-center w-full h-full p-0.5" title={event.title}>
+            <IconElement size={15} strokeWidth={2.5} className={iconClass} />
+          </div>
+        );
+      }
+
+      // 월간 뷰나 Agenda 등 다른 뷰에서는 텍스트 출력
+      return (
+        <div className="flex items-center gap-1 overflow-hidden" title={event.title}>
+          <span className="truncate">{event.title}</span>
+        </div>
+      );
+    },
+    [view]
+  );
+
   return (
     <div style={{ height: "70vh", minHeight: "500px" }}>
       <Calendar<ScheduleEvent>
@@ -164,6 +198,9 @@ export const BigCalendarView: React.FC<BigCalendarViewProps> = ({
         onView={handleViewChange}
         onSelectEvent={handleSelectEvent}
         eventPropGetter={eventStyleGetter}
+        components={{
+          event: CustomEventComponent,
+        }}
         messages={messages}
         popup
         popupOffset={10}
