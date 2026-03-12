@@ -9,8 +9,10 @@ import { createTextModel } from '../item-research/pipeline/config'
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { keyword, persona, articleType, textModel: requestedModel, count: requestedCount, excludeTitles, titleExamples, titleExclusions } = body as {
+    const { keyword, trafficKeyword, searchIntent, persona, articleType, textModel: requestedModel, count: requestedCount, excludeTitles, titleExamples, titleExclusions } = body as {
       keyword: string
+      trafficKeyword?: string
+      searchIntent?: string
       persona?: string
       articleType?: string
       textModel?: string
@@ -71,7 +73,9 @@ export async function POST(request: Request) {
       : ''
 
     const userPrompt = `
-[메인 키워드]: ${keyword}
+[사용자 입력 키워드]: ${keyword}
+${trafficKeyword && trafficKeyword !== keyword ? `[연관 트래픽 키워드 (핵심)]: ${trafficKeyword}` : ''}
+${searchIntent ? `[키워드 검색 의도]: ${searchIntent}` : ''}
 [글 유형]: ${articleType || '자유 (가장 적합한 유형으로 추천)'}
 [페르소나]: ${persona || '범용'}
 ${excludeText}
@@ -79,7 +83,7 @@ ${titleExamples?.trim() ? `[참고할 제목 스타일 예제 (Positive)]:\n${ti
 ${titleExclusions?.trim() ? `[절대 사용 금지 포맷/단어 (Negative)]:\n${titleExclusions}\n위 포맷이나 단어는 어떠한 경우에도 제목에 포함하지 마세요.\n` : ''}
 
 [필수 사항]
-위 키워드로 SEO에 최적화된 블로그 제목 후보를 하나도 빠짐없이 **정확히 ${count}개** 생성하세요. 
+${trafficKeyword || searchIntent ? '위 사용자 입력 키워드와 함께 [연관 트래픽 키워드]와 [검색 의도] 팩트 데이터를 적극적으로 스며들게 하여 제목을 작성하세요.\n' : ''}위 키워드로 SEO에 최적화된 블로그 제목 후보를 하나도 빠짐없이 **정확히 ${count}개** 생성하세요. 
 내가 요청한 개수(${count}개)보다 적게 주거나 많이 주면 절대 안 됩니다. 반드시 ${count}개의 배열 객체를 꽉 채워서 응답하세요.
 각 제목은 서로 다른 앵글(관점/접근법)을 가져야 합니다.
 `
@@ -113,7 +117,15 @@ function parseTitles(rawText: string, count: number = 5): Array<{
     const jsonMatch = rawText.match(/\[[\s\S]*\]/)
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0])
-      return Array.isArray(parsed) ? parsed.slice(0, count) : []
+      if (Array.isArray(parsed)) {
+        return parsed.map(item => {
+          if (item && item.title) {
+            // 강제로 콜론(:) 자체를 제거하여 출력 단에서 원천 차단
+            item.title = item.title.replace(/:/g, ' ').replace(/\s+/g, ' ').trim()
+          }
+          return item
+        }).slice(0, count)
+      }
     }
     return []
   } catch {

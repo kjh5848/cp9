@@ -180,39 +180,45 @@ export function useAutopilotDashboardViewModel() {
     try {
       const excludeTitles = cartTitles.map((t) => t.title);
       
-      const [titlesRes, metaRes] = await Promise.all([
-        fetch('/api/keyword-titles', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            keyword: keyword.trim(),
-            persona: personaId,
-            articleType: articleType === 'auto' ? undefined : articleType,
-            textModel: titleModel,
-            titleExamples: titleExamples.trim(),
-            titleExclusions: titleExclusions.trim(),
-            count: titleCount,
-            excludeTitles,
-          }),
+      // 1. 퍼플렉시티 리서치 선행 (팩트 수집)
+      const metaRes = await fetch('/api/autopilot/research-single', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          keyword: keyword.trim(),
+          personaId: personaId,
         }),
-        fetch('/api/autopilot/research-single', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            keyword: keyword.trim(),
-            personaId: personaId,
-          }),
-        })
-      ]);
-
-      const [result, metaResult] = await Promise.all([
-        titlesRes.json(),
-        metaRes.json()
-      ]);
+      });
+      const metaResult = await metaRes.json();
+      
+      let trafficKeyword = keyword.trim();
+      let searchIntent = '';
 
       if (metaResult && metaResult.result) {
         setSingleKeywordResearchMeta(metaResult.result);
+        if (metaResult.result.trafficKeyword) trafficKeyword = metaResult.result.trafficKeyword;
+        if (metaResult.result.searchIntent) searchIntent = metaResult.result.searchIntent;
       }
+
+      // 2. 수집된 팩트(트래픽 키워드, 인텐트) 기반으로 GPT 직렬 호출
+      const titlesRes = await fetch('/api/keyword-titles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          keyword: keyword.trim(),
+          trafficKeyword,
+          searchIntent,
+          persona: personaId,
+          articleType: articleType === 'auto' ? undefined : articleType,
+          textModel: titleModel,
+          titleExamples: titleExamples.trim(),
+          titleExclusions: titleExclusions.trim(),
+          count: titleCount,
+          excludeTitles,
+        }),
+      });
+
+      const result = await titlesRes.json();
 
       if (result && result.titles && result.titles.length > 0) {
         setSuggestedTitles(result.titles);

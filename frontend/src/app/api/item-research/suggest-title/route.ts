@@ -117,6 +117,9 @@ ${itemsList}
       if (!Array.isArray(parsedTitles)) {
         throw new Error('응답이 배열 형식이 아닙니다.');
       }
+      
+      // 강제로 콜론(:) 제거
+      parsedTitles = parsedTitles.map((t: string) => t.replace(/:/g, ' ').replace(/\s+/g, ' ').trim());
     } catch (e) {
       console.warn('AI JSON 응답 파싱 실패. 원본 응답:\n', resultText);
       // 만약 배열이 아니라 그냥 줄바꿈으로 주거나 숫자로 번호를 매겨 줬을 때 억지로 짜르기
