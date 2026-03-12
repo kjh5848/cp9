@@ -20,6 +20,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Persona not found' }, { status: 404 });
     }
 
+    // Create dynamic current year variable for prompts
+    const currentYear = new Date().getFullYear();
+
     const systemPrompt = `당신은 대한민국 최고 수준의 데이터 기반 SEO 마케터이자 커머스 전문가입니다.
 사용자의 [초기 단일 키워드]를 실시간 웹 트렌드와 빙/구글 검색 결과를 통해 심층 분석하여, 완벽한 "오토파일럿 블로그 발행 메타데이터"를 한 개만 JSON 형태로 반환하는 것입니다.
 
@@ -31,7 +34,7 @@ export async function POST(req: Request) {
 "${keyword}"
 
 💡 필수 과제 (반드시 실시간 검색을 선행할 것)
-1. 최근 한 달간 한국 시장에서 사람들이 이 키워드와 관련하여 진짜 빈번하게 치는 구체적 검색어(트렌드/모델명 포함)를 파악하세요.
+1. 최근 한 달간(${currentYear}년 기준) 한국 시장에서 사람들이 이 키워드와 관련하여 진짜 빈번하게 치는 구체적 검색어(트렌드/모델명 포함)를 파악하세요.
 2. 구글, 네이버 상위 노출 블로그들의 어그로성 제목 구조와 그들이 비교/추천하는 아이템 개수(BEST 3 등)를 분석 및 벤치마킹하세요.
 3. 해당 키워드 검색 결과에서 현재 가장 잘 팔리거나 인기 있는 **실제 특정 상품명(브랜드+모델명 등)**을 정확하게 발굴하세요.
 
