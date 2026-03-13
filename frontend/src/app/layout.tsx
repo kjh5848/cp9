@@ -3,6 +3,7 @@ import { Syne, Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "@/shared/ui/toaster";
 import { Navbar } from "@/widgets/navbar/ui/Navbar";
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
+import { AuthProvider } from "@/app/providers/AuthProvider";
 import "@/shared/styles/globals.css";
 
 const syne = Syne({
@@ -31,11 +32,12 @@ export default function RootLayout({
     <html lang="ko" className="dark" suppressHydrationWarning>
       <body className={`${syne.variable} ${jakarta.variable} font-sans bg-background text-foreground antialiased`} suppressHydrationWarning>
         <NuqsAdapter>
-          {/* AuthProvider는 Entities/User Layer 완성 후 복구 예정 */}
-          <Navbar />
-          <main>
-            {children}
-          </main>
+          <AuthProvider>
+            <Navbar />
+            <main>
+              {children}
+            </main>
+          </AuthProvider>
           <Toaster 
 
           position="bottom-right"

@@ -152,3 +152,15 @@ model CategoryCampaign {
 
   @@map("category_campaign")
 }
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  nickname  String
+  role      String   @default("FREE") // FREE, PRO, ADMIN
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("users")
+}

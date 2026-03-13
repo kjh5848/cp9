@@ -1,0 +1,154 @@
+"use client";
+
+import React from "react";
+import { CheckSquare, Square, ChevronRight, BarChart3, Presentation, Inbox } from "lucide-react";
+import { ExtractedKeyword } from "../model/useKeywordExtraction";
+import { Button } from "@/shared/ui/button";
+import { cn } from "@/shared/lib/utils";
+
+interface KeywordResultTableProps {
+  state: {
+    extractedKeywords: ExtractedKeyword[];
+    selectedKeywords: string[];
+    isLoading: boolean;
+  };
+  actions: {
+    toggleSelection: (kw: string) => void;
+    sendToKeywordWriting: () => void;
+  };
+}
+
+const TYPE_LABELS: Record<string, { label: string; color: string }> = {
+  longtail: { label: "롱테일(세부)", color: "text-blue-400 bg-blue-500/10 border-blue-500/20" },
+  compare: { label: "비교/견적", color: "text-amber-400 bg-amber-500/10 border-amber-500/20" },
+  "problem-solving": { label: "문제해결", color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" }
+};
+
+const ARTICLE_TYPE_LABELS = {
+  single: "단일 리뷰",
+  compare: "비교 분석",
+  curation: "대량 큐레이션"
+};
+
+export const KeywordResultTable = ({ state, actions }: KeywordResultTableProps) => {
+  if (state.isLoading) {
+    return (
+      <div className="h-full min-h-[400px] flex flex-col items-center justify-center space-y-4">
+        <div className="relative">
+          <div className="absolute inset-0 bg-purple-500/20 blur-xl rounded-full"></div>
+          <Inbox className="w-12 h-12 text-purple-400 animate-pulse relative z-10" />
+        </div>
+        <div className="text-center">
+          <h4 className="text-white font-bold text-lg mb-1">AI 딥 리서치 중...</h4>
+          <p className="text-sm text-slate-400">네이버/쿠팡 트렌드를 다차원으로 분석하고 있습니다.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (state.extractedKeywords.length === 0) {
+    return (
+      <div className="h-full min-h-[400px] flex flex-col items-center justify-center text-center">
+        <Presentation className="w-12 h-12 text-slate-600 mb-4" />
+        <h4 className="text-slate-300 font-bold mb-1">분석 결과가 없습니다</h4>
+        <p className="text-sm text-slate-500">좌측 패널에서 시드 단어를 입력하고 발굴 버튼을 눌러보세요.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between mb-2">
+        <div className="text-sm text-slate-400">
+          총 <strong className="text-purple-400">{state.extractedKeywords.length}개</strong>의 타겟 키워드 발굴 완료
+        </div>
+        <Button 
+          onClick={actions.sendToKeywordWriting}
+          disabled={state.selectedKeywords.length === 0}
+          className="bg-blue-600 hover:bg-blue-500 text-white font-bold h-9"
+        >
+          선택 항목 ({state.selectedKeywords.length}) 글쓰기로 넘기기 <ChevronRight className="w-4 h-4 mr-1" />
+        </Button>
+      </div>
+
+      <div className="rounded-xl border border-white/10 overflow-hidden bg-black/20">
+        <table className="w-full text-sm text-left align-middle">
+          <thead className="bg-white/5 text-xs uppercase text-slate-400 border-b border-white/10">
+            <tr>
+              <th className="px-4 py-3 w-10 text-center">선택</th>
+              <th className="px-4 py-3">딥 타겟 키워드</th>
+              <th className="px-4 py-3 text-center">유형</th>
+              <th className="px-4 py-3 text-center">비즈니스 가치</th>
+              <th className="px-4 py-3">AI 추천 글 유형</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/5">
+            {state.extractedKeywords.map((item, idx) => {
+              const isSelected = state.selectedKeywords.includes(item.keyword);
+              const tInfo = TYPE_LABELS[item.type] || TYPE_LABELS.longtail;
+
+              return (
+                <tr 
+                  key={idx} 
+                  className={cn(
+                    "hover:bg-white/5 transition-colors group cursor-pointer",
+                    isSelected && "bg-blue-500/10 hover:bg-blue-500/20"
+                  )}
+                  onClick={() => actions.toggleSelection(item.keyword)}
+                >
+                  <td className="px-4 py-4 text-center">
+                    <button className="text-slate-400 hover:text-white transition-colors focus:outline-none">
+                      {isSelected ? <CheckSquare className="w-5 h-5 text-blue-400" /> : <Square className="w-5 h-5" />}
+                    </button>
+                  </td>
+                  <td className="px-4 py-4">
+                    <div className="font-bold text-white text-base mb-1">{item.keyword}</div>
+                    <div className="text-xs text-slate-400 pr-4 line-clamp-1 group-hover:line-clamp-none transition-all">
+                      {item.reason}
+                    </div>
+                  </td>
+                  <td className="px-4 py-4 text-center">
+                    <span className={cn("px-2 py-1 rounded text-[11px] font-bold border", tInfo.color)}>
+                      {tInfo.label}
+                    </span>
+                  </td>
+                  <td className="px-4 py-4">
+                    <div className="flex flex-col gap-1.5 text-[11px]">
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-400">검색량</span>
+                        <span className={cn(
+                          "font-bold",
+                          item.estimatedVolume === "높음" ? "text-emerald-400" : item.estimatedVolume === "중간" ? "text-amber-400" : "text-slate-500"
+                        )}>{item.estimatedVolume}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-400">수익성</span>
+                        <span className={cn(
+                          "font-bold",
+                          item.profitability === "높음" ? "text-blue-400" : item.profitability === "중간" ? "text-indigo-400" : "text-slate-500"
+                        )}>{item.profitability}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-400">경쟁도</span>
+                        <span className={cn(
+                          "font-bold",
+                          item.competition === "낮음" ? "text-emerald-400" : item.competition === "중간" ? "text-amber-400" : "text-red-400"
+                        )}>{item.competition}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4 text-slate-300">
+                    <div className="flex items-center gap-1.5 font-medium">
+                      <BarChart3 className="w-3.5 h-3.5 text-purple-400" /> 
+                      {ARTICLE_TYPE_LABELS[item.expectedArticleType]}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};

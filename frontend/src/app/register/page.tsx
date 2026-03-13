@@ -1,17 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "react-hot-toast";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
+    nickname: "",
     email: "",
     password: "",
   });
@@ -21,21 +21,23 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await signIn("credentials", {
-        redirect: false,
-        email: formData.email,
-        password: formData.password,
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       });
 
-      if (res?.error) {
-        toast.error("이메일 또는 비밀번호가 일치하지 않습니다.");
-      } else {
-        toast.success("로그인 성공!");
-        router.push("/keyword-lab");
-        router.refresh();
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.message || "회원가입에 실패했습니다.");
+        return;
       }
+
+      toast.success("회원가입이 완료되었습니다! 로그인해주세요.");
+      router.push("/login");
     } catch (err) {
-      toast.error("로그인 중 오류가 발생했습니다.");
+      toast.error("회원가입 중 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
@@ -44,8 +46,8 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 relative overflow-hidden">
       {/* 배경 장식 노드 */}
-      <div className="absolute top-1/4 -left-20 w-80 h-80 bg-blue-600/10 rounded-full blur-[120px]" />
-      <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-purple-600/10 rounded-full blur-[120px]" />
+      <div className="absolute top-1/4 -right-20 w-80 h-80 bg-blue-600/10 rounded-full blur-[120px]" />
+      <div className="absolute bottom-1/4 -left-20 w-80 h-80 bg-purple-600/10 rounded-full blur-[120px]" />
 
       <div className="w-full max-w-md relative z-10">
         {/* Header */}
@@ -55,9 +57,9 @@ export default function LoginPage() {
               CP9.
             </h1>
           </Link>
-          <h2 className="text-2xl font-bold text-slate-100 mb-2">환영합니다</h2>
+          <h2 className="text-2xl font-bold text-slate-100 mb-2">계정 만들기</h2>
           <p className="text-slate-400 text-sm font-medium">
-            계정에 로그인하여 플랫폼에 접속하세요
+            비즈니스 혁신을 지금 시작하세요
           </p>
         </div>
 
@@ -68,6 +70,29 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
             <div className="space-y-4">
+               {/* Nickname Input */}
+               <div className="space-y-2">
+                <label
+                  htmlFor="nickname"
+                  className="text-xs font-semibold text-slate-300 uppercase tracking-wider"
+                >
+                  닉네임
+                </label>
+                <div className="relative group">
+                  <input
+                    id="nickname"
+                    type="text"
+                    required
+                    value={formData.nickname}
+                    onChange={(e) =>
+                      setFormData({ ...formData, nickname: e.target.value })
+                    }
+                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all placeholder:text-slate-600"
+                    placeholder="홍길동"
+                  />
+                </div>
+              </div>
+
               {/* Email Input */}
               <div className="space-y-2">
                 <label
@@ -106,6 +131,7 @@ export default function LoginPage() {
                     id="password"
                     type={showPassword ? "text" : "password"}
                     required
+                    minLength={6}
                     value={formData.password}
                     onChange={(e) =>
                       setFormData({ ...formData, password: e.target.value })
@@ -131,25 +157,25 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium text-sm py-3 rounded-xl transition-all shadow-[0_0_20px_-5px_rgba(37,99,235,0.4)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm py-3 rounded-xl transition-all shadow-[0_0_20px_-5px_rgba(79,70,229,0.4)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  로그인 중...
+                  처리 중...
                 </>
               ) : (
-                "로그인"
+                "계정 생성하기"
               )}
             </button>
 
             <p className="text-center text-sm text-slate-400 pt-2 border-t border-slate-800">
-              아직 계정이 없으신가요?{" "}
+              이미 계정이 있으신가요?{" "}
               <Link
-                href="/register"
-                className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
+                href="/login"
+                className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
               >
-                회원가입
+                로그인
               </Link>
             </p>
           </form>

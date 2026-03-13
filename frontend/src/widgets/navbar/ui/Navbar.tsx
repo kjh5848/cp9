@@ -37,6 +37,9 @@ export const Navbar = ({ className }: NavbarProps) => {
         </Link>
 
         <nav className="hidden md:flex items-center gap-1">
+          <Link href="/keyword-lab" className="px-4 py-2 text-sm font-medium text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1">
+            발굴소(Lab)
+          </Link>
           <Link href="/keyword" className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors">
             키워드 글쓰기
           </Link>
