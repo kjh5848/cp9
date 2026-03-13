@@ -34,6 +34,10 @@ export interface DefaultAutopilotSettings {
 
   // Publish Settings
   intervalHours?: number; 
+  publishTimes?: string;
+  publishDays?: string;
+  jitterMinutes?: number;
+  dailyCap?: number;
   activeTimeStart?: number;
   activeTimeEnd?: number;
 }

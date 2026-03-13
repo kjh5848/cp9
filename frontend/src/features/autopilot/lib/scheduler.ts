@@ -1,11 +1,14 @@
 /**
  * 다음 실행 예약 시각을 KST 기준으로 계산합니다.
  *
- * @param intervalMinutes - 반복 주기 (분 단위). DB의 intervalHours 필더를 활용하되 분 단위로 저장/처리.
+ * @param intervalMinutes - 반복 주기 (분 단위)
  * @param activeStart - 동작 허용 시작 시간 (KST, 0~23)
  * @param activeEnd - 동작 허용 종료 시간 (KST, 0~23)
  * @param offsetMinutes - 추가 오프셋(대량 등록 시 인덱스별 간격, 분 단위)
  * @param baseDate - 기준 시점 (미지정 시 현재 시각)
+ * @param publishTimes - 특정 발행 시간 배열 (예: ["09:00", "15:00"])
+ * @param publishDays - 특정 요일 배열 (예: [1,2,3,4,5] 월~금)
+ * @param jitterMinutes - 어뷰징 방지 난수화 범위 (분 단위)
  * @returns 다음 실행 예정 시각 (UTC Date)
  */
 export function getNextRunAtKST(
@@ -13,20 +16,93 @@ export function getNextRunAtKST(
   activeStart?: number | null, 
   activeEnd?: number | null,
   offsetMinutes: number = 0,
-  baseDate?: Date | string | null
+  baseDate?: Date | string | null,
+  publishTimes?: string[],
+  publishDays?: number[],
+  jitterMinutes: number = 0
 ): Date {
   const base = baseDate ? new Date(baseDate) : new Date();
-  
-  // 기준 시간에 intervalMinutes(주기)와 offsetMinutes(대량 등록 오프셋)를 합산 (분 단위 -> 밀리초 변환)
-  const totalOffsetMs = (offsetMinutes + (intervalMinutes ?? 0)) * 60 * 1000;
-  let targetTime = new Date(base.getTime() + totalOffsetMs);
-  
-  // 활성 시간대 필터링 (KST 기준)
-  if (activeStart !== null && activeStart !== undefined && activeEnd !== null && activeEnd !== undefined) {
-    targetTime = adjustToActiveWindow(targetTime, activeStart, activeEnd);
+  let targetTime: Date;
+
+  if (publishTimes && publishTimes.length > 0) {
+    // 1. 특정 시간 지정 방식 (Specific Publish Times)
+    targetTime = getNextSpecificTime(base, publishTimes, publishDays);
+    
+    // 타겟 시간에 Offset 합산 (대량 등록일 경우 순차적으로 밀리도록)
+    if (offsetMinutes > 0) {
+      targetTime = new Date(targetTime.getTime() + offsetMinutes * 60 * 1000);
+    }
+  } else {
+    // 2. 간격 방식 (Interval - 기존 로직)
+    const totalOffsetMs = (offsetMinutes + (intervalMinutes ?? 0)) * 60 * 1000;
+    targetTime = new Date(base.getTime() + totalOffsetMs);
+    
+    // 활성 시간대 필터링 (KST 기준)
+    if (activeStart !== null && activeStart !== undefined && activeEnd !== null && activeEnd !== undefined) {
+      targetTime = adjustToActiveWindow(targetTime, activeStart, activeEnd);
+    }
   }
-  
+
+  // 3. 어뷰징 방지 난수화 (Jitter) 적용
+  if (jitterMinutes > 0) {
+    targetTime = applyJitter(targetTime, jitterMinutes);
+  }
+
   return targetTime;
+}
+
+/**
+ * 기준 시간(base) 이후에 도래하는 가장 가까운 특정 예약 시간(KST)을 찾습니다.
+ */
+function getNextSpecificTime(base: Date, publishTimes: string[], publishDays?: number[]): Date {
+  // 1. Time 문자열 파싱 (KST 기준 HH:MM)
+  const parsedTimes = publishTimes.map(t => {
+    const [h, m] = t.split(':').map(Number);
+    return { h, m };
+  }).sort((a, b) => (a.h * 60 + a.m) - (b.h * 60 + b.m)); // 빠른 시간 순 정렬
+
+  // 2. 날짜 탐색 시작 (최대 14일 정도 탐색)
+  for (let dayOffset = 0; dayOffset < 14; dayOffset++) {
+    const currentTestDate = new Date(base.getTime() + dayOffset * 24 * 60 * 60 * 1000);
+    const kstDay = (currentTestDate.getUTCDay() + (currentTestDate.getUTCHours() + 9 >= 24 ? 1 : 0)) % 7;
+    
+    // 요일 필터 (지정된 요일이 있고, 현재 테스트하는 날짜가 그 요일이 아니면 건너뜀)
+    if (publishDays && publishDays.length > 0 && !publishDays.includes(kstDay)) {
+      continue;
+    }
+
+    const baseKSTHour = (base.getUTCHours() + 9) % 24;
+    const baseKSTMinute = base.getUTCMinutes();
+
+    for (const time of parsedTimes) {
+      // 당일인 경우, 이미 지난 시간은 스킵
+      if (dayOffset === 0 && (time.h < baseKSTHour || (time.h === baseKSTHour && time.m <= baseKSTMinute))) {
+        continue;
+      }
+
+      // 후보 시간을 Date 객체로 생성 (target KST hours - 9 = UTC hours)
+      const targetUtcHours = time.h - 9;
+      
+      const candidateDate = new Date(currentTestDate);
+      candidateDate.setUTCHours(targetUtcHours, time.m, 0, 0);
+
+      return candidateDate;
+    }
+  }
+
+  // 매칭되는 날이 없으면 기본적으로 하루 뒤 반환 (Fallback)
+  return new Date(base.getTime() + 24 * 60 * 60 * 1000);
+}
+
+/**
+ * 목표 시간에 지정된 분(minutes) 범위 안에서 난수를 더하거나 뺍니다.
+ * 예: 09:00에 jitter 15를 주면 08:45 ~ 09:15 사이의 시간 반환.
+ */
+function applyJitter(targetTime: Date, jitterMinutes: number): Date {
+  // -jitterMinutes ~ +jitterMinutes 사이의 랜덤한 밀리초 산출
+  const jitterMs = jitterMinutes * 60 * 1000;
+  const randomOffset = Math.floor(Math.random() * (jitterMs * 2 + 1)) - jitterMs;
+  return new Date(targetTime.getTime() + randomOffset);
 }
 
 /**

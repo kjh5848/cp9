@@ -28,7 +28,13 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { categoryName, personaId, themeId, intervalHours, activeTimeStart, activeTimeEnd, batchSize, isAutoApprove } = body;
+    const { 
+      categoryName, personaId, themeId, 
+      intervalHours, publishTimes, publishDays, jitterMinutes, dailyCap,
+      activeTimeStart, activeTimeEnd, batchSize, isAutoApprove,
+      targetAge, targetGender, targetPrice, targetIndustry,
+      publishTargets
+    } = body;
 
     if (!categoryName) {
       return NextResponse.json({ error: 'Category Name is required' }, { status: 400 });
@@ -40,10 +46,19 @@ export async function POST(request: Request) {
         personaId: personaId || null,
         themeId: themeId || null,
         intervalHours: intervalHours ? parseInt(intervalHours, 10) : 24,
+        publishTimes: publishTimes || null,
+        publishDays: publishDays || null,
+        jitterMinutes: jitterMinutes !== undefined && jitterMinutes !== null ? parseInt(jitterMinutes, 10) : 15,
+        dailyCap: dailyCap !== undefined && dailyCap !== null ? parseInt(dailyCap, 10) : null,
         activeTimeStart: activeTimeStart !== undefined && activeTimeStart !== null ? parseInt(activeTimeStart, 10) : null,
         activeTimeEnd: activeTimeEnd !== undefined && activeTimeEnd !== null ? parseInt(activeTimeEnd, 10) : null,
         batchSize: batchSize ? parseInt(batchSize, 10) : 15,
         isAutoApprove: isAutoApprove || false,
+        targetAge: targetAge || null,
+        targetGender: targetGender || null,
+        targetPrice: targetPrice || null,
+        targetIndustry: targetIndustry || null,
+        publishTargets: publishTargets ? JSON.stringify(publishTargets) : null,
       },
       include: {
         persona: { select: { name: true } }

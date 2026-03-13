@@ -1,29 +1,67 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useCategoryCampaignViewModel } from '../model/useCategoryCampaignViewModel';
-import { Loader2, Plus, RefreshCw, Archive } from 'lucide-react';
+import { Loader2, Plus, RefreshCw, Archive, Info } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
+import { CATEGORY_TREE } from '@/shared/constants/categories';
 
 interface Props {
   personaId: string;
   themeId: string | null;
   intervalHours: string;
+  publishTimes?: string;
+  publishDays?: string;
+  jitterMinutes?: string;
+  dailyCap?: string;
   activeTimeStart: string;
   activeTimeEnd: string;
+  publishTargets?: any[];
   configNode: React.ReactNode;
   quickPresetNode: React.ReactNode;
+  publishTargetNode?: React.ReactNode;
 }
 
 export function CategoryCampaignWizard({
   personaId,
   themeId,
   intervalHours,
+  publishTimes,
+  publishDays,
+  jitterMinutes,
+  dailyCap,
   activeTimeStart,
   activeTimeEnd,
+  publishTargets,
   configNode,
-  quickPresetNode
+  quickPresetNode,
+  publishTargetNode
 }: Props) {
   const { createCampaign, isLoading, campaigns, deleteCampaign, fetchCampaigns } = useCategoryCampaignViewModel();
-  const [categoryName, setCategoryName] = useState('');
+  
+  const [inputType, setInputType] = useState<'category' | 'custom'>('category');
+  const [depth1, setDepth1] = useState<string>('');
+  const [depth2, setDepth2] = useState<string>('');
+  const [depth3, setDepth3] = useState<string>('');
+  const [customCategory, setCustomCategory] = useState<string>('');
   const [batchSize, setBatchSize] = useState(15);
+  const [targetAge, setTargetAge] = useState<string>('');
+  const [targetGender, setTargetGender] = useState<string>('');
+  const [targetPrice, setTargetPrice] = useState<string>('');
+  const [targetIndustry, setTargetIndustry] = useState<string>('');
+
+  const depth1List = useMemo(() => CATEGORY_TREE.map(c => c.name), []);
+  const depth2List = useMemo(() => {
+    if (!depth1) return [];
+    return CATEGORY_TREE.find(c => c.name === depth1)?.subtypes.map(s => s.name) || [];
+  }, [depth1]);
+  const depth3List = useMemo(() => {
+    if (!depth1 || !depth2) return [];
+    return CATEGORY_TREE.find(c => c.name === depth1)?.subtypes.find(s => s.name === depth2)?.details || [];
+  }, [depth1, depth2]);
+
+  // 카테고리 조합
+  const currentCategoryName = useMemo(() => {
+    return [depth1, depth2, depth3].filter(Boolean).join(' > ');
+  }, [depth1, depth2, depth3]);
 
   React.useEffect(() => {
     fetchCampaigns();
@@ -31,20 +69,44 @@ export function CategoryCampaignWizard({
   }, []);
 
   const handleCreate = async () => {
-    if (!categoryName) return alert('카테고리명을 입력해주세요.');
+    let finalCategoryName = '';
+    
+    if (inputType === 'category') {
+      if (!depth1) return alert('대분류를 선택해주세요. (중분류/소분류는 선택사항입니다)');
+      finalCategoryName = currentCategoryName;
+    } else {
+      if (!customCategory.trim()) return alert('캠페인을 지속할 제품이나 주제 키워드를 직접 입력해주세요.');
+      finalCategoryName = customCategory.trim();
+    }
     
     // config 항목들 가져와서 전송
     await createCampaign({
-      categoryName,
+      categoryName: finalCategoryName,
       personaId,
       themeId,
       intervalHours,
+      publishTimes,
+      publishDays,
+      jitterMinutes,
+      dailyCap,
       activeTimeStart,
       activeTimeEnd,
       batchSize,
       isAutoApprove: false,
+      targetAge,
+      targetGender,
+      targetPrice,
+      targetIndustry,
+      publishTargets
     });
-    setCategoryName('');
+    setDepth1('');
+    setDepth2('');
+    setDepth3('');
+    setCustomCategory('');
+    setTargetAge('');
+    setTargetGender('');
+    setTargetPrice('');
+    setTargetIndustry('');
   };
 
   return (
@@ -52,26 +114,200 @@ export function CategoryCampaignWizard({
       <div className="flex flex-col gap-4 bg-slate-800/40 p-5 rounded-xl border border-slate-700/50">
         <h3 className="text-lg font-bold text-slate-200">새 카테고리 캠페인 생성</h3>
         <p className="text-sm text-slate-400">
-          "전자기기", "건강식품" 등의 카테고리를 입력하고 하단에서 배치 사이즈를 조절하세요.
-          해당 분야로 AI가 부족한 스케줄 큐를 주기적으로 채워 넣습니다.
+          "전자기기", "건강식품" 등의 카테고리를 선택하거나, 특정 제품 키워드를 직접 입력하여 AI가 부족한 스케줄 큐를 주기적으로 채워 넣도록 설정하세요.
         </p>
         
-        <div className="flex items-center gap-3 mt-2">
-          <input
-            type="text"
-            className="flex-1 bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-            placeholder="카테고리명 (예: 캠핑용품, 주방가전)"
-            value={categoryName}
-            onChange={(e) => setCategoryName(e.target.value)}
-          />
-          <div className="flex flex-col w-32">
-            <span className="text-xs text-slate-500 mb-1">배치 생성 수</span>
-            <input
-              type="number"
-              className="bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-              value={batchSize}
-              onChange={(e) => setBatchSize(Number(e.target.value))}
-            />
+        {/* 입력 방식 선택 */}
+        <div className="flex bg-slate-900/50 p-1 rounded-lg w-fit border border-slate-700/50 mt-2">
+          <button
+            onClick={() => setInputType('category')}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+              inputType === 'category' ? 'bg-indigo-500/20 text-indigo-400' : 'text-slate-500 hover:text-slate-300'
+            }`}
+          >
+            카테고리 트리 선택
+          </button>
+          <button
+            onClick={() => setInputType('custom')}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+              inputType === 'custom' ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-500 hover:text-slate-300'
+            }`}
+          >
+            직접 입력 (자유 키워드)
+          </button>
+        </div>
+
+        <div className="flex flex-col md:flex-row items-end gap-3 mt-2">
+          <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {inputType === 'category' ? (
+              <>
+                <div className="flex flex-col">
+                  <span className="text-xs text-slate-500 mb-1">대분류</span>
+                  <Select 
+                    value={depth1} 
+                    onValueChange={(val) => { setDepth1(val); setDepth2(''); setDepth3(''); }}
+                  >
+                    <SelectTrigger className="bg-slate-900 border-slate-700 text-slate-200">
+                      <SelectValue placeholder="선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {depth1List.map(name => (
+                        <SelectItem key={name} value={name}>{name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs text-slate-500 mb-1">중분류</span>
+                  <Select 
+                    value={depth2} 
+                    onValueChange={(val) => { setDepth2(val); setDepth3(''); }}
+                    disabled={!depth1}
+                  >
+                    <SelectTrigger className="bg-slate-900 border-slate-700 text-slate-200">
+                      <SelectValue placeholder="선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {depth2List.map(name => (
+                        <SelectItem key={name} value={name}>{name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs text-slate-500 mb-1">소분류 (선택)</span>
+                  <Select 
+                    value={depth3} 
+                    onValueChange={setDepth3}
+                    disabled={!depth2}
+                  >
+                    <SelectTrigger className="bg-slate-900 border-slate-700 text-slate-200">
+                      <SelectValue placeholder="선택 (옵션)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">선택안함</SelectItem>
+                      {depth3List.map(name => (
+                        <SelectItem key={name} value={name}>{name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            ) : (
+              <div className="col-span-3 flex flex-col">
+                <span className="text-xs text-slate-500 mb-1">캠페인 키워드 / 제품명</span>
+                <input
+                  type="text"
+                  value={customCategory}
+                  onChange={(e) => setCustomCategory(e.target.value)}
+                  placeholder="무한 스케줄링할 자유 제품명 (예: 아이폰 16 맥세이프 케이스)"
+                  className="bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-md px-3 py-2 outline-none focus:border-indigo-500 transition-colors w-full"
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col w-full md:w-32">
+            <span className="text-xs text-slate-500 mb-1">목표 발행 개수 (회당)</span>
+            <Select value={batchSize.toString()} onValueChange={(v) => setBatchSize(Number(v))}>
+              <SelectTrigger className="bg-slate-900 border-slate-700 text-slate-200 h-10">
+                <SelectValue placeholder="선택" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5개</SelectItem>
+                <SelectItem value="10">10개</SelectItem>
+                <SelectItem value="15">15개</SelectItem>
+                <SelectItem value="20">20개</SelectItem>
+                <SelectItem value="30">30개</SelectItem>
+                <SelectItem value="50">50개</SelectItem>
+                <SelectItem value="100">100개</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        
+        {/* 추가 타겟팅 설정 */}
+        <div className="pt-4 border-t border-slate-700/50 mt-2">
+          <h4 className="text-sm font-semibold text-slate-300 mb-3">콘텐츠 타겟팅 (옵션)</h4>
+          <p className="text-xs text-slate-400 mb-4">입력한 타겟팅 정보는 AI 리서치 프롬프트에 반영되며 결과 메타데이터에 저장됩니다.</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="flex flex-col">
+              <span className="text-xs text-slate-500 mb-1">타겟 연령</span>
+              <Select value={targetAge || "none"} onValueChange={(v) => setTargetAge(v === "none" ? "" : v)}>
+                <SelectTrigger className="bg-slate-900 border-slate-700 text-slate-200 h-10">
+                  <SelectValue placeholder="선택안함" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">선택안함</SelectItem>
+                  <SelectItem value="1020">10~20대 (1020)</SelectItem>
+                  <SelectItem value="2030">20~30대 (2030)</SelectItem>
+                  <SelectItem value="3040">30~40대 (3040)</SelectItem>
+                  <SelectItem value="4050">40~50대 (4050)</SelectItem>
+                  <SelectItem value="5060">50대 이상 (5060)</SelectItem>
+                  <SelectItem value="전 연령">전 연령</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs text-slate-500 mb-1">타겟 성별</span>
+              <Select value={targetGender || "none"} onValueChange={(v) => setTargetGender(v === "none" ? "" : v)}>
+                <SelectTrigger className="bg-slate-900 border-slate-700 text-slate-200 h-10">
+                  <SelectValue placeholder="선택안함" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">선택안함</SelectItem>
+                  <SelectItem value="남성">남성</SelectItem>
+                  <SelectItem value="여성">여성</SelectItem>
+                  <SelectItem value="남녀공용">남녀공용</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs text-slate-500 mb-1">가격대</span>
+              <Select value={targetPrice || "none"} onValueChange={(v) => setTargetPrice(v === "none" ? "" : v)}>
+                <SelectTrigger className="bg-slate-900 border-slate-700 text-slate-200 h-10">
+                  <SelectValue placeholder="선택안함" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">선택안함</SelectItem>
+                  <SelectItem value="가성비">가성비 중심</SelectItem>
+                  <SelectItem value="중저가">중저가</SelectItem>
+                  <SelectItem value="프리미엄">프리미엄/고가</SelectItem>
+                  <SelectItem value="상관없음">상관없음</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col">
+              <span className="flex items-center gap-1.5 text-xs text-slate-500 mb-1 relative group">
+                주요 업종/관심사
+                <Info className="w-3.5 h-3.5 text-slate-400 cursor-help" />
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden w-64 p-3 text-xs leading-relaxed text-slate-200 bg-slate-800 border border-slate-700/80 rounded-lg shadow-xl group-hover:block z-50">
+                  <p className="font-semibold text-emerald-400 mb-1 flex items-center gap-1">💡 대분류와의 차이점</p>
+                  <p className="mb-2"><strong className="text-white">대분류:</strong> 소싱할 상품의 물리적 카테고리 (예: 가전디지털)</p>
+                  <p><strong className="text-white">업종/관심사:</strong> 글의 맥락과 타겟 독자. (예: '도서/취미' 선택 시 가전디지털 상품을 '취미용' 맥락으로 포스팅)</p>
+                  <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-800 border-b border-r border-slate-700/80 transform rotate-45"></div>
+                </div>
+              </span>
+              <Select value={targetIndustry || "none"} onValueChange={(v) => setTargetIndustry(v === "none" ? "" : v)}>
+                <SelectTrigger className="bg-slate-900 border-slate-700 text-slate-200 h-10">
+                  <SelectValue placeholder="선택안함" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">선택안함</SelectItem>
+                  <SelectItem value="IT/전자기기">IT/전자기기</SelectItem>
+                  <SelectItem value="패션/의류">패션/의류</SelectItem>
+                  <SelectItem value="뷰티/화장품">뷰티/화장품</SelectItem>
+                  <SelectItem value="식품/건강">식품/건강</SelectItem>
+                  <SelectItem value="생활/주방">생활/주방</SelectItem>
+                  <SelectItem value="가구/인테리어">가구/인테리어</SelectItem>
+                  <SelectItem value="도서/취미">도서/취미</SelectItem>
+                  <SelectItem value="스포츠/레저">스포츠/레저</SelectItem>
+                  <SelectItem value="육아/아동">육아/아동</SelectItem>
+                  <SelectItem value="반려동물">반려동물</SelectItem>
+                  <SelectItem value="기타">기타</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
@@ -83,10 +319,17 @@ export function CategoryCampaignWizard({
           {configNode}
         </div>
 
+        {publishTargetNode && (
+          <div className="pt-4 border-t border-slate-800/50 mt-2">
+             <h4 className="text-sm font-semibold text-slate-300 mb-3">다중 플랫폼 발행 설정</h4>
+            {publishTargetNode}
+          </div>
+        )}
+
         <div className="flex justify-end pt-2">
           <button
             onClick={handleCreate}
-            disabled={isLoading || !categoryName}
+            disabled={isLoading || !depth1}
             className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium rounded-xl hover:from-blue-500 hover:to-indigo-500 focus:ring-4 focus:ring-blue-500/30 transition-all disabled:opacity-50"
           >
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
@@ -114,7 +357,18 @@ export function CategoryCampaignWizard({
                 >
                   <RefreshCw className="w-4 h-4 rotate-45" /> {/* Delete Icon placeholder */}
                 </button>
-                <div className="font-bold text-blue-400">{camp.categoryName}</div>
+                <div className="font-bold text-blue-400 mb-1">{camp.categoryName}</div>
+                
+                {/* 타겟팅 배지 */}
+                {(camp.targetAge || camp.targetGender || camp.targetPrice || camp.targetIndustry) && (
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {camp.targetAge && <span className="px-1.5 py-0.5 bg-slate-700/50 text-slate-300 text-[10px] rounded border border-slate-600">연령: {camp.targetAge}</span>}
+                    {camp.targetGender && <span className="px-1.5 py-0.5 bg-slate-700/50 text-slate-300 text-[10px] rounded border border-slate-600">성별: {camp.targetGender}</span>}
+                    {camp.targetPrice && <span className="px-1.5 py-0.5 bg-slate-700/50 text-slate-300 text-[10px] rounded border border-slate-600">가격: {camp.targetPrice}</span>}
+                    {camp.targetIndustry && <span className="px-1.5 py-0.5 bg-slate-700/50 text-slate-300 text-[10px] rounded border border-slate-600">업종: {camp.targetIndustry}</span>}
+                  </div>
+                )}
+                
                 <div className="flex justify-between text-xs text-slate-400">
                   <span>배치: {camp.batchSize}개</span>
                   <span>주기: {camp.intervalHours}시간</span>

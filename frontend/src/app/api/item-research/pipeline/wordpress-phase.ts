@@ -20,6 +20,7 @@ export async function runWordPressPhase(
   seoContent: string,
   thumbnailUrl: string | null,
   title: string,
+  categoryId?: number // 선택적 카테고리 ID
 ): Promise<WordPressPublishResult | null> {
   const wp = getWordPressClient()
 
@@ -57,6 +58,7 @@ export async function runWordPressPhase(
       status: 'publish',
       excerpt: `${ctx.finalPersonaName}가 추천하는 ${title}`, // 메타 디스크립션
       featured_media: featuredMediaId,
+      categories: categoryId ? [categoryId] : undefined,
       meta: {
         cp9_item_id: ctx.body.itemId,
         cp9_project_id: ctx.body.projectId,

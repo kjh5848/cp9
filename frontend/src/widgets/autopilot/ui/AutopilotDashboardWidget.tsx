@@ -10,6 +10,7 @@ import { CategoryCampaignWizard } from '@/features/autopilot/ui/CategoryCampaign
 import { ApprovalInbox } from '@/features/autopilot/ui/ApprovalInbox';
 import { SourcingCriteriaSection } from '@/entities/autopilot/ui/SourcingCriteriaSection';
 import { ScheduleSettingsSection } from '@/entities/autopilot/ui/ScheduleSettingsSection';
+import { PublishTargetSection } from '@/shared/ui/PublishTargetSection';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/shared/ui/accordion';
 
 // FSD ViewModel
@@ -119,6 +120,14 @@ export function AutopilotDashboardWidget() {
           <ScheduleSettingsSection
             intervalHours={vm.intervalHours}
             setIntervalHours={vm.setIntervalHours}
+            publishTimes={vm.publishTimes}
+            setPublishTimes={vm.setPublishTimes}
+            publishDays={vm.publishDays}
+            setPublishDays={vm.setPublishDays}
+            jitterMinutes={vm.jitterMinutes}
+            setJitterMinutes={vm.setJitterMinutes}
+            dailyCap={vm.dailyCap}
+            setDailyCap={vm.setDailyCap}
             activeTimeStart={vm.activeTimeStart}
             setActiveTimeStart={vm.setActiveTimeStart}
             activeTimeEnd={vm.activeTimeEnd}
@@ -132,6 +141,16 @@ export function AutopilotDashboardWidget() {
         </AccordionContent>
       </AccordionItem>
     </Accordion>
+  );
+
+  const publishTargetNode = (
+    <div className="mt-8 border-t border-slate-800/50 pt-6">
+      <PublishTargetSection
+        targets={vm.publishTargets}
+        onChange={vm.setPublishTargets}
+        hideLoadMySettings={true}
+      />
+    </div>
   );
 
   return (
@@ -165,28 +184,31 @@ export function AutopilotDashboardWidget() {
           <button 
             type="button"
             onClick={() => vm.setInputMode('single')}
-            className={`flex-1 py-3 text-sm font-semibold tracking-tight transition-colors border-b-2 ${vm.inputMode === 'single' ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-500 hover:text-slate-300 text-center'}`}
+            className={`cursor-pointer flex-1 py-3 text-sm font-semibold tracking-tight transition-colors border-b-2 ${vm.inputMode === 'single' ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-500 hover:text-slate-300 text-center'}`}
           >
             단일 키워드 등록
           </button>
           <button 
             type="button"
-            onClick={() => vm.setInputMode('bulk')}
-            className={`flex-1 py-3 text-sm font-semibold tracking-tight transition-colors border-b-2 ${vm.inputMode === 'bulk' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-500 hover:text-slate-300 text-center'}`}
+            onClick={() => {
+              console.log('TAB CLICKED: bulk');
+              vm.setInputMode('bulk');
+            }}
+            className={`cursor-pointer flex-1 py-3 text-sm font-semibold tracking-tight transition-colors border-b-2 ${vm.inputMode === 'bulk' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-500 hover:text-slate-300 text-center'}`}
           >
             주제 기반 AI 리서치
           </button>
           <button 
             type="button"
             onClick={() => vm.setInputMode('campaign')}
-            className={`flex-1 py-3 text-sm font-semibold tracking-tight transition-colors border-b-2 ${vm.inputMode === 'campaign' ? 'border-emerald-500 text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-300 text-center'}`}
+            className={`cursor-pointer flex-1 py-3 text-sm font-semibold tracking-tight transition-colors border-b-2 ${vm.inputMode === 'campaign' ? 'border-emerald-500 text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-300 text-center'}`}
           >
             카테고리 캠페인
           </button>
           <button 
             type="button"
             onClick={() => vm.setInputMode('inbox')}
-            className={`flex-1 py-3 text-sm font-semibold tracking-tight transition-colors border-b-2 ${vm.inputMode === 'inbox' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-300 text-center'}`}
+            className={`cursor-pointer flex-1 py-3 text-sm font-semibold tracking-tight transition-colors border-b-2 ${vm.inputMode === 'inbox' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-300 text-center'}`}
           >
             승인 대기함
             {vm.queue.filter(q => q.status === 'WAITING_APPROVAL').length > 0 && (
@@ -228,10 +250,11 @@ export function AutopilotDashboardWidget() {
               isQueueLoading={vm.isQueueLoading}
               configNode={configNodes}
               quickPresetNode={quickPresetNode}
+              publishTargetNode={publishTargetNode}
             />
           ) : vm.inputMode === 'bulk' ? (
             <>
-              <BulkKeywordWizard 
+              <BulkKeywordWizard
                 topic={vm.topic}
                 setTopic={vm.setTopic}
                 bulkCount={vm.bulkCount}
@@ -247,6 +270,7 @@ export function AutopilotDashboardWidget() {
                 isQueueLoading={vm.isQueueLoading}
                 configNode={configNodes}
                 quickPresetNode={quickPresetNode}
+                publishTargetNode={publishTargetNode}
               />
               {/* 대량 모드에서는 결과를 고른 후에 설정이 표시됨 */}
               <div className={`transition-all duration-500 pt-6 mt-6 border-t border-slate-800/50 ${
@@ -264,8 +288,13 @@ export function AutopilotDashboardWidget() {
               personaId={vm.personaId}
               themeId={vm.themeId}
               intervalHours={vm.intervalHours}
+              publishTimes={vm.publishTimes}
+              publishDays={vm.publishDays}
+              jitterMinutes={vm.jitterMinutes}
+              dailyCap={vm.dailyCap}
               activeTimeStart={vm.activeTimeStart}
               activeTimeEnd={vm.activeTimeEnd}
+              publishTargets={vm.publishTargets}
               configNode={configNodes}
               quickPresetNode={quickPresetNode}
             />

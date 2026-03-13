@@ -5,6 +5,8 @@ import { SuggestedTitle } from '@/entities/autopilot/model/types';
 import { SuggestedTitleList } from '@/entities/autopilot/ui/SuggestedTitleList';
 import { CartTitleList } from '@/entities/autopilot/ui/CartTitleList';
 import { TitleFormatSettingsGroup } from '@/shared/ui/article-settings/TitleFormatSettingsGroup';
+import { getNextRunAtKST } from '@/features/autopilot/lib/scheduler';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 
 export interface SingleKeywordWizardProps {
   wizardStep: number;
@@ -30,12 +32,17 @@ export interface SingleKeywordWizardProps {
   setCustomTitleInput: (input: string) => void;
   startDate: string;
   intervalHours: string;
+  publishTimes?: string;
+  publishDays?: string;
+  jitterMinutes?: string;
+  dailyCap?: string;
   activeTimeStart: string;
   activeTimeEnd: string;
   handleSingleSubmit: () => void;
   isQueueLoading: boolean;
   configNode?: React.ReactNode;
   quickPresetNode?: React.ReactNode;
+  publishTargetNode?: React.ReactNode;
 }
 
 export function SingleKeywordWizard({
@@ -62,47 +69,27 @@ export function SingleKeywordWizard({
   setCustomTitleInput,
   startDate,
   intervalHours,
+  publishTimes,
+  publishDays,
+  jitterMinutes,
+  dailyCap,
   activeTimeStart,
   activeTimeEnd,
   handleSingleSubmit,
   isQueueLoading,
   configNode,
-  quickPresetNode
+  quickPresetNode,
+  publishTargetNode
 }: SingleKeywordWizardProps) {
 
-  // 스케줄 미리보기 계산
   const calculateSchedulePreview = () => {
     const base = startDate ? new Date(startDate) : new Date();
-    const intervalMinutes = parseInt(intervalHours || '360', 10); // 분 단위
-    const activeStart = parseInt(activeTimeStart || '-1', 10);
-    const activeEnd = parseInt(activeTimeEnd || '-1', 10);
-
-    let currentTime = new Date(base.getTime());
-
-    // 현재 시간이 스케줄 시작으로 적합한지 판단, 아니면 앞당기기
-    const adjustToAllowedTime = (time: Date) => {
-      if (activeStart === -1 || activeEnd === -1) return;
-      const hour = time.getHours();
-
-      if (activeStart < activeEnd) {
-        // 주간 (예: 09:00 ~ 22:00)
-        if (hour < activeStart) {
-          time.setHours(activeStart, 0, 0, 0);
-        } else if (hour >= activeEnd) {
-          time.setDate(time.getDate() + 1);
-          time.setHours(activeStart, 0, 0, 0);
-        }
-      } else if (activeStart > activeEnd) {
-        // 야간/밤샘 (예: 22:00 ~ 06:00)
-        // 06:00 <= hour < 22:00 이라면 제외되는 시간임
-        if (hour >= activeEnd && hour < activeStart) {
-          time.setHours(activeStart, 0, 0, 0);
-        }
-      }
-    };
-
-    // 첫 시작 시간 교정
-    adjustToAllowedTime(currentTime);
+    const intervalMinutes = intervalHours ? parseInt(intervalHours, 10) * 60 : 0;
+    const activeStart = activeTimeStart ? parseInt(activeTimeStart, 10) : undefined;
+    const activeEnd = activeTimeEnd ? parseInt(activeTimeEnd, 10) : undefined;
+    const parsedPublishTimes = publishTimes ? publishTimes.split(',').filter(Boolean) : undefined;
+    const parsedPublishDays = publishDays ? publishDays.split(',').filter(Boolean).map(Number) : undefined;
+    const jitter = jitterMinutes ? parseInt(jitterMinutes, 10) : 0;
 
     // 템플릿 치환 로직 (예: {YYYY}, {MM}, {DD})
     const replaceDatePlaceholders = (titleText: string, d: Date) => {
@@ -119,14 +106,16 @@ export function SingleKeywordWizard({
     };
 
     return cartTitles.map((item, i) => {
-      if (i > 0) {
-        // 기존 시간에 단순히 Interval을 더함
-        currentTime = new Date(currentTime.getTime() + intervalMinutes * 60 * 1000);
-        // 더해진 결과가 금지시간대(주간/야간)라면 다시 교정
-        adjustToAllowedTime(currentTime);
-      }
-
-      const scheduledTime = new Date(currentTime.getTime());
+      const scheduledTime = getNextRunAtKST(
+          intervalMinutes,
+          activeStart,
+          activeEnd,
+          i * intervalMinutes, // 대량 등록 시 오프셋
+          base,
+          parsedPublishTimes,
+          parsedPublishDays,
+          jitter
+      );
 
       return {
         index: i,
@@ -184,17 +173,18 @@ export function SingleKeywordWizard({
             </div>
             <div className="space-y-1.5">
               <label className="block text-sm font-medium text-slate-300 tracking-tight">생성할 제목 개수</label>
-              <select
-                value={titleCount}
-                onChange={(e) => setTitleCount(Number(e.target.value))}
-                className="w-full p-3 bg-slate-950/50 border border-slate-800/50 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors text-slate-200 outline-none shadow-inner"
-              >
-                <option value={5}>5개</option>
-                <option value={10}>10개</option>
-                <option value={15}>15개 (추천)</option>
-                <option value={20}>20개</option>
-                <option value={30}>30개</option>
-              </select>
+              <Select value={titleCount.toString()} onValueChange={(v) => setTitleCount(Number(v))}>
+                <SelectTrigger className="w-full bg-slate-950/50 border-slate-800/50 text-slate-200 h-10">
+                  <SelectValue placeholder="개수" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5개</SelectItem>
+                  <SelectItem value="10">10개</SelectItem>
+                  <SelectItem value="15">15개 (추천)</SelectItem>
+                  <SelectItem value="20">20개</SelectItem>
+                  <SelectItem value="30">30개</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -316,6 +306,12 @@ export function SingleKeywordWizard({
               </div>
             </div>
           </div>
+
+          {publishTargetNode && (
+            <div className="mt-4">
+              {publishTargetNode}
+            </div>
+          )}
 
           <div className="flex justify-end pt-8 mt-2 border-t border-slate-800/50">
             <div className="flex items-center gap-3">

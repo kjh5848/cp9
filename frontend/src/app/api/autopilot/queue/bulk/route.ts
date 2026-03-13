@@ -54,6 +54,7 @@ export async function POST(request: Request) {
         maxRuns: payload.maxRuns ? parseInt(payload.maxRuns, 10) : null,
         expiresAt: payload.expiresAt ? new Date(payload.expiresAt) : null,
         titleRegenRule: payload.titleRegenRule || 'reuse',
+        publishTargets: payload.publishTargets ? JSON.stringify(payload.publishTargets) : null,
       };
     });
 

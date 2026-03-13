@@ -23,6 +23,10 @@ export interface AutopilotQueueItem {
   isRocketOnly?: boolean;
 
   intervalHours?: number | null;
+  publishTimes?: string | null;
+  publishDays?: string | null;
+  jitterMinutes?: number | null;
+  dailyCap?: number | null;
   activeTimeStart?: number | null;
   activeTimeEnd?: number | null;
   nextRunAt?: string | null;
@@ -56,6 +60,10 @@ export interface CreateAutopilotQueuePayload {
   isRocketOnly?: boolean;
 
   intervalHours?: number;
+  publishTimes?: string;
+  publishDays?: string;
+  jitterMinutes?: number;
+  dailyCap?: number;
   activeTimeStart?: number;
   activeTimeEnd?: number;
   startDate?: string;
@@ -64,6 +72,7 @@ export interface CreateAutopilotQueuePayload {
   maxRuns?: number;
   expiresAt?: string;
   titleRegenRule?: string;
+  publishTargets?: any[];
 }
 
 export interface AiResearchKeyword {

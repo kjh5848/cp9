@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { PersonaManager } from '@/features/persona/ui/PersonaManager';
 
 export const metadata = {
@@ -17,7 +17,9 @@ export default function PersonasPage() {
           <p className="text-slate-400 font-jakarta">오토파일럿 봇이나 수동 글 작성 시 적용될 나만의 AI 자아(페르소나)를 커스텀하고 관리하세요.</p>
         </header>
 
-        <PersonaManager />
+        <Suspense fallback={<div className="text-white text-center py-10">Loading Personas...</div>}>
+          <PersonaManager />
+        </Suspense>
       </div>
     </div>
   );

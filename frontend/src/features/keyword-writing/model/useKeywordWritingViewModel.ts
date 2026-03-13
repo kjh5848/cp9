@@ -45,6 +45,7 @@ export function useKeywordWritingViewModel() {
   const [titleExamples, setTitleExamples] = useState("");
   const [titleExclusions, setTitleExclusions] = useState("");
   const [themeId, setThemeId] = useState<string | null>(null);
+  const [publishTargets, setPublishTargets] = useState<any[]>([]);
 
   useEffect(() => {
     if (articleSettings?.defaultTitleModel) {
@@ -386,6 +387,7 @@ export function useKeywordWritingViewModel() {
           publishTarget: "DB_ONLY",
           ...(themeId && { themeId })
         },
+        publishTargets,
         keywordMode: { keyword: keyword.trim() || finalTitle, selectedTitle: finalTitle },
       };
       if (leadProduct) {
@@ -440,6 +442,7 @@ export function useKeywordWritingViewModel() {
       titleExamples,
       titleExclusions,
       themeId,
+      publishTargets,
       isGenerating,
       generationResult,
       coupangResults,
@@ -484,6 +487,7 @@ export function useKeywordWritingViewModel() {
       setTitleExamples,
       setTitleExclusions,
       setThemeId,
+      setPublishTargets,
       setCoupangSearchTerm,
       setStepA,
       setCategory,

@@ -4,9 +4,11 @@ import { useAutopilotViewModel } from '@/features/autopilot/model/useAutopilotVi
 import { usePersonaViewModel } from '@/features/persona/model/usePersonaViewModel';
 import { DEFAULT_TEXT_MODEL, DEFAULT_IMAGE_MODEL } from '@/shared/config/model-options';
 import { AiResearchKeyword, CreateAutopilotQueuePayload, SuggestedTitle } from '@/entities/autopilot/model/types';
+import { PublishTarget } from '@/shared/ui/PublishTargetSection';
 import { useUserSettingsViewModel } from '@/features/user-settings/model/useUserSettingsViewModel';
 import { useAutopilotStore } from '@/entities/autopilot/model/useAutopilotStore';
 import { ThemeSwitcherTheme } from '@/entities/design/ui/ThemeSwitcher';
+import { getNextRunAtKST } from '@/features/autopilot/lib/scheduler';
 
 export function useAutopilotDashboardViewModel() {
   const router = useRouter();
@@ -71,10 +73,17 @@ export function useAutopilotDashboardViewModel() {
   const [maxPrice, setMaxPrice] = useState('');
   const [isRocketOnly, setIsRocketOnly] = useState(false);
   const [intervalHours, setIntervalHours] = useState('24');
+  const [publishTimes, setPublishTimes] = useState('');
+  const [publishDays, setPublishDays] = useState('');
+  const [jitterMinutes, setJitterMinutes] = useState('');
+  const [dailyCap, setDailyCap] = useState('');
   const [activeTimeStart, setActiveTimeStart] = useState('9');
   const [activeTimeEnd, setActiveTimeEnd] = useState('22');
   const [startDate, setStartDate] = useState('');
   const [expiresAt, setExpiresAt] = useState('');
+
+  // 다중 플랫폼 발행 대상
+  const [publishTargets, setPublishTargets] = useState<PublishTarget[]>();
 
   // Zustand Draft 연동 (Silent Recovery)
   const { cartTitles: storeCartTitles, settings: storeSettings, draftState, setCartTitles: setStoreCartTitles, updateSettings: setStoreSettings, updateDraftState, clearCart: storeClearCart } = useAutopilotStore();
@@ -161,6 +170,10 @@ export function useAutopilotDashboardViewModel() {
       if (autopilotSettings.minPrice !== null && autopilotSettings.minPrice !== undefined) setMinPrice(String(autopilotSettings.minPrice));
       if (autopilotSettings.maxPrice !== null && autopilotSettings.maxPrice !== undefined) setMaxPrice(String(autopilotSettings.maxPrice));
       if (autopilotSettings.intervalHours !== null && autopilotSettings.intervalHours !== undefined) setIntervalHours(String(autopilotSettings.intervalHours));
+      if (autopilotSettings.publishTimes) setPublishTimes(autopilotSettings.publishTimes);
+      if (autopilotSettings.publishDays) setPublishDays(autopilotSettings.publishDays);
+      if (autopilotSettings.jitterMinutes !== null && autopilotSettings.jitterMinutes !== undefined) setJitterMinutes(String(autopilotSettings.jitterMinutes));
+      if (autopilotSettings.dailyCap !== null && autopilotSettings.dailyCap !== undefined) setDailyCap(String(autopilotSettings.dailyCap));
       if (autopilotSettings.activeTimeStart !== null && autopilotSettings.activeTimeStart !== undefined) setActiveTimeStart(String(autopilotSettings.activeTimeStart));
       if (autopilotSettings.activeTimeEnd !== null && autopilotSettings.activeTimeEnd !== undefined) setActiveTimeEnd(String(autopilotSettings.activeTimeEnd));
     }
@@ -283,20 +296,26 @@ export function useAutopilotDashboardViewModel() {
 
   const calculateSchedulePreview = () => {
     const base = startDate ? new Date(startDate) : new Date();
-    const interval = parseInt(intervalHours || '24', 10);
-    const activeStart = parseInt(activeTimeStart || '9', 10);
-    const activeEnd = parseInt(activeTimeEnd || '22', 10);
+    const intervalMinutes = intervalHours ? parseInt(intervalHours, 10) * 60 : 0;
+    const activeStart = activeTimeStart ? parseInt(activeTimeStart, 10) : undefined;
+    const activeEnd = activeTimeEnd ? parseInt(activeTimeEnd, 10) : undefined;
+    const parsedPublishTimes = publishTimes ? publishTimes.split(',').filter(Boolean) : undefined;
+    const parsedPublishDays = publishDays ? publishDays.split(',').filter(Boolean).map(Number) : undefined;
+    const jitter = jitterMinutes ? parseInt(jitterMinutes, 10) : 0;
 
     return cartTitles.map((item, i) => {
-      const runTime = new Date(base.getTime() + i * interval * 60 * 60 * 1000);
-      const hour = runTime.getHours();
-      if (activeEnd > activeStart) {
-        if (hour < activeStart) runTime.setHours(activeStart, 0, 0, 0);
-        else if (hour >= activeEnd) {
-          runTime.setDate(runTime.getDate() + 1);
-          runTime.setHours(activeStart, 0, 0, 0);
-        }
-      }
+      // 특정 시간 모드의 경우 단발성으로 잡지만 preview에서는 순차적으로 나옴
+      const runTime = getNextRunAtKST(
+          intervalMinutes,
+          activeStart,
+          activeEnd,
+          i * intervalMinutes, // 대량 등록 시 오프셋
+          base,
+          parsedPublishTimes,
+          parsedPublishDays,
+          jitter
+      );
+
       return { index: i, title: item.title, scheduledAt: runTime };
     });
   };
@@ -323,6 +342,10 @@ export function useAutopilotDashboardViewModel() {
         maxPrice: maxPrice ? parseInt(maxPrice, 10) : undefined,
         isRocketOnly,
         intervalHours: undefined, // 한 제목당 반복 발행하지 않으므로 undefined (단발성)
+        publishTimes: publishTimes || undefined,
+        publishDays: publishDays || undefined,
+        jitterMinutes: jitterMinutes ? parseInt(jitterMinutes, 10) : undefined,
+        dailyCap: dailyCap ? parseInt(dailyCap, 10) : undefined,
         activeTimeStart: activeTimeStart ? parseInt(activeTimeStart, 10) : undefined,
         activeTimeEnd: activeTimeEnd ? parseInt(activeTimeEnd, 10) : undefined,
         startDate: item.scheduledAt.toISOString(),
@@ -331,6 +354,7 @@ export function useAutopilotDashboardViewModel() {
         coupangSearchTerm: singleKeywordResearchMeta?.coupangSearchTerm,
         recommendedItemCount: singleKeywordResearchMeta?.recommendedItemCount,
         searchIntent: singleKeywordResearchMeta?.intent,
+        publishTargets,
       };
     });
 
@@ -351,24 +375,30 @@ export function useAutopilotDashboardViewModel() {
 
     const preview = calculateSchedulePreview();
     if (preview.length === 0) {
-       // 대량의 경우 cartTitles가 아니라 선택된 키워드들에 직접 매핑합니다.
-       const base = startDate ? new Date(startDate) : new Date();
-       const interval = parseInt(intervalHours || '24', 10);
-       const activeStart = parseInt(activeTimeStart || '9', 10);
-       const activeEnd = parseInt(activeTimeEnd || '22', 10);
-
-       selectedItems.forEach((_, i) => {
-         const runTime = new Date(base.getTime() + i * interval * 60 * 60 * 1000);
-         const hour = runTime.getHours();
-         if (activeEnd > activeStart) {
-           if (hour < activeStart) runTime.setHours(activeStart, 0, 0, 0);
-           else if (hour >= activeEnd) {
-             runTime.setDate(runTime.getDate() + 1);
-             runTime.setHours(activeStart, 0, 0, 0);
-           }
-         }
-         preview.push({ index: i, title: selectedItems[i].blogTitle, scheduledAt: runTime });
-       });
+         // 대량의 경우 cartTitles가 아니라 선택된 키워드들에 직접 매핑합니다.
+         const base = startDate ? new Date(startDate) : new Date();
+         const intervalMinutes = intervalHours ? parseInt(intervalHours, 10) * 60 : 0;
+         const activeStart = activeTimeStart ? parseInt(activeTimeStart, 10) : undefined;
+         const activeEnd = activeTimeEnd ? parseInt(activeTimeEnd, 10) : undefined;
+         const parsedPublishTimes = publishTimes ? publishTimes.split(',').filter(Boolean) : undefined;
+         const parsedPublishDays = publishDays ? publishDays.split(',').filter(Boolean).map(Number) : undefined;
+         const jitter = jitterMinutes ? parseInt(jitterMinutes, 10) : 0;
+  
+         selectedItems.forEach((_, i) => {
+           let offset = 0;
+           if (i > 0) offset = intervalMinutes;
+           const runTime = getNextRunAtKST(
+               intervalMinutes,
+               activeStart,
+               activeEnd,
+               i * intervalMinutes,
+               base,
+               parsedPublishTimes,
+               parsedPublishDays,
+               jitter
+           );
+           preview.push({ index: i, title: selectedItems[i].blogTitle, scheduledAt: runTime });
+         });
     }
 
     const payloads: CreateAutopilotQueuePayload[] = preview.map((item, i) => {
@@ -391,10 +421,15 @@ export function useAutopilotDashboardViewModel() {
         maxPrice: maxPrice ? parseInt(maxPrice, 10) : undefined,
         isRocketOnly,
         intervalHours: intervalHours ? parseInt(intervalHours, 10) : undefined,
+        publishTimes: publishTimes || undefined,
+        publishDays: publishDays || undefined,
+        jitterMinutes: jitterMinutes ? parseInt(jitterMinutes, 10) : undefined,
+        dailyCap: dailyCap ? parseInt(dailyCap, 10) : undefined,
         activeTimeStart: activeTimeStart ? parseInt(activeTimeStart, 10) : undefined,
         activeTimeEnd: activeTimeEnd ? parseInt(activeTimeEnd, 10) : undefined,
         startDate: item.scheduledAt.toISOString(),
         expiresAt: expiresAt || undefined,
+        publishTargets,
       };
     });
 
@@ -433,6 +468,10 @@ export function useAutopilotDashboardViewModel() {
         if (autopilotSettings.maxPrice !== null && autopilotSettings.maxPrice !== undefined) setMaxPrice(String(autopilotSettings.maxPrice));
         if (autopilotSettings.isRocketOnly !== undefined) setIsRocketOnly(autopilotSettings.isRocketOnly);
         if (autopilotSettings.intervalHours !== null && autopilotSettings.intervalHours !== undefined) setIntervalHours(String(autopilotSettings.intervalHours));
+        if (autopilotSettings.publishTimes) setPublishTimes(autopilotSettings.publishTimes);
+        if (autopilotSettings.publishDays) setPublishDays(autopilotSettings.publishDays);
+        if (autopilotSettings.jitterMinutes !== null && autopilotSettings.jitterMinutes !== undefined) setJitterMinutes(String(autopilotSettings.jitterMinutes));
+        if (autopilotSettings.dailyCap !== null && autopilotSettings.dailyCap !== undefined) setDailyCap(String(autopilotSettings.dailyCap));
         if (autopilotSettings.activeTimeStart !== null && autopilotSettings.activeTimeStart !== undefined) setActiveTimeStart(String(autopilotSettings.activeTimeStart));
         if (autopilotSettings.activeTimeEnd !== null && autopilotSettings.activeTimeEnd !== undefined) setActiveTimeEnd(String(autopilotSettings.activeTimeEnd));
       }
@@ -486,10 +525,15 @@ export function useAutopilotDashboardViewModel() {
     maxPrice, setMaxPrice,
     isRocketOnly, setIsRocketOnly,
     intervalHours, setIntervalHours,
+    publishTimes, setPublishTimes,
+    publishDays, setPublishDays,
+    jitterMinutes, setJitterMinutes,
+    dailyCap, setDailyCap,
     activeTimeStart, setActiveTimeStart,
     activeTimeEnd, setActiveTimeEnd,
     startDate, setStartDate,
     expiresAt, setExpiresAt,
+    publishTargets, setPublishTargets,
     handleRefreshSettings,
     queue, fetchQueue
   };

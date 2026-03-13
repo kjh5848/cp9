@@ -244,6 +244,7 @@ export async function GET(request: Request) {
         sortCriteria: pendingItem.sortCriteria,
         intervalHours: pendingItem.intervalHours,
         articleType: pendingItem.articleType,
+        publishTargets: pendingItem.publishTargets,
       };
 
       const pipelineResult = await runSeoPipeline(body, { persona, tone, textModel, imageModel, charLimit, articleType: articleType as 'single' | 'compare' | 'curation', publishTarget, themeId, autopilotData });

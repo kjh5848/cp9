@@ -1,6 +1,7 @@
 import React from 'react';
 import { AiResearchKeyword } from '@/entities/autopilot/model/types';
 import { ResearchResultTable } from '@/entities/autopilot/ui/ResearchResultTable';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 
 export interface BulkKeywordWizardProps {
   topic: string;
@@ -18,6 +19,7 @@ export interface BulkKeywordWizardProps {
   isQueueLoading: boolean;
   configNode?: React.ReactNode;
   quickPresetNode?: React.ReactNode;
+  publishTargetNode?: React.ReactNode;
 }
 
 export function BulkKeywordWizard({
@@ -35,7 +37,8 @@ export function BulkKeywordWizard({
   handleBulkSubmit,
   isQueueLoading,
   configNode,
-  quickPresetNode
+  quickPresetNode,
+  publishTargetNode
 }: BulkKeywordWizardProps) {
   return (
     <div className="space-y-4">
@@ -44,14 +47,17 @@ export function BulkKeywordWizard({
           <label className="block text-sm font-medium text-slate-300 tracking-tight">리서치 주제어 (데이터셋)</label>
           <div className="flex items-center gap-2">
             <span className="text-xs text-slate-400">발굴 개수:</span>
-            <input
-              type="number"
-              min={1}
-              max={100}
-              value={bulkCount}
-              onChange={(e) => setBulkCount(Number(e.target.value))}
-              className="w-16 p-1 bg-slate-950/50 border border-slate-800/50 rounded-lg focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500 transition-colors text-slate-200 text-sm text-center outline-none"
-            />
+            <Select value={bulkCount.toString()} onValueChange={(v) => setBulkCount(Number(v))}>
+              <SelectTrigger className="w-24 bg-slate-950/50 border-slate-800/50 text-slate-200 h-8 text-xs">
+                <SelectValue placeholder="개수" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10개</SelectItem>
+                <SelectItem value="30">30개</SelectItem>
+                <SelectItem value="50">50개</SelectItem>
+                <SelectItem value="100">100개</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
         <div className="space-y-2">
@@ -119,8 +125,15 @@ export function BulkKeywordWizard({
         toggleKeywordSelection={toggleKeywordSelection}
       />
 
+      {researchResults.length > 0 && publishTargetNode && (
+        <div className="mt-8 border-t border-slate-800/50 pt-6">
+          <h3 className="text-lg font-semibold text-white mb-4">다중 플랫폼 발행 설정</h3>
+          {publishTargetNode}
+        </div>
+      )}
+
       {researchResults.length > 0 ? (
-        <div className="flex justify-end pt-8 mt-2 border-t border-slate-800/50">
+        <div className="flex justify-end pt-6 mt-2 border-t border-slate-800/50">
           <button
             type="button"
             onClick={() => {

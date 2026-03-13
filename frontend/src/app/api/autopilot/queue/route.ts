@@ -38,12 +38,17 @@ export async function POST(request: Request) {
       maxPrice,
       isRocketOnly,
       intervalHours,
+      publishTimes,
+      publishDays,
+      jitterMinutes,
+      dailyCap,
       activeTimeStart,
       activeTimeEnd,
       startDate,
       themeId,
       maxRuns,
-      expiresAt
+      expiresAt,
+      publishTargets
     } = body;
     
     if (!keyword) {
@@ -53,8 +58,23 @@ export async function POST(request: Request) {
     const parsedInterval = intervalHours ? parseInt(intervalHours, 10) : null;
     const parsedStart = activeTimeStart !== undefined && activeTimeStart !== null ? parseInt(activeTimeStart, 10) : null;
     const parsedEnd = activeTimeEnd !== undefined && activeTimeEnd !== null ? parseInt(activeTimeEnd, 10) : null;
+    
+    // Parse advance fields
+    const parsedPublishTimes = publishTimes ? publishTimes.split(',').map((s: string) => s.trim()) : undefined;
+    const parsedPublishDays = publishDays ? publishDays.split(',').map((s: string) => parseInt(s.trim(), 10)) : undefined;
+    const parsedJitter = jitterMinutes !== undefined && jitterMinutes !== null ? parseInt(jitterMinutes, 10) : 15;
+    const parsedDailyCap = dailyCap !== undefined && dailyCap !== null ? parseInt(dailyCap, 10) : null;
 
-    const nextRunAt = getNextRunAtKST(parsedInterval, parsedStart, parsedEnd, 0, startDate || null);
+    const nextRunAt = getNextRunAtKST(
+      parsedInterval, 
+      parsedStart, 
+      parsedEnd, 
+      0, 
+      startDate || null,
+      parsedPublishTimes,
+      parsedPublishDays,
+      parsedJitter
+    );
 
     const newItem = await prisma.autopilotQueue.create({
       data: {
@@ -75,11 +95,16 @@ export async function POST(request: Request) {
         isRocketOnly: isRocketOnly || false,
         
         intervalHours: parsedInterval,
+        publishTimes: publishTimes || null,
+        publishDays: publishDays || null,
+        jitterMinutes: parsedJitter,
+        dailyCap: parsedDailyCap,
         activeTimeStart: parsedStart,
         activeTimeEnd: parsedEnd,
         nextRunAt,
         maxRuns: maxRuns ? parseInt(maxRuns, 10) : null,
         expiresAt: expiresAt ? new Date(expiresAt) : null,
+        publishTargets: publishTargets ? JSON.stringify(publishTargets) : null,
       },
       include: {
         persona: {

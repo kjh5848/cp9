@@ -13,6 +13,7 @@ import { usePersonaViewModel } from "@/features/persona/model/usePersonaViewMode
 import { useUserSettingsViewModel } from "@/features/user-settings/model/useUserSettingsViewModel";
 import { SharedArticleSettings } from "@/shared/ui/SharedArticleSettings";
 import { ThemeSwitcherTheme } from "@/entities/design/ui/ThemeSwitcher";
+import { PublishTargetSection } from "@/shared/ui/PublishTargetSection";
 
 interface WritingSettingsFormProps {
   persona: string;
@@ -28,6 +29,8 @@ interface WritingSettingsFormProps {
   themeId: string | null;
   setThemeId: (v: string | null) => void;
   itemCount?: number;
+  publishTargets?: any[];
+  setPublishTargets?: (targets: any[]) => void;
 }
 
 export function WritingSettingsForm(props: WritingSettingsFormProps) {
@@ -88,6 +91,15 @@ export function WritingSettingsForm(props: WritingSettingsFormProps) {
         themeId={props.themeId}
         setThemeId={props.setThemeId}
       />
+
+      {props.publishTargets !== undefined && props.setPublishTargets && (
+        <div className="mt-8 border-t border-slate-800/60 pt-6">
+          <PublishTargetSection
+            targets={props.publishTargets}
+            onChange={props.setPublishTargets}
+          />
+        </div>
+      )}
     </GlassCard>
   );
 }

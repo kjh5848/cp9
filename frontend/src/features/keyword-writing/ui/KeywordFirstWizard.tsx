@@ -337,6 +337,8 @@ export const KeywordFirstWizard = ({ viewModel, renderCartBar }: KeywordFirstWiz
             themeId={s.themeId}
             setThemeId={a.setThemeId}
             itemCount={s.selectedProducts.length}
+            publishTargets={s.publishTargets}
+            setPublishTargets={a.setPublishTargets}
           />
           <div className="flex justify-between">
             <Button variant="ghost" onClick={() => a.setStepA(2)}><ChevronLeft className="w-4 h-4 mr-1" />이전</Button>

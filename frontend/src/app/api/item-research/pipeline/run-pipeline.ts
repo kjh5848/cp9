@@ -146,10 +146,58 @@ export async function runSeoPipeline(body: ItemResearchRequest, config: Pipeline
     const seoContent = await runHtmlPhase(ctx, markdownRaw, actualImageUrl);
     const phase4Ms = Date.now() - phase4Start;
 
-    // ── Phase 5: WordPress 발행 (조건부) ──
+    // ── Phase 5: 다중 플랫폼 발행 (조건부) ──
     let wpResult = null;
     let phase5Ms = 0;
-    if (publishTarget === 'WORDPRESS') {
+    
+    // 다중 목적지 정보 파싱
+    const publishTargetsRaw = ctx.autopilotData?.publishTargets;
+    let publishTargets: any[] = [];
+    if (typeof publishTargetsRaw === 'string') {
+      try {
+        publishTargets = JSON.parse(publishTargetsRaw);
+      } catch (e) {
+        console.warn('Failed to parse publishTargets', e);
+      }
+    } else if (Array.isArray(publishTargetsRaw)) {
+      publishTargets = publishTargetsRaw;
+    }
+
+    if (publishTargets.length > 0) {
+      const phase5Start = Date.now();
+      console.log(`🚀 [Phase 5] 다중 플랫폼 발행 시작 (${publishTargets.length}개 타겟 설정됨)`);
+      
+      const publishPromises = publishTargets.map(async (target) => {
+        if (!target.enabled) return null;
+        
+        if (target.platform === 'wordpress') {
+          const categoryId = target.meta?.categoryId ? Number(target.meta.categoryId) : undefined;
+          return runWordPressPhase(ctx, seoContent, actualImageUrl, finalTitle, categoryId);
+        }
+        
+        // 향후 구글, 네이버 카페 등 확장 시 추가
+        if (target.platform === 'google' || target.platform === 'naver_cafe') {
+          console.log(`⚠️ [Phase 5] ${target.platform} 발행 기능은 아직 구현되지 않았습니다.`);
+          return null; // TODO: 구현
+        }
+        
+        return null; // 알 수 없는 플랫폼
+      });
+
+      const results = await Promise.allSettled(publishPromises);
+      
+      results.forEach((res, idx) => {
+        const platform = publishTargets[idx].platform;
+        if (res.status === 'rejected') {
+          console.error(`❌ [Phase 5] ${platform} 발행 실패:`, res.reason);
+        } else if (res.value && platform === 'wordpress') {
+          wpResult = res.value; // 워드프레스 결과는 파이프라인의 메인 결과로 리턴하기 위해 저장
+        }
+      });
+      
+      phase5Ms = Date.now() - phase5Start;
+    } else if (publishTarget === 'WORDPRESS') {
+      // 레거시 단일 워드프레스 발행 호환성 유지
       const phase5Start = Date.now();
       wpResult = await runWordPressPhase(ctx, seoContent, actualImageUrl, finalTitle);
       phase5Ms = Date.now() - phase5Start;

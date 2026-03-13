@@ -10,6 +10,10 @@ export interface CategoryCampaign {
   activeTimeEnd: number | null;
   batchSize: number;
   isAutoApprove: boolean;
+  targetAge?: string | null;
+  targetGender?: string | null;
+  targetPrice?: string | null;
+  targetIndustry?: string | null;
   createdAt: string;
   persona?: { name: string } | null;
   _count?: {
