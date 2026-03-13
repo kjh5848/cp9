@@ -5,7 +5,7 @@ import { CoupangProductResponse, CoupangRawProduct } from '@/shared/types/api';
 import { normalizeCoupangProduct, resolveImageRedirectUrl } from '@/shared/lib/api-utils';
 import { getServerSession } from "next-auth/next";
 import { prisma } from "@/infrastructure/clients/prisma";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/shared/config/auth-options";
 
 /**
  * 당일 쿠팡 골드박스 특가 상품 리스트 조회 API 라우트

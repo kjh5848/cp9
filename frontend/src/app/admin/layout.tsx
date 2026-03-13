@@ -1,7 +1,7 @@
 import { LayoutGrid, Users, Activity, CreditCard } from "lucide-react";
 import Link from "next/link";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/shared/config/auth-options";
 import { redirect } from "next/navigation";
 
 export default async function AdminLayout({
@@ -23,7 +23,7 @@ export default async function AdminLayout({
   ];
 
   return (
-    <div className="flex bg-[#0A0A0B] min-h-screen text-slate-200">
+    <div className="flex bg-[#0A0A0B] h-[calc(100vh-4rem)] text-slate-200">
       {/* 어드민 사이드바 (LNB) */}
       <aside className="w-64 bg-[#111113] border-r border-slate-800 flex flex-col">
         <div className="p-6 border-b border-slate-800">
@@ -54,7 +54,7 @@ export default async function AdminLayout({
       </aside>
 
       {/* 내부 콘텐츠 */}
-      <main className="flex-1 flex flex-col max-h-screen overflow-hidden">
+      <main className="flex-1 flex flex-col h-full overflow-hidden">
         <header className="h-16 border-b border-slate-800 flex items-center px-8 bg-[#0A0A0B]/80 backdrop-blur-md">
           <h1 className="text-lg font-medium">관리자 전용 대시보드</h1>
         </header>

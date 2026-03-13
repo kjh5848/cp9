@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { useKeywordLabStore } from "@/entities/keyword-extraction/model/useKeywordLabStore";
 
 export interface ExtractedKeyword {
   keyword: string;
@@ -15,17 +16,21 @@ export interface ExtractedKeyword {
 export function useKeywordExtraction() {
   const router = useRouter();
 
-  // 1. 탐색 조건 State
-  const [seedKeyword, setSeedKeyword] = useState("");
-  const [targetAge, setTargetAge] = useState("all"); // 20s, 30s, 40s, 50s, all
-  const [targetGender, setTargetGender] = useState("all"); // m, f, all
-  const [category, setCategory] = useState("tech");
-  const [searchIntent, setSearchIntent] = useState("all"); // info, review, compare, all
+  // 1. 전역 상태 연동 (Draft)
+  const {
+    seedKeyword, targetCount, targetAge, targetGender, category, searchIntent, searchModel,
+    extractedKeywords, selectedKeywords,
+    setSeedKeyword, setTargetCount, setTargetAge, setTargetGender, setCategory, setSearchIntent, setSearchModel,
+    setExtractedKeywords, setSelectedKeywords
+  } = useKeywordLabStore();
 
-  // 2. 결과 처리 State
-  const [extractedKeywords, setExtractedKeywords] = useState<ExtractedKeyword[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
+  const [isStoreReady, setIsStoreReady] = useState(false);
+
+  // Client-side hydration 처리
+  useEffect(() => {
+    setIsStoreReady(true);
+  }, []);
 
   // 액션: AI 키워드 탐색
   const handleExtract = async () => {
@@ -44,10 +49,12 @@ export function useKeywordExtraction() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           seedKeyword,
+          targetCount,
           targetAge,
           targetGender,
           category,
-          searchIntent
+          searchIntent,
+          searchModel
         }),
       });
 
@@ -67,8 +74,10 @@ export function useKeywordExtraction() {
   };
 
   const toggleSelection = (keyword: string) => {
-    setSelectedKeywords(prev => 
-      prev.includes(keyword) ? prev.filter(k => k !== keyword) : [...prev, keyword]
+    setSelectedKeywords(
+      selectedKeywords.includes(keyword) 
+        ? selectedKeywords.filter((k: string) => k !== keyword) 
+        : [...selectedKeywords, keyword]
     );
   };
 
@@ -85,11 +94,11 @@ export function useKeywordExtraction() {
 
   return {
     state: {
-      seedKeyword, targetAge, targetGender, category, searchIntent,
+      seedKeyword, targetCount, targetAge, targetGender, category, searchIntent, searchModel,
       extractedKeywords, isLoading, selectedKeywords
     },
     actions: {
-      setSeedKeyword, setTargetAge, setTargetGender, setCategory, setSearchIntent,
+      setSeedKeyword, setTargetCount, setTargetAge, setTargetGender, setCategory, setSearchIntent, setSearchModel,
       handleExtract, toggleSelection, sendToKeywordWriting
     }
   };

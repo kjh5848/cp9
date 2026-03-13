@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { useState, useEffect } from "react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
@@ -9,12 +9,20 @@ import { toast } from "react-hot-toast";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+
+  // 전역 세션이 이미 존재하면(로그인된 상태라면) 메인화면으로 리다이렉트
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.push("/keyword-lab");
+    }
+  }, [status, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,8 +39,8 @@ export default function LoginPage() {
         toast.error("이메일 또는 비밀번호가 일치하지 않습니다.");
       } else {
         toast.success("로그인 성공!");
-        router.push("/keyword-lab");
-        router.refresh();
+        // 하드 리프레시로 세션 강제 동기화 (NextAuth 상태 갱신)
+        window.location.href = "/keyword-lab";
       }
     } catch (err) {
       toast.error("로그인 중 오류가 발생했습니다.");

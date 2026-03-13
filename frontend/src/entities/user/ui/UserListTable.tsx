@@ -13,7 +13,34 @@ interface UserListTableProps {
   onRoleChange: (userId: string, newRole: UserRole) => void;
 }
 
+import { useState } from "react";
 export function UserListTable({ users, isLoading, onRoleChange }: UserListTableProps) {
+  const [pendingRoles, setPendingRoles] = useState<Record<string, UserRole>>({});
+
+  const handlePendingRoleChange = (userId: string, newRole: UserRole) => {
+    setPendingRoles(prev => ({ ...prev, [userId]: newRole }));
+  };
+
+  const handleSave = (userId: string, currentRole: UserRole) => {
+    const newRole = pendingRoles[userId];
+    if (newRole && newRole !== currentRole) {
+      onRoleChange(userId, newRole);
+    }
+    // Remove from pending after save
+    setPendingRoles(prev => {
+      const copy = { ...prev };
+      delete copy[userId];
+      return copy;
+    });
+  };
+
+  const handleCancel = (userId: string) => {
+    setPendingRoles(prev => {
+      const copy = { ...prev };
+      delete copy[userId];
+      return copy;
+    });
+  };
   if (isLoading) {
     return <div className="p-8 text-center text-slate-500 animate-pulse">데이터를 불러오는 중입니다...</div>;
   }
@@ -89,15 +116,37 @@ export function UserListTable({ users, isLoading, onRoleChange }: UserListTableP
                     </div>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <select 
-                      className="bg-[#111113] border border-slate-700 text-slate-200 text-xs rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-slate-500 cursor-pointer"
-                      value={user.role}
-                      onChange={(e) => onRoleChange(user.id, e.target.value as UserRole)}
-                    >
-                      <option value="USER">일반 (USER)</option>
-                      <option value="PRO">프로 (PRO)</option>
-                      <option value="ADMIN">관리자 (ADMIN)</option>
-                    </select>
+                    <div className="flex items-center justify-end gap-2">
+                      <select 
+                        className="bg-[#111113] border border-slate-700 text-slate-200 text-xs rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-slate-500 cursor-pointer"
+                        value={pendingRoles[user.id] || user.role}
+                        onChange={(e) => handlePendingRoleChange(user.id, e.target.value as UserRole)}
+                      >
+                        <option value="USER">일반 (USER)</option>
+                        <option value="PRO">프로 (PRO)</option>
+                        <option value="ADMIN">관리자 (ADMIN)</option>
+                      </select>
+                      
+                      {pendingRoles[user.id] && pendingRoles[user.id] !== user.role && (
+                        <>
+                          <Button 
+                            size="sm" 
+                            className="h-7 px-2 text-xs bg-emerald-600 hover:bg-emerald-500 text-white"
+                            onClick={() => handleSave(user.id, user.role)}
+                          >
+                            저장
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            className="h-7 px-2 text-xs border-slate-700 hover:bg-slate-800 text-slate-300"
+                            onClick={() => handleCancel(user.id)}
+                          >
+                            취소
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))

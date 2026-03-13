@@ -11,15 +11,16 @@ interface NavbarProps {
   className?: string;
 }
 
+import { useSession, signOut } from "next-auth/react";
+
 /**
  * [Widgets Layer]
  * 전역 네비게이션 바 위젯입니다. 
  * Glassmorphism 디자인이 적용되어 있으며 고정(fixed) 위치를 가집니다.
  */
 export const Navbar = ({ className }: NavbarProps) => {
-  // 임시Mock 유저 데이터 (테스트를 위해 활성화)
-  const user = { email: "admin@cp9.com" }; 
-  const signOut = () => console.log("Sign out");
+  const { data: session } = useSession();
+  const user = session?.user;
 
   return (
     <header className={cn(
@@ -70,12 +71,23 @@ export const Navbar = ({ className }: NavbarProps) => {
       <div className="flex items-center gap-4">
         {user ? (
           <div className="flex items-center gap-3">
-            <span className="text-xs text-slate-400">{(user as any).email}</span>
+            {(user as any).role === "ADMIN" && (
+              <Link href="/admin">
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="h-8 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-400/10 font-bold tracking-wide"
+                >
+                  어드민
+                </Button>
+              </Link>
+            )}
+            <span className="text-xs text-slate-400">{user.email}</span>
             <Button 
               size="sm" 
               variant="outline" 
               className="h-8 border-white/10 text-white hover:bg-white/5"
-              onClick={signOut}
+              onClick={() => signOut({ callbackUrl: "/login" })}
             >
               로그아웃
             </Button>

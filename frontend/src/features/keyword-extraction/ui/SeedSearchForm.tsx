@@ -7,18 +7,22 @@ import { Button } from "@/shared/ui/button";
 interface SeedSearchFormProps {
   state: {
     seedKeyword: string;
+    targetCount: number;
     targetAge: string;
     targetGender: string;
     category: string;
     searchIntent: string;
+    searchModel: string;
     isLoading: boolean;
   };
   actions: {
     setSeedKeyword: (v: string) => void;
+    setTargetCount: (v: number) => void;
     setTargetAge: (v: string) => void;
     setTargetGender: (v: string) => void;
     setCategory: (v: string) => void;
     setSearchIntent: (v: string) => void;
+    setSearchModel: (v: string) => void;
     handleExtract: () => void;
   };
 }
@@ -43,7 +47,22 @@ export const SeedSearchForm = ({ state, actions }: SeedSearchFormProps) => {
       </div>
 
       {/* 2. 상세 타겟팅 */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-slate-400">타겟 키워드 개수</label>
+          <select 
+            className="w-full bg-black/40 border border-white/10 rounded-xl pl-3 pr-8 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22white%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_0.75rem_center] bg-no-repeat"
+            value={state.targetCount}
+            onChange={(e) => actions.setTargetCount(Number(e.target.value))}
+          >
+            <option value={5}>5개 (권장)</option>
+            <option value={10}>10개</option>
+            <option value={15}>15개</option>
+            <option value={20}>20개</option>
+            <option value={25}>25개</option>
+            <option value={30}>30개</option>
+          </select>
+        </div>
         <div className="space-y-2">
           <label className="text-xs font-bold text-slate-400">타겟 연령</label>
           <select 
@@ -70,7 +89,7 @@ export const SeedSearchForm = ({ state, actions }: SeedSearchFormProps) => {
             <option value="female">여성</option>
           </select>
         </div>
-        <div className="space-y-2 col-span-2">
+        <div className="space-y-2 col-span-2 lg:col-span-3">
           <label className="text-xs font-bold text-slate-400">타겟 검색 의도</label>
           <select 
             className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none"
@@ -81,6 +100,17 @@ export const SeedSearchForm = ({ state, actions }: SeedSearchFormProps) => {
             <option value="info">정보/문제해결형 (How-to)</option>
             <option value="review">후기/리뷰형</option>
             <option value="compare">비교/견적형 (vs)</option>
+          </select>
+        </div>
+        <div className="space-y-2 col-span-2 lg:col-span-3">
+          <label className="text-xs font-bold text-slate-400">AI 분석 모델</label>
+          <select 
+            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none"
+            value={state.searchModel || "sonar-deep-research"}
+            onChange={(e) => actions.setSearchModel(e.target.value)}
+          >
+            <option value="sonar-deep-research">sonar-deep-research (심층 조사 모델)</option>
+            <option value="sonar-pro">sonar-pro (빠른 도출 모델)</option>
           </select>
         </div>
       </div>

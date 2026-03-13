@@ -34,7 +34,7 @@ export default function RootLayout({
         <NuqsAdapter>
           <AuthProvider>
             <Navbar />
-            <main>
+            <main className="pt-16">
               {children}
             </main>
           </AuthProvider>

@@ -5,7 +5,7 @@ import { DeepLinkResponse, DeepLinkRequest, CoupangRawDeepLink } from '@/shared/
 import { normalizeDeepLinkResponse } from '@/shared/lib/api-utils';
 import { getServerSession } from "next-auth/next";
 import { prisma } from "@/infrastructure/clients/prisma";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/shared/config/auth-options";
 
 /**
  * 쿠팡 파트너스 딥링크 변환 API 라우트

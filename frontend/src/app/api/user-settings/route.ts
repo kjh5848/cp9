@@ -3,7 +3,7 @@ import { UserSettingsDTO } from '@/entities/user-settings/model/types';
 import { mockDb } from './db';
 import { getServerSession } from "next-auth/next";
 import { prisma } from "@/infrastructure/clients/prisma";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/shared/config/auth-options";
 
 // ============================================================================
 // [Route Handlers]

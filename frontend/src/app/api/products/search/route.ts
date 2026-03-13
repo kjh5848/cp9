@@ -5,7 +5,7 @@ import { CoupangProductResponse, ProductSearchRequest, CoupangRawProduct } from 
 import { normalizeCoupangProduct, resolveImageRedirectUrl } from '@/shared/lib/api-utils';
 import { getServerSession } from "next-auth/next";
 import { prisma } from "@/infrastructure/clients/prisma";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/shared/config/auth-options";
 
 /**
  * @param req - NextRequest (POST, { keyword: string, limit?: number })
