@@ -33,15 +33,19 @@ export interface SourcingConstraints {
  * @param query 검색 키워드 (예: "가성비 로봇청소기")
  * @param limit 반환할 최대 아이템 수 (기본 10구)
  * @param constraints 오토파일럿 가격/로켓 필터 레이어
+ * @param accessKey 쿠팡 API Access Key
+ * @param secretKey 쿠팡 API Secret Key
  */
 export async function searchCoupangProductsTool(
   query: string, 
   limit: number = 10,
-  constraints?: SourcingConstraints
+  constraints?: SourcingConstraints,
+  accessKey?: string,
+  secretKey?: string
 ): Promise<CoupangSearchResult[]> {
   try {
     // 쿠팡 검색 API는 limit > 10일 때 간헐적으로 0건을 반환할 수 있으므로 10개만 요청합니다.
-    const rawData = await searchCoupangProducts(query, 10);
+    const rawData = await searchCoupangProducts(query, 10, accessKey, secretKey);
     let mapped = rawData.map((item: CoupangRawItem) => ({
       productId: Number(item.productId),
       productName: item.productName,

@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -69,6 +69,9 @@ model AutopilotQueue {
   themeId      String? // Phase 7: 디자인 테마 ID
   persona      Persona?  @relation(fields: [personaId], references: [id])
 
+  userId       String?
+  user         User?     @relation(fields: [userId], references: [id])
+
   // Phase 3: 키워드별 개별 설정 (Article Settings)
   articleType  String?   @default("single") // 단일, 비교, 큐레이션
   textModel    String?   @default("gpt-4o")
@@ -125,6 +128,9 @@ model CategoryCampaign {
   persona        Persona? @relation(fields: [personaId], references: [id])
   themeId        String?  // 테마 연결
   
+  userId         String?
+  user           User?    @relation(fields: [userId], references: [id])
+  
   intervalHours  Int      @default(24) // 발행 주기 (시간)
   publishTimes   String?  // 특정 발행 시간 배열 (예: "09:00,15:00")
   publishDays    String?  // 특정 요일 배열 (예: "1,2,3,4,5")
@@ -154,13 +160,21 @@ model CategoryCampaign {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  nickname  String
-  role      String   @default("FREE") // FREE, PRO, ADMIN
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  id               String   @id @default(uuid())
+  email            String   @unique
+  password         String
+  nickname         String
+  role             String   @default("FREE") // FREE, PRO, ADMIN
+  
+  // API Integration (SaaS용 개별 API 키 저장)
+  coupangAccessKey String?  @map("coupang_access_key")
+  coupangSecretKey String?  @map("coupang_secret_key")
+
+  autopilotQueues AutopilotQueue[]
+  categoryCampaigns CategoryCampaign[]
+
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@map("users")
 }

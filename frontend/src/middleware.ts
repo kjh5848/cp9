@@ -3,7 +3,14 @@ import { NextResponse } from "next/server";
 
 export default withAuth(
   function middleware(req) {
-    // 사용자의 토큰 정보나 라우팅 제어가 필요한 추가 로직이 있다면 여기서 처리 (Role 체크 등)
+    const { pathname } = req.nextUrl;
+    const { token } = req.nextauth;
+
+    // 어드민 페이지 접근 제어: 토큰의 role이 ADMIN이 아니면 튕겨냄
+    if (pathname.startsWith("/admin") && token?.role !== "ADMIN") {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
+
     return NextResponse.next();
   },
   {
@@ -20,12 +27,12 @@ export default withAuth(
   }
 );
 
-// 배열 형태의 matcher로 보호하고 싶은 라우트 경로들을 명시 (대시보드, 랩, 환경설정 등)
+// 배열 형태의 matcher로 보호하고 싶은 라우트 경로들을 명시
 export const config = {
   matcher: [
     "/dashboard/:path*",
     "/keyword-lab/:path*",
     "/settings/:path*",
-    // 추후 보호할 페이지가 있다면 이 배열에 계속 추가
+    "/admin/:path*",
   ],
 };

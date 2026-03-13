@@ -3,6 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fetchCoupangBestCategory } from '@/infrastructure/clients/coupang-best-category';
 import { CoupangProductResponse, CategorySearchRequest, CoupangRawProduct } from '@/shared/types/api';
 import { normalizeCoupangProduct, resolveImageRedirectUrl } from '@/shared/lib/api-utils';
+import { getServerSession } from "next-auth/next";
+import { prisma } from "@/infrastructure/clients/prisma";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 /**
  * 쿠팡 베스트 카테고리 상품 검색 API 라우트
@@ -13,13 +16,32 @@ import { normalizeCoupangProduct, resolveImageRedirectUrl } from '@/shared/lib/a
  */
 export async function POST(req: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
+    }
+
     const { categoryId, limit = 100, imageSize }: CategorySearchRequest = await req.json();
     
     if (!categoryId) {
       return NextResponse.json({ error: 'categoryId를 입력하세요.' }, { status: 400 });
     }
+
+    const dbUser = await prisma.user.findUnique({
+      where: { id: session.user.id }
+    });
     
-    const products = await fetchCoupangBestCategory({ categoryId, limit, imageSize });
+    if (!dbUser?.coupangAccessKey || !dbUser?.coupangSecretKey) {
+      return NextResponse.json({ error: '마이페이지에서 쿠팡 API 연동 설정이 필요합니다.' }, { status: 403 });
+    }
+    
+    const products = await fetchCoupangBestCategory({ 
+      categoryId, 
+      limit, 
+      imageSize, 
+      accessKey: dbUser.coupangAccessKey, 
+      secretKey: dbUser.coupangSecretKey 
+    });
     
     // 일관된 응답 형식으로 변환 및 이미지 애드블록 우회 처리
     const result: CoupangProductResponse[] = await Promise.all(

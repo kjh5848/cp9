@@ -2,14 +2,14 @@ import { generateCoupangSignature } from '../utils/coupang-hmac';
 import { config } from '@/shared/lib/config';
 import { cache } from 'react';
 
-const COUPANG_ACCESS_KEY = config.COUPANG_ACCESS_KEY;
-const COUPANG_SECRET_KEY = config.COUPANG_SECRET_KEY;
 const COUPANG_API_HOST = 'https://api-gateway.coupang.com';
 
 export interface CoupangExtendedParams {
   limit?: number;
   imageSize?: string;
   subId?: string;
+  accessKey?: string;
+  secretKey?: string;
 }
 
 export interface CoupangPLBrandParams extends CoupangExtendedParams {
@@ -19,10 +19,14 @@ export interface CoupangPLBrandParams extends CoupangExtendedParams {
 /**
  * 범용 쿠팡 API Fetcher (내부 공통 로직)
  */
-async function fetchCoupangApi(path: string, errorMessage: string) {
+async function fetchCoupangApi(path: string, errorMessage: string, accessKey?: string, secretKey?: string) {
+  if (!accessKey || !secretKey) {
+    throw new Error('쿠팡 API 키가 설정되지 않았습니다.');
+  }
+
   const method = 'GET';
   const url = COUPANG_API_HOST + path;
-  const authorization = generateCoupangSignature(method, path, COUPANG_SECRET_KEY, COUPANG_ACCESS_KEY);
+  const authorization = generateCoupangSignature(method, path, secretKey, accessKey);
   
   const headers = {
     'Authorization': authorization,
@@ -44,11 +48,11 @@ async function fetchCoupangApi(path: string, errorMessage: string) {
  * @param params brandId (필수), limit(선택, 최대 100), imageSize, subId
  */
 export const fetchCoupangPLBrand = cache(async (params: CoupangPLBrandParams) => {
-  const { brandId, limit = 20, imageSize } = params;
+  const { brandId, limit = 20, imageSize, accessKey, secretKey } = params;
   let path = `/v2/providers/affiliate_open_api/apis/openapi/products/coupangPL/${brandId}?limit=${limit}`;
   if (imageSize) path += `&imageSize=${encodeURIComponent(imageSize)}`;
   
-  return fetchCoupangApi(path, `쿠팡 PL 브랜드(${brandId}) 상품 조회 실패`);
+  return fetchCoupangApi(path, `쿠팡 PL 브랜드(${brandId}) 상품 조회 실패`, accessKey, secretKey);
 });
 
 /**
@@ -56,11 +60,11 @@ export const fetchCoupangPLBrand = cache(async (params: CoupangPLBrandParams) =>
  * @param params limit(선택, 최대 100), imageSize, subId
  */
 export const fetchCoupangPL = cache(async (params: CoupangExtendedParams = {}) => {
-  const { limit = 20, imageSize } = params;
+  const { limit = 20, imageSize, accessKey, secretKey } = params;
   let path = `/v2/providers/affiliate_open_api/apis/openapi/products/coupangPL?limit=${limit}`;
   if (imageSize) path += `&imageSize=${encodeURIComponent(imageSize)}`;
   
-  return fetchCoupangApi(path, '쿠팡 PL 상품 조회 실패');
+  return fetchCoupangApi(path, '쿠팡 PL 상품 조회 실패', accessKey, secretKey);
 });
 
 /**
@@ -68,7 +72,7 @@ export const fetchCoupangPL = cache(async (params: CoupangExtendedParams = {}) =
  * @param params imageSize, subId
  */
 export const fetchCoupangGoldbox = cache(async (params: Omit<CoupangExtendedParams, 'limit'> = {}) => {
-  const { imageSize } = params;
+  const { imageSize, accessKey, secretKey } = params as any;
   // 골드박스는 limit 파라미터가 없음 (당일 한정 리스트 반환)
   let path = `/v2/providers/affiliate_open_api/apis/openapi/products/goldbox`;
   let hasQuery = false;
@@ -78,5 +82,5 @@ export const fetchCoupangGoldbox = cache(async (params: Omit<CoupangExtendedPara
     hasQuery = true;
   }
   
-  return fetchCoupangApi(path, '골드박스 상품 조회 실패');
+  return fetchCoupangApi(path, '골드박스 상품 조회 실패', accessKey, secretKey);
 });

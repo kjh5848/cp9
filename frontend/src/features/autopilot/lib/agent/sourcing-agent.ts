@@ -28,7 +28,9 @@ const finishCurationSchema = {
  */
 export async function runSourcingAgent(
   intentData: IntentPlannerResult,
-  constraints?: SourcingConstraints
+  constraints?: SourcingConstraints,
+  accessKey?: string,
+  secretKey?: string
 ): Promise<CoupangSearchResult[]> {
   const constraintsText = constraints ? `
 [필수 소싱 제약 조건]
@@ -136,7 +138,7 @@ ${constraintsText}
       if (call.function?.name === 'search_coupang_items') {
         const args = JSON.parse(call.function.arguments);
         console.log(`[SourcingAgent] 툴 호출: search_coupang_items (query: ${args.query})`);
-        const searchResults = await searchCoupangProductsTool(args.query, args.limit || 10, constraints);
+        const searchResults = await searchCoupangProductsTool(args.query, args.limit || 10, constraints, accessKey, secretKey);
         
         messages.push({
           role: 'tool',

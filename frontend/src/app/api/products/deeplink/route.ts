@@ -3,6 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateCoupangSignature } from '@/infrastructure/utils/coupang-hmac';
 import { DeepLinkResponse, DeepLinkRequest, CoupangRawDeepLink } from '@/shared/types/api';
 import { normalizeDeepLinkResponse } from '@/shared/lib/api-utils';
+import { getServerSession } from "next-auth/next";
+import { prisma } from "@/infrastructure/clients/prisma";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 /**
  * 쿠팡 파트너스 딥링크 변환 API 라우트
@@ -13,18 +16,27 @@ import { normalizeDeepLinkResponse } from '@/shared/lib/api-utils';
  */
 export async function POST(req: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
+    }
+
     const { urls }: DeepLinkRequest = await req.json();
 
     if (!urls || !Array.isArray(urls) || urls.length === 0) {
       return NextResponse.json({ error: 'URLs 배열이 필요합니다.' }, { status: 400 });
     }
 
-    const ACCESS_KEY = process.env.COUPANG_ACCESS_KEY;
-    const SECRET_KEY = process.env.COUPANG_SECRET_KEY;
-
-    if (!ACCESS_KEY || !SECRET_KEY) {
-      return NextResponse.json({ error: '쿠팡 API 키가 설정되지 않았습니다.' }, { status: 500 });
+    const dbUser = await prisma.user.findUnique({
+      where: { id: session.user.id }
+    });
+    
+    if (!dbUser?.coupangAccessKey || !dbUser?.coupangSecretKey) {
+      return NextResponse.json({ error: '쿠팡 API 초기 설정이 필요합니다. (마이페이지)' }, { status: 403 });
     }
+
+    const ACCESS_KEY = dbUser.coupangAccessKey;
+    const SECRET_KEY = dbUser.coupangSecretKey;
 
     console.log('ACCESS_KEY 존재:', !!ACCESS_KEY);
     console.log('SECRET_KEY 존재:', !!SECRET_KEY);

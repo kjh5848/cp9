@@ -104,6 +104,32 @@ export const ApiIntegrationSettingsForm: React.FC<ApiIntegrationSettingsFormProp
           </div>
           
           <div>
+            <h5 className="text-sm font-syne font-semibold text-white mb-4">쿠팡 파트너스 연동 (선택사항)</h5>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                 <Label className="text-slate-300 font-jakarta">쿠팡 Access Key</Label>
+                 <Input 
+                   type="text" 
+                   placeholder="Access Key 입력" 
+                   value={formData.coupangAccessKey || ''} 
+                   onChange={(e) => handleChange('coupangAccessKey', e.target.value)}
+                   className="bg-black/40 border-white/10 text-white font-jakarta focus-visible:ring-cyan-500/50"
+                 />
+              </div>
+              <div className="space-y-2">
+                 <Label className="text-slate-300 font-jakarta">쿠팡 Secret Key</Label>
+                 <Input 
+                   type="password" 
+                   placeholder="Secret Key 입력" 
+                   value={formData.coupangSecretKey || ''} 
+                   onChange={(e) => handleChange('coupangSecretKey', e.target.value)}
+                   className="bg-black/40 border-white/10 text-white font-jakarta focus-visible:ring-cyan-500/50"
+                 />
+              </div>
+            </div>
+          </div>
+          
+          <div>
             <h5 className="text-sm font-syne font-semibold text-white mb-4">WordPress 연동 (필수)</h5>
             <div className="space-y-4">
               <div className="space-y-2">
