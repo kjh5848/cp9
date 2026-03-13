@@ -83,6 +83,10 @@ model AutopilotQueue {
 
   // Phase 3: 세밀한 스케줄링 간격 제어 (Scheduling & Interval Control)
   intervalHours Int?     // 작동 주기 (예: 6 = 6시간마다)
+  publishTimes  String?  // 특정 발행 시간 배열 (예: "09:00,15:00")
+  publishDays   String?  // 특정 요일 배열 (예: "1,2,3,4,5" - 월~금)
+  jitterMinutes Int?     @default(15) // 어뷰징 방지 난수화 범위 (기본 15분)
+  dailyCap      Int?     // 일일 최대 발행량 제한
   activeTimeStart Int?   // 동작 허용 시작 시간 (예: 9 = 09:00)
   activeTimeEnd   Int?   // 동작 허용 종료 시간 (예: 22 = 22:00)
   nextRunAt       DateTime? @map("next_run_at") // 연산된 다음 실행 예정 시간
@@ -93,11 +97,19 @@ model AutopilotQueue {
   titleRegenRule String?   @default("reuse") // 재생성 규칙 (reuse | generate)
   expiresAt      DateTime? @map("expires_at") // 발행 종료 일시
 
-  // Phase 8: Perplexity 트렌드 메타데이터
+  // Phase 8: 다중 플랫폼 발행 목적지 (JSON String)
+  // 예: [{"platform": "wordpress", "enabled": true, "meta": {"categoryId": "12"}}]
+  publishTargets String?
   trafficKeyword       String?
   coupangSearchTerm    String?
   recommendedItemCount Int?
   searchIntent         String?
+
+  // 추가 타겟팅 설정
+  targetAge      String?
+  targetGender   String?
+  targetPrice    String?
+  targetIndustry String?
 
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
@@ -114,11 +126,24 @@ model CategoryCampaign {
   themeId        String?  // 테마 연결
   
   intervalHours  Int      @default(24) // 발행 주기 (시간)
+  publishTimes   String?  // 특정 발행 시간 배열 (예: "09:00,15:00")
+  publishDays    String?  // 특정 요일 배열 (예: "1,2,3,4,5")
+  jitterMinutes  Int?     @default(15) // 어뷰징 방지 난수화 범위 (분)
+  dailyCap       Int?     // 일일 최대 발행 권장량
   activeTimeStart Int?
   activeTimeEnd   Int?
   
   batchSize      Int      @default(15) // 한 번에 생성할 키워드 수
   isAutoApprove  Boolean  @default(false) @map("is_auto_approve") // 자동 승인 여부 (추후 확장)
+
+  // 다중 플랫폼 발행 대상 (JSON String)
+  publishTargets String?
+
+  // 추가 타겟팅 설정
+  targetAge      String?
+  targetGender   String?
+  targetPrice    String?
+  targetIndustry String?
 
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @default(now()) @updatedAt @map("updated_at")
