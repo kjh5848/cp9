@@ -14,8 +14,8 @@ jobs:
     steps:
       - name: Ping Vercel Cron API (Every 5 min)
         run: |
-          curl -X GET "https://cp9.vercel.app/api/cron/schedule"
+          curl -X GET "https://cp9-navy.vercel.app/api/cron/schedule"
           
       - name: Ping Vercel Autopilot Dispatch (Every 5 min)
         run: |
-          curl -X GET "https://cp9.vercel.app/api/cron/autopilot"
+          curl -X GET "https://cp9-navy.vercel.app/api/cron/autopilot"
