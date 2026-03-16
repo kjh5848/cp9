@@ -11,7 +11,8 @@ const fetcher = async (url: string, body?: any) => {
   }
   const res = await fetch(url, options);
   if (!res.ok) {
-    throw new Error(`Error fetching ${url}`);
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || `Error fetching ${url}`);
   }
   return res.json();
 };

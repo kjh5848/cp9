@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { GlassCard } from "@/shared/ui/GlassCard";
 import { Button } from "@/shared/ui/button";
-import { Loader2, Package, Layers } from "lucide-react";
+import { Loader2, Package, Layers, Settings, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/shared/lib/utils";
 import { CoupangProductResponse } from "@/shared/types/api";
@@ -50,7 +50,7 @@ export const ProductCreation = () => {
   });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { defaultPlAll, defaultGoldbox, isLoading: isDefaultLoading } = useCoupangDefaults();
+  const { defaultPlAll, defaultGoldbox, isLoading: isDefaultLoading, isError: defaultError } = useCoupangDefaults();
 
   const [pricePresetIdx, setPricePresetIdx] = useState(0);
   const [rocketOnly, setRocketOnly] = useState(false);
@@ -250,6 +250,9 @@ export const ProductCreation = () => {
   };
 
   const hasResults = results.length > 0;
+  
+  const combinedError = error || (!hasResults && defaultError ? defaultError.message : null);
+  const isSettingMissing = combinedError && (combinedError.includes("설정") || combinedError.includes("API 연동"));
 
   return (
     <div className="w-full max-w-[1400px] mx-auto space-y-8 py-8 pb-32 relative">
@@ -298,9 +301,29 @@ export const ProductCreation = () => {
         loading={loading}
       />
 
-      {error && (
-        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-6 py-4 text-sm text-red-400 whitespace-pre-line">
-          {error}
+      {error && !isSettingMissing && (
+        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-6 py-4 text-sm text-red-400 whitespace-pre-line flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {isSettingMissing && (
+        <div className="flex flex-col items-center justify-center p-12 text-center bg-red-500/5 border border-red-500/20 rounded-2xl space-y-4">
+          <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-2">
+            <Settings className="w-8 h-8 text-red-400" />
+          </div>
+          <h3 className="text-xl font-bold text-white">쿠팡 파트너스 API 설정 필요</h3>
+          <p className="text-slate-400 text-sm max-w-md leading-relaxed">
+            아이템 생성을 위해 쿠팡 파트너스 API 연동이 필수입니다.<br/>
+            마이페이지에서 Access Key와 Secret Key를 먼저 등록해주세요.
+          </p>
+          <Button 
+            onClick={() => router.push("/mypage")} 
+            className="mt-4 bg-red-500 hover:bg-red-600 text-white font-medium px-8 h-11"
+          >
+            마이페이지로 이동하기
+          </Button>
         </div>
       )}
 
@@ -333,7 +356,7 @@ export const ProductCreation = () => {
         />
       )}
 
-      {!hasResults && !error && (
+      {!hasResults && !error && !isSettingMissing && (
         <div className="space-y-12">
           {isDefaultLoading ? (
             <div className="flex flex-col items-center justify-center p-12 text-slate-500 space-y-4">
@@ -342,20 +365,24 @@ export const ProductCreation = () => {
             </div>
           ) : (
             <>
-              <HorizontalProductList
-                title="오늘의 골드박스 특가"
-                items={defaultGoldbox}
-                icon={<Package className="w-6 h-6 text-yellow-400" />}
-                selectedProductIds={selectedProductIds}
-                toggleSelection={toggleSelection}
-              />
-              <HorizontalProductList
-                title="쿠팡 전문 브랜드(PL) 인기상품"
-                items={defaultPlAll}
-                icon={<Layers className="w-6 h-6 text-purple-400" />}
-                selectedProductIds={selectedProductIds}
-                toggleSelection={toggleSelection}
-              />
+              {defaultGoldbox.length > 0 && (
+                <HorizontalProductList
+                  title="오늘의 골드박스 특가"
+                  items={defaultGoldbox}
+                  icon={<Package className="w-6 h-6 text-yellow-400" />}
+                  selectedProductIds={selectedProductIds}
+                  toggleSelection={toggleSelection}
+                />
+              )}
+              {defaultPlAll.length > 0 && (
+                <HorizontalProductList
+                  title="쿠팡 전문 브랜드(PL) 인기상품"
+                  items={defaultPlAll}
+                  icon={<Layers className="w-6 h-6 text-purple-400" />}
+                  selectedProductIds={selectedProductIds}
+                  toggleSelection={toggleSelection}
+                />
+              )}
             </>
           )}
 
