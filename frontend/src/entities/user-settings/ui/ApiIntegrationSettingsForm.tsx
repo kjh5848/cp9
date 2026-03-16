@@ -78,7 +78,7 @@ export const ApiIntegrationSettingsForm: React.FC<ApiIntegrationSettingsFormProp
 
         <div className="space-y-8">
           <div>
-            <h5 className="text-sm font-syne font-semibold text-white mb-4">외부 API 연동 (선택사항)</h5>
+            <h5 className="text-sm font-syne font-semibold text-white mb-4">외부 API 연동 (필수)</h5>
             <div className="space-y-4">
               <div className="space-y-2">
                  <Label className="text-slate-300 font-jakarta">OpenAI API 키 (BYOK)</Label>
@@ -104,7 +104,7 @@ export const ApiIntegrationSettingsForm: React.FC<ApiIntegrationSettingsFormProp
           </div>
           
           <div>
-            <h5 className="text-sm font-syne font-semibold text-white mb-4">쿠팡 파트너스 연동 (선택사항)</h5>
+            <h5 className="text-sm font-syne font-semibold text-white mb-4">쿠팡 파트너스 연동 (필수)</h5>
             <div className="space-y-4">
               <div className="space-y-2">
                  <Label className="text-slate-300 font-jakarta">쿠팡 Access Key</Label>

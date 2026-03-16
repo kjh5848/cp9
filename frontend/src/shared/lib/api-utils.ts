@@ -64,4 +64,27 @@ export function createSuccessResponse<T>(data: T) {
     data,
     success: true,
   };
-} 
+}
+
+/**
+ * DB에 저장된 유저 키와 환경변수 키를 비교하여
+ * 사용자에게 맞는 쿠팡 API 키를 반환합니다.
+ * 개발 환경(NODE_ENV = development)에서는 로컬 .env 환경변수를 최우선으로, 
+ * 운영/프로덕션 환경에서는 사용자 DB 설정을 최우선으로 라우팅합니다.
+ */
+export function resolveCoupangKeys(dbUser: any | null | undefined): { accessKey: string | undefined; secretKey: string | undefined } {
+  const envAccessKey = process.env.COUPANG_ACCESS_KEY;
+  const envSecretKey = process.env.COUPANG_SECRET_KEY;
+
+  if (process.env.NODE_ENV === 'development') {
+    return {
+      accessKey: envAccessKey || dbUser?.coupangAccessKey,
+      secretKey: envSecretKey || dbUser?.coupangSecretKey,
+    };
+  }
+
+  return {
+    accessKey: dbUser?.coupangAccessKey || envAccessKey,
+    secretKey: dbUser?.coupangSecretKey || envSecretKey,
+  };
+}

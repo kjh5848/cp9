@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchCoupangGoldbox } from '@/infrastructure/clients/coupang-extended';
 import { CoupangProductResponse, CoupangRawProduct } from '@/shared/types/api';
-import { normalizeCoupangProduct, resolveImageRedirectUrl } from '@/shared/lib/api-utils';
+import { normalizeCoupangProduct, resolveImageRedirectUrl, resolveCoupangKeys } from '@/shared/lib/api-utils';
 import { getServerSession } from "next-auth/next";
 import { prisma } from "@/infrastructure/clients/prisma";
 import { authOptions } from "@/shared/config/auth-options";
@@ -23,8 +23,7 @@ export async function POST(req: NextRequest) {
       where: { id: session.user.id }
     });
     
-    const accessKey = dbUser?.coupangAccessKey || process.env.COUPANG_ACCESS_KEY;
-    const secretKey = dbUser?.coupangSecretKey || process.env.COUPANG_SECRET_KEY;
+    const { accessKey, secretKey } = resolveCoupangKeys(dbUser);
 
     if (!accessKey || !secretKey) {
       return NextResponse.json({ error: '마이페이지에서 쿠팡 API 연동 설정이 필요합니다.' }, { status: 403 });

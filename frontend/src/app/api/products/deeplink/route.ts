@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { generateCoupangSignature } from '@/infrastructure/utils/coupang-hmac';
 import { DeepLinkResponse, DeepLinkRequest, CoupangRawDeepLink } from '@/shared/types/api';
-import { normalizeDeepLinkResponse } from '@/shared/lib/api-utils';
+import { normalizeDeepLinkResponse, resolveCoupangKeys } from '@/shared/lib/api-utils';
 import { getServerSession } from "next-auth/next";
 import { prisma } from "@/infrastructure/clients/prisma";
 import { authOptions } from "@/shared/config/auth-options";
@@ -31,8 +31,8 @@ export async function POST(req: NextRequest) {
       where: { id: session.user.id }
     });
     
-    const ACCESS_KEY = dbUser?.coupangAccessKey || process.env.COUPANG_ACCESS_KEY;
-    const SECRET_KEY = dbUser?.coupangSecretKey || process.env.COUPANG_SECRET_KEY;
+    // 구조 분해 할당으로 대문자 변수명 매핑 
+    const { accessKey: ACCESS_KEY, secretKey: SECRET_KEY } = resolveCoupangKeys(dbUser);
     
     if (!ACCESS_KEY || !SECRET_KEY) {
       return NextResponse.json({ error: '쿠팡 API 초기 설정이 필요합니다. (마이페이지)' }, { status: 403 });
