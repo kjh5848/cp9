@@ -32,7 +32,7 @@ export const Sheet = ({ open, onOpenChange, children }: SheetProps) => {
         onClick={() => onOpenChange?.(false)} 
       />
       {/* 모달 이너 콘텐트 래퍼 */}
-      <div className="relative z-[100] h-full w-full sm:w-[540px] shadow-2xl animate-in slide-in-from-right duration-300">
+      <div className="relative z-[100] h-full w-full sm:w-[380px] shadow-2xl animate-in slide-in-from-right duration-300">
         {React.Children.map(children, child => {
           if (React.isValidElement(child)) {
             // @ts-ignore
