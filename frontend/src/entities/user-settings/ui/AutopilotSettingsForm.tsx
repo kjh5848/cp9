@@ -11,6 +11,7 @@ import { Switch } from '@/shared/ui/switch';
 import { Loader2 } from 'lucide-react';
 import { SourcingCriteriaSection } from '@/entities/autopilot/ui/SourcingCriteriaSection';
 import { ScheduleSettingsSection } from '@/entities/autopilot/ui/ScheduleSettingsSection';
+import { PublishTargetSection } from '@/shared/ui/PublishTargetSection';
 
 interface AutopilotSettingsFormProps {
   settings?: DefaultAutopilotSettings;
@@ -101,6 +102,15 @@ export const AutopilotSettingsForm: React.FC<AutopilotSettingsFormProps> = ({
             setStartDate={() => {}}
             expiresAt=""
             setExpiresAt={() => {}}
+            hideLoadMySettings={true}
+          />
+        </div>
+
+        {/* 3. 자동 발행(다중 플랫폼) 기본 설정 */}
+        <div className="space-y-6 bg-black/20 p-6 border border-white/5 rounded-xl">
+          <PublishTargetSection
+            targets={formData.publishTargets}
+            onChange={(targets: any) => handleChange('publishTargets', targets)}
             hideLoadMySettings={true}
           />
         </div>

@@ -20,9 +20,9 @@ export function useKeywordExtraction() {
 
   // 1. 전역 상태 연동 (Draft)
   const {
-    seedKeyword, targetCount, targetAge, targetGender, category, searchIntent, searchModel,
+    seedKeyword, targetCount, targetAge, targetGender, category, searchIntent, searchModel, keywordType,
     extractedKeywords, selectedKeywords, isLoading, cartKeywords, exportPayload,
-    setSeedKeyword, setTargetCount, setTargetAge, setTargetGender, setCategory, setSearchIntent, setSearchModel,
+    setSeedKeyword, setTargetCount, setTargetAge, setTargetGender, setCategory, setSearchIntent, setSearchModel, setKeywordType,
     setExtractedKeywords, setSelectedKeywords, setIsLoading, setCartKeywords, setExportPayload
   } = useKeywordLabStore();
   const [isStoreReady, setIsStoreReady] = useState(false);
@@ -54,7 +54,8 @@ export function useKeywordExtraction() {
           targetGender,
           category,
           searchIntent,
-          searchModel
+          searchModel,
+          keywordType
         }),
       });
 
@@ -108,11 +109,11 @@ export function useKeywordExtraction() {
 
   return {
     state: {
-      seedKeyword, targetCount, targetAge, targetGender, category, searchIntent, searchModel,
+      seedKeyword, targetCount, targetAge, targetGender, category, searchIntent, searchModel, keywordType,
       extractedKeywords, isLoading, selectedKeywords, cartKeywords
     },
     actions: {
-      setSeedKeyword, setTargetCount, setTargetAge, setTargetGender, setCategory, setSearchIntent, setSearchModel,
+      setSeedKeyword, setTargetCount, setTargetAge, setTargetGender, setCategory, setSearchIntent, setSearchModel, setKeywordType,
       handleExtract, toggleSelection, handleSendToDestination,
       toggleCartSelection: (keywordObj: ExtractedKeyword) => {
         const isAlreadyInCart = cartKeywords.some((k) => k.keyword === keywordObj.keyword);

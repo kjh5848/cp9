@@ -42,6 +42,11 @@ if (!globalMemory._userSettingsMockDb) {
       intervalHours: 6,
       activeTimeStart: 9,
       activeTimeEnd: 22,
+      publishTargets: [
+        { platform: 'wordpress', enabled: true, meta: { categoryId: '' } },
+        { platform: 'google', enabled: false, meta: { blogId: '' } },
+        { platform: 'naver_cafe', enabled: false, meta: { clubId: '', menuId: '' } },
+      ],
     }
   };
 }

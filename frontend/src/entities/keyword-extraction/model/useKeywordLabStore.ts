@@ -11,6 +11,7 @@ interface KeywordLabState {
   category: string;
   searchIntent: string;
   searchModel: string;
+  keywordType: 'single' | 'topic' | 'category';
 
   // 2. 결과 처리 State
   extractedKeywords: ExtractedKeyword[];
@@ -38,6 +39,7 @@ interface KeywordLabState {
   setCategory: (category: string) => void;
   setSearchIntent: (searchIntent: string) => void;
   setSearchModel: (searchModel: string) => void;
+  setKeywordType: (keywordType: 'single' | 'topic' | 'category') => void;
   setIsLoading: (isLoading: boolean) => void;
   
   setExtractedKeywords: (keywords: ExtractedKeyword[]) => void;
@@ -60,6 +62,7 @@ const initialState = {
   category: "tech",
   searchIntent: "all",
   searchModel: "sonar-pro",
+  keywordType: "single" as const,
   isLoading: false,
   extractedKeywords: [],
   selectedKeywords: [],
@@ -79,6 +82,7 @@ export const useKeywordLabStore = create<KeywordLabState>()(
       category: initialState.category,
       searchIntent: initialState.searchIntent,
       searchModel: initialState.searchModel,
+      keywordType: initialState.keywordType,
       isLoading: initialState.isLoading,
       extractedKeywords: initialState.extractedKeywords,
       selectedKeywords: initialState.selectedKeywords,
@@ -93,6 +97,7 @@ export const useKeywordLabStore = create<KeywordLabState>()(
       setCategory: (category) => set({ category }),
       setSearchIntent: (searchIntent) => set({ searchIntent }),
       setSearchModel: (searchModel) => set({ searchModel }),
+      setKeywordType: (keywordType) => set({ keywordType }),
       setIsLoading: (isLoading) => set({ isLoading }),
 
       setExtractedKeywords: (extractedKeywords) => set({ extractedKeywords }),

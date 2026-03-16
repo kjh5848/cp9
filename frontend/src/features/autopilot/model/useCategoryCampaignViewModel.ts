@@ -1,51 +1,30 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
+import useSWR, { mutate } from 'swr';
+import type { CategoryCampaign } from '@/entities/campaign/model/types';
 
-export interface CategoryCampaign {
-  id: string;
-  categoryName: string;
-  personaId: string | null;
-  themeId: string | null;
-  intervalHours: number;
-  activeTimeStart: number | null;
-  activeTimeEnd: number | null;
-  batchSize: number;
-  isAutoApprove: boolean;
-  targetAge?: string | null;
-  targetGender?: string | null;
-  targetPrice?: string | null;
-  targetIndustry?: string | null;
-  createdAt: string;
-  persona?: { name: string } | null;
-  _count?: {
-    queues: number;
-  };
-}
+const fetcher = async (url: string) => {
+  const res = await fetch(url, { cache: 'no-store' });
+  const data = await res.json();
+  if (!data.success) {
+    throw new Error(data.error || 'Failed to fetch');
+  }
+  return data.data;
+};
 
 export function useCategoryCampaignViewModel() {
-  const [campaigns, setCampaigns] = useState<CategoryCampaign[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isMutating, setIsMutating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchCampaigns = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/autopilot/campaign?_t=${Date.now()}`, { cache: 'no-store' });
-      const data = await res.json();
-      if (data.success) {
-        setCampaigns(data.data);
-      } else {
-        throw new Error(data.error || 'Failed to fetch campaigns');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setIsLoading(false);
+  const { data: campaigns = [], error: fetchError, isLoading, mutate: refreshCampaigns } = useSWR<CategoryCampaign[]>(
+    '/api/autopilot/campaign',
+    fetcher,
+    {
+      revalidateOnFocus: false, // Optional: FSD best practices standard caching behavior
     }
-  }, []);
+  );
 
   const createCampaign = async (payload: any) => {
-    setIsLoading(true);
+    setIsMutating(true);
     setError(null);
     try {
       const res = await fetch('/api/autopilot/campaign', {
@@ -57,7 +36,7 @@ export function useCategoryCampaignViewModel() {
       });
       const data = await res.json();
       if (data.success) {
-        await fetchCampaigns();
+        await refreshCampaigns(); // SWR 캐시 갱신
         return true;
       } else {
         throw new Error(data.error || 'Failed to create campaign');
@@ -66,12 +45,12 @@ export function useCategoryCampaignViewModel() {
       setError(err instanceof Error ? err.message : String(err));
       return false;
     } finally {
-      setIsLoading(false);
+      setIsMutating(false);
     }
   };
 
   const deleteCampaign = async (id: string) => {
-    setIsLoading(true);
+    setIsMutating(true);
     setError(null);
     try {
       const res = await fetch(`/api/autopilot/campaign?id=${id}`, {
@@ -79,7 +58,7 @@ export function useCategoryCampaignViewModel() {
       });
       const data = await res.json();
       if (data.success) {
-        await fetchCampaigns();
+        await refreshCampaigns();
         return true;
       } else {
         throw new Error(data.error || 'Failed to delete campaign');
@@ -88,12 +67,34 @@ export function useCategoryCampaignViewModel() {
       setError(err instanceof Error ? err.message : String(err));
       return false;
     } finally {
-      setIsLoading(false);
+      setIsMutating(false);
+    }
+  };
+
+  const deleteCampaigns = async (ids: string[]) => {
+    setIsMutating(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/autopilot/campaign?ids=${ids.join(',')}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        await refreshCampaigns();
+        return true;
+      } else {
+        throw new Error(data.error || 'Failed to delete campaigns');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      return false;
+    } finally {
+      setIsMutating(false);
     }
   };
 
   const approveQueues = async (queueIds: string[]) => {
-    setIsLoading(true);
+    setIsMutating(true);
     setError(null);
     try {
       const res = await fetch('/api/autopilot/campaign/approve', {
@@ -113,17 +114,23 @@ export function useCategoryCampaignViewModel() {
       setError(err instanceof Error ? err.message : String(err));
       return false;
     } finally {
-      setIsLoading(false);
+      setIsMutating(false);
     }
+  };
+
+  // 기존 레거시 호환성을 위해 이름 유지
+  const fetchCampaigns = async () => {
+    await refreshCampaigns();
   };
 
   return {
     campaigns,
-    isLoading,
-    error,
+    isLoading: isLoading || isMutating,
+    error: error || (fetchError ? fetchError.message : null),
     fetchCampaigns,
     createCampaign,
     deleteCampaign,
-    approveQueues
+    deleteCampaigns,
+    approveQueues,
   };
 }

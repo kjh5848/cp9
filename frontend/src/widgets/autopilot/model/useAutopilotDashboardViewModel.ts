@@ -12,6 +12,7 @@ export function useAutopilotDashboardViewModel() {
     ...actions,
     queueError: autopilotHook.error,
     triggerCronManually: autopilotHook.triggerCronManually,
+    triggerCampaignCronManually: autopilotHook.triggerCampaignCronManually,
     isQueueLoading: autopilotHook.isLoading,
     queue: autopilotHook.queue,
     fetchQueue: autopilotHook.fetchQueue

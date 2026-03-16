@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/infrastructure/clients/prisma';
 import { ChatOpenAI } from '@langchain/openai';
+import { getNextRunAtKST } from '@/features/autopilot/lib/scheduler';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300; // 5 minutes Max for Vercel Cron
@@ -77,29 +78,42 @@ export async function GET(request: Request) {
         const finalKeywords = Array.from(uniqueMap.values()).slice(0, countToGenerate);
 
         if (finalKeywords.length > 0) {
-          const createData = finalKeywords.map(k => ({
-            keyword: k.keyword,
-            status: campaign.isAutoApprove ? 'PENDING' : 'WAITING_APPROVAL',
-            campaignId: campaign.id,
-            personaId: campaign.personaId,
-            themeId: campaign.themeId,
-            articleType: k.articleType || 'single',
-            intervalHours: campaign.intervalHours,
-            publishTimes: campaign.publishTimes,
-            publishDays: campaign.publishDays,
-            jitterMinutes: campaign.jitterMinutes,
-            dailyCap: campaign.dailyCap,
-            activeTimeStart: campaign.activeTimeStart,
-            activeTimeEnd: campaign.activeTimeEnd,
-            targetAge: campaign.targetAge,
-            targetGender: campaign.targetGender,
-            targetPrice: campaign.targetPrice,
-            targetIndustry: campaign.targetIndustry,
-            publishTargets: campaign.publishTargets,
-            // 기타 기본 설정
-            textModel: 'gpt-4o',
-            imageModel: 'dall-e-3',
-          }));
+          const createData = finalKeywords.map((k, idx) => {
+            const intervalMinutes = campaign.intervalHours ? campaign.intervalHours * 60 : 0;
+            // index(idx)를 통해 간격 누적
+            const nextRunAt = getNextRunAtKST(
+              intervalMinutes,
+              campaign.activeTimeStart,
+              campaign.activeTimeEnd,
+              idx,
+              now
+            );
+
+            return {
+              keyword: k.keyword,
+              status: campaign.isAutoApprove ? 'PENDING' : 'WAITING_APPROVAL',
+              campaignId: campaign.id,
+              personaId: campaign.personaId,
+              themeId: campaign.themeId,
+              articleType: k.articleType || 'single',
+              intervalHours: campaign.intervalHours,
+              publishTimes: campaign.publishTimes,
+              publishDays: campaign.publishDays,
+              jitterMinutes: campaign.jitterMinutes,
+              dailyCap: campaign.dailyCap,
+              activeTimeStart: campaign.activeTimeStart,
+              activeTimeEnd: campaign.activeTimeEnd,
+              targetAge: campaign.targetAge,
+              targetGender: campaign.targetGender,
+              targetPrice: campaign.targetPrice,
+              targetIndustry: campaign.targetIndustry,
+              publishTargets: campaign.publishTargets,
+              // 기타 기본 설정
+              textModel: 'gpt-4o',
+              imageModel: 'dall-e-3',
+              nextRunAt,
+            };
+          });
 
           await prisma.autopilotQueue.createMany({
             data: createData

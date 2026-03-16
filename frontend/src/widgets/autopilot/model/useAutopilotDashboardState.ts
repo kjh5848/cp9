@@ -172,6 +172,10 @@ export function useAutopilotDashboardState() {
       if (autopilotSettings.dailyCap !== null && autopilotSettings.dailyCap !== undefined) setDailyCap(String(autopilotSettings.dailyCap));
       if (autopilotSettings.activeTimeStart !== null && autopilotSettings.activeTimeStart !== undefined) setActiveTimeStart(String(autopilotSettings.activeTimeStart));
       if (autopilotSettings.activeTimeEnd !== null && autopilotSettings.activeTimeEnd !== undefined) setActiveTimeEnd(String(autopilotSettings.activeTimeEnd));
+      
+      if (autopilotSettings.publishTargets) {
+        setPublishTargets(autopilotSettings.publishTargets as unknown as PublishTarget[]);
+      }
     }
   }, [articleSettings, profile, autopilotSettings]);
 

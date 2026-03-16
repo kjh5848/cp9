@@ -112,7 +112,7 @@ export function SingleKeywordWizard({
           intervalMinutes,
           activeStart,
           activeEnd,
-          i * intervalMinutes, // 대량 등록 시 오프셋
+          i, // 대량 등록 시 오프셋 인덱스
           base,
           parsedPublishTimes,
           parsedPublishDays,

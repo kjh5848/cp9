@@ -42,6 +42,7 @@ export interface DefaultAutopilotSettings {
   dailyCap?: number;
   activeTimeStart?: number;
   activeTimeEnd?: number;
+  publishTargets?: any[];
 }
 
 export interface UserSettingsDTO {

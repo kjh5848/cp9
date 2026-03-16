@@ -19,12 +19,12 @@ export async function POST(request: Request) {
       const charLimit = payload.charLimit ? parseInt(payload.charLimit, 10) : 5000;
       const minPrice = payload.minPrice ? parseInt(payload.minPrice, 10) : null;
       const maxPrice = payload.maxPrice ? parseInt(payload.maxPrice, 10) : null;
-      const intervalHours = payload.intervalHours ? parseInt(payload.intervalHours, 10) : null;
+      const intervalHours = payload.intervalHours ? Number(payload.intervalHours) : null;
       const activeTimeStart = payload.activeTimeStart !== undefined && payload.activeTimeStart !== null ? parseInt(payload.activeTimeStart, 10) : null;
       const activeTimeEnd = payload.activeTimeEnd !== undefined && payload.activeTimeEnd !== null ? parseInt(payload.activeTimeEnd, 10) : null;
 
-      const offsetHours = intervalHours ? (index * intervalHours) : 0;
-      const nextRunAt = getNextRunAtKST(intervalHours, activeTimeStart, activeTimeEnd, offsetHours, payload.startDate || null);
+      const intervalMinutes = intervalHours ? intervalHours * 60 : 0;
+      const nextRunAt = getNextRunAtKST(intervalMinutes, activeTimeStart, activeTimeEnd, index, payload.startDate || null);
 
       return {
         keyword: payload.keyword,

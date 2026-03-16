@@ -76,16 +76,22 @@ export async function DELETE(request: Request) {
   try {
     const url = new URL(request.url);
     const id = url.searchParams.get('id');
+    const ids = url.searchParams.get('ids');
 
-    if (!id) {
-      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    if (ids) {
+      const idList = ids.split(',').filter(Boolean);
+      await prisma.categoryCampaign.deleteMany({
+        where: { id: { in: idList } }
+      });
+      return NextResponse.json({ success: true, count: idList.length });
+    } else if (id) {
+      await prisma.categoryCampaign.delete({
+        where: { id }
+      });
+      return NextResponse.json({ success: true, count: 1 });
+    } else {
+      return NextResponse.json({ error: 'id or ids parameter is required' }, { status: 400 });
     }
-
-    await prisma.categoryCampaign.delete({
-      where: { id }
-    });
-
-    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Failed to delete category campaign:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

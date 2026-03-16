@@ -42,6 +42,7 @@ export const ScheduleListView = ({
   onExecuteBulkCancel,
 }: ScheduleListViewProps) => {
   const [selectedPendingIds, setSelectedPendingIds] = React.useState<string[]>([]);
+  const [sortOrder, setSortOrder] = React.useState<'asc' | 'desc'>('asc');
 
   const handleToggleSelect = (id: string, checked: boolean) => {
     if (checked) {
@@ -60,9 +61,11 @@ export const ScheduleListView = ({
     }
   };
 
-  const allItems = [...displayScheduledItems, ...displayCompletedItems].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
+  const allItems = [...displayScheduledItems, ...displayCompletedItems].sort((a, b) => {
+    const timeA = new Date(a.date).getTime();
+    const timeB = new Date(b.date).getTime();
+    return sortOrder === 'asc' ? timeA - timeB : timeB - timeA;
+  });
 
   const renderStatusBadge = (status: string) => {
     if (status === 'PENDING') {
@@ -90,8 +93,8 @@ export const ScheduleListView = ({
 
   return (
     <div className="flex flex-col gap-4">
-      {displayScheduledItems.length > 0 && (
-        <div className="flex items-center gap-3 bg-muted/40 p-3 rounded-lg border border-border">
+      <div className="flex items-center justify-between gap-3 bg-muted/40 p-3 rounded-lg border border-border">
+        {displayScheduledItems.length > 0 ? (
           <div className="flex items-center gap-2 px-2">
             <input 
               type="checkbox" 
@@ -101,9 +104,13 @@ export const ScheduleListView = ({
             />
             <span className="text-xs font-medium text-muted-foreground">전체 선택 (오토파일럿 전용)</span>
           </div>
-          
+        ) : (
+          <div></div>
+        )}
+        
+        <div className="flex items-center gap-2 ml-auto">
           {selectedPendingIds.length > 0 && (
-            <div className="flex items-center gap-2 ml-auto">
+            <>
               <span className="text-xs font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded">
                 {selectedPendingIds.length}개 선택됨
               </span>
@@ -114,14 +121,22 @@ export const ScheduleListView = ({
                     setSelectedPendingIds([]);
                   }
                 }}
-                className="text-xs font-medium bg-red-500/10 text-red-500 hover:bg-red-500/20 px-3 py-1.5 rounded-md transition-colors"
+                className="text-xs font-medium bg-red-500/10 text-red-500 hover:bg-red-500/20 px-3 py-1.5 rounded-md transition-colors mr-2"
               >
                 일괄 삭제
               </button>
-            </div>
+            </>
           )}
+          
+          <button
+            onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+            className="flex items-center gap-1.5 text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-md transition-colors"
+          >
+            <Clock className="w-3.5 h-3.5" />
+            {sortOrder === 'asc' ? '오름차순 (오래된 순)' : '내림차순 (최신 순)'}
+          </button>
         </div>
-      )}
+      </div>
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         <div className="overflow-x-auto">

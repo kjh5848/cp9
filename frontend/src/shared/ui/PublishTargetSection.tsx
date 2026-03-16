@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Share2, Globe, FileText, CheckCircle2, RefreshCw } from 'lucide-react';
 import { Switch } from '@/shared/ui/switch';
 import { Input } from '@/shared/ui/input';
@@ -55,6 +55,15 @@ export function PublishTargetSection({
       setIsLoadingWp(false);
     }
   };
+
+  const isWpEnabled = safeTargets.find(t => t.platform === 'wordpress')?.enabled;
+
+  useEffect(() => {
+    if (isWpEnabled && wpCategories.length === 0 && !isLoadingWp) {
+      fetchWpCategories();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isWpEnabled]);
 
   const handleToggle = (platform: PublishTarget['platform'], enabled: boolean) => {
     const newTargets = safeTargets.map(t =>
@@ -142,7 +151,11 @@ export function PublishTargetSection({
                       카테고리 불러오기
                     </button>
                   </div>
-                  {wpCategories.length > 0 ? (
+                  {isLoadingWp ? (
+                    <div className="h-8 text-xs bg-slate-900 border border-slate-700 rounded-md flex items-center px-3 text-slate-500">
+                      카테고리 정보 불러오는 중...
+                    </div>
+                  ) : wpCategories.length > 0 ? (
                     <Select 
                       value={target.meta.categoryId || ''} 
                       onValueChange={(val) => handleMetaChange(target.platform, 'categoryId', val === 'none' ? '' : val)}

@@ -166,12 +166,22 @@ export function AutopilotDashboardWidget() {
             AI 리서치 기반 키워드 발굴부터 일괄 스케줄링까지 블로그 운영을 자동화합니다.
           </p>
         </div>
-        <button
-          onClick={vm.triggerCronManually}
-          className="px-4 py-2 text-sm font-medium text-slate-300 bg-slate-800 rounded-xl hover:bg-slate-700 hover:text-white border border-slate-700 transition-all font-syne"
-        >
-          임의 설정된 큐 배치 실행 시작
-        </button>
+        {process.env.NODE_ENV === 'development' && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={vm.triggerCampaignCronManually}
+              className="px-4 py-2 text-sm font-medium text-purple-300 bg-purple-500/10 rounded-xl hover:bg-purple-500/20 border border-purple-500/30 transition-all font-syne"
+            >
+              캠페인 큐 보충 (강제)
+            </button>
+            <button
+              onClick={vm.triggerCronManually}
+              className="px-4 py-2 text-sm font-medium text-slate-300 bg-slate-800 rounded-xl hover:bg-slate-700 hover:text-white border border-slate-700 transition-all font-syne"
+            >
+              발행 스케줄 강제 실행
+            </button>
+          </div>
+        )}
       </div>
 
       {/* 큐 등록 폼 컨테이너 */}
@@ -305,6 +315,7 @@ export function AutopilotDashboardWidget() {
               setDepth3={vm.setDepth3}
               customCategory={vm.customCategory}
               setCustomCategory={vm.setCustomCategory}
+              publishTargetNode={publishTargetNode}
             />
           ) : (
             <ApprovalInbox 

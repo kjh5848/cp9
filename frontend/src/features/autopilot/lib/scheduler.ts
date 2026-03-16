@@ -4,7 +4,7 @@
  * @param intervalMinutes - 반복 주기 (분 단위)
  * @param activeStart - 동작 허용 시작 시간 (KST, 0~23)
  * @param activeEnd - 동작 허용 종료 시간 (KST, 0~23)
- * @param offsetMinutes - 추가 오프셋(대량 등록 시 인덱스별 간격, 분 단위)
+ * @param index - 현재 항목의 대기열 등록 순서 인덱스 (0부터 시작)
  * @param baseDate - 기준 시점 (미지정 시 현재 시각)
  * @param publishTimes - 특정 발행 시간 배열 (예: ["09:00", "15:00"])
  * @param publishDays - 특정 요일 배열 (예: [1,2,3,4,5] 월~금)
@@ -15,7 +15,7 @@ export function getNextRunAtKST(
   intervalMinutes?: number | null, 
   activeStart?: number | null, 
   activeEnd?: number | null,
-  offsetMinutes: number = 0,
+  index: number = 0,
   baseDate?: Date | string | null,
   publishTimes?: string[],
   publishDays?: number[],
@@ -26,19 +26,15 @@ export function getNextRunAtKST(
 
   if (publishTimes && publishTimes.length > 0) {
     // 1. 특정 시간 지정 방식 (Specific Publish Times)
-    targetTime = getNextSpecificTime(base, publishTimes, publishDays);
-    
-    // 타겟 시간에 Offset 합산 (대량 등록일 경우 순차적으로 밀리도록)
-    if (offsetMinutes > 0) {
-      targetTime = new Date(targetTime.getTime() + offsetMinutes * 60 * 1000);
-    }
+    targetTime = getNextSpecificTimeByIndex(base, publishTimes, index, publishDays);
   } else {
     // 2. 간격 방식 (Interval - 기존 로직)
-    const totalOffsetMs = (offsetMinutes + (intervalMinutes ?? 0)) * 60 * 1000;
-    targetTime = new Date(base.getTime() + totalOffsetMs);
+    const intervalMs = (intervalMinutes ?? 0) * 60 * 1000;
+    targetTime = new Date(base.getTime() + index * intervalMs);
     
     // 활성 시간대 필터링 (KST 기준)
     if (activeStart !== null && activeStart !== undefined && activeEnd !== null && activeEnd !== undefined) {
+      // 좀 더 정교한 누적은 차후 구현하되, 현재는 활성 시간대를 넘어가면 시작 시간으로 밀어줌
       targetTime = adjustToActiveWindow(targetTime, activeStart, activeEnd);
     }
   }
@@ -52,17 +48,19 @@ export function getNextRunAtKST(
 }
 
 /**
- * 기준 시간(base) 이후에 도래하는 가장 가까운 특정 예약 시간(KST)을 찾습니다.
+ * 기준 시간(base) 이후에 도래하는 특정 예약 시간(KST) 중 index번째 시각을 찾습니다.
  */
-function getNextSpecificTime(base: Date, publishTimes: string[], publishDays?: number[]): Date {
+function getNextSpecificTimeByIndex(base: Date, publishTimes: string[], targetIndex: number, publishDays?: number[]): Date {
   // 1. Time 문자열 파싱 (KST 기준 HH:MM)
   const parsedTimes = publishTimes.map(t => {
     const [h, m] = t.split(':').map(Number);
     return { h, m };
   }).sort((a, b) => (a.h * 60 + a.m) - (b.h * 60 + b.m)); // 빠른 시간 순 정렬
 
-  // 2. 날짜 탐색 시작 (최대 14일 정도 탐색)
-  for (let dayOffset = 0; dayOffset < 14; dayOffset++) {
+  let matchesFound = 0;
+  
+  // 2. 날짜 탐색 시작 (최대 100일 정도 탐색)
+  for (let dayOffset = 0; dayOffset < 100; dayOffset++) {
     const currentTestDate = new Date(base.getTime() + dayOffset * 24 * 60 * 60 * 1000);
     const kstDay = (currentTestDate.getUTCDay() + (currentTestDate.getUTCHours() + 9 >= 24 ? 1 : 0)) % 7;
     
@@ -80,18 +78,19 @@ function getNextSpecificTime(base: Date, publishTimes: string[], publishDays?: n
         continue;
       }
 
-      // 후보 시간을 Date 객체로 생성 (target KST hours - 9 = UTC hours)
-      const targetUtcHours = time.h - 9;
-      
-      const candidateDate = new Date(currentTestDate);
-      candidateDate.setUTCHours(targetUtcHours, time.m, 0, 0);
-
-      return candidateDate;
+      if (matchesFound === targetIndex) {
+        // 목표 시간 계산 (target KST hours - 9 = UTC hours)
+        const targetUtcHours = time.h - 9;
+        const candidateDate = new Date(currentTestDate);
+        candidateDate.setUTCHours(targetUtcHours, time.m, 0, 0);
+        return candidateDate;
+      }
+      matchesFound++;
     }
   }
 
-  // 매칭되는 날이 없으면 기본적으로 하루 뒤 반환 (Fallback)
-  return new Date(base.getTime() + 24 * 60 * 60 * 1000);
+  // 매칭되는 날이 없으면 기본적으로 fallback 반환
+  return new Date(base.getTime() + 24 * 60 * 60 * 1000 * (targetIndex + 1));
 }
 
 /**
@@ -99,7 +98,6 @@ function getNextSpecificTime(base: Date, publishTimes: string[], publishDays?: n
  * 예: 09:00에 jitter 15를 주면 08:45 ~ 09:15 사이의 시간 반환.
  */
 function applyJitter(targetTime: Date, jitterMinutes: number): Date {
-  // -jitterMinutes ~ +jitterMinutes 사이의 랜덤한 밀리초 산출
   const jitterMs = jitterMinutes * 60 * 1000;
   const randomOffset = Math.floor(Math.random() * (jitterMs * 2 + 1)) - jitterMs;
   return new Date(targetTime.getTime() + randomOffset);
@@ -122,28 +120,24 @@ function adjustToActiveWindow(targetTime: Date, activeStart: number, activeEnd: 
   }
   
   if (isWithinActiveTime) {
-    return targetTime; // 분/초 그대로 유지
+    return targetTime;
   }
   
   // 활성 시간대 밖 → 다음 activeStart 정각으로 이동
   let hoursToAdd = 0;
   if (activeStart <= activeEnd) {
-    // 일반 구간
     if (currentKSTHour < activeStart) {
       hoursToAdd = activeStart - currentKSTHour;
     } else {
-      // currentKSTHour > activeEnd
       hoursToAdd = 24 - currentKSTHour + activeStart;
     }
   } else {
-    // 야간 구간: 비활성 = (activeEnd, activeStart) 사이
     if (currentKSTHour > activeEnd && currentKSTHour < activeStart) {
       hoursToAdd = activeStart - currentKSTHour;
     }
   }
   
   const adjusted = new Date(targetTime.getTime() + hoursToAdd * 60 * 60 * 1000);
-  // 활성 시작 정각으로 맞춤 (예: 09:00:00)
   adjusted.setUTCMinutes(0, 0, 0);
   return adjusted;
 }

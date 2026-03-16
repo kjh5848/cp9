@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+// @ts-expect-error type missing
 import { createPortal } from "react-dom";
 import { cn } from "@/shared/lib/utils";
 

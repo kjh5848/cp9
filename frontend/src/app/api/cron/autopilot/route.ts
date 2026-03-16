@@ -305,10 +305,10 @@ export async function GET(request: Request) {
           }
 
           const nextTime = getNextRunAtKST(
-            pendingItem.intervalHours,
+            pendingItem.intervalHours ? pendingItem.intervalHours * 60 : 0,
             pendingItem.activeTimeStart,
             pendingItem.activeTimeEnd,
-            0,        // offsetHours 불필요 (단일 재예약)
+            0,        // 단일 재예약이므로 index=0
             new Date() // 실행 완료 시점 기준
           );
 

@@ -11,7 +11,7 @@ const perplexityKey = process.env.PERPLEXITY_API_KEY || process.env.OPENAI_API_K
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { seedKeyword, targetCount = 15, targetAge, targetGender, category, searchIntent, searchModel = "sonar-pro" } = body as {
+    const { seedKeyword, targetCount = 15, targetAge, targetGender, category, searchIntent, searchModel = "sonar-pro", keywordType = "single" } = body as {
       seedKeyword: string;
       targetCount?: number;
       targetAge: string;
@@ -19,6 +19,7 @@ export async function POST(request: Request) {
       category: string;
       searchIntent: string;
       searchModel?: string;
+      keywordType?: "single" | "topic" | "category";
     }
 
     if (!seedKeyword) {
@@ -57,6 +58,27 @@ export async function POST(request: Request) {
 `;
     }
 
+    let typeInstructions = "";
+    if (keywordType === "single") {
+      typeInstructions = `
+[키워드 발굴 형태: 단일 키워드 파생 (Single)]
+- 입력된 시드 단어를 중심축으로 삼아, 앞뒤로 수식어가 붙거나 더 구체적인 상황을 묘사하는 "직접적인 파생 롱테일 키워드" 위주로 발굴하세요.
+- 시드 단어의 의도에서 벗어나지 않고, 직관적으로 연결되는 세부 검색어를 도출하는 데 집중하세요.
+`;
+    } else if (keywordType === "topic") {
+      typeInstructions = `
+[키워드 발굴 형태: 주제/클러스터 기반 확장 (Topic)]
+- 시드 단어와 직접적으로 같은 단어가 포함되지 않더라도, 해당 '주제망(Topic Cluster)'이나 '연관 의미망(LSI)'에 속하는 위성 주제들을 폭넓게 발굴하세요.
+- 사용자가 시드 단어를 검색하기 전이나 후에 검색할 만한 인접 맥락의 키워드를 포함하여 다차원적인 관점을 제시하세요.
+`;
+    } else if (keywordType === "category") {
+      typeInstructions = `
+[키워드 발굴 형태: 카테고리 캠페인용 구조화 (Category)]
+- 시드 단어가 속한 전체 카테고리(매크로)를 아우를 수 있도록, 대표적인 '하위 분류(Sub-category)' 특성을 띄는 구조화된 마스터 키워드(Master Keywords) 위주로 발굴하세요.
+- 각 키워드가 전체 캠페인의 하나의 카테고리 기둥(Pillar) 역할을 수행할 수 있도록, 적당한 검색 볼륨과 대표성을 지닌 키워드들을 선별하세요.
+`;
+    }
+
     const prompt = `
 당신은 10년 이상의 경력을 가진 대한민국 최고 수준의 SEO 최적화 및 제휴 마케팅(Affiliate Marketing) 전략가이자 데이터 분석가입니다.
 현재 ${currentYear}년 ${currentMonth}월입니다. 
@@ -76,6 +98,8 @@ export async function POST(request: Request) {
 2. 제휴 마케팅을 통한 수익화를 고려하여, 잠재 고객의 'Pain Point(불편함)'나 'Desire(욕망)'를 정확히 건드리는 키워드여야 합니다.
 3. 경쟁이 너무 치열한 메인 키워드(예: "공기청정기")보다는, 타겟이 세분화된 세부 키워드(예: "원룸 냄새 제거용 미니 공기청정기 추천")를 도출하세요.
 4. AI 검색(Perplexity, ChatGPT 등) 환경에서 자주 쓰이는 '대화형/질문형(Conversational search)' 쿼리도 고려하세요.
+
+${typeInstructions}
 
 ${intentInstructions}
 

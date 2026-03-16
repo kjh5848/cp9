@@ -13,6 +13,7 @@ interface SeedSearchFormProps {
     category: string;
     searchIntent: string;
     searchModel: string;
+    keywordType: 'single' | 'topic' | 'category';
     isLoading: boolean;
   };
   actions: {
@@ -23,6 +24,7 @@ interface SeedSearchFormProps {
     setCategory: (v: string) => void;
     setSearchIntent: (v: string) => void;
     setSearchModel: (v: string) => void;
+    setKeywordType: (v: 'single' | 'topic' | 'category') => void;
     handleExtract: () => void;
   };
 }
@@ -48,6 +50,18 @@ export const SeedSearchForm = ({ state, actions }: SeedSearchFormProps) => {
 
       {/* 2. 상세 타겟팅 */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="space-y-2 col-span-2 lg:col-span-3">
+          <label className="text-xs font-bold text-slate-400">키워드 발굴 형태</label>
+          <select 
+            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none"
+            value={state.keywordType}
+            onChange={(e) => actions.setKeywordType(e.target.value as 'single' | 'topic' | 'category')}
+          >
+            <option value="single">단일 키워드 파생 (구체적/직접적)</option>
+            <option value="topic">주제/클러스터 기반 확장 (LSI/위성 주제)</option>
+            <option value="category">카테고리 캠페인용 구조화 (하위 분류형)</option>
+          </select>
+        </div>
         <div className="space-y-2">
           <label className="text-xs font-bold text-slate-400">타겟 키워드 개수</label>
           <select 

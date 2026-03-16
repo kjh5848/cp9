@@ -145,6 +145,24 @@ export function useAutopilotViewModel() {
     }
   };
 
+  const triggerCampaignCronManually = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/cron/campaigns');
+      const data = await res.json();
+      if (res.ok) {
+        alert(`캠페인 큐 보충 완료!\n생성된 총 큐 개수: ${data.generatedCount}개\n처리된 캠페인: ${data.processedCampaigns}개`);
+        await fetchQueue();
+      } else {
+        alert('캠페인 크론 트리거 오류: ' + (data.error || '알 수 없는 오류'));
+      }
+    } catch (err) {
+      alert('캠페인 크론 요청 중 에러: ' + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const researchKeywords = async (personaId: string, topic: string) => {
     setIsLoading(true);
     setError(null);
@@ -205,6 +223,7 @@ export function useAutopilotViewModel() {
     bulkDeleteFromQueue,
     rescheduleQueue,
     triggerCronManually,
+    triggerCampaignCronManually,
     researchKeywords,
     addBulkToQueue,
   };

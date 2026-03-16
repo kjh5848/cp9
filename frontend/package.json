@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:doppler": "doppler run -- next dev",
+    "dev:cron": "node scripts/local-cron.js",
     "build": "NODE_ENV=production next build",
     "build:doppler": "NODE_ENV=production doppler run -- next build",
     "start": "NODE_ENV=production next start",

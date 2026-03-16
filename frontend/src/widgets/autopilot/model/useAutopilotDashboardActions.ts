@@ -126,7 +126,7 @@ export function useAutopilotDashboardActions(state: any, autopilotHook: any) {
           intervalMinutes,
           activeStart,
           activeEnd,
-          i * intervalMinutes,
+          i, // 순서 인덱스 전달 (이전처럼 i * intervalMinutes 가 아님)
           base,
           parsedPublishTimes,
           parsedPublishDays,
@@ -207,7 +207,7 @@ export function useAutopilotDashboardActions(state: any, autopilotHook: any) {
                intervalMinutes,
                activeStart,
                activeEnd,
-               i * intervalMinutes,
+               i, // 순서 인덱스 전달
                base,
                parsedPublishTimes,
                parsedPublishDays,

@@ -36,9 +36,8 @@ export async function POST(request: Request) {
       const activeEnd = q.campaign?.activeTimeEnd ?? q.activeTimeEnd;
       
       // index * intervalMinutes (혹은 단순 spacing)
-      // 여기서는 각 아이템을 intervalMinutes 단위로 순차적 배치
-      const offsetMinutes = index * intervalMinutes;
-      const nextRunAt = getNextRunAtKST(intervalMinutes, activeStart, activeEnd, offsetMinutes, new Date());
+      // 여기서는 각 아이템을 intervalMinutes 단위로 순차적 배치 (getNextRunAtKST 내부에서 index 기반으로 계산되므로 index만 전달)
+      const nextRunAt = getNextRunAtKST(intervalMinutes, activeStart, activeEnd, index, new Date());
 
       return prisma.autopilotQueue.update({
         where: { id: q.id },
