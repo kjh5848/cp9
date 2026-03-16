@@ -46,6 +46,10 @@ interface KeywordLabState {
   setExportPayload: (payload: { destination: 'keyword-writing' | 'autopilot-single' | 'autopilot-category' | null; keywords: ExtractedKeyword[] } | null) => void;
   setIsCartModalOpen: (isOpen: boolean) => void;
   resetDraft: () => void;
+  
+  // API Sync
+  fetchCartFromServer: () => Promise<void>;
+  syncCartToServer: (keywords: ExtractedKeyword[]) => Promise<void>;
 }
 
 const initialState = {
@@ -67,7 +71,7 @@ const initialState = {
 // 키워드 발굴소용 글로벌 드래프트 상태
 export const useKeywordLabStore = create<KeywordLabState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       seedKeyword: initialState.seedKeyword,
       targetCount: initialState.targetCount,
       targetAge: initialState.targetAge,
@@ -93,20 +97,47 @@ export const useKeywordLabStore = create<KeywordLabState>()(
 
       setExtractedKeywords: (extractedKeywords) => set({ extractedKeywords }),
       setSelectedKeywords: (selectedKeywords) => set({ selectedKeywords }),
-      setCartKeywords: (cartKeywords) => set({ cartKeywords }),
+      setCartKeywords: (cartKeywords) => {
+        set({ cartKeywords });
+        // Update server on change (fire and forget for UX)
+        get().syncCartToServer(cartKeywords);
+      },
       setExportPayload: (exportPayload) => set({ exportPayload }),
       setIsCartModalOpen: (isCartModalOpen) => set({ isCartModalOpen }),
 
       resetDraft: () => set((state) => ({
         ...initialState,
-        // Resetting draft shouldn't clear the cart or modal state usually, but following previous pattern:
-        cartKeywords: state.cartKeywords, // Keep cart data
+        cartKeywords: state.cartKeywords, 
         isCartModalOpen: state.isCartModalOpen
       })),
+
+      fetchCartFromServer: async () => {
+        try {
+          const res = await fetch('/api/cart');
+          if (res.ok) {
+            const data = await res.json();
+            set({ cartKeywords: data.keywords || [] });
+          }
+        } catch (error) {
+          console.error("Failed to fetch cart:", error);
+        }
+      },
+
+      syncCartToServer: async (keywords: ExtractedKeyword[]) => {
+        try {
+          await fetch('/api/cart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ keywords })
+          });
+        } catch (error) {
+          console.error("Failed to sync cart:", error);
+        }
+      }
     }),
     {
-      name: 'keyword-cart-storage', // name of item in the storage (must be unique)
-      partialize: (state) => ({ cartKeywords: state.cartKeywords }), // Only persist cartKeywords
+      name: 'keyword-cart-storage',
+      partialize: (state) => ({ cartKeywords: state.cartKeywords }), 
     }
   )
 );

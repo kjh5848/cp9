@@ -24,13 +24,16 @@ import { useSession, signOut } from "next-auth/react";
 export const Navbar = ({ className }: NavbarProps) => {
   const { data: session } = useSession();
   const user = session?.user;
-  const { cartKeywords, isCartModalOpen, setIsCartModalOpen } = useKeywordLabStore();
+  const { cartKeywords, isCartModalOpen, setIsCartModalOpen, fetchCartFromServer } = useKeywordLabStore();
 
-  // Next.js Hydration Mismatch 방지 (Zustand persist 사용 시)
+  // Next.js Hydration Mismatch 방지 및 서버 연동
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => {
     setMounted(true);
-  }, []);
+    if (user) {
+      fetchCartFromServer();
+    }
+  }, [user, fetchCartFromServer]);
 
   return (
     <header className={cn(

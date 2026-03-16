@@ -172,9 +172,30 @@ model User {
 
   autopilotQueues AutopilotQueue[]
   categoryCampaigns CategoryCampaign[]
+  cartItems        KeywordCartItem[]
 
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@map("users")
 }
+
+model KeywordCartItem {
+  id               String   @id @default(uuid())
+  userId           String   @map("user_id")
+  keyword          String
+  
+  // 메타데이터 (옵셔널)
+  monthlySearchVol Int?     @map("monthly_search_vol")
+  competition      String?
+  intent           String?
+
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@unique([userId, keyword]) // 한 유저가 같은 키워드를 중복으로 담지 못하도록 복합 유니크 키 설정
+  @@map("keyword_cart_items")
+}
+
