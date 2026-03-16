@@ -1,8 +1,6 @@
-import { Suspense } from "react";
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
 import { Metadata } from "next";
-import { LoginForm } from "@/features/auth/ui/LoginForm";
+import { LoginWidget } from "@/widgets/auth/ui/LoginWidget";
 
 export const metadata: Metadata = {
   title: "로그인 | CP9",
@@ -31,13 +29,7 @@ export default function LoginPage() {
         </div>
 
         {/* Form Card */}
-        <Suspense fallback={
-          <div className="bg-slate-900/50 border border-slate-800/60 rounded-2xl p-8 backdrop-blur-xl shadow-2xl flex items-center justify-center h-[400px]">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-          </div>
-        }>
-          <LoginForm />
-        </Suspense>
+        <LoginWidget />
       </div>
       
       <div className="absolute bottom-8 text-[10px] text-slate-600 font-medium tracking-widest uppercase">
