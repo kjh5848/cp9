@@ -32,7 +32,7 @@ export const Sheet = ({ open, onOpenChange, children }: SheetProps) => {
         onClick={() => onOpenChange?.(false)} 
       />
       {/* 모달 이너 콘텐트 래퍼 */}
-      <div className="relative z-[100] h-full w-full sm:w-[320px] shadow-2xl animate-in slide-in-from-right duration-300">
+      <div className="relative z-[100] h-[100dvh] w-full sm:w-[400px] shadow-2xl animate-in slide-in-from-right duration-300">
         {React.Children.map(children, child => {
           if (React.isValidElement(child)) {
             // @ts-ignore
@@ -55,7 +55,7 @@ export const SheetContent = ({
   onClose?: () => void
 }) => {
   return (
-    <div className={cn("h-full w-full border-l border-slate-800 bg-slate-950 p-6 flex flex-col shadow-2xl", className)}>
+    <div className={cn("h-full max-h-[100dvh] w-full border-l border-slate-800 bg-slate-950 flex flex-col shadow-2xl overflow-hidden", className)}>
       {onClose && (
         <button 
           onClick={onClose}
@@ -71,7 +71,7 @@ export const SheetContent = ({
 };
 
 export const SheetHeader = ({ children, className }: { children: React.ReactNode, className?: string }) => (
-  <div className={cn("flex flex-col space-y-2 text-center sm:text-left pt-2 pb-6 shrink-0", className)}>
+  <div className={cn("flex flex-col space-y-1.5 p-5 border-b border-white/10 shrink-0", className)}>
     {children}
   </div>
 );
