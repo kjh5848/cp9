@@ -26,6 +26,7 @@ export const ApiIntegrationSettingsForm: React.FC<ApiIntegrationSettingsFormProp
     openAiApiKey: '',
     geminiApiKey: '',
     perplexityApiKey: '',
+    claudeApiKey: '',
     wordpressUrl: '',
     wordpressUsername: '',
     wordpressAppPassword: '',
@@ -98,6 +99,16 @@ export const ApiIntegrationSettingsForm: React.FC<ApiIntegrationSettingsFormProp
                    placeholder="pplx-..." 
                    value={formData.perplexityApiKey || ''} 
                    onChange={(e) => handleChange('perplexityApiKey', e.target.value)}
+                   className="bg-black/40 border-white/10 text-white font-jakarta focus-visible:ring-cyan-500/50"
+                 />
+              </div>
+              <div className="space-y-2">
+                 <Label className="text-slate-300 font-jakarta">Anthropic Claude API 키</Label>
+                 <Input 
+                   type="password" 
+                   placeholder="sk-ant-..." 
+                   value={formData.claudeApiKey || ''} 
+                   onChange={(e) => handleChange('claudeApiKey', e.target.value)}
                    className="bg-black/40 border-white/10 text-white font-jakarta focus-visible:ring-cyan-500/50"
                  />
               </div>

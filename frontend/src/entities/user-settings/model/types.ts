@@ -15,6 +15,7 @@ export interface DefaultArticleSettings {
   openAiApiKey?: string;
   geminiApiKey?: string;
   perplexityApiKey?: string;
+  claudeApiKey?: string;
   wordpressUrl?: string; // 워드프레스 기본 통신 URL
   wordpressUsername?: string; // 워드프레스 계정명
   wordpressAppPassword?: string; // 워드프레스 앱 비밀번호

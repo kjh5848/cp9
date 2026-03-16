@@ -26,6 +26,7 @@ export async function PUT(request: Request) {
           openAiApiKey: body.openAiApiKey || null,
           geminiApiKey: body.geminiApiKey || null,
           perplexityApiKey: body.perplexityApiKey || null,
+          claudeApiKey: body.claudeApiKey || null,
           wordpressUrl: body.wordpressUrl || null,
           wordpressUsername: body.wordpressUsername || null,
           wordpressAppPassword: body.wordpressAppPassword || null,
