@@ -6,15 +6,6 @@ import { getNextRunAtKST } from '@/features/autopilot/lib/scheduler';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300; // 5 minutes Max for Vercel Cron
 
-const perplexityKey = process.env.PERPLEXITY_API_KEY || process.env.OPENAI_API_KEY || 'placeholder';
-const suggestModel = new ChatOpenAI({
-  apiKey: perplexityKey,
-  modelName: 'sonar-pro',
-  configuration: { baseURL: 'https://api.perplexity.ai' },
-  maxRetries: 1,
-  temperature: 0.8,
-});
-
 export async function GET(request: Request) {
   try {
     const authHeader = request.headers.get('authorization');
@@ -40,6 +31,26 @@ export async function GET(request: Request) {
       if (pendingCount <= 3) {
         console.log(`[Cron] 캠페인 ${campaign.categoryName} 큐 보충 필요. (현재: ${pendingCount})`);
         
+        // 유저의 API 키 가져오기
+        const user = await prisma.user.findUnique({
+          where: { id: campaign.userId ?? undefined },
+          select: { perplexityApiKey: true, openAiApiKey: true }
+        });
+
+        const apiKey = user?.perplexityApiKey || user?.openAiApiKey;
+        if (!apiKey) {
+          console.warn(`[Cron] 캠페인 ${campaign.categoryName} 생성 취소: 유저 API 키 없음`);
+          continue; // 키가 없으면 이 캠페인은 건너뜀
+        }
+
+        const suggestModel = new ChatOpenAI({
+          apiKey: apiKey,
+          modelName: user?.perplexityApiKey ? 'sonar-pro' : 'gpt-4o', 
+          configuration: user?.perplexityApiKey ? { baseURL: 'https://api.perplexity.ai' } : undefined,
+          maxRetries: 1,
+          temperature: 0.8,
+        });
+
         const now = new Date();
         const month = now.getMonth() + 1;
         const countToGenerate = campaign.batchSize || 15;
@@ -176,3 +187,4 @@ function parseKeywords(rawText: string): Array<{ keyword: string, articleType: s
   }
   return [];
 }
+

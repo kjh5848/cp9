@@ -16,6 +16,10 @@ jobs:
         run: |
           curl -X GET "https://cp9-navy.vercel.app/api/cron/schedule"
           
+      - name: Ping Vercel Campaigns Generation (Every 5 min)
+        run: |
+          curl -X GET "https://cp9-navy.vercel.app/api/cron/campaigns"
+
       - name: Ping Vercel Autopilot Dispatch (Every 5 min)
         run: |
           curl -X GET "https://cp9-navy.vercel.app/api/cron/autopilot"
