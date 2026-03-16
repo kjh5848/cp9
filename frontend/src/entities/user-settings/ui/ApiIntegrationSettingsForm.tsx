@@ -25,6 +25,7 @@ export const ApiIntegrationSettingsForm: React.FC<ApiIntegrationSettingsFormProp
     presetWordCount: 3000,
     openAiApiKey: '',
     geminiApiKey: '',
+    perplexityApiKey: '',
     wordpressUrl: '',
     wordpressUsername: '',
     wordpressAppPassword: '',
@@ -87,6 +88,16 @@ export const ApiIntegrationSettingsForm: React.FC<ApiIntegrationSettingsFormProp
                    placeholder="sk-..." 
                    value={formData.openAiApiKey || ''} 
                    onChange={(e) => handleChange('openAiApiKey', e.target.value)}
+                   className="bg-black/40 border-white/10 text-white font-jakarta focus-visible:ring-cyan-500/50"
+                 />
+              </div>
+              <div className="space-y-2">
+                 <Label className="text-slate-300 font-jakarta">Perplexity API 키</Label>
+                 <Input 
+                   type="password" 
+                   placeholder="pplx-..." 
+                   value={formData.perplexityApiKey || ''} 
+                   onChange={(e) => handleChange('perplexityApiKey', e.target.value)}
                    className="bg-black/40 border-white/10 text-white font-jakarta focus-visible:ring-cyan-500/50"
                  />
               </div>

@@ -14,6 +14,7 @@ export interface DefaultArticleSettings {
   presetWordCount: number; // e.g. 3000, 5000
   openAiApiKey?: string;
   geminiApiKey?: string;
+  perplexityApiKey?: string;
   wordpressUrl?: string; // 워드프레스 기본 통신 URL
   wordpressUsername?: string; // 워드프레스 계정명
   wordpressAppPassword?: string; // 워드프레스 앱 비밀번호

@@ -319,7 +319,7 @@ export const ProductCreation = () => {
             마이페이지에서 Access Key와 Secret Key를 먼저 등록해주세요.
           </p>
           <Button 
-            onClick={() => router.push("/mypage")} 
+            onClick={() => router.push("/my-page")} 
             className="mt-4 bg-red-500 hover:bg-red-600 text-white font-medium px-8 h-11"
           >
             마이페이지로 이동하기

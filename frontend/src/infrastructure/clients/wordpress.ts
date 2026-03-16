@@ -40,27 +40,36 @@ let _wpClient: WordPressClient | null = null
 
 /**
  * WordPress 클라이언트 인스턴스를 반환합니다.
- * 환경변수가 설정되지 않으면 null을 반환합니다.
+ * 인자로 인증 정보를 전달하면 해당 정보로 새로운 인스턴스를 생성하여 반환하고,
+ * 파라미터가 없으면 환경변수 기반의 싱글톤 인스턴스를 반환합니다.
  */
-export function getWordPressClient(): WordPressClient | null {
+export function getWordPressClient(
+  siteUrl?: string | null,
+  username?: string | null,
+  appPassword?: string | null
+): WordPressClient | null {
+  if (siteUrl && username && appPassword) {
+    return new WordPressClient(siteUrl, username, appPassword)
+  }
+
   if (_wpClient) return _wpClient
 
-  const siteUrl = config.WORDPRESS_SITE_URL
-  const username = config.WORDPRESS_USERNAME
-  const appPassword = config.WORDPRESS_APP_PASSWORD
+  const fallbackSiteUrl = config.WORDPRESS_SITE_URL
+  const fallbackUsername = config.WORDPRESS_USERNAME
+  const fallbackAppPassword = config.WORDPRESS_APP_PASSWORD
 
-  if (!siteUrl || !username || !appPassword) {
+  if (!fallbackSiteUrl || !fallbackUsername || !fallbackAppPassword) {
     console.warn('⚠️ [WordPress] 환경변수가 설정되지 않았습니다 (WORDPRESS_SITE_URL, WORDPRESS_USERNAME, WORDPRESS_APP_PASSWORD)')
     return null
   }
 
-  _wpClient = new WordPressClient(siteUrl, username, appPassword)
+  _wpClient = new WordPressClient(fallbackSiteUrl, fallbackUsername, fallbackAppPassword)
   return _wpClient
 }
 
 // ── WordPress 클라이언트 클래스 ──
 
-class WordPressClient {
+export class WordPressClient {
   private baseUrl: string
   private authHeader: string
 

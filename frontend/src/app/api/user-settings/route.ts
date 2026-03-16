@@ -16,30 +16,66 @@ export async function GET() {
 
     // Get current user session
     const session = await getServerSession(authOptions);
-    let coupangAccessKey = '';
-    let coupangSecretKey = '';
-
-    if (session?.user?.id) {
-      const user = await prisma.user.findUnique({
-        where: { id: session.user.id },
-        select: { coupangAccessKey: true, coupangSecretKey: true }
-      });
-      if (user) {
-        coupangAccessKey = user.coupangAccessKey || '';
-        coupangSecretKey = user.coupangSecretKey || '';
-      }
-    }
-
-    const dto: UserSettingsDTO = {
-      profile: mockDb.profile,
+    let realProfile = { ...mockDb.profile }; // Initialize with mock data as fallback
+    let dto: UserSettingsDTO = { // Initialize dto with mock data as fallback
+      profile: realProfile,
       articleSettings: {
         ...mockDb.articleSettings,
-        coupangAccessKey,
-        coupangSecretKey,
+        coupangAccessKey: '',
+        coupangSecretKey: '',
       },
       themeSettings: mockDb.themeSettings,
       autopilotSettings: mockDb.autopilotSettings
     };
+
+    if (session?.user?.id) {
+      const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: {
+          id: true,
+          email: true,
+          nickname: true,
+          createdAt: true,
+          coupangAccessKey: true,
+          coupangSecretKey: true,
+          openAiApiKey: true,
+          geminiApiKey: true,
+          perplexityApiKey: true,
+          wordpressUrl: true,
+          wordpressUsername: true,
+          wordpressAppPassword: true,
+        }
+      });
+
+      if (!user) {
+        return NextResponse.json({ error: 'User not found in DB' }, { status: 404 });
+      }
+
+      realProfile = {
+        id: user.id,
+        name: user.nickname || 'Unknown User',
+        email: user.email,
+        profileImageUrl: undefined,
+        createdAt: user.createdAt.toISOString()
+      };
+
+      dto = {
+        profile: realProfile,
+        articleSettings: {
+          ...mockDb.articleSettings,
+          coupangAccessKey: user.coupangAccessKey || '',
+          coupangSecretKey: user.coupangSecretKey || '',
+          openAiApiKey: user.openAiApiKey || '',
+          geminiApiKey: user.geminiApiKey || '',
+          perplexityApiKey: user.perplexityApiKey || '',
+          wordpressUrl: user.wordpressUrl || '',
+          wordpressUsername: user.wordpressUsername || '',
+          wordpressAppPassword: user.wordpressAppPassword || '',
+        },
+        themeSettings: mockDb.themeSettings,
+        autopilotSettings: mockDb.autopilotSettings
+      };
+    }
 
     return NextResponse.json(dto);
   } catch (error) {

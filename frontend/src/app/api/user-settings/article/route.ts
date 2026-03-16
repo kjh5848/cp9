@@ -15,7 +15,7 @@ export async function PUT(request: Request) {
     // Update the mock DB
     mockDb.articleSettings = { ...mockDb.articleSettings, ...body };
 
-    // Save Coupang keys to Prisma if user is logged in
+    // Save API keys to Prisma if user is logged in
     const session = await getServerSession(authOptions);
     if (session?.user?.id) {
       await prisma.user.update({
@@ -23,6 +23,12 @@ export async function PUT(request: Request) {
         data: {
           coupangAccessKey: body.coupangAccessKey || null,
           coupangSecretKey: body.coupangSecretKey || null,
+          openAiApiKey: body.openAiApiKey || null,
+          geminiApiKey: body.geminiApiKey || null,
+          perplexityApiKey: body.perplexityApiKey || null,
+          wordpressUrl: body.wordpressUrl || null,
+          wordpressUsername: body.wordpressUsername || null,
+          wordpressAppPassword: body.wordpressAppPassword || null,
         }
       });
     }
