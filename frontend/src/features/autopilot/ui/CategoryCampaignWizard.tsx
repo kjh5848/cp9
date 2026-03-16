@@ -3,6 +3,8 @@ import { useCategoryCampaignViewModel } from '../model/useCategoryCampaignViewMo
 import { Loader2, Plus, RefreshCw, Archive, Info } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 import { CATEGORY_TREE } from '@/shared/constants/categories';
+import { CartKeywordLoader } from '@/features/keyword-extraction/ui/CartKeywordLoader';
+import { ShoppingCart } from 'lucide-react';
 
 interface Props {
   personaId: string;
@@ -37,6 +39,7 @@ export function CategoryCampaignWizard({
 }: Props) {
   const { createCampaign, isLoading, campaigns, deleteCampaign, fetchCampaigns } = useCategoryCampaignViewModel();
   
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const [inputType, setInputType] = useState<'category' | 'custom'>('category');
   const [depth1, setDepth1] = useState<string>('');
   const [depth2, setDepth2] = useState<string>('');
@@ -134,6 +137,17 @@ export function CategoryCampaignWizard({
             }`}
           >
             직접 입력 (자유 키워드)
+          </button>
+          
+          <div className="flex-1" />
+          
+          <button
+            type="button"
+            onClick={() => setIsCartOpen(true)}
+            className="text-xs flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 transition-colors bg-emerald-500/10 hover:bg-emerald-500/20 px-3 py-1.5 rounded-md border border-emerald-500/30 ml-2"
+          >
+            <ShoppingCart className="w-3.5 h-3.5" />
+            장바구니에서 불러오기
           </button>
         </div>
 
@@ -382,6 +396,19 @@ export function CategoryCampaignWizard({
           </div>
         )}
       </div>
+
+      <CartKeywordLoader
+        isOpen={isCartOpen}
+        onOpenChange={setIsCartOpen}
+        maxSelection={10}
+        onLoad={(kws) => {
+          if (kws.length > 0) {
+            setInputType('custom');
+            const addedTerms = kws.map(k => k.keyword).join(', ');
+            setCustomCategory((prev: string) => prev ? `${prev}, ${addedTerms}` : addedTerms);
+          }
+        }}
+      />
     </div>
   );
 }

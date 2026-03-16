@@ -1,20 +1,23 @@
 "use client";
 
 import React from "react";
-import { CheckSquare, Square, ChevronRight, BarChart3, Presentation, Inbox } from "lucide-react";
+import { CheckSquare, Square, ChevronRight, BarChart3, Presentation, Inbox, ShoppingCart, Check } from "lucide-react";
 import { ExtractedKeyword } from "../model/useKeywordExtraction";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
+import { SendToModal } from "./SendToModal";
 
 interface KeywordResultTableProps {
   state: {
     extractedKeywords: ExtractedKeyword[];
     selectedKeywords: string[];
+    cartKeywords: ExtractedKeyword[];
     isLoading: boolean;
   };
   actions: {
     toggleSelection: (kw: string) => void;
-    sendToKeywordWriting: () => void;
+    toggleCartSelection: (kw: ExtractedKeyword) => void;
+    handleSendToDestination: (destination: 'keyword-writing' | 'autopilot-single' | 'autopilot-category') => void;
   };
 }
 
@@ -24,13 +27,15 @@ const TYPE_LABELS: Record<string, { label: string; color: string }> = {
   "problem-solving": { label: "문제해결", color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" }
 };
 
-const ARTICLE_TYPE_LABELS = {
+const ARTICLE_TYPE_LABELS: Record<string, string> = {
   single: "단일 리뷰",
   compare: "비교 분석",
   curation: "대량 큐레이션"
 };
 
 export const KeywordResultTable = ({ state, actions }: KeywordResultTableProps) => {
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
+  
   if (state.isLoading) {
     return (
       <div className="h-full min-h-[400px] flex flex-col items-center justify-center space-y-4">
@@ -62,14 +67,30 @@ export const KeywordResultTable = ({ state, actions }: KeywordResultTableProps) 
         <div className="text-sm text-slate-400">
           총 <strong className="text-purple-400">{state.extractedKeywords.length}개</strong>의 타겟 키워드 발굴 완료
         </div>
-        <Button 
-          onClick={actions.sendToKeywordWriting}
-          disabled={state.selectedKeywords.length === 0}
-          className="bg-blue-600 hover:bg-blue-500 text-white font-bold h-9"
-        >
-          선택 항목 ({state.selectedKeywords.length}) 글쓰기로 넘기기 <ChevronRight className="w-4 h-4 mr-1" />
-        </Button>
+        <div className="flex items-center gap-2">
+           <Button 
+            variant="outline"
+            className="border-white/10 text-slate-300 hover:text-white hover:bg-white/5 h-9"
+          >
+            <ShoppingCart className="w-4 h-4 mr-2" />
+            장바구니 ({state.cartKeywords.length})
+          </Button>
+          <Button 
+            onClick={() => setIsModalOpen(true)}
+            disabled={state.selectedKeywords.length === 0}
+            className="bg-purple-600 hover:bg-purple-500 text-white font-bold h-9 shadow-lg shadow-purple-500/20"
+          >
+            선택 항목 내보내기 ({state.selectedKeywords.length}) <ChevronRight className="w-4 h-4 ml-1" />
+          </Button>
+        </div>
       </div>
+
+      <SendToModal 
+        isOpen={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        selectedKeywordsObj={state.extractedKeywords.filter(k => state.selectedKeywords.includes(k.keyword))}
+        onConfirm={actions.handleSendToDestination}
+      />
 
       <div className="rounded-xl border border-white/10 overflow-hidden bg-black/20">
         <table className="w-full text-sm text-left align-middle">
@@ -80,11 +101,13 @@ export const KeywordResultTable = ({ state, actions }: KeywordResultTableProps) 
               <th className="px-4 py-3 text-center">유형</th>
               <th className="px-4 py-3 text-center">비즈니스 가치</th>
               <th className="px-4 py-3">AI 추천 글 유형</th>
+              <th className="px-4 py-3 text-center w-24">장바구니</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
             {state.extractedKeywords.map((item, idx) => {
               const isSelected = state.selectedKeywords.includes(item.keyword);
+              const isInCart = state.cartKeywords.some(k => k.keyword === item.keyword);
               const tInfo = TYPE_LABELS[item.type] || TYPE_LABELS.longtail;
 
               return (
@@ -102,6 +125,14 @@ export const KeywordResultTable = ({ state, actions }: KeywordResultTableProps) 
                     </button>
                   </td>
                   <td className="px-4 py-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-300 border border-slate-700">
+                        {item.category || '미분류'}
+                      </span>
+                      <span className="text-[11px] text-purple-400 font-medium">
+                        주제어: {item.mainKeyword || item.keyword}
+                      </span>
+                    </div>
                     <div className="font-bold text-white text-base mb-1">{item.keyword}</div>
                     <div className="text-xs text-slate-400 pr-4 line-clamp-1 group-hover:line-clamp-none transition-all">
                       {item.reason}
@@ -142,6 +173,18 @@ export const KeywordResultTable = ({ state, actions }: KeywordResultTableProps) 
                       <BarChart3 className="w-3.5 h-3.5 text-purple-400" /> 
                       {ARTICLE_TYPE_LABELS[item.expectedArticleType]}
                     </div>
+                  </td>
+                  <td className="px-4 py-4 text-center" onClick={(e) => e.stopPropagation()}>
+                    <button 
+                      onClick={() => actions.toggleCartSelection(item)}
+                      className={cn(
+                        "p-2 rounded-full transition-colors",
+                        isInCart ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30" : "bg-white/5 text-slate-400 hover:text-white hover:bg-white/10"
+                      )}
+                      title={isInCart ? "장바구니에서 제거" : "장바구니 담기"}
+                    >
+                      {isInCart ? <Check className="w-4 h-4" /> : <ShoppingCart className="w-4 h-4" />}
+                    </button>
                   </td>
                 </tr>
               );

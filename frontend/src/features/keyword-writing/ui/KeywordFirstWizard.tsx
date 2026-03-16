@@ -5,6 +5,7 @@ import { ChevronRight, ChevronLeft, Loader2, Sparkles, Edit3, Tag, Package, Ligh
 import { GlassCard } from "@/shared/ui/GlassCard";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
+import { ShoppingCart } from "lucide-react";
 
 import {
   StepIndicator,
@@ -17,6 +18,7 @@ import {
 import { ProductSearchSection } from "@/entities/keyword-writing/ui/ProductSearchSection";
 import { useKeywordWritingViewModel } from "@/features/keyword-writing/model/useKeywordWritingViewModel";
 import { TitleFormatSettingsGroup } from "@/shared/ui/article-settings/TitleFormatSettingsGroup";
+import { CartKeywordLoader } from "@/features/keyword-extraction/ui/CartKeywordLoader";
 
 type KeywordFirstWizardProps = {
   viewModel: ReturnType<typeof useKeywordWritingViewModel>;
@@ -27,6 +29,7 @@ const STEP_LABELS_A = ["키워드 선정", "제목 선택", "상품 연결", "�
 
 export const KeywordFirstWizard = ({ viewModel, renderCartBar }: KeywordFirstWizardProps) => {
   const { state: s, actions: a, router } = viewModel;
+  const [isCartOpen, setIsCartOpen] = React.useState(false);
 
   return (
     <>
@@ -37,13 +40,25 @@ export const KeywordFirstWizard = ({ viewModel, renderCartBar }: KeywordFirstWiz
         <div className="space-y-6 animate-in fade-in duration-300">
           {/* ① 직접 키워드 입력 */}
           <GlassCard className="p-6">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="p-2 bg-blue-500/20 rounded-lg"><Edit3 className="w-5 h-5 text-blue-400" /></div>
-              <div>
-                <h3 className="text-lg font-bold text-foreground">직접 키워드 입력</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">글을 작성할 키워드를 직접 입력하세요</p>
+            <div className="flex items-center gap-3 mb-5 justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/20 rounded-lg"><Edit3 className="w-5 h-5 text-blue-400" /></div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">직접 키워드 입력</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">글을 작성할 키워드를 직접 입력하세요</p>
+                </div>
               </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setIsCartOpen(true)}
+                className="text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 h-8 text-xs"
+              >
+                <ShoppingCart className="w-3.5 h-3.5 mr-1.5" />
+                장바구니에서 불러오기
+              </Button>
             </div>
+            
             <div className="relative">
               <input
                 type="text"
@@ -367,6 +382,17 @@ export const KeywordFirstWizard = ({ viewModel, renderCartBar }: KeywordFirstWiz
           />
         </div>
       )}
+
+      <CartKeywordLoader 
+        isOpen={isCartOpen}
+        onOpenChange={setIsCartOpen}
+        maxSelection={1}
+        onLoad={(kws) => {
+          if (kws.length > 0) {
+            a.setKeyword(kws[0].keyword);
+          }
+        }}
+      />
     </>
   );
 };

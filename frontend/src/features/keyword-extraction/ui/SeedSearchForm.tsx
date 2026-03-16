@@ -106,11 +106,11 @@ export const SeedSearchForm = ({ state, actions }: SeedSearchFormProps) => {
           <label className="text-xs font-bold text-slate-400">AI 분석 모델</label>
           <select 
             className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none"
-            value={state.searchModel || "sonar-deep-research"}
+            value={state.searchModel || "sonar-pro"}
             onChange={(e) => actions.setSearchModel(e.target.value)}
           >
+            <option value="sonar-pro">sonar-pro (기본/빠른 도출 모델)</option>
             <option value="sonar-deep-research">sonar-deep-research (심층 조사 모델)</option>
-            <option value="sonar-pro">sonar-pro (빠른 도출 모델)</option>
           </select>
         </div>
       </div>

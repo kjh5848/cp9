@@ -6,6 +6,7 @@ import { DEFAULT_TEXT_MODEL, DEFAULT_IMAGE_MODEL } from '@/shared/config/model-o
 import { AiResearchKeyword, SuggestedTitle } from '@/entities/autopilot/model/types';
 import { PublishTarget } from '@/shared/ui/PublishTargetSection';
 import { ThemeSwitcherTheme } from '@/entities/design/ui/ThemeSwitcher';
+import { useKeywordLabStore } from '@/entities/keyword-extraction/model/useKeywordLabStore';
 
 export function useAutopilotDashboardState() {
   const { personas, fetchPersonas } = usePersonaViewModel();
@@ -164,6 +165,27 @@ export function useAutopilotDashboardState() {
       setPersonaId(personas[0].id);
     }
   }, [personas, personaId]);
+
+  // Handle Export Payload from Keyword Extraction Handlers
+  const { exportPayload, setExportPayload } = useKeywordLabStore();
+  
+  useEffect(() => {
+    if (exportPayload) {
+      if (exportPayload.destination === 'autopilot-single' && exportPayload.keywords.length > 0) {
+        setInputMode('single');
+        setWizardStep(1);
+        setKeyword(exportPayload.keywords[0].keyword);
+        if (exportPayload.keywords[0].expectedArticleType) {
+          setArticleType(exportPayload.keywords[0].expectedArticleType);
+        }
+        setExportPayload(null);
+      } else if (exportPayload.destination === 'autopilot-category' && exportPayload.keywords.length > 0) {
+        setInputMode('bulk');
+        setTopic(exportPayload.keywords[0].keyword); // First keyword used as main topic
+        setExportPayload(null);
+      }
+    }
+  }, [exportPayload, setExportPayload]);
 
   return {
     inputMode, setInputMode,

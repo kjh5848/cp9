@@ -4,6 +4,7 @@ import React from "react";
 import { ChevronRight, ChevronLeft, Loader2, Sparkles, Package, PenTool } from "lucide-react";
 import { GlassCard } from "@/shared/ui/GlassCard";
 import { Button } from "@/shared/ui/button";
+import { ShoppingCart } from "lucide-react";
 
 import {
   StepIndicator,
@@ -17,6 +18,7 @@ import { RecommendedProductList } from "@/entities/keyword-writing/ui/Recommende
 import { SelectedProductList } from "@/shared/ui/SelectedProductList";
 import { useKeywordWritingViewModel } from "@/features/keyword-writing/model/useKeywordWritingViewModel";
 import { TitleFormatSettingsGroup } from "@/shared/ui/article-settings/TitleFormatSettingsGroup";
+import { CartKeywordLoader } from "@/features/keyword-extraction/ui/CartKeywordLoader";
 
 type ProductFirstWizardProps = {
   viewModel: ReturnType<typeof useKeywordWritingViewModel>;
@@ -36,6 +38,7 @@ export const ProductFirstWizard = ({
   isDefaultLoading
 }: ProductFirstWizardProps) => {
   const { state: s, actions: a, router } = viewModel;
+  const [isCartOpen, setIsCartOpen] = React.useState(false);
 
   return (
     <>
@@ -161,12 +164,23 @@ export const ProductFirstWizard = ({
       {s.stepB === 2 && (
         <div className="space-y-6 animate-in fade-in duration-300">
           <GlassCard className="p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-purple-500/20 rounded-lg"><PenTool className="w-5 h-5 text-purple-400" /></div>
-              <div>
-                <h3 className="text-lg font-bold text-foreground">AI 추출 결과</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">추출된 키워드와 제목을 확인/수정하세요</p>
+            <div className="flex items-center gap-3 mb-4 justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-500/20 rounded-lg"><PenTool className="w-5 h-5 text-purple-400" /></div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">AI 추출 결과</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">추출된 키워드와 제목을 확인/수정하세요</p>
+                </div>
               </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setIsCartOpen(true)}
+                className="text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 h-8 text-xs"
+              >
+                <ShoppingCart className="w-3.5 h-3.5 mr-1.5" />
+                장바구니 키워드로 변경
+              </Button>
             </div>
             {/* 추출된 키워드 */}
             <div className="mb-4">
@@ -254,6 +268,17 @@ export const ProductFirstWizard = ({
           />
         </div>
       )}
+
+      <CartKeywordLoader 
+        isOpen={isCartOpen}
+        onOpenChange={setIsCartOpen}
+        maxSelection={1}
+        onLoad={(kws) => {
+          if (kws.length > 0) {
+            a.setKeyword(kws[0].keyword);
+          }
+        }}
+      />
     </>
   );
 };

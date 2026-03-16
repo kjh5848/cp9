@@ -2,6 +2,8 @@ import React from 'react';
 import { AiResearchKeyword } from '@/entities/autopilot/model/types';
 import { ResearchResultTable } from '@/entities/autopilot/ui/ResearchResultTable';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
+import { CartKeywordLoader } from '@/features/keyword-extraction/ui/CartKeywordLoader';
+import { ShoppingCart } from 'lucide-react';
 
 export interface BulkKeywordWizardProps {
   topic: string;
@@ -40,11 +42,23 @@ export function BulkKeywordWizard({
   quickPresetNode,
   publishTargetNode
 }: BulkKeywordWizardProps) {
+  const [isCartOpen, setIsCartOpen] = React.useState(false);
+
   return (
     <div className="space-y-4">
       <div className="space-y-4 bg-slate-950/30 p-6 rounded-xl border border-slate-800/50">
         <div className="flex justify-between items-center">
-          <label className="block text-sm font-medium text-slate-300 tracking-tight">리서치 주제어 (데이터셋)</label>
+          <div className="flex items-center gap-3">
+            <label className="block text-sm font-medium text-slate-300 tracking-tight">리서치 주제어 (데이터셋)</label>
+            <button
+              type="button"
+              onClick={() => setIsCartOpen(true)}
+              className="text-xs flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 transition-colors bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1 rounded-md border border-emerald-500/30"
+            >
+              <ShoppingCart className="w-3.5 h-3.5" />
+              장바구니에서 불러오기
+            </button>
+          </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-slate-400">발굴 개수:</span>
             <Select value={bulkCount.toString()} onValueChange={(v) => setBulkCount(Number(v))}>
@@ -147,6 +161,18 @@ export function BulkKeywordWizard({
           </button>
         </div>
       ) : null}
+
+      <CartKeywordLoader
+        isOpen={isCartOpen}
+        onOpenChange={setIsCartOpen}
+        maxSelection={10}
+        onLoad={(kws) => {
+          if (kws.length > 0) {
+            const addedTerms = kws.map(k => k.keyword).join(', ');
+            setTopic(topic ? `${topic}, ${addedTerms}` : addedTerms);
+          }
+        }}
+      />
     </div>
   );
 }

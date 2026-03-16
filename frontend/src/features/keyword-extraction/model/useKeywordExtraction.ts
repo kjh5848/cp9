@@ -5,6 +5,8 @@ import { useKeywordLabStore } from "@/entities/keyword-extraction/model/useKeywo
 
 export interface ExtractedKeyword {
   keyword: string;
+  mainKeyword: string; // 주제어 (단일키워드)
+  category: string; // 우리 서비스 맞춤 카테고리
   type: 'longtail' | 'compare' | 'problem-solving';
   estimatedVolume: '높음' | '중간' | '낮음';
   profitability: '높음' | '중간' | '낮음';
@@ -19,12 +21,10 @@ export function useKeywordExtraction() {
   // 1. 전역 상태 연동 (Draft)
   const {
     seedKeyword, targetCount, targetAge, targetGender, category, searchIntent, searchModel,
-    extractedKeywords, selectedKeywords,
+    extractedKeywords, selectedKeywords, isLoading, cartKeywords, exportPayload,
     setSeedKeyword, setTargetCount, setTargetAge, setTargetGender, setCategory, setSearchIntent, setSearchModel,
-    setExtractedKeywords, setSelectedKeywords
+    setExtractedKeywords, setSelectedKeywords, setIsLoading, setCartKeywords, setExportPayload
   } = useKeywordLabStore();
-
-  const [isLoading, setIsLoading] = useState(false);
   const [isStoreReady, setIsStoreReady] = useState(false);
 
   // Client-side hydration 처리
@@ -81,25 +81,49 @@ export function useKeywordExtraction() {
     );
   };
 
-  const sendToKeywordWriting = () => {
+  const handleSendToDestination = (destination: 'keyword-writing' | 'autopilot-single' | 'autopilot-category') => {
     if (selectedKeywords.length === 0) {
       toast.error("선택된 키워드가 없습니다.");
       return;
     }
-    // 가장 첫 번째 키워드를 기본으로 넘기는 플로우 (향후 벌크 확장 가능)
-    const primaryKw = selectedKeywords[0];
-    // query string으로 넘기거나 localStorage 사용
-    router.push(`/keyword?kw=${encodeURIComponent(primaryKw)}`);
+
+    const selectedKeywordsObj = extractedKeywords.filter(k => selectedKeywords.includes(k.keyword));
+
+    if (destination === 'keyword-writing' && selectedKeywordsObj.length > 1) {
+      toast.error("키워드 글쓰기는 1개의 키워드만 선택 가능합니다.");
+      return;
+    }
+
+    setExportPayload({
+      destination,
+      keywords: selectedKeywordsObj
+    });
+
+    if (destination === 'keyword-writing') {
+      router.push(`/keyword`);
+    } else {
+      router.push(`/autopilot`);
+    }
   };
 
   return {
     state: {
       seedKeyword, targetCount, targetAge, targetGender, category, searchIntent, searchModel,
-      extractedKeywords, isLoading, selectedKeywords
+      extractedKeywords, isLoading, selectedKeywords, cartKeywords
     },
     actions: {
       setSeedKeyword, setTargetCount, setTargetAge, setTargetGender, setCategory, setSearchIntent, setSearchModel,
-      handleExtract, toggleSelection, sendToKeywordWriting
+      handleExtract, toggleSelection, handleSendToDestination,
+      toggleCartSelection: (keywordObj: ExtractedKeyword) => {
+        const isAlreadyInCart = cartKeywords.some((k) => k.keyword === keywordObj.keyword);
+        if (isAlreadyInCart) {
+          setCartKeywords(cartKeywords.filter((k) => k.keyword !== keywordObj.keyword));
+          toast.success("장바구니에서 제거되었습니다.");
+        } else {
+          setCartKeywords([...cartKeywords, keywordObj]);
+          toast.success("장바구니에 담겼습니다.");
+        }
+      }
     }
   };
 }

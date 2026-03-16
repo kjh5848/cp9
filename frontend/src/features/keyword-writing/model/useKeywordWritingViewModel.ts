@@ -6,9 +6,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useKeywordWritingState } from "./useKeywordWritingState";
 import { useKeywordWritingActions } from "./useKeywordWritingActions";
 import { useKeywordWritingDraft } from "./useKeywordWritingDraft";
+import { useKeywordLabStore } from "@/entities/keyword-extraction/model/useKeywordLabStore";
 
 export function useKeywordWritingViewModel() {
   const router = useRouter();
@@ -21,6 +23,22 @@ export function useKeywordWritingViewModel() {
 
   // 3. 비즈니스 로직(액션) 훅
   const actions = useKeywordWritingActions(state);
+
+  // 4. Export Payload 연동 (키워드 발굴소에서 넘어온 데이터)
+  const { exportPayload, setExportPayload } = useKeywordLabStore();
+
+  useEffect(() => {
+    if (exportPayload?.destination === 'keyword-writing' && exportPayload.keywords.length > 0) {
+      const kwObj = exportPayload.keywords[0];
+      state.setKeyword(kwObj.keyword);
+      // 'curation' 등은 여러 개일 때 쓰이므로 'single'이나 'compare'로 제한. 글쓰기는 보통 single 이나 기본값 유지.
+      if (['single', 'compare'].includes(kwObj.expectedArticleType)) {
+        state.setArticleType(kwObj.expectedArticleType);
+      }
+      // 처리 후 페이로드 초기화
+      setExportPayload(null);
+    }
+  }, [exportPayload, setExportPayload, state]);
 
   return {
     router,

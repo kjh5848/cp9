@@ -7,6 +7,8 @@ import { CartTitleList } from '@/entities/autopilot/ui/CartTitleList';
 import { TitleFormatSettingsGroup } from '@/shared/ui/article-settings/TitleFormatSettingsGroup';
 import { getNextRunAtKST } from '@/features/autopilot/lib/scheduler';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
+import { CartKeywordLoader } from '@/features/keyword-extraction/ui/CartKeywordLoader';
+import { ShoppingCart } from 'lucide-react';
 
 export interface SingleKeywordWizardProps {
   wizardStep: number;
@@ -125,6 +127,8 @@ export function SingleKeywordWizard({
     });
   };
 
+  const [isCartOpen, setIsCartOpen] = React.useState(false);
+
   return (
     <div className="space-y-6">
       {/* 스텝 인디케이터 */}
@@ -161,7 +165,17 @@ export function SingleKeywordWizard({
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1.5 md:col-span-2">
-              <label className="block text-sm font-medium text-slate-300 tracking-tight">키워드 (검색어)</label>
+              <div className="flex justify-between items-center">
+                <label className="block text-sm font-medium text-slate-300 tracking-tight">키워드 (검색어)</label>
+                <button
+                  type="button"
+                  onClick={() => setIsCartOpen(true)}
+                  className="text-xs flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 transition-colors bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1 rounded-md border border-emerald-500/30"
+                >
+                  <ShoppingCart className="w-3.5 h-3.5" />
+                  장바구니에서 불러오기
+                </button>
+              </div>
               <input
                 type="text"
                 value={keyword}
@@ -334,6 +348,17 @@ export function SingleKeywordWizard({
           </div>
         </div>
       ) : null}
+
+      <CartKeywordLoader
+        isOpen={isCartOpen}
+        onOpenChange={setIsCartOpen}
+        maxSelection={1}
+        onLoad={(kws) => {
+          if (kws.length > 0) {
+            setKeyword(kws[0].keyword);
+          }
+        }}
+      />
     </div>
   );
 }
