@@ -193,18 +193,3 @@ export default function LoginPage() {
     </div>
   );
 }
-tion-colors"
-              >
-                회원가입
-              </Link>
-            </p>
-          </form>
-        </div>
-      </div>
-      
-      <div className="absolute bottom-8 text-[10px] text-slate-600 font-medium tracking-widest uppercase">
-        © 2026 CP9 Advanced Agentic Platform
-      </div>
-    </div>
-  );
-}
