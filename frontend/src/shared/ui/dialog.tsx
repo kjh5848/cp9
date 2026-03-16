@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/shared/lib/utils";
 
 interface DialogProps {
@@ -10,31 +11,41 @@ interface DialogProps {
 }
 
 export const Dialog = ({ open, onOpenChange, children }: DialogProps) => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
     }
     return () => {
       document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
     };
   }, [open]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center">
       {/* 바깥 영역 클릭 시 닫힘 */}
       <div 
-        className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity" 
+        className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity z-[90]" 
         onClick={() => onOpenChange?.(false)} 
       />
       {/* 모달 이너 콘텐트 래퍼 */}
-      <div className="relative z-50 w-full p-4 sm:p-0 animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative z-[100] w-full p-4 sm:p-0 animate-in fade-in zoom-in-95 duration-200 pointer-events-auto">
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

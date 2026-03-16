@@ -43,21 +43,21 @@ export const CartKeywordLoader = ({ isOpen, onOpenChange, onLoad, maxSelection =
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px] bg-slate-900 border-slate-800 text-white max-h-[80vh] flex flex-col">
-        <DialogHeader className="shrink-0">
+      <DialogContent className="sm:max-w-[550px] bg-slate-900 border-slate-800 text-white max-h-[85vh] flex flex-col p-0">
+        <DialogHeader className="shrink-0 p-6 pb-2 border-b border-white/10">
           <DialogTitle className="text-xl flex items-center gap-2">
             <ShoppingCart className="w-5 h-5 text-emerald-400" />
             장바구니에서 불러오기
           </DialogTitle>
-          <DialogDescription className="text-slate-400">
+          <DialogDescription className="text-slate-400 mt-2">
             발굴소에서 담아둔 키워드를 선택형으로 불러옵니다.
             {maxSelection > 0 && <span className="text-purple-400 ml-1">최대 {maxSelection}개 선택 가능</span>}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto py-4 min-h-[200px]">
+        <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0 max-h-[60vh] scrollbar-hide">
           {cartKeywords.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-slate-500 py-10">
+            <div className="flex flex-col items-center justify-center h-[200px] text-slate-500 py-10">
               <ShoppingCart className="w-12 h-12 mb-3 opacity-20" />
               <p>장바구니가 비어 있습니다.</p>
               <p className="text-sm">키워드 발굴소에서 키워드를 장바구니에 담아주세요.</p>
@@ -93,7 +93,7 @@ export const CartKeywordLoader = ({ isOpen, onOpenChange, onLoad, maxSelection =
           )}
         </div>
 
-        <DialogFooter className="shrink-0 pt-4 border-t border-white/10">
+        <DialogFooter className="shrink-0 px-6 py-4 border-t border-white/10 bg-black/10">
           <Button variant="outline" className="text-slate-300 border-white/10" onClick={() => onOpenChange(false)}>
             취소
           </Button>

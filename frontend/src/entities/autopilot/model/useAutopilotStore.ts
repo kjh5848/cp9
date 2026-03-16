@@ -14,6 +14,10 @@ export interface AutopilotDraftState {
   keyword: string;
   topic: string;
   suggestedTitles: SuggestedTitle[];
+  depth1?: string;
+  depth2?: string;
+  depth3?: string;
+  customCategory?: string;
 }
 
 interface AutopilotState {

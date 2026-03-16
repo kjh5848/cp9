@@ -23,11 +23,12 @@ export function PersonaSelectionGroup({
 }: PersonaSelectionGroupProps) {
   if (hidePersona) return null;
 
+  // 기본 시스템 페르소나 우선 배치, 그 다음 커스텀 페르소나
   const displayPersonas = personas.length > 0 
     ? personas.map(p => ({
         id: p.id,
         label: p.name.replace(/[\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF]/g, '').trim(),
-        desc: p.toneDescription.slice(0, 30) + '...'
+        desc: p.toneDescription ? p.toneDescription.slice(0, 30) + '...' : '페르소나 설명이 없습니다.'
       }))
     : [{ id: "IT", label: "기본 IT 페르소나", desc: "전문적이고 신뢰감 있는 IT 기기 리뷰어체" }];
 

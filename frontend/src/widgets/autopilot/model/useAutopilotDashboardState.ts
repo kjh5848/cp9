@@ -30,6 +30,12 @@ export function useAutopilotDashboardState() {
     intent: string;
   } | null>(null);
 
+  // Category Campaign State
+  const [depth1, setDepth1] = useState<string>('');
+  const [depth2, setDepth2] = useState<string>('');
+  const [depth3, setDepth3] = useState<string>('');
+  const [customCategory, setCustomCategory] = useState<string>('');
+
   // Bulk Keyword State
   const [topic, setTopic] = useState('');
   const [bulkCount, setBulkCount] = useState(30);
@@ -93,6 +99,10 @@ export function useAutopilotDashboardState() {
         if (draftState.keyword) setKeyword(draftState.keyword);
         if (draftState.topic) setTopic(draftState.topic);
         if (draftState.suggestedTitles) setSuggestedTitles(draftState.suggestedTitles);
+        if (draftState.depth1) setDepth1(draftState.depth1);
+        if (draftState.depth2) setDepth2(draftState.depth2);
+        if (draftState.depth3) setDepth3(draftState.depth3);
+        if (draftState.customCategory) setCustomCategory(draftState.customCategory);
       }
       setIsStoreRestored(true);
     }
@@ -104,10 +114,10 @@ export function useAutopilotDashboardState() {
     if (isStoreRestored) {
       setStoreCartTitles(cartTitles);
       setStoreSettings({ intervalHours, activeTimeStart, activeTimeEnd });
-      updateDraftState({ inputMode, wizardStep, keyword, topic, suggestedTitles });
+      updateDraftState({ inputMode, wizardStep, keyword, topic, suggestedTitles, depth1, depth2, depth3, customCategory });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cartTitles, intervalHours, activeTimeStart, activeTimeEnd, inputMode, wizardStep, keyword, topic, suggestedTitles, isStoreRestored]);
+  }, [cartTitles, intervalHours, activeTimeStart, activeTimeEnd, inputMode, wizardStep, keyword, topic, suggestedTitles, depth1, depth2, depth3, customCategory, isStoreRestored]);
 
   const fetchThemes = async () => {
     try {
@@ -136,6 +146,11 @@ export function useAutopilotDashboardState() {
     const tzOffset = now.getTimezoneOffset() * 60000;
     const localISOTime = new Date(now.getTime() - tzOffset).toISOString().slice(0, 16);
     setStartDate(localISOTime);
+    
+    // Mount 시 필수 데이터 로드
+    fetchPersonas();
+    fetchThemes();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -197,6 +212,10 @@ export function useAutopilotDashboardState() {
     cartTitles, setCartTitles,
     customTitleInput, setCustomTitleInput,
     singleKeywordResearchMeta, setSingleKeywordResearchMeta,
+    depth1, setDepth1,
+    depth2, setDepth2,
+    depth3, setDepth3,
+    customCategory, setCustomCategory,
     topic, setTopic,
     bulkCount, setBulkCount,
     researchResults, setResearchResults,

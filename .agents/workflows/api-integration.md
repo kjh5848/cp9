@@ -1,5 +1,5 @@
 ---
-description: 외부 API 연동 및 환경 변수 설정 워크플로우
+description: api-integration
 ---
 
 # API 연동 워크플로우 (API Integration Workflow)

@@ -1,5 +1,5 @@
 ---
-description: 퍼플렉시티(Perplexity) 검색 API와 seo-article-writer 스킬을 결합하여 최신 정보 기반의 고전환율 SEO 최적화 기사를 자동 생성하는 파이프라인 워크플로우입니다.
+description: seo-pipeline
 ---
 
 # SEO 파이프라인 자동화 워크플로우 (`/seo-pipeline`)

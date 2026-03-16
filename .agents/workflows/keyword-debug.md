@@ -1,5 +1,5 @@
 ---
-description: 키워드 글쓰기 기능 검증 및 디버깅 워크플로우
+description: keyword-debug
 ---
 
 # 키워드 글쓰기 검증 & 디버깅

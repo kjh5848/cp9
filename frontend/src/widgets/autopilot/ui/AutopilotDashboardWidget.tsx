@@ -297,6 +297,14 @@ export function AutopilotDashboardWidget() {
               publishTargets={vm.publishTargets}
               configNode={configNodes}
               quickPresetNode={quickPresetNode}
+              depth1={vm.depth1}
+              setDepth1={vm.setDepth1}
+              depth2={vm.depth2}
+              setDepth2={vm.setDepth2}
+              depth3={vm.depth3}
+              setDepth3={vm.setDepth3}
+              customCategory={vm.customCategory}
+              setCustomCategory={vm.setCustomCategory}
             />
           ) : (
             <ApprovalInbox 

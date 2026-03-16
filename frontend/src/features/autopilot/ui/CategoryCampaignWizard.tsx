@@ -20,6 +20,14 @@ interface Props {
   configNode: React.ReactNode;
   quickPresetNode: React.ReactNode;
   publishTargetNode?: React.ReactNode;
+  depth1: string;
+  setDepth1: (v: string) => void;
+  depth2: string;
+  setDepth2: (v: string) => void;
+  depth3: string;
+  setDepth3: (v: string) => void;
+  customCategory: string;
+  setCustomCategory: (v: string | ((prev: string) => string)) => void;
 }
 
 export function CategoryCampaignWizard({
@@ -35,16 +43,20 @@ export function CategoryCampaignWizard({
   publishTargets,
   configNode,
   quickPresetNode,
-  publishTargetNode
+  publishTargetNode,
+  depth1,
+  setDepth1,
+  depth2,
+  setDepth2,
+  depth3,
+  setDepth3,
+  customCategory,
+  setCustomCategory
 }: Props) {
   const { createCampaign, isLoading, campaigns, deleteCampaign, fetchCampaigns } = useCategoryCampaignViewModel();
   
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [inputType, setInputType] = useState<'category' | 'custom'>('category');
-  const [depth1, setDepth1] = useState<string>('');
-  const [depth2, setDepth2] = useState<string>('');
-  const [depth3, setDepth3] = useState<string>('');
-  const [customCategory, setCustomCategory] = useState<string>('');
   const [batchSize, setBatchSize] = useState(15);
   const [targetAge, setTargetAge] = useState<string>('');
   const [targetGender, setTargetGender] = useState<string>('');
@@ -172,16 +184,17 @@ export function CategoryCampaignWizard({
                   </Select>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-xs text-slate-500 mb-1">중분류</span>
+                  <span className="text-xs text-slate-500 mb-1">중분류 (선택)</span>
                   <Select 
-                    value={depth2} 
-                    onValueChange={(val) => { setDepth2(val); setDepth3(''); }}
+                    value={depth2 || "none"} 
+                    onValueChange={(val) => { setDepth2(val === "none" ? "" : val); setDepth3(''); }}
                     disabled={!depth1}
                   >
                     <SelectTrigger className="bg-slate-900 border-slate-700 text-slate-200">
-                      <SelectValue placeholder="선택" />
+                      <SelectValue placeholder="선택 (옵션)" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="none">선택안함</SelectItem>
                       {depth2List.map(name => (
                         <SelectItem key={name} value={name}>{name}</SelectItem>
                       ))}

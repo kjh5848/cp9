@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/shared/config/auth-options';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/infrastructure/clients/prisma';
 
 // GET: 로그인된 유저의 장바구니 키워드 목록 조회
 export async function GET(req: Request) {
