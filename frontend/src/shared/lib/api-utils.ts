@@ -84,7 +84,7 @@ export function resolveCoupangKeys(dbUser: any | null | undefined): { accessKey:
   }
 
   return {
-    accessKey: dbUser?.coupangAccessKey || envAccessKey,
-    secretKey: dbUser?.coupangSecretKey || envSecretKey,
+    accessKey: dbUser?.coupangAccessKey,
+    secretKey: dbUser?.coupangSecretKey,
   };
 }
