@@ -30,9 +30,15 @@ export default withAuth(
 // 배열 형태의 matcher로 보호하고 싶은 라우트 경로들을 명시
 export const config = {
   matcher: [
-    "/dashboard/:path*",
-    "/keyword-lab/:path*",
-    "/settings/:path*",
-    "/admin/:path*",
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico, sitemap.xml, robots.txt (metadata files)
+     * - login (login page)
+     * - register (registration page)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|login|register).*)',
   ],
 };

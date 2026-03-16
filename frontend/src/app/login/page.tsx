@@ -19,6 +19,9 @@ export default function LoginPage() {
 
   // 전역 세션이 이미 존재하면(로그인된 상태라면) 메인화면으로 리다이렉트
   useEffect(() => {
+    if (status === "unauthenticated") {
+      localStorage.removeItem('keyword-cart-storage');
+    }
     if (status === "authenticated") {
       router.push("/keyword-lab");
     }
@@ -30,7 +33,8 @@ export default function LoginPage() {
 
     try {
       const res = await signIn("credentials", {
-        redirect: false,
+        redirect: true,
+        callbackUrl: "/keyword-lab",
         email: formData.email,
         password: formData.password,
       });
@@ -39,8 +43,6 @@ export default function LoginPage() {
         toast.error("이메일 또는 비밀번호가 일치하지 않습니다.");
       } else {
         toast.success("로그인 성공!");
-        // 하드 리프레시로 세션 강제 동기화 (NextAuth 상태 갱신)
-        window.location.href = "/keyword-lab";
       }
     } catch (err) {
       toast.error("로그인 중 오류가 발생했습니다.");

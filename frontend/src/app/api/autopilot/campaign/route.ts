@@ -1,11 +1,22 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/infrastructure/clients/prisma';
 
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/shared/config/auth-options';
+
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || !session.user.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userId = session.user.id;
+
     const campaigns = await prisma.categoryCampaign.findMany({
+      where: { userId },
       orderBy: { createdAt: 'desc' },
       include: {
         persona: { select: { name: true } },
@@ -27,6 +38,13 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || !session.user.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userId = session.user.id;
+
     const body = await request.json();
     const { 
       categoryName, personaId, themeId, 
@@ -43,6 +61,7 @@ export async function POST(request: Request) {
     const newCampaign = await prisma.categoryCampaign.create({
       data: {
         categoryName,
+        userId,
         personaId: personaId || null,
         themeId: themeId || null,
         intervalHours: intervalHours ? parseInt(intervalHours, 10) : 24,

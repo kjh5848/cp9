@@ -113,7 +113,10 @@ export const Navbar = ({ className }: NavbarProps) => {
               size="sm" 
               variant="outline" 
               className="h-8 border-white/10 text-white hover:bg-white/5"
-              onClick={() => signOut({ callbackUrl: "/login" })}
+              onClick={() => {
+                localStorage.removeItem('keyword-cart-storage');
+                signOut({ callbackUrl: "/login" });
+              }}
             >
               로그아웃
             </Button>

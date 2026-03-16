@@ -2,12 +2,23 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/infrastructure/clients/prisma';
 import { getNextRunAtKST } from '@/features/autopilot/lib/scheduler';
 
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/shared/config/auth-options';
+
 export const dynamic = 'force-dynamic';
 
 // 큐 목록 조회
 export async function GET(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || !session.user.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userId = session.user.id;
+
     const queue = await prisma.autopilotQueue.findMany({
+      where: { userId },
       orderBy: { createdAt: 'desc' },
       include: {
         persona: {
@@ -25,6 +36,12 @@ export async function GET(request: Request) {
 // 큐에 키워드 추가
 export async function POST(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || !session.user.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = session.user.id;
+
     const body = await request.json();
     const {
       keyword,
@@ -79,6 +96,7 @@ export async function POST(request: Request) {
     const newItem = await prisma.autopilotQueue.create({
       data: {
         keyword,
+        userId,
         status: 'PENDING',
         personaId: personaId || null,
         themeId: themeId || null,
