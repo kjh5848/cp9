@@ -10,13 +10,13 @@ interface EnvironmentConfig {
   NEXT_PUBLIC_ENV: 'local' | 'staging' | 'production';
   
   // Supabase
-  NEXT_PUBLIC_SUPABASE_URL: string;
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: string;
+  NEXT_PUBLIC_SUPABASE_URL?: string;
+  NEXT_PUBLIC_SUPABASE_ANON_KEY?: string;
   SUPABASE_SERVICE_ROLE_KEY?: string;
   
   // 쿠팡 파트너스 API
-  COUPANG_ACCESS_KEY: string;
-  COUPANG_SECRET_KEY: string;
+  COUPANG_ACCESS_KEY?: string;
+  COUPANG_SECRET_KEY?: string;
   
   // AI API
   OPENAI_API_KEY?: string;
@@ -32,7 +32,7 @@ interface EnvironmentConfig {
   WORDPRESS_APP_PASSWORD?: string;
   
   // Base URL
-  NEXT_PUBLIC_BASE_URL: string;
+  NEXT_PUBLIC_BASE_URL?: string;
   
   // LangGraph
   NEXT_PUBLIC_LANGGRAPH_API_URL?: string;
@@ -66,14 +66,14 @@ export const config: EnvironmentConfig = {
   NODE_ENV: (process.env.NODE_ENV as EnvironmentConfig['NODE_ENV']) || 'development',
   NEXT_PUBLIC_ENV: (process.env.NEXT_PUBLIC_ENV as EnvironmentConfig['NEXT_PUBLIC_ENV']) || 'local',
   
-  // Supabase (필수)
-  NEXT_PUBLIC_SUPABASE_URL: getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL'),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: getRequiredEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
+  // Supabase (선택)
+  NEXT_PUBLIC_SUPABASE_URL: getOptionalEnv('NEXT_PUBLIC_SUPABASE_URL'),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: getOptionalEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
   SUPABASE_SERVICE_ROLE_KEY: getOptionalEnv('SUPABASE_SERVICE_ROLE_KEY'),
   
-  // 쿠팡 파트너스 API (필수)
-  COUPANG_ACCESS_KEY: getRequiredEnv('COUPANG_ACCESS_KEY'),
-  COUPANG_SECRET_KEY: getRequiredEnv('COUPANG_SECRET_KEY'),
+  // 쿠팡 파트너스 API (선택)
+  COUPANG_ACCESS_KEY: getOptionalEnv('COUPANG_ACCESS_KEY'),
+  COUPANG_SECRET_KEY: getOptionalEnv('COUPANG_SECRET_KEY'),
   
   // AI API (선택)
   OPENAI_API_KEY: getOptionalEnv('OPENAI_API_KEY'),
@@ -88,8 +88,8 @@ export const config: EnvironmentConfig = {
   WORDPRESS_USERNAME: getOptionalEnv('WORDPRESS_USERNAME'),
   WORDPRESS_APP_PASSWORD: getOptionalEnv('WORDPRESS_APP_PASSWORD'),
   
-  // Base URL (필수)
-  NEXT_PUBLIC_BASE_URL: getRequiredEnv('NEXT_PUBLIC_BASE_URL'),
+  // Base URL (선택)
+  NEXT_PUBLIC_BASE_URL: getOptionalEnv('NEXT_PUBLIC_BASE_URL'),
   
   // LangGraph (선택)
   NEXT_PUBLIC_LANGGRAPH_API_URL: getOptionalEnv('NEXT_PUBLIC_LANGGRAPH_API_URL', '/api/langgraph'),
@@ -111,31 +111,10 @@ export function isTest(): boolean {
 }
 
 /**
- * 환경변수 검증 함수
- * 앱 시작 시 필수 환경변수가 모두 설정되어 있는지 확인
+ * 환경변수 검증 함수 (유저별 DB 설정을 사용하므로 필수 체크 완화)
  */
 export function validateEnvironment(): void {
-  const requiredVars = [
-    'NEXT_PUBLIC_SUPABASE_URL',
-    'NEXT_PUBLIC_SUPABASE_ANON_KEY',
-    'COUPANG_ACCESS_KEY',
-    'COUPANG_SECRET_KEY',
-    'NEXT_PUBLIC_BASE_URL',
-  ];
-  
-  const missingVars = requiredVars.filter(key => !process.env[key]);
-  
-  if (missingVars.length > 0 && !isTest()) {
-    console.error('🚨 다음 필수 환경변수가 설정되지 않았습니다:');
-    missingVars.forEach(key => console.error(`  - ${key}`));
-    console.error('\n💡 Doppler를 사용하여 환경변수를 주입하세요:');
-    console.error('   doppler run -- npm run dev');
-    console.error('\n또는 .env.local 파일에 환경변수를 설정하세요.');
-    
-    if (isProduction()) {
-      throw new Error('필수 환경변수가 설정되지 않았습니다.');
-    }
-  }
+  // 사용하지 않음
 }
 
 /**
