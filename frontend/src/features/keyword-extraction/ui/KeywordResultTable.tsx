@@ -6,6 +6,7 @@ import { ExtractedKeyword } from "../model/useKeywordExtraction";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { SendToModal } from "./SendToModal";
+import { CartViewerModal } from "./CartViewerModal";
 
 interface KeywordResultTableProps {
   state: {
@@ -16,7 +17,9 @@ interface KeywordResultTableProps {
   };
   actions: {
     toggleSelection: (kw: string) => void;
+    toggleAllSelection: () => void;
     toggleCartSelection: (kw: ExtractedKeyword) => void;
+    addAllToCart: () => void;
     handleSendToDestination: (destination: 'keyword-writing' | 'autopilot-single' | 'autopilot-category') => void;
   };
 }
@@ -35,6 +38,7 @@ const ARTICLE_TYPE_LABELS: Record<string, string> = {
 
 export const KeywordResultTable = ({ state, actions }: KeywordResultTableProps) => {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [isCartViewerOpen, setIsCartViewerOpen] = React.useState(false);
   
   if (state.isLoading) {
     return (
@@ -68,8 +72,17 @@ export const KeywordResultTable = ({ state, actions }: KeywordResultTableProps) 
           총 <strong className="text-purple-400">{state.extractedKeywords.length}개</strong>의 타겟 키워드 발굴 완료
         </div>
         <div className="flex items-center gap-2">
-           <Button 
+          <Button 
             variant="outline"
+            onClick={actions.addAllToCart}
+            disabled={state.extractedKeywords.length === 0}
+            className="border-white/10 text-slate-300 hover:text-white hover:bg-white/5 h-9"
+          >
+            전체 장바구니 담기
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => setIsCartViewerOpen(true)}
             className="border-white/10 text-slate-300 hover:text-white hover:bg-white/5 h-9"
           >
             <ShoppingCart className="w-4 h-4 mr-2" />
@@ -85,6 +98,11 @@ export const KeywordResultTable = ({ state, actions }: KeywordResultTableProps) 
         </div>
       </div>
 
+      <CartViewerModal 
+        isOpen={isCartViewerOpen}
+        onOpenChange={setIsCartViewerOpen}
+      />
+
       <SendToModal 
         isOpen={isModalOpen}
         onOpenChange={setIsModalOpen}
@@ -96,7 +114,16 @@ export const KeywordResultTable = ({ state, actions }: KeywordResultTableProps) 
         <table className="w-full text-sm text-left align-middle">
           <thead className="bg-white/5 text-xs uppercase text-slate-400 border-b border-white/10">
             <tr>
-              <th className="px-4 py-3 w-10 text-center">선택</th>
+              <th className="px-4 py-3 w-10 text-center">
+                <button 
+                  onClick={actions.toggleAllSelection}
+                  className="text-slate-400 hover:text-white transition-colors focus:outline-none"
+                >
+                  {state.selectedKeywords.length === state.extractedKeywords.length && state.extractedKeywords.length > 0 
+                    ? <CheckSquare className="w-5 h-5 text-blue-400 mx-auto" /> 
+                    : <Square className="w-5 h-5 mx-auto" />}
+                </button>
+              </th>
               <th className="px-4 py-3">딥 타겟 키워드</th>
               <th className="px-4 py-3 text-center">유형</th>
               <th className="px-4 py-3 text-center">비즈니스 가치</th>

@@ -123,6 +123,29 @@ export function useKeywordExtraction() {
           setCartKeywords([...cartKeywords, keywordObj]);
           toast.success("장바구니에 담겼습니다.");
         }
+      },
+      toggleAllSelection: () => {
+        if (selectedKeywords.length === extractedKeywords.length && extractedKeywords.length > 0) {
+          setSelectedKeywords([]);
+        } else {
+          setSelectedKeywords(extractedKeywords.map(k => k.keyword));
+        }
+      },
+      addAllToCart: () => {
+        const newCartKeywords = [...cartKeywords];
+        let addedCount = 0;
+        extractedKeywords.forEach(extKw => {
+          if (!newCartKeywords.some(cartKw => cartKw.keyword === extKw.keyword)) {
+            newCartKeywords.push(extKw);
+            addedCount++;
+          }
+        });
+        if (addedCount > 0) {
+          setCartKeywords(newCartKeywords);
+          toast.success(`${addedCount}개 항목이 장바구니에 담겼습니다.`);
+        } else if (extractedKeywords.length > 0) {
+          toast.success(`이미 모든 항목이 장바구니에 있습니다.`);
+        }
       }
     }
   };
