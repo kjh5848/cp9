@@ -1,0 +1,21 @@
+name: Autopilot 5min Scheduler
+
+on:
+  schedule:
+    # 5분마다 실행 (UTC 기준)
+    - cron: '*/5 * * * *'
+  
+  # Github Actions 페이지에서 수동으로 실행해볼 수 있는 버튼 추가
+  workflow_dispatch:
+
+jobs:
+  ping-vercel:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Vercel Cron API (Every 5 min)
+        run: |
+          curl -X GET "https://cp9.vercel.app/api/cron/schedule"
+          
+      - name: Ping Vercel Autopilot Dispatch (Every 5 min)
+        run: |
+          curl -X GET "https://cp9.vercel.app/api/cron/autopilot"
