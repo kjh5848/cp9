@@ -31,12 +31,12 @@ export async function POST(req: NextRequest) {
       where: { id: session.user.id }
     });
     
-    if (!dbUser?.coupangAccessKey || !dbUser?.coupangSecretKey) {
+    const ACCESS_KEY = dbUser?.coupangAccessKey || process.env.COUPANG_ACCESS_KEY;
+    const SECRET_KEY = dbUser?.coupangSecretKey || process.env.COUPANG_SECRET_KEY;
+    
+    if (!ACCESS_KEY || !SECRET_KEY) {
       return NextResponse.json({ error: '쿠팡 API 초기 설정이 필요합니다. (마이페이지)' }, { status: 403 });
     }
-
-    const ACCESS_KEY = dbUser.coupangAccessKey;
-    const SECRET_KEY = dbUser.coupangSecretKey;
 
     console.log('ACCESS_KEY 존재:', !!ACCESS_KEY);
     console.log('SECRET_KEY 존재:', !!SECRET_KEY);

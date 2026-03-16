@@ -24,7 +24,10 @@ export async function POST(req: NextRequest) {
       where: { id: session.user.id }
     });
     
-    if (!dbUser?.coupangAccessKey || !dbUser?.coupangSecretKey) {
+    const accessKey = dbUser?.coupangAccessKey || process.env.COUPANG_ACCESS_KEY;
+    const secretKey = dbUser?.coupangSecretKey || process.env.COUPANG_SECRET_KEY;
+    
+    if (!accessKey || !secretKey) {
       return NextResponse.json({ error: '마이페이지에서 쿠팡 API 연동 설정이 필요합니다.' }, { status: 403 });
     }
 
@@ -34,7 +37,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '키워드를 입력하세요.' }, { status: 400 });
     }
     
-    const products = await searchCoupangProducts(keyword, limit, dbUser.coupangAccessKey, dbUser.coupangSecretKey);
+    const products = await searchCoupangProducts(keyword, limit, accessKey, secretKey);
 
     
     // 일관된 응답 형식으로 변환 및 이미지 애드블록 우회 처리
