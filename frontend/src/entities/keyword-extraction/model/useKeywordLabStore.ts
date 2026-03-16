@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { ExtractedKeyword } from '@/features/keyword-extraction/model/useKeywordExtraction';
 
 interface KeywordLabState {
@@ -24,6 +25,9 @@ interface KeywordLabState {
     keywords: ExtractedKeyword[];
   } | null;
 
+  // 5. 모달 상태
+  isCartModalOpen: boolean;
+
   isLoading: boolean;
 
   // Actions
@@ -40,6 +44,7 @@ interface KeywordLabState {
   setSelectedKeywords: (keywords: string[]) => void;
   setCartKeywords: (keywords: ExtractedKeyword[]) => void;
   setExportPayload: (payload: { destination: 'keyword-writing' | 'autopilot-single' | 'autopilot-category' | null; keywords: ExtractedKeyword[] } | null) => void;
+  setIsCartModalOpen: (isOpen: boolean) => void;
   resetDraft: () => void;
 }
 
@@ -56,36 +61,52 @@ const initialState = {
   selectedKeywords: [],
   cartKeywords: [],
   exportPayload: null,
+  isCartModalOpen: false,
 };
 
 // 키워드 발굴소용 글로벌 드래프트 상태
-export const useKeywordLabStore = create<KeywordLabState>((set) => ({
-  seedKeyword: initialState.seedKeyword,
-  targetCount: initialState.targetCount,
-  targetAge: initialState.targetAge,
-  targetGender: initialState.targetGender,
-  category: initialState.category,
-  searchIntent: initialState.searchIntent,
-  searchModel: initialState.searchModel,
-  isLoading: initialState.isLoading,
-  extractedKeywords: initialState.extractedKeywords,
-  selectedKeywords: initialState.selectedKeywords,
-  cartKeywords: initialState.cartKeywords,
-  exportPayload: initialState.exportPayload,
+export const useKeywordLabStore = create<KeywordLabState>()(
+  persist(
+    (set) => ({
+      seedKeyword: initialState.seedKeyword,
+      targetCount: initialState.targetCount,
+      targetAge: initialState.targetAge,
+      targetGender: initialState.targetGender,
+      category: initialState.category,
+      searchIntent: initialState.searchIntent,
+      searchModel: initialState.searchModel,
+      isLoading: initialState.isLoading,
+      extractedKeywords: initialState.extractedKeywords,
+      selectedKeywords: initialState.selectedKeywords,
+      cartKeywords: initialState.cartKeywords,
+      exportPayload: initialState.exportPayload,
+      isCartModalOpen: initialState.isCartModalOpen,
 
-  setSeedKeyword: (seedKeyword) => set({ seedKeyword }),
-  setTargetCount: (targetCount) => set({ targetCount }),
-  setTargetAge: (targetAge) => set({ targetAge }),
-  setTargetGender: (targetGender) => set({ targetGender }),
-  setCategory: (category) => set({ category }),
-  setSearchIntent: (searchIntent) => set({ searchIntent }),
-  setSearchModel: (searchModel) => set({ searchModel }),
-  setIsLoading: (isLoading) => set({ isLoading }),
+      setSeedKeyword: (seedKeyword) => set({ seedKeyword }),
+      setTargetCount: (targetCount) => set({ targetCount }),
+      setTargetAge: (targetAge) => set({ targetAge }),
+      setTargetGender: (targetGender) => set({ targetGender }),
+      setCategory: (category) => set({ category }),
+      setSearchIntent: (searchIntent) => set({ searchIntent }),
+      setSearchModel: (searchModel) => set({ searchModel }),
+      setIsLoading: (isLoading) => set({ isLoading }),
 
-  setExtractedKeywords: (extractedKeywords) => set({ extractedKeywords }),
-  setSelectedKeywords: (selectedKeywords) => set({ selectedKeywords }),
-  setCartKeywords: (cartKeywords) => set({ cartKeywords }),
-  setExportPayload: (exportPayload) => set({ exportPayload }),
+      setExtractedKeywords: (extractedKeywords) => set({ extractedKeywords }),
+      setSelectedKeywords: (selectedKeywords) => set({ selectedKeywords }),
+      setCartKeywords: (cartKeywords) => set({ cartKeywords }),
+      setExportPayload: (exportPayload) => set({ exportPayload }),
+      setIsCartModalOpen: (isCartModalOpen) => set({ isCartModalOpen }),
 
-  resetDraft: () => set(initialState),
-}));
+      resetDraft: () => set((state) => ({
+        ...initialState,
+        // Resetting draft shouldn't clear the cart or modal state usually, but following previous pattern:
+        cartKeywords: state.cartKeywords, // Keep cart data
+        isCartModalOpen: state.isCartModalOpen
+      })),
+    }),
+    {
+      name: 'keyword-cart-storage', // name of item in the storage (must be unique)
+      partialize: (state) => ({ cartKeywords: state.cartKeywords }), // Only persist cartKeywords
+    }
+  )
+);

@@ -6,7 +6,7 @@ import { ExtractedKeyword } from "../model/useKeywordExtraction";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { SendToModal } from "./SendToModal";
-import { CartViewerModal } from "./CartViewerModal";
+import { useKeywordLabStore } from "@/entities/keyword-extraction/model/useKeywordLabStore";
 
 interface KeywordResultTableProps {
   state: {
@@ -38,7 +38,7 @@ const ARTICLE_TYPE_LABELS: Record<string, string> = {
 
 export const KeywordResultTable = ({ state, actions }: KeywordResultTableProps) => {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
-  const [isCartViewerOpen, setIsCartViewerOpen] = React.useState(false);
+  const { setIsCartModalOpen } = useKeywordLabStore();
   
   if (state.isLoading) {
     return (
@@ -82,7 +82,7 @@ export const KeywordResultTable = ({ state, actions }: KeywordResultTableProps) 
           </Button>
           <Button 
             variant="outline"
-            onClick={() => setIsCartViewerOpen(true)}
+            onClick={() => setIsCartModalOpen(true)}
             className="border-white/10 text-slate-300 hover:text-white hover:bg-white/5 h-9"
           >
             <ShoppingCart className="w-4 h-4 mr-2" />
@@ -97,11 +97,6 @@ export const KeywordResultTable = ({ state, actions }: KeywordResultTableProps) 
           </Button>
         </div>
       </div>
-
-      <CartViewerModal 
-        isOpen={isCartViewerOpen}
-        onOpenChange={setIsCartViewerOpen}
-      />
 
       <SendToModal 
         isOpen={isModalOpen}

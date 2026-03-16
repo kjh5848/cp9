@@ -6,6 +6,9 @@ import { Button } from "@/shared/ui/button";
 // TODO: Auth 기능 이관 시 경로 수정 필요
 // import { useAuth } from "@/features/auth/model/useAuth"; 
 import { cn } from "@/shared/lib/utils";
+import { ShoppingCart } from "lucide-react";
+import { useKeywordLabStore } from "@/entities/keyword-extraction/model/useKeywordLabStore";
+import { CartViewerModal } from "@/features/keyword-extraction/ui/CartViewerModal";
 
 interface NavbarProps {
   className?: string;
@@ -21,6 +24,13 @@ import { useSession, signOut } from "next-auth/react";
 export const Navbar = ({ className }: NavbarProps) => {
   const { data: session } = useSession();
   const user = session?.user;
+  const { cartKeywords, isCartModalOpen, setIsCartModalOpen } = useKeywordLabStore();
+
+  // Next.js Hydration Mismatch 방지 (Zustand persist 사용 시)
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <header className={cn(
@@ -67,8 +77,21 @@ export const Navbar = ({ className }: NavbarProps) => {
           </Link>
         </nav>
       </div>
-
       <div className="flex items-center gap-4">
+        {mounted && (
+          <button
+            onClick={() => setIsCartModalOpen(true)}
+            className="relative p-2 text-slate-400 hover:text-white transition-colors"
+          >
+            <ShoppingCart className="w-5 h-5" />
+            {cartKeywords.length > 0 && (
+              <span className="absolute top-0 right-0 w-4 h-4 bg-purple-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center translate-x-1 -translate-y-1">
+                {cartKeywords.length}
+              </span>
+            )}
+          </button>
+        )}
+
         {user ? (
           <div className="flex items-center gap-3">
             {(user as any).role === "ADMIN" && (
@@ -103,6 +126,11 @@ export const Navbar = ({ className }: NavbarProps) => {
           </Link>
         )}
       </div>
+
+      <CartViewerModal 
+        isOpen={isCartModalOpen}
+        onOpenChange={setIsCartModalOpen}
+      />
     </header>
   );
 };
