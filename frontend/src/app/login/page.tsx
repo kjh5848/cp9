@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { signIn, useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session, status } = useSession();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -16,6 +17,14 @@ export default function LoginPage() {
     email: "",
     password: "",
   });
+
+  // 에러 파라미터가 URL에 있을 때 토스트 표시
+  useEffect(() => {
+    const error = searchParams.get("error");
+    if (error === "CredentialsSignin" || error) {
+      toast.error("이메일 또는 비밀번호가 일치하지 않습니다.", { id: "login-error" });
+    }
+  }, [searchParams]);
 
   // 전역 세션이 이미 존재하면(로그인된 상태라면) 메인화면으로 리다이렉트
   useEffect(() => {

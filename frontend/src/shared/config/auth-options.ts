@@ -65,6 +65,7 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: "/login",
+    error: "/login",
   },
   // Vercel 배포 환경에서는 VERCEL_URL을 우선 참조하고, 없으면 NEXTAUTH_URL 사용
   secret: process.env.NEXTAUTH_SECRET || "fallback_secret_for_local_dev",
