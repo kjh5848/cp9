@@ -43,20 +43,20 @@ export const CartViewerModal = ({ isOpen, onOpenChange }: CartViewerModalProps) 
   return (
     <>
       <Sheet open={isOpen} onOpenChange={onOpenChange}>
-        <SheetContent className="sm:w-[380px] p-0 flex flex-col h-full bg-slate-950 border-slate-800">
-          <SheetHeader className="px-5 pt-5 pb-3 border-b border-white/5 bg-slate-900/50">
+        <SheetContent className="sm:w-[320px] p-0 flex flex-col h-full bg-slate-950 border-slate-800">
+          <SheetHeader className="px-4 pt-4 pb-2 border-b border-white/5 bg-slate-900/50">
             <div>
-              <SheetTitle className="text-lg flex items-center gap-2">
+              <SheetTitle className="text-base flex items-center gap-2">
                 <ShoppingCart className="w-4 h-4 text-emerald-400" />
                 장바구니 ({cartKeywords.length})
               </SheetTitle>
-              <SheetDescription className="text-xs text-slate-400 mt-1">
+              <SheetDescription className="text-[11px] text-slate-400 mt-1">
                 일부 항목을 미리보거나 내보낼 수 있습니다.
               </SheetDescription>
             </div>
           </SheetHeader>
 
-          <div className="flex-1 overflow-y-auto px-4 py-3">
+          <div className="flex-1 overflow-y-auto px-3 py-2 scrollbar-hide">
             {cartKeywords.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-slate-500 py-10">
                 <ShoppingCart className="w-12 h-12 mb-3 opacity-20" />
@@ -108,21 +108,16 @@ export const CartViewerModal = ({ isOpen, onOpenChange }: CartViewerModalProps) 
                     <div 
                       key={idx}
                       className={cn(
-                        "flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors group",
-                        isSelected ? "bg-emerald-500/10 border-emerald-500/50" : "bg-black/20 border-white/10 hover:bg-white/5"
+                        "flex items-center gap-3 p-2.5 rounded-lg border cursor-pointer transition-colors group",
+                        isSelected ? "bg-emerald-500/10 border-emerald-500/50" : "bg-black/20 border-white/5 hover:bg-white/5"
                       )}
                       onClick={() => toggleSelection(item.keyword)}
                     >
                       <button className="text-slate-400 focus:outline-none shrink-0">
                         {isSelected ? <CheckSquare className="w-5 h-5 text-emerald-400" /> : <Square className="w-5 h-5 group-hover:text-slate-300" />}
                       </button>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-bold text-white text-[14px] leading-tight mb-1 truncate">{item.keyword}</div>
-                        <div className="flex flex-wrap gap-x-2 gap-y-1 text-[10px] text-slate-400 items-center">
-                          <span className="px-1.5 py-0.5 rounded-sm bg-slate-800 shrink-0">{item.category || '미분류'}</span>
-                          <span className="text-purple-400 truncate max-w-[120px]">주제어: {item.mainKeyword || item.keyword}</span>
-                          <span className="shrink-0">볼륨: {item.estimatedVolume}</span>
-                        </div>
+                      <div className="flex-1 min-w-0 py-1">
+                        <div className="font-medium text-white text-[15px] leading-snug break-words line-clamp-2">{item.keyword}</div>
                       </div>
                       <button 
                         onClick={(e) => handleRemove(item.keyword, e)}
@@ -138,8 +133,8 @@ export const CartViewerModal = ({ isOpen, onOpenChange }: CartViewerModalProps) 
             )}
           </div>
 
-          <div className="shrink-0 p-5 bg-slate-900 border-t border-white/5 space-y-3">
-             <div className="flex items-center justify-between text-xs">
+          <div className="shrink-0 p-4 bg-slate-900 border-t border-white/5 space-y-2">
+             <div className="flex items-center justify-between text-[11px]">
               <span className="text-slate-400">
                 {selectedKeys.length > 0 ? (
                   <span className="text-emerald-400 font-medium">{selectedKeys.length}개 선택됨</span>
@@ -155,17 +150,17 @@ export const CartViewerModal = ({ isOpen, onOpenChange }: CartViewerModalProps) 
                   }}
                   className="text-blue-400 hover:text-blue-300 font-medium flex items-center transition-colors"
                 >
-                  상세 페이지로 이동 <ChevronRight className="w-4 h-4 ml-0.5" />
+                  상세 페이지 <ChevronRight className="w-3 h-3 ml-0.5" />
                 </button>
               )}
             </div>
             
             <Button 
-              className="w-full text-sm h-9 bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-500/20" 
+              className="w-full text-[11px] h-7 bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-500/20 px-2" 
               onClick={() => setIsSendModalOpen(true)}
               disabled={selectedKeys.length === 0}
             >
-              선택 항목 내보내기 <ChevronRight className="w-3 h-3 ml-1" />
+              선택 내보내기 <ChevronRight className="w-3 h-3 ml-1" />
             </Button>
           </div>
         </SheetContent>
