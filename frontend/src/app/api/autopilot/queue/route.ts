@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/infrastructure/clients/prisma';
 import { getNextRunAtKST } from '@/features/autopilot/lib/scheduler';
 
-import { getServerSession } from 'next-auth';
+import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/shared/config/auth-options';
 
 export const dynamic = 'force-dynamic';

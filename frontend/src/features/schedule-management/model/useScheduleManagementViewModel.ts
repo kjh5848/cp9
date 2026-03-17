@@ -5,10 +5,10 @@ import { useAutopilotViewModel } from "@/features/autopilot/model/useAutopilotVi
 
 export function useScheduleManagementViewModel() {
   const { researchList, loading: researchLoading, error: researchError, fetchResearch } = useResearchViewModel();
-  const { queue: autopilotQueue, isLoading: autopilotLoading, fetchQueue: fetchAutopilotQueue, deleteFromQueue, bulkDeleteFromQueue, rescheduleQueue } = useAutopilotViewModel();
+  const { queue: autopilotQueue, isLoading: autopilotLoading, error: autopilotError, fetchQueue: fetchAutopilotQueue, deleteFromQueue, bulkDeleteFromQueue, rescheduleQueue } = useAutopilotViewModel();
 
   const loading = researchLoading || autopilotLoading;
-  const error = researchError;
+  const error = researchError || autopilotError;
 
   useEffect(() => {
     fetchResearch();
