@@ -21,6 +21,13 @@ interface CampaignCreateModalProps {
   activeTimeStart: string;
   activeTimeEnd: string;
   publishTargets?: any[];
+  textModel: string;
+  imageModel: string;
+  articleType: string;
+  sortCriteria: string;
+  minPrice: string;
+  maxPrice: string;
+  isRocketOnly: boolean;
   
   configNode: React.ReactNode;
   quickPresetNode: React.ReactNode;
@@ -51,6 +58,13 @@ export function CampaignCreateModal({
   activeTimeStart,
   activeTimeEnd,
   publishTargets,
+  textModel,
+  imageModel,
+  articleType,
+  sortCriteria,
+  minPrice,
+  maxPrice,
+  isRocketOnly,
   configNode,
   quickPresetNode,
   publishTargetNode,
@@ -132,11 +146,18 @@ export function CampaignCreateModal({
       activeTimeStart,
       activeTimeEnd,
       batchSize,
-      isAutoApprove: false,
+      isAutoApprove: true,
       targetAge,
       targetGender,
       targetPrice,
       targetIndustry,
+      textModel,
+      imageModel,
+      articleType,
+      sortCriteria,
+      minPrice,
+      maxPrice,
+      isRocketOnly,
       publishTargets
     });
 

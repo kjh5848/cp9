@@ -26,17 +26,17 @@ export async function runIntentPlanner(input: IntentPlannerInput): Promise<Inten
 
 [유저 컨텍스트]
 - 기본 키워드: "${input.keyword}"
-- 글 유형(Article Type): "${input.articleType}" (만약 "auto"라면 키워드 의도를 분석하여 single, compare, curation 중 하나를 스스로 선택하세요.)
+- 글 유형(Article Type): "${input.articleType}" (만약 "auto"라면 키워드 의도를 분석하여 single, compare, list 중 하나를 스스로 선택하세요.)
 - 페르소나(Persona): "${input.personaName}"
 - 페르소나 설명: "${input.personaPrompt}"
 
 [요청 사항]
 1. 위 컨텍스트를 종합하여, 시선을 사로잡는 구체적인 블로그 Title을 작성하세요.
-2. 글 유형(Article Type)이 "auto"인 경우 키워드의 검색 의도를 파악하여 가장 적절한 포맷(single, compare, curation)을 'recommendedArticleType'으로 선택하세요. 그 외의 경우 입력된 글 유형을 그대로 기입하세요.
+2. 글 유형(Article Type)이 "auto"인 경우 키워드의 검색 의도를 파악하여 가장 적절한 포맷(single, compare, list)을 'recommendedArticleType'으로 선택하세요. 그 외의 경우 입력된 글 유형을 그대로 기입하세요.
 3. 선택된(또는 부여된) 글 유형에 맞춰 필요한 아이템의 개수(requiredItemCount)를 정확히 정수로 설정하세요.
-   * single: 무조건 1
-   * compare: 무조건 2
-   * curation: 3에서 5 사이의 적당한 숫자
+   * single: 무조건 1 (딥다이브 단일상품 리뷰)
+   * compare: 무조건 2 (비교 분석)
+   * list: 3에서 5 사이의 적당한 숫자 (상위 추천 큐레이션 리스트)
 4. 어떤 상품들을 쿠팡에서 찾아야 하는지(예: 가격대, 핵심 스펙) 의도(searchIntent)를 상세히 서술하세요.
 5. 다음 단계 에이전트가 쿠팡 검색 API에 사용할 검색어(query) 리스트를 'suggestedSearchQueries' 배열에 나열하세요. 개수는 requiredItemCount 만큼, 핵심 키워드(브랜드명+모델명 등) 위주로 작성하세요.`;
 
@@ -65,8 +65,8 @@ export async function runIntentPlanner(input: IntentPlannerInput): Promise<Inten
               },
               recommendedArticleType: {
                 type: 'string',
-                description: '최종 결정된 글 유형 (single, compare, curation 중 택 1)',
-                enum: ['single', 'compare', 'curation']
+                description: '최종 결정된 글 유형 (single, compare, list 중 택 1)',
+                enum: ['single', 'compare', 'list']
               },
               requiredItemCount: {
                 type: 'number',

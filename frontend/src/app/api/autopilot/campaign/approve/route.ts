@@ -30,8 +30,8 @@ export async function POST(request: Request) {
     // 트랜잭션으로 상태를 PENDING으로 변경하고 각각 nextRunAt 배정 (간격 분리)
     const updates = queues.map((q, index) => {
       // campaign 정보가 있으면 우선시, 없으면 큐 내부 정보 사용
-      const intervalHours = q.campaign?.intervalHours || q.intervalHours || 24;
-      const intervalMinutes = intervalHours * 60;
+      const intervalHours = q.campaign?.intervalHours || q.intervalHours || 24 * 60;
+      const intervalMinutes = intervalHours;
       const activeStart = q.campaign?.activeTimeStart ?? q.activeTimeStart;
       const activeEnd = q.campaign?.activeTimeEnd ?? q.activeTimeEnd;
       

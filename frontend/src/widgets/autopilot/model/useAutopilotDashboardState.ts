@@ -88,11 +88,15 @@ export function useAutopilotDashboardState() {
       if (storeCartTitles && storeCartTitles.length > 0) {
         setCartTitles(storeCartTitles);
       }
+      
+      // Zustand 스토어 데이터 복원
+      // 단, 마이페이지(SWR) 설정값이 이미 로드되었다면 덮어쓰지 않음
       if (storeSettings) {
-        setIntervalHours(storeSettings.intervalHours);
-        setActiveTimeStart(storeSettings.activeTimeStart);
-        setActiveTimeEnd(storeSettings.activeTimeEnd);
+        if (!autopilotSettings?.intervalHours) setIntervalHours(storeSettings.intervalHours);
+        if (!autopilotSettings?.activeTimeStart) setActiveTimeStart(storeSettings.activeTimeStart);
+        if (!autopilotSettings?.activeTimeEnd) setActiveTimeEnd(storeSettings.activeTimeEnd);
       }
+      
       if (draftState) {
         if (draftState.inputMode) setInputMode(draftState.inputMode);
         if (draftState.wizardStep) setWizardStep(draftState.wizardStep);
@@ -107,7 +111,7 @@ export function useAutopilotDashboardState() {
       setIsStoreRestored(true);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isStoreRestored]);
+  }, [isStoreRestored, autopilotSettings]);
 
   // 입력 내용 변경 시 Store 스토리지 자동 업데이트
   useEffect(() => {
@@ -160,18 +164,22 @@ export function useAutopilotDashboardState() {
     if (articleSettings?.presetWordCount) setCharLimit(articleSettings.presetWordCount);
     if (profile?.name) setPersonaName(profile.name);
     
+    // 마이페이지 값이 있으면 (SWR 로드 완료) 가장 높은 우선순위를 가짐
     if (autopilotSettings) {
       if (autopilotSettings.sortCriteria) setSortCriteria(autopilotSettings.sortCriteria);
       if (autopilotSettings.isRocketOnly !== undefined) setIsRocketOnly(autopilotSettings.isRocketOnly);
       if (autopilotSettings.minPrice !== null && autopilotSettings.minPrice !== undefined) setMinPrice(String(autopilotSettings.minPrice));
       if (autopilotSettings.maxPrice !== null && autopilotSettings.maxPrice !== undefined) setMaxPrice(String(autopilotSettings.maxPrice));
+      
+      // Zustand 스토어보다 마이페이지 서버 설정값을 우선
       if (autopilotSettings.intervalHours !== null && autopilotSettings.intervalHours !== undefined) setIntervalHours(String(autopilotSettings.intervalHours));
+      if (autopilotSettings.activeTimeStart !== null && autopilotSettings.activeTimeStart !== undefined) setActiveTimeStart(String(autopilotSettings.activeTimeStart));
+      if (autopilotSettings.activeTimeEnd !== null && autopilotSettings.activeTimeEnd !== undefined) setActiveTimeEnd(String(autopilotSettings.activeTimeEnd));
+      
       if (autopilotSettings.publishTimes) setPublishTimes(autopilotSettings.publishTimes);
       if (autopilotSettings.publishDays) setPublishDays(autopilotSettings.publishDays);
       if (autopilotSettings.jitterMinutes !== null && autopilotSettings.jitterMinutes !== undefined) setJitterMinutes(String(autopilotSettings.jitterMinutes));
       if (autopilotSettings.dailyCap !== null && autopilotSettings.dailyCap !== undefined) setDailyCap(String(autopilotSettings.dailyCap));
-      if (autopilotSettings.activeTimeStart !== null && autopilotSettings.activeTimeStart !== undefined) setActiveTimeStart(String(autopilotSettings.activeTimeStart));
-      if (autopilotSettings.activeTimeEnd !== null && autopilotSettings.activeTimeEnd !== undefined) setActiveTimeEnd(String(autopilotSettings.activeTimeEnd));
       
       if (autopilotSettings.publishTargets) {
         setPublishTargets(autopilotSettings.publishTargets as unknown as PublishTarget[]);

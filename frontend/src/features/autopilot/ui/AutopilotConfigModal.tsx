@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { GlassCard } from "@/shared/ui/GlassCard";
 import { Button } from "@/shared/ui/button";
-import { X, Settings, Clock, Tag, ShoppingCart, UserCircle, AlignLeft, Bot, Rocket, Database, Trash2, CalendarHeart } from "lucide-react";
+import { X, Settings, Clock, Tag, ShoppingCart, UserCircle, AlignLeft, Bot, Rocket, Database, Trash2, CalendarHeart, Filter } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { formatInterval } from "@/shared/lib/interval";
 
@@ -182,6 +182,40 @@ export const AutopilotConfigModal: React.FC<AutopilotConfigModalProps> = ({ isOp
                   <span className="font-semibold text-foreground uppercase">{config.imageModel}</span>
                 </div>
               </div>
+            </div>
+            
+            {/* 소싱 기준 설정 */}
+            <div className="col-span-2 flex flex-col gap-3 p-4 rounded-xl bg-slate-900/50 border border-border mt-2">
+              <div className="flex items-center gap-2 text-sm font-semibold text-slate-300">
+                <Filter className="w-4 h-4 text-emerald-400" />
+                <span>아이템 선별 기준</span>
+              </div>
+              <ul className="flex flex-col gap-2 text-xs text-muted-foreground">
+                <li className="flex items-center justify-between">
+                  <span>정렬 기준</span>
+                  <span className="text-foreground">
+                    {config.sortCriteria === 'salePriceDesc' ? '가격 높은순' :
+                     config.sortCriteria === 'salePriceAsc' ? '가격 낮은순' :
+                     config.sortCriteria === 'saleCount' ? '판매량순' :
+                     config.sortCriteria === 'reviewCount' ? '리뷰 많은순' :
+                     '쿠팡 랭킹순'}
+                  </span>
+                </li>
+                {(config.minPrice || config.maxPrice) && (
+                  <li className="flex items-center justify-between">
+                     <span>기본 가격대</span>
+                     <span className="text-foreground">
+                       {config.minPrice ? `${config.minPrice.toLocaleString()}원` : '0원'} ~ {config.maxPrice ? `${config.maxPrice.toLocaleString()}원` : '무제한'}
+                     </span>
+                  </li>
+                )}
+                <li className="flex items-center justify-between">
+                  <span>로켓배송 전용</span>
+                  <span className={config.isRocketOnly ? "text-blue-400 font-semibold" : "text-foreground"}>
+                    {config.isRocketOnly ? '적용' : '미적용'}
+                  </span>
+                </li>
+              </ul>
             </div>
 
             {/* 스케줄러 정보 */}

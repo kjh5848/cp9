@@ -62,8 +62,8 @@ export const ScheduleListView = ({
   };
 
   const allItems = [...displayScheduledItems, ...displayCompletedItems].sort((a, b) => {
-    const timeA = new Date(a.date).getTime();
-    const timeB = new Date(b.date).getTime();
+    const timeA = new Date(a.date || 0).getTime() || 0;
+    const timeB = new Date(b.date || 0).getTime() || 0;
     return sortOrder === 'asc' ? timeA - timeB : timeB - timeA;
   });
 

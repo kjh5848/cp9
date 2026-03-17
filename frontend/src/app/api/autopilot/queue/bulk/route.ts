@@ -23,7 +23,7 @@ export async function POST(request: Request) {
       const activeTimeStart = payload.activeTimeStart !== undefined && payload.activeTimeStart !== null ? parseInt(payload.activeTimeStart, 10) : null;
       const activeTimeEnd = payload.activeTimeEnd !== undefined && payload.activeTimeEnd !== null ? parseInt(payload.activeTimeEnd, 10) : null;
 
-      const intervalMinutes = intervalHours ? intervalHours * 60 : 0;
+      const intervalMinutes = intervalHours ? intervalHours : 0;
       const nextRunAt = getNextRunAtKST(intervalMinutes, activeTimeStart, activeTimeEnd, index, payload.startDate || null);
 
       return {

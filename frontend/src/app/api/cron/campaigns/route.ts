@@ -55,8 +55,7 @@ export async function GET(request: Request) {
         const month = now.getMonth() + 1;
         const countToGenerate = campaign.batchSize || 15;
 
-        const CHUNK_SIZE = 5;
-        const iterations = Math.ceil(countToGenerate / CHUNK_SIZE);
+        const CHUNK_SIZE = countToGenerate; // One single query
         const allKeywords: Array<{ keyword: string, articleType: string }> = [];
 
         const targetConfig = {
@@ -66,19 +65,14 @@ export async function GET(request: Request) {
           industry: campaign.targetIndustry,
         };
 
-        for (let i = 0; i < iterations; i++) {
-          const currentChunkSize = (i === iterations - 1 && countToGenerate % CHUNK_SIZE !== 0)
-            ? countToGenerate % CHUNK_SIZE
-            : CHUNK_SIZE;
-          const prompt = buildSuggestPrompt(campaign.categoryName, month, currentChunkSize, targetConfig);
-          try {
-            const res = await suggestModel.invoke(prompt);
-            const rawText = res.content.toString();
-            const chunkKeywords = parseKeywords(rawText).slice(0, currentChunkSize);
-            allKeywords.push(...chunkKeywords);
-          } catch (aiError) {
-            console.error(`[Cron] 캠페인 ${campaign.categoryName} AI 생성 에러 (Chunk ${i}):`, aiError);
-          }
+        const prompt = buildSuggestPrompt(campaign.categoryName, month, countToGenerate, targetConfig);
+        try {
+          const res = await suggestModel.invoke(prompt);
+          const rawText = res.content.toString();
+          const parsedKeywords = parseKeywords(rawText).slice(0, countToGenerate);
+          allKeywords.push(...parsedKeywords);
+        } catch (aiError) {
+          console.error(`[Cron] 캠페인 ${campaign.categoryName} AI 생성 에러:`, aiError);
         }
 
         // 중복 제거 및 최종 개수 맞춤
@@ -90,7 +84,7 @@ export async function GET(request: Request) {
 
         if (finalKeywords.length > 0) {
           const createData = finalKeywords.map((k, idx) => {
-            const intervalMinutes = campaign.intervalHours ? campaign.intervalHours * 60 : 0;
+            const intervalMinutes = campaign.intervalHours ? campaign.intervalHours : 0;
             // index(idx)를 통해 간격 누적
             const nextRunAt = getNextRunAtKST(
               intervalMinutes,
@@ -107,7 +101,7 @@ export async function GET(request: Request) {
               campaignId: campaign.id,
               personaId: campaign.personaId,
               themeId: campaign.themeId,
-              articleType: k.articleType || 'single',
+              articleType: (campaign.articleType && campaign.articleType !== 'auto') ? campaign.articleType : (k.articleType || 'single'),
               intervalHours: campaign.intervalHours,
               publishTimes: campaign.publishTimes,
               publishDays: campaign.publishDays,
@@ -120,9 +114,12 @@ export async function GET(request: Request) {
               targetPrice: campaign.targetPrice,
               targetIndustry: campaign.targetIndustry,
               publishTargets: campaign.publishTargets,
-              // 기타 기본 설정
-              textModel: 'gpt-4o',
-              imageModel: 'dall-e-3',
+              textModel: campaign.textModel || 'gpt-4o',
+              imageModel: campaign.imageModel || 'dall-e-3',
+              sortCriteria: campaign.sortCriteria || 'salePriceAsc',
+              minPrice: campaign.minPrice,
+              maxPrice: campaign.maxPrice,
+              isRocketOnly: campaign.isRocketOnly || false,
               nextRunAt,
             };
           });
@@ -166,7 +163,7 @@ function buildSuggestPrompt(category: string, month: number, count: number, targ
 [
   {
     "keyword": "키워드",
-    "articleType": "single | compare | curation"
+    "articleType": "single | compare | list"
   }
 ]`;
 }
@@ -189,7 +186,7 @@ function parseKeywords(rawText: string): Array<{ keyword: string, articleType: s
       return parsed.filter((i: any) => i && typeof i.keyword === 'string')
         .map((i: any) => ({
           keyword: i.keyword,
-          articleType: ['single', 'compare', 'curation'].includes(i.articleType) ? i.articleType : 'single'
+          articleType: ['single', 'compare', 'list'].includes(i.articleType) ? i.articleType : 'single'
         }));
     } else {
       console.warn('[cron/campaigns] JSON 배열 괄호([, ])를 찾을 수 없음:', rawText);

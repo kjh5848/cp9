@@ -5,6 +5,7 @@ import { Plus, Archive, CheckSquare, Square, Trash2 } from 'lucide-react';
 import { CampaignCard } from '@/entities/campaign/ui/CampaignCard';
 import { CampaignEmptyState } from '@/entities/campaign/ui/CampaignEmptyState';
 import { CampaignCreateModal } from './CampaignCreateModal';
+import { CampaignEditModal } from './CampaignEditModal';
 import { CampaignDetailModal } from './CampaignDetailModal';
 
 interface Props {
@@ -21,6 +22,13 @@ interface Props {
   configNode: React.ReactNode;
   quickPresetNode: React.ReactNode;
   publishTargetNode?: React.ReactNode;
+  textModel: string;
+  imageModel: string;
+  articleType: string;
+  sortCriteria: string;
+  minPrice: string;
+  maxPrice: string;
+  isRocketOnly: boolean;
   depth1: string;
   setDepth1: (v: string) => void;
   depth2: string;
@@ -32,11 +40,14 @@ interface Props {
 }
 
 export function CategoryCampaignWizard(props: Props) {
-  const { campaigns, isLoading, createCampaign, deleteCampaign, deleteCampaigns } = useCategoryCampaignViewModel();
+  const { campaigns, isLoading, createCampaign, updateCampaign, deleteCampaign, deleteCampaigns } = useCategoryCampaignViewModel();
   
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState<CategoryCampaign | null>(null);
   const [selectedCampaignIds, setSelectedCampaignIds] = useState<Set<string>>(new Set());
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [campaignToEdit, setCampaignToEdit] = useState<CategoryCampaign | null>(null);
 
   const handleToggleCheck = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -65,6 +76,12 @@ export function CategoryCampaignWizard(props: Props) {
   const handleDeleteSingle = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     await deleteCampaign(id);
+  };
+
+  const handleEdit = (campaign: CategoryCampaign, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCampaignToEdit(campaign);
+    setIsEditModalOpen(true);
   };
 
   return (
@@ -123,6 +140,7 @@ export function CategoryCampaignWizard(props: Props) {
                 onSelect={(c) => setSelectedCampaign(c)}
                 onToggleCheck={handleToggleCheck}
                 onDelete={handleDeleteSingle}
+                onEdit={handleEdit}
               />
             ))}
           </div>
@@ -136,6 +154,17 @@ export function CategoryCampaignWizard(props: Props) {
         isLoading={isLoading}
         onCreate={createCampaign}
         {...props}
+      />
+
+      <CampaignEditModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setCampaignToEdit(null);
+        }}
+        isLoading={isLoading}
+        campaign={campaignToEdit}
+        onUpdate={updateCampaign}
       />
 
       <CampaignDetailModal

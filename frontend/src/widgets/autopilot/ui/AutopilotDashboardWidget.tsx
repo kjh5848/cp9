@@ -305,6 +305,13 @@ export function AutopilotDashboardWidget() {
               activeTimeStart={vm.activeTimeStart}
               activeTimeEnd={vm.activeTimeEnd}
               publishTargets={vm.publishTargets}
+              textModel={vm.textModel}
+              imageModel={vm.imageModel}
+              articleType={vm.articleType}
+              sortCriteria={vm.sortCriteria}
+              minPrice={vm.minPrice}
+              maxPrice={vm.maxPrice}
+              isRocketOnly={vm.isRocketOnly}
               configNode={configNodes}
               quickPresetNode={quickPresetNode}
               depth1={vm.depth1}

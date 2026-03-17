@@ -49,6 +49,32 @@ export function useCategoryCampaignViewModel() {
     }
   };
 
+  const updateCampaign = async (id: string, payload: any) => {
+    setIsMutating(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/autopilot/campaign', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id, ...payload }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        await refreshCampaigns(); // SWR 캐시 갱신
+        return true;
+      } else {
+        throw new Error(data.error || 'Failed to update campaign');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      return false;
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
   const deleteCampaign = async (id: string) => {
     setIsMutating(true);
     setError(null);
@@ -129,6 +155,7 @@ export function useCategoryCampaignViewModel() {
     error: error || (fetchError ? fetchError.message : null),
     fetchCampaigns,
     createCampaign,
+    updateCampaign,
     deleteCampaign,
     deleteCampaigns,
     approveQueues,

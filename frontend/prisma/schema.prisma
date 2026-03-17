@@ -151,6 +151,15 @@ model CategoryCampaign {
   targetPrice    String?
   targetIndustry String?
 
+  // AI 및 소싱 설정 추가
+  textModel      String?  @default("gpt-4o")
+  imageModel     String?  @default("dall-e-3")
+  articleType    String?  @default("auto")
+  sortCriteria   String?  @default("salePriceAsc")
+  minPrice       Int?
+  maxPrice       Int?
+  isRocketOnly   Boolean  @default(false)
+
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @default(now()) @updatedAt @map("updated_at")
 

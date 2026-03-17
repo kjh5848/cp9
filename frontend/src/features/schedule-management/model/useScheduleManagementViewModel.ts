@@ -40,7 +40,15 @@ export function useScheduleManagementViewModel() {
     rawItem: item as any
   }));
 
-  const scheduledItems = [...manualScheduled, ...autoScheduled].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const scheduledItems = [...manualScheduled, ...autoScheduled].sort((a,b) => {
+    // DEV DEBUG
+    if (isNaN(new Date(a.date || 0).getTime())) console.log('Invalid date A:', a.date, 'typeof:', typeof a.date);
+    if (isNaN(new Date(b.date || 0).getTime())) console.log('Invalid date B:', b.date, 'typeof:', typeof b.date);
+    
+    const timeA = new Date(a.date || 0).getTime() || 0;
+    const timeB = new Date(b.date || 0).getTime() || 0;
+    return timeA - timeB;
+  });
 
   const manualCompleted = researchList.filter(item => item.pack.status === 'PUBLISHED' || item.pack.content).map(item => ({
     id: `${item.projectId}_${item.itemId}`,
@@ -67,7 +75,11 @@ export function useScheduleManagementViewModel() {
     content: (item.resultUrl && item.resultUrl !== 'undefined') ? '' : '스케줄에 등록된 아이템입니다.'
   }));
 
-  const completedItems = [...manualCompleted, ...autoCompleted].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const completedItems = [...manualCompleted, ...autoCompleted].sort((a,b) => {
+    const timeA = new Date(a.date || 0).getTime() || 0;
+    const timeB = new Date(b.date || 0).getTime() || 0;
+    return timeB - timeA;
+  });
 
   // 상태 관리
   const [previewItem, setPreviewItem] = useState<{ isOpen: boolean; title: string; markdown: string }>({

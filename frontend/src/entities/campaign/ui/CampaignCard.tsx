@@ -9,6 +9,7 @@ interface CampaignCardProps {
   onSelect: (campaign: CategoryCampaign) => void;
   onToggleCheck: (id: string, e: React.MouseEvent) => void;
   onDelete: (id: string, e: React.MouseEvent) => void;
+  onEdit: (campaign: CategoryCampaign, e: React.MouseEvent) => void;
 }
 
 export function CampaignCard({
@@ -17,6 +18,7 @@ export function CampaignCard({
   onSelect,
   onToggleCheck,
   onDelete,
+  onEdit,
 }: CampaignCardProps) {
   const hasTargeting = Boolean(
     campaign.targetAge ||
@@ -48,16 +50,25 @@ export function CampaignCard({
         </button>
       </div>
       
-      <button
-        onClick={(e) => onDelete(campaign.id, e)}
-        className="absolute top-3 right-3 text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 rounded-md p-1 border border-slate-700 hover:bg-slate-800 hover:border-red-500/50 z-10"
-        title="삭제"
-      >
-        <RefreshCw className="w-3.5 h-3.5 rotate-45" />
-      </button>
+      <div className="absolute top-3 right-3 flex gap-1 z-10">
+        <button
+          onClick={(e) => onEdit(campaign, e)}
+          className="text-slate-500 hover:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 rounded-md p-1 border border-slate-700 hover:bg-slate-800 hover:border-blue-500/50"
+          title="수정"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>
+        </button>
+        <button
+          onClick={(e) => onDelete(campaign.id, e)}
+          className="text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 rounded-md p-1 border border-slate-700 hover:bg-slate-800 hover:border-red-500/50"
+          title="삭제"
+        >
+          <RefreshCw className="w-3.5 h-3.5 rotate-45" />
+        </button>
+      </div>
       
       <div
-        className="font-bold text-blue-400 mb-1 leading-tight pr-6 pl-6 line-clamp-2"
+        className="font-bold text-blue-400 mb-1 leading-tight pr-[60px] pl-6 line-clamp-2"
         title={campaign.categoryName}
       >
         {campaign.categoryName}

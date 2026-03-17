@@ -5,6 +5,14 @@ import { getNextRunAtKST } from '@/features/autopilot/lib/scheduler';
 export function useAutopilotDashboardActions(state: any, autopilotHook: any) {
   const router = useRouter();
 
+  const resolveArticleType = (configType: string, itemCount?: number) => {
+    if (configType && configType !== 'auto') return configType;
+    if (!itemCount) return 'single'; 
+    if (itemCount === 1) return 'single';
+    if (itemCount === 2) return 'compare';
+    return 'list';
+  };
+
   const handleGenerateTitles = async () => {
     if (!state.keyword.trim()) {
       alert('키워드를 입력해주세요.');
@@ -114,7 +122,7 @@ export function useAutopilotDashboardActions(state: any, autopilotHook: any) {
 
   const calculateSchedulePreview = () => {
     const base = state.startDate ? new Date(state.startDate) : new Date();
-    const intervalMinutes = state.intervalHours ? parseInt(state.intervalHours, 10) * 60 : 0;
+    const intervalMinutes = state.intervalHours ? parseInt(state.intervalHours, 10) : 0;
     const activeStart = state.activeTimeStart ? parseInt(state.activeTimeStart, 10) : undefined;
     const activeEnd = state.activeTimeEnd ? parseInt(state.activeTimeEnd, 10) : undefined;
     const parsedPublishTimes = state.publishTimes ? state.publishTimes.split(',').filter(Boolean) : undefined;
@@ -146,11 +154,21 @@ export function useAutopilotDashboardActions(state: any, autopilotHook: any) {
 
     const payloads: CreateAutopilotQueuePayload[] = preview.map((item: any) => {
       const cartItem = state.cartTitles[item.index];
+      
+      const baseArticleType = cartItem?.articleType && cartItem.articleType !== 'auto' 
+        ? cartItem.articleType 
+        : state.articleType;
+        
+      const finalArticleType = resolveArticleType(
+        baseArticleType, 
+        state.singleKeywordResearchMeta?.recommendedItemCount
+      );
+
       return {
         keyword: item.title,
         personaId: state.personaId || undefined,
         themeId: state.themeId || undefined,
-        articleType: cartItem?.articleType && cartItem.articleType !== 'auto' ? cartItem.articleType : state.articleType,
+        articleType: finalArticleType,
         textModel: state.textModel,
         imageModel: state.imageModel,
         charLimit: parseInt(state.charLimit as string, 10),
@@ -193,7 +211,7 @@ export function useAutopilotDashboardActions(state: any, autopilotHook: any) {
     const preview = calculateSchedulePreview();
     if (preview.length === 0) {
          const base = state.startDate ? new Date(state.startDate) : new Date();
-         const intervalMinutes = state.intervalHours ? parseInt(state.intervalHours, 10) * 60 : 0;
+         const intervalMinutes = state.intervalHours ? parseInt(state.intervalHours, 10) : 0;
          const activeStart = state.activeTimeStart ? parseInt(state.activeTimeStart, 10) : undefined;
          const activeEnd = state.activeTimeEnd ? parseInt(state.activeTimeEnd, 10) : undefined;
          const parsedPublishTimes = state.publishTimes ? state.publishTimes.split(',').filter(Boolean) : undefined;
@@ -228,7 +246,7 @@ export function useAutopilotDashboardActions(state: any, autopilotHook: any) {
         
         personaId: state.personaId || undefined,
         themeId: state.themeId || undefined,
-        articleType: state.articleType,
+        articleType: resolveArticleType(state.articleType, researchItem?.recommendedItemCount),
         textModel: state.textModel,
         imageModel: state.imageModel,
         charLimit: parseInt(state.charLimit as string, 10),

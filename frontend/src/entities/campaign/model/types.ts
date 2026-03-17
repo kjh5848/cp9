@@ -12,7 +12,23 @@ export interface CategoryCampaign {
   targetGender?: string | null;
   targetPrice?: string | null;
   targetIndustry?: string | null;
+  
+  // Phase 3 Extensions
+  textModel?: string | null;
+  imageModel?: string | null;
+  articleType?: string | null;
+  charLimit?: number | null;
+  sortCriteria?: string | null;
+  minPrice?: number | null;
+  maxPrice?: number | null;
+  isRocketOnly?: boolean | null;
+  
+  publishTimes?: string | null;
+  publishDays?: string | null;
+  jitterMinutes?: number | null;
+  dailyCap?: number | null;
   publishTargets?: string | null;
+
   createdAt: string;
   persona?: { name: string } | null;
   _count?: {

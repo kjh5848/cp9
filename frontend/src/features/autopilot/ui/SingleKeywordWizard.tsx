@@ -86,7 +86,7 @@ export function SingleKeywordWizard({
 
   const calculateSchedulePreview = () => {
     const base = startDate ? new Date(startDate) : new Date();
-    const intervalMinutes = intervalHours ? parseInt(intervalHours, 10) * 60 : 0;
+    const intervalMinutes = intervalHours ? parseInt(intervalHours, 10) : 0;
     const activeStart = activeTimeStart ? parseInt(activeTimeStart, 10) : undefined;
     const activeEnd = activeTimeEnd ? parseInt(activeTimeEnd, 10) : undefined;
     const parsedPublishTimes = publishTimes ? publishTimes.split(',').filter(Boolean) : undefined;
