@@ -42,7 +42,7 @@ export async function GET(request: Request) {
     await Promise.all(overdueItems.map(async (item) => {
       const pack = typeof item.pack === 'string' ? JSON.parse(item.pack) : item.pack;
       
-      const body: ItemResearchRequest = {
+      const body: ItemResearchRequest = pack.originalRequest || {
         itemName: pack.title || '상품',
         projectId: item.projectId,
         itemId: item.itemId,

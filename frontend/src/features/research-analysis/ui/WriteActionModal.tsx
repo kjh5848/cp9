@@ -44,6 +44,7 @@ export interface WriteActionExecuteParams {
   articleType: ArticleType;
   themeId?: string;
   customTitles?: Record<string, string>;
+  publishTargets?: PublishTarget[];
 }
 
 interface WriteActionModalProps {
@@ -60,6 +61,7 @@ import {
   useWriteActionViewModel, 
   TOTAL_STEPS 
 } from "../model/useWriteActionViewModel";
+import { PublishTarget } from "@/shared/ui/PublishTargetSection";
 
 /* ──────────────────────────── Step 인디케이터 ──────────────────────────── */
 
@@ -102,6 +104,7 @@ export const WriteActionModal = ({
     themeId, setThemeId, themes,
     customTitles, setCustomTitles, suggestedTitles, isGeneratingTitle, handleSuggestTitle,
     actionType, setActionType, scheduleDate, setScheduleDate, scheduleTime, setScheduleTime,
+    publishTargets, setPublishTargets,
     articleTypeAvailability, publishPreview, handleConfirm, canGoNext
   } = useWriteActionViewModel({
     isOpen, selectedItems, defaultAction, onExecute
@@ -118,19 +121,30 @@ export const WriteActionModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[560px] bg-gray-900 border-gray-800 text-slate-200 max-h-[85vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-white">포스팅 생성 설정</DialogTitle>
-          <DialogDescription className="text-slate-400">
-            [{title}] — {itemCount}개 상품 선택됨
+      <DialogContent className="sm:max-w-[900px] bg-gray-900 border-gray-800 text-slate-200 max-h-[85vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex flex-col">
+        <DialogHeader className="mb-2">
+          <DialogTitle className="text-3xl font-bold text-white mb-2">포스팅 생성 설정</DialogTitle>
+          <DialogDescription className="text-slate-400 text-sm">
+            <span className="text-blue-400 font-semibold">[{title}]</span> — {itemCount}개 상품 선택됨
           </DialogDescription>
         </DialogHeader>
 
         <StepIndicator current={step} total={TOTAL_STEPS} />
 
-        <SelectedProductList products={selectedItems} className="mb-2" />
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 min-h-[420px] mt-3">
+          {/* 왼쪽 단: 상품 목록 */}
+          <div className="md:col-span-4 border-r border-slate-800 pr-4 flex flex-col max-h-[500px]">
+            <h4 className="text-sm font-semibold text-slate-300 mb-4 flex items-center gap-2">
+              <Package className="w-5 h-5 text-emerald-400" />
+              선택된 상품
+            </h4>
+            <div className="flex-1 overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-700/50 [&::-webkit-scrollbar-thumb]:rounded-full">
+              <SelectedProductList products={selectedItems} className="mb-2" />
+            </div>
+          </div>
 
-        <div className="py-2 space-y-5 min-h-[280px]">
+          {/* 오른쪽 단: 셋팅 영역 */}
+          <div className="md:col-span-8 py-1 space-y-6 flex flex-col">
           {/* ════════ Step 1: 글 유형 선택 ════════ */}
           {step === 0 && (
             <ArticleTypeSelectionStep
@@ -192,6 +206,7 @@ export const WriteActionModal = ({
                 charLimitMode={charLimitMode} setCharLimitMode={setCharLimitMode}
                 itemCount={itemCount}
                 themeId={themeId} setThemeId={setThemeId}
+                themes={themes as import('@/entities/design/ui/ThemeSwitcher').ThemeSwitcherTheme[]}
                 hideTheme={true}
               />
 
@@ -261,12 +276,15 @@ export const WriteActionModal = ({
               scheduleTime={scheduleTime}
               setScheduleTime={setScheduleTime}
               publishPreview={publishPreview}
+              publishTargets={publishTargets}
+              setPublishTargets={setPublishTargets}
             />
           )}
+          </div>
         </div>
 
         {/* ════════ 하단 네비게이션 ════════ */}
-        <DialogFooter className="mt-2 border-t border-slate-800 pt-4 flex items-center justify-between">
+        <DialogFooter className="mt-4 border-t border-slate-800 pt-5 flex items-center justify-between">
           <div>
             {step > 0 && (
               <Button

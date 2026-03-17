@@ -2,7 +2,8 @@
 
 import React from "react";
 import { ScheduleItem } from "@/entities/schedule-management/ui/SchedulePendingCard";
-import { Clock, Settings, Edit3, Trash2, ExternalLink } from "lucide-react";
+import { Clock, Settings, Edit3, Trash2, ExternalLink, RefreshCw } from "lucide-react";
+import { formatInterval } from "@/shared/lib/interval";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 
@@ -82,7 +83,8 @@ export const ScheduleListView = ({
       "IT": "💻 IT",
       "LIVING": "🏠 살림",
       "BEAUTY": "✨ 뷰티",
-      "HUNTER": "🔥 가성비"
+      "HUNTER": "🔥 가성비",
+      "MASTER_CURATOR_H": "👑 큐레이터"
     };
     return (
       <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-md whitespace-nowrap">
@@ -168,11 +170,21 @@ export const ScheduleListView = ({
                       )}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      {item.isAutopilot ? (
-                        <span className="bg-blue-500/10 text-blue-400 text-[10px] px-1.5 py-0.5 rounded border border-blue-500/20 font-bold tracking-tight">Auto</span>
-                      ) : (
-                        <span className="bg-slate-500/10 text-slate-400 text-[10px] px-1.5 py-0.5 rounded border border-slate-500/20 font-bold tracking-tight">Manual</span>
-                      )}
+                      <div className="flex flex-col items-center gap-1">
+                        {item.isAutopilot ? (
+                          <>
+                            <span className="bg-blue-500/10 text-blue-400 text-[10px] px-1.5 py-0.5 rounded border border-blue-500/20 font-bold tracking-tight">Auto</span>
+                            {isPending && item.rawItem?.intervalHours ? (
+                              <span className="text-[10px] text-blue-400/80 bg-blue-500/5 px-1 py-0.5 rounded whitespace-nowrap flex flex-row items-center gap-0.5">
+                                <RefreshCw className="w-2.5 h-2.5" />
+                                {formatInterval(item.rawItem.intervalHours)}
+                              </span>
+                            ) : null}
+                          </>
+                        ) : (
+                          <span className="bg-slate-500/10 text-slate-400 text-[10px] px-1.5 py-0.5 rounded border border-slate-500/20 font-bold tracking-tight">Manual</span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-center">
                       {renderStatusBadge(item.status)}

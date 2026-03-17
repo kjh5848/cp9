@@ -200,6 +200,7 @@ model KeywordCartItem {
   id               String   @id @default(uuid())
   userId           String   @map("user_id")
   keyword          String
+  status           String   @default("PENDING") // PENDING, PUBLISHED
   
   // 메타데이터 (옵셔널)
   monthlySearchVol Int?     @map("monthly_search_vol")

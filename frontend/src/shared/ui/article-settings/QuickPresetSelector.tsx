@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { Settings2 } from 'lucide-react';
+import { Settings2, AlertCircle } from 'lucide-react';
 import { useUserSettingsViewModel } from '@/features/user-settings/model/useUserSettingsViewModel';
 
 export interface QuickPresetSelectorProps {
@@ -29,9 +29,10 @@ export function QuickPresetSelector({
   themes,
 }: QuickPresetSelectorProps) {
   const { articleSettings, themeSettings } = useUserSettingsViewModel();
+  const [showEmptySettingsWarning, setShowEmptySettingsWarning] = useState(false);
 
   return (
-    <div className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-4 space-y-3">
+    <div className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-4 space-y-3 relative">
       <div className="flex items-center justify-between mb-1">
         <h4 className="flex items-center gap-1.5 text-sm font-semibold text-slate-300">
           간편 설정 불러오기
@@ -69,6 +70,15 @@ export function QuickPresetSelector({
           };
 
           if (val === "my-settings") {
+            const hasArticleSettings = articleSettings && (articleSettings.defaultTextModel || articleSettings.presetWordCount);
+            const hasThemeSettings = themeSettings && (themeSettings.personaId || themeSettings.themeId);
+            
+            if (!hasArticleSettings && !hasThemeSettings) {
+              setShowEmptySettingsWarning(true);
+            } else {
+              setShowEmptySettingsWarning(false);
+            }
+
             if (articleSettings) {
               if (articleSettings.defaultTextModel) setTextModel(articleSettings.defaultTextModel);
               if (articleSettings.defaultImageModel && setImageModel) setImageModel(articleSettings.defaultImageModel);
@@ -104,6 +114,16 @@ export function QuickPresetSelector({
         <option value="preset-a">권장 A (가성비/스피드) - GPT-4o mini + 2,000자</option>
         <option value="preset-b">권장 B (고품질 전문글) - Claude 4.6 Sonnet + 5,000자</option>
       </select>
+      
+      {showEmptySettingsWarning && (
+        <div className="mt-3 p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg flex items-start gap-2 animate-in fade-in slide-in-from-top-2">
+          <AlertCircle className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
+          <div className="text-xs text-blue-200 leading-relaxed">
+            저장된 <strong>[내 설정]</strong>이 없습니다. 
+            상단의 <Settings2 className="inline-block w-3 h-3 text-slate-400 mx-1 mb-0.5" /> <Link href="/my-page" target="_blank" className="text-blue-400 underline hover:text-blue-300">마이페이지</Link>로 이동하여 기본값을 저장해보세요!
+          </div>
+        </div>
+      )}
     </div>
   );
 }

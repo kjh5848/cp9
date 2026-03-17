@@ -2,6 +2,7 @@ import React from "react";
 import { Calendar, Clock, PenTool, CalendarPlus } from "lucide-react";
 import { Input } from "@/shared/ui/input";
 import { cn } from "@/shared/lib/utils";
+import { PublishTargetSection, PublishTarget } from "@/shared/ui/PublishTargetSection";
 
 interface PublishActionStepProps {
   actionType: "NOW" | "SCHEDULE";
@@ -15,6 +16,8 @@ interface PublishActionStepProps {
     estimatedMinutes: number;
     estimatedCost: string;
   };
+  publishTargets: PublishTarget[];
+  setPublishTargets: (targets: PublishTarget[]) => void;
 }
 
 export function PublishActionStep({
@@ -25,6 +28,8 @@ export function PublishActionStep({
   scheduleTime,
   setScheduleTime,
   publishPreview,
+  publishTargets,
+  setPublishTargets,
 }: PublishActionStepProps) {
   return (
     <div className="space-y-5">
@@ -98,6 +103,15 @@ export function PublishActionStep({
           </p>
         </div>
       )}
+
+      {/* 다중 플랫폼 발행 설정 */}
+      <div className="pt-2 border-t border-slate-800">
+        <PublishTargetSection 
+          targets={publishTargets}
+          onChange={setPublishTargets}
+          hideLoadMySettings={true}
+        />
+      </div>
     </div>
   );
 }

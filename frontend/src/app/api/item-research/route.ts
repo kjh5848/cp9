@@ -51,6 +51,15 @@ export async function POST(request: NextRequest) {
         itemId: body.itemId, title: body.itemName,
         content: null, thumbnailPrompt: null, thumbnailUrl: null,
         researchRaw: null, status: 'SCHEDULED', scheduledAt,
+        persona, personaName: finalPersonaName, textModel, imageModel,
+        charLimit, articleType, publishTarget, themeId, toneAndManner: tone,
+        productUrl: body.productData?.productUrl || `https://www.coupang.com/vp/products/${body.itemId}`,
+        productImage: body.productData?.productImage || null,
+        priceKRW: body.productData?.productPrice || 0,
+        categoryName: body.productData?.categoryName || '',
+        isRocket: body.productData?.isRocket || false,
+        isFreeShipping: body.productData?.isFreeShipping || false,
+        originalRequest: body,
       };
       try {
         await prisma.research.upsert({

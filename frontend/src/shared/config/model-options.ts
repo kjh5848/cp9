@@ -38,6 +38,8 @@ export const TEXT_MODEL_OPTIONS: ModelOption[] = [
 export const IMAGE_MODEL_OPTIONS: ImageModelOption[] = [
   { value: "dall-e-3", label: "DALL-E 3 (OpenAI)" },
   { value: "nano-banana", label: "Nano Banana (Gemini 2.5 Flash Image) ⭐" },
+  { value: "stock", label: "무료 스탁 이미지 (Pixabay)" },
+  { value: "web-search", label: "무료 웹 검색 (DuckDuckGo)" },
   { value: "none", label: "사용 안 함" },
 ];
 

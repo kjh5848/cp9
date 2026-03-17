@@ -1,5 +1,5 @@
 ---
-description: seo-pipeline
+description: 워크플로우 - SEO 최적화 파이프라인 자동화 가이드
 ---
 
 # SEO 파이프라인 자동화 워크플로우 (`/seo-pipeline`)

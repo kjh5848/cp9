@@ -28,6 +28,7 @@ export async function GET(req: Request) {
       competition: item.competition || '조회불가',
       cpc: 0,
       intent: item.intent || '정보검색',
+      status: item.status || 'PENDING',
     }));
 
     return NextResponse.json({ keywords });
@@ -74,5 +75,38 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error('Failed to sync cart:', error);
     return NextResponse.json({ error: 'Failed to sync cart' }, { status: 500 });
+  }
+}
+
+// PATCH: 장바구니 내 특정 키워드들의 상태 갱신 (예: PENDING -> PUBLISHED)
+export async function PATCH(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || !session.user.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userId = session.user.id;
+    const body = await req.json();
+    const { keywords, status } = body;
+
+    if (!Array.isArray(keywords) || typeof status !== 'string') {
+      return NextResponse.json({ error: 'Invalid payload: keywords array and status string are required' }, { status: 400 });
+    }
+
+    const updateResult = await prisma.keywordCartItem.updateMany({
+      where: {
+        userId,
+        keyword: { in: keywords }
+      },
+      data: {
+        status
+      }
+    });
+
+    return NextResponse.json({ success: true, count: updateResult.count });
+  } catch (error) {
+    console.error('Failed to update cart status:', error);
+    return NextResponse.json({ error: 'Failed to update cart status' }, { status: 500 });
   }
 }

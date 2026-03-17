@@ -121,29 +121,53 @@ export async function runSeoPipeline(body: ItemResearchRequest, config: Pipeline
     const researchData = await runResearchPhase(ctx);
     const phase1Ms = Date.now() - phase1Start;
 
-    // ── Phase 2 + Phase 3: 병렬 실행 (~20초 단축) ──
-    console.log(`⚡ [Phase 2+3] LLM 본문(${textModel}) + 이미지(${imageModel}) 병렬 실행 시작...`);
+    // ── Phase 2: LLM 본문 생성 (`textModel`) ──
+    console.log(`⚡ [Phase 2] LLM 본문(${textModel}) 생성 시작...`);
     const phase2Start = Date.now();
-    const phase3Start = Date.now();
-
-    const [articleResult, actualImageUrl] = await Promise.all([
-      runArticlePhase(ctx, researchData),
-      runImagePhase(ctx),
-    ]);
+    const articleResult = await runArticlePhase(ctx, researchData);
     const markdownRaw = articleResult.content;
     const extractedTitle = articleResult.title;
-    
-    // 최종 사용할 제목 (1순위: 사용자가 직접 선택/수정한 커스텀 제목(itemName에 바인딩됨), 2순위: 키워드모드 제목, 3순위: LLM 추출 제목)
-    // frontend의 ProductCreation.tsx에서 itemName에 customTitle을 넣어서 보내므로, body.itemName을 1순위로 사용합니다.
-    const finalTitle = body.itemName || body.keywordMode?.selectedTitle || extractedTitle || '제목 없음';
-
     const phase2Ms = Date.now() - phase2Start;
+    console.log(`⚡ [Phase 2] 본문 생성 완료 (${markdownRaw.length}자)`);
+
+    // ── 본문에서 이미지 제안 텍스트 추출 ──
+    // 정규식: [이미지 제안: xxx] 형태의 텍스트 모두 추출
+    const suggestionRegex = /\[이미지 제안:\s*(.*?)\]/g;
+    const imageSuggestions: string[] = [];
+    let match;
+    while ((match = suggestionRegex.exec(markdownRaw)) !== null) {
+      if (match[1]) {
+        imageSuggestions.push(match[1].trim());
+      }
+    }
+    // 중복 제거
+    const uniqueSuggestions = Array.from(new Set(imageSuggestions));
+    console.log(`🔍 [Phase 2.5] 본문에서 ${uniqueSuggestions.length}개의 이미지 제안 추출됨`);
+
+    // ── Phase 3: 다중 이미지 생성/검색 (`imageModel`) ──
+    console.log(`⚡ [Phase 3] 이미지 확보 시작...`);
+    const phase3Start = Date.now();
+    const imageUrlMap: Record<string, string | null> = await runImagePhase(ctx, uniqueSuggestions);
     const phase3Ms = Date.now() - phase3Start;
-    console.log(`⚡ [Phase 2+3] 병렬 실행 완료 (본문: ${markdownRaw.length}자, 이미지: ${actualImageUrl ? '있음' : '없음'})`);
+    
+    // 대표 이미지(썸네일)는 추출된 첫 번째 이미지 혹은 default 이미지, 없으면 상품 이미지로 설정
+    const actualImageUrl = Object.values(imageUrlMap).find(url => url !== null) || body.productData?.productImage || null;
+    
+    console.log(`⚡ [Phase 3] 이미지 확보 완료 (확보된 이미지 수: ${Object.values(imageUrlMap).filter(Boolean).length}개)`);
+    
+    // 최종 사용할 제목
+    // 1순위: 사용자가 직접 수정한 커스텀 제목 (itemName이 원본 productName과 다를 때)
+    // 2순위: 키워드모드 지정 제목
+    // 3순위: LLM 본문 추출 제목 (extractedTitle)
+    // 4순위: 원본 상품명 (fallback)
+    const isCustomTitle = body.itemName && body.itemName !== body.productData?.productName;
+    const finalTitle = isCustomTitle 
+      ? body.itemName 
+      : (body.keywordMode?.selectedTitle || extractedTitle || body.itemName || '제목 없음');
 
     // ── Phase 4: HTML 변환 + CTA 주입 ──
     const phase4Start = Date.now();
-    const seoContent = await runHtmlPhase(ctx, markdownRaw, actualImageUrl);
+    const seoContent = await runHtmlPhase(ctx, markdownRaw, imageUrlMap, actualImageUrl);
     const phase4Ms = Date.now() - phase4Start;
 
     // ── Phase 5: 다중 플랫폼 발행 (조건부) ──

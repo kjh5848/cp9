@@ -184,6 +184,7 @@ export const ProductCreation = () => {
         });
 
         if (res.ok) {
+          clearCart(); // <-- 여기에 장바구니 초기화 추가
           startPolling(newProjectId, String(leadProduct.productId));
           toast.success(`📝 ${resolvedArticleType === 'compare' ? '비교 분석' : '큐레이션'} 글 생성이 시작되었습니다!`, { duration: 4000 });
           if (params.actionType === 'SCHEDULE') router.push('/schedule');
@@ -231,6 +232,7 @@ export const ProductCreation = () => {
         const successCount = responses.filter((r) => r.ok).length;
 
         if (successCount > 0) {
+          clearCart(); // <-- 여기에 장바구니 초기화 추가
           const firstProduct = uniqueSelectedProducts[0];
           startPolling(newProjectId, String(firstProduct.productId));
           toast.success(`📝 ${successCount}개 상품 글 생성이 시작되었습니다!\n완료 시 알림을 보내드리겠습니다.`, { duration: 4000 });

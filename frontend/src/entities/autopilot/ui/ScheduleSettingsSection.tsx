@@ -233,7 +233,7 @@ export function ScheduleSettingsSection({
         {scheduleMode === 'interval' ? (
           <>
             <div className="space-y-2 md:col-span-2">
-              <Label className="text-slate-300 text-sm">발행 주기/빈도 (Interval)</Label>
+              <Label className="text-slate-300 text-sm">발행 간격 (Interval)</Label>
               <div className="flex gap-2">
                 <Input 
                   type="number"
@@ -262,6 +262,7 @@ export function ScheduleSettingsSection({
                 </div>
               </div>
               <p className="text-xs text-slate-500 mt-1">※ '0' 입력 시 단발성 즉시 발행으로 예약됩니다.</p>
+              <p className="text-[11px] text-amber-500/80 mt-1">💡 [주의] 어떤 단위를 선택하든 시스템 내부적으로는 '분(Minutes)' 단위로 총합산되어 저장 및 동작합니다. (예: 1시간 선택 시 → 60분으로 계산)</p>
             </div>
 
             <div className="space-y-2">

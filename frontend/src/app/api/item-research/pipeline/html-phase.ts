@@ -4,6 +4,7 @@
  */
 import { marked } from 'marked'
 import { buildCtaHtml, buildCtaBlockHtml } from '../seo-cta-builder'
+import { buildCtaHtmlSnippet } from './seo-cta-builder'
 import { buildThemeStyles } from '@/shared/lib/build-theme-styles'
 import type { PipelineContext } from './types'
 
@@ -17,11 +18,21 @@ marked.setOptions({ gfm: true, breaks: true });
 export async function runHtmlPhase(
   ctx: PipelineContext,
   markdownRaw: string,
+  imageUrlMap: Record<string, string | null>,
   imageUrl: string | null,
 ): Promise<string> {
   const { articleType } = ctx;
   console.log(`🔄 [Phase 4] 마크다운 → HTML 변환 중... (유형: ${articleType})`);
   let htmlBody = await marked.parse(markdownRaw);
+
+  const defaultBuyUrl = ctx.body.productData?.productUrl || `https://www.coupang.com/vp/products/${ctx.body.itemId}`;
+
+  // ── 후처리 0: AI 매크로 동적 1:1 치환 ──
+  // [[[CTA_BUTTON:URL]]] 또는 [[[CTA_BUTTON]]] 포맷 모두 대응
+  htmlBody = htmlBody.replace(/\[\[\[CTA_BUTTON(?::([^\]]+))?\]\]\]/g, (match, urlGroup) => {
+    const url = (urlGroup && urlGroup.trim()) ? urlGroup.trim() : defaultBuyUrl;
+    return buildCtaHtmlSnippet({ productUrl: url });
+  });
 
   // ── 후처리 1: 취소선(<del>) 태그 제거 ──
   htmlBody = htmlBody.replace(/<del>(.*?)<\/del>/g, '$1');
@@ -71,8 +82,13 @@ export async function runHtmlPhase(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const themeConfig = ctx.themeConfig as any;
   const legacyCtaConfig = themeConfig?.cta;
-  const ctaBlocks = themeConfig?.ctaBlocks;
+  let ctaBlocks = themeConfig?.ctaBlocks;
   const useNewCtaSystem = themeConfig && 'ctaBlocks' in themeConfig;
+
+  // AI 매크로 삽입을 존중하기 위해, 테마의 강제 본문 삽입(random-p, first-p, last-p)을 무력화
+  if (ctaBlocks && ctaBlocks.length > 0) {
+    ctaBlocks = ctaBlocks.filter((b: any) => !['random-p', 'first-p', 'last-p', 'h2-before', 'h3-before'].includes(b.placement.position));
+  }
 
   let coupangHeaderHtml = '';
   let coupangCtaHtml = '';
@@ -133,16 +149,15 @@ export async function runHtmlPhase(
       themeCtaConfig: legacyCtaConfig,
     });
     coupangHeaderHtml = result.headerHtml;
-    const midContentHtml = result.midContentHtml;
+    // const midContentHtml = result.midContentHtml; // 매크로로 치환하므로 강제 삽입 무력화
     coupangCtaHtml = result.footerHtml;
 
-    // 본문 중간 CTA 삽입 + 쿠팡 상품 이미지 삽입
+    // 본문 중간 썸네일 상품 이미지 삽입 (단일 모드 한정)
     if (articleType === 'single') {
       const productImageUrl = ctx.body.productData?.productImage;
       const productImageHtml = productImageUrl
         ? `<figure class="cp9-product-image" style="text-align:center;margin:2em auto;max-width:420px;"><img src="${productImageUrl}" alt="${ctx.body.itemName}" style="max-width:100%;height:auto;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1px solid #eee;" /><figcaption style="font-size:13px;color:#94a3b8;margin-top:8px;">${ctx.body.itemName}</figcaption></figure>`
         : '';
-      let midCtaInserted = false;
       let productImageInserted = false;
       let sectionCount = 0;
       htmlBody = htmlBody.replace(/<\/h[23]>/g, (match) => {
@@ -152,23 +167,10 @@ export async function runHtmlPhase(
           productImageInserted = true;
           injection += '\n' + productImageHtml;
         }
-        if (sectionCount === 3 && !midCtaInserted) {
-          midCtaInserted = true;
-          injection += '\n' + midContentHtml;
-        }
         return injection;
       });
     } else {
-      let midCtaInserted = false;
-      let sectionCount = 0;
-      htmlBody = htmlBody.replace(/<\/h[23]>/g, (match) => {
-        sectionCount++;
-        if (sectionCount === 3 && !midCtaInserted) {
-          midCtaInserted = true;
-          return match + '\n' + midContentHtml;
-        }
-        return match;
-      });
+      // 비교/큐레이션은 AI 매크로에 구조 생성을 온전히 위임함
     }
   }
 
@@ -208,12 +210,26 @@ export async function runHtmlPhase(
   );
 
   // ── 후처리 4: AI 이미지 제안 문구 안내 박스 치환 ──
+  // imageUrlMap에 있는 실제 이미지 URL을 사용하여 치환, 없으면 기본 fallback 박스 렌더링
   htmlBody = htmlBody.replace(
     /\[이미지 제안:\s*(.*?)\]/g,
-    `<div class="cp9-image-suggestion" style="margin:24px 0;padding:16px 20px;background-color:#f8fafc;border:1px dashed #cbd5e1;border-radius:12px;text-align:center;">
-      <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#64748b;">🎨 AI 이미지 연출 제안 <span style="font-weight:400;font-size:11px;opacity:0.7;">(※ 실제 워드프레스 발행 시 이 박스는 자동 삭제됩니다)</span></p>
-      <p style="margin:0;font-size:14px;color:#334155;line-height:1.5;">$1</p>
-    </div>`
+    (match, suggestionText) => {
+      const suggestionKey = suggestionText.trim();
+      const mappedUrl = imageUrlMap[suggestionKey];
+      
+      if (mappedUrl) {
+        return `<figure class="cp9-dynamic-image" style="margin:32px 0;text-align:center;">
+          <img src="${mappedUrl}" alt="${suggestionKey}" style="max-width:100%;height:auto;max-height:500px;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,0.08);border:1px solid #e2e8f0;background:#fff;" />
+          <figcaption style="font-size:13px;color:#94a3b8;margin-top:10px;">${suggestionKey}</figcaption>
+        </figure>`;
+      }
+      
+      // 이미지를 구하지 못한 경우 (fallback)
+      return `<div class="cp9-image-suggestion" style="margin:24px 0;padding:16px 20px;background-color:#f8fafc;border:1px dashed #cbd5e1;border-radius:12px;text-align:center;">
+        <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#64748b;">🎨 AI 이미지 연출 제안 <span style="font-weight:400;font-size:11px;opacity:0.7;">(※ 이미지 스크랩 대기 중...)</span></p>
+        <p style="margin:0;font-size:14px;color:#334155;line-height:1.5;">${suggestionText}</p>
+      </div>`;
+    }
   );
 
   // ── 큐레이션: 본문 하단에 상품 카드 그리드 삽입 ──

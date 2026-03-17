@@ -18,38 +18,55 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { searchParams } = new URL(request.url);
+    const forceId = searchParams.get('id');
+
     // 2. 실행 가능한 큐 아이템 조회 (미래 시간으로 설정된 nextRunAt 제외)
     const now = new Date();
-    const candidateItems = await prisma.autopilotQueue.findMany({
-      where: { 
-        status: 'PENDING',
-        OR: [
-          { nextRunAt: null },
-          { nextRunAt: { lte: now } }
+    let candidateItems;
+    
+    if (forceId) {
+      candidateItems = await prisma.autopilotQueue.findMany({
+        where: { id: forceId, status: 'PENDING' }
+      });
+    } else {
+      candidateItems = await prisma.autopilotQueue.findMany({
+        where: { 
+          status: 'PENDING',
+          OR: [
+            { nextRunAt: null },
+            { nextRunAt: { lte: now } }
+          ]
+        },
+        orderBy: [
+          { nextRunAt: 'asc' }, // 스케줄된 것 중 가장 오래 지연된 것 우선
+          { createdAt: 'asc' }  // 신규 등록된 것 우선
         ]
-      },
-      orderBy: [
-        { nextRunAt: 'asc' }, // 스케줄된 것 중 가장 오래 지연된 것 우선
-        { createdAt: 'asc' }  // 신규 등록된 것 우선
-      ]
-    });
+      });
+    }
 
     if (candidateItems.length === 0) {
       return NextResponse.json({ message: 'No eligible pending items found.', count: 0 });
     }
 
     // 2.1 동작 허용 시간(activeTimeStart ~ activeTimeEnd) 필터링 (KST 기준)
-    const kstHour = new Date(now.getTime() + 9 * 60 * 60 * 1000).getUTCHours();
+    let pendingItem;
     
-    const pendingItem = candidateItems.find(item => {
-      const start = item.activeTimeStart ?? 0;
-      const end = item.activeTimeEnd ?? 23;
-      if (start <= end) {
-        return kstHour >= start && kstHour <= end; // 예: 09:00 ~ 22:00
-      } else {
-        return kstHour >= start || kstHour <= end; // 예: 22:00 ~ 04:00 (밤샘)
-      }
-    });
+    if (forceId) {
+      pendingItem = candidateItems[0]; // 강제 실행 시에는 시간 윈도우 무시
+    } else {
+      const kstHour = new Date(now.getTime() + 9 * 60 * 60 * 1000).getUTCHours();
+      
+      pendingItem = candidateItems.find(item => {
+        const start = item.activeTimeStart ?? 0;
+        const end = item.activeTimeEnd ?? 23;
+        if (start <= end) {
+          return kstHour >= start && kstHour <= end; // 예: 09:00 ~ 22:00
+        } else {
+          return kstHour >= start || kstHour <= end; // 예: 22:00 ~ 04:00 (밤샘)
+        }
+      });
+    }
 
     if (!pendingItem) {
       return NextResponse.json({ message: 'Items are pending but outside of allowed active hour window.', count: 0 });
@@ -127,7 +144,27 @@ export async function GET(request: Request) {
         isRocketOnly: pendingItem.isRocketOnly
       };
 
-      const rawAgentProducts = await runSourcingAgent(intentContent, sourcingConstraints);
+      // User의 Coupang API Key 조회
+      let coupangAccessKey;
+      let coupangSecretKey;
+      
+      if (pendingItem.userId) {
+        const user = await prisma.user.findUnique({
+          where: { id: pendingItem.userId },
+          select: { coupangAccessKey: true, coupangSecretKey: true }
+        });
+        
+        if (user) {
+          coupangAccessKey = user.coupangAccessKey || undefined;
+          coupangSecretKey = user.coupangSecretKey || undefined;
+        }
+      }
+
+      if (!coupangAccessKey || !coupangSecretKey) {
+        throw new Error('쿠팡 API 키가 설정되지 않았습니다. (마이페이지 - API 연동)');
+      }
+
+      const rawAgentProducts = await runSourcingAgent(intentContent, sourcingConstraints, coupangAccessKey, coupangSecretKey);
       
       // 정렬 (Sort)
       const productsFiltered = [...rawAgentProducts];
@@ -252,6 +289,17 @@ export async function GET(request: Request) {
       // 실행 완료 시점 기준 resultUrl 확보
       const resultUrl = pipelineResult || null;
 
+      // 사용자가 파이프라인 진행 중(수 분 동안) 해당 스케줄을 삭제했을 수 있으므로 확인
+      const stillExists = await prisma.autopilotQueue.findUnique({
+        where: { id: pendingItem.id },
+        select: { id: true }
+      });
+
+      if (!stillExists) {
+        console.warn(`⚠️ [Autopilot] 큐(ID: ${pendingItem.id})가 실행 중 삭제되었습니다. 후속 큐 생성 및 업데이트를 중단합니다.`);
+        return NextResponse.json({ success: true, message: 'Processing finished but queue item was deleted by user.' });
+      }
+
       // 반복 발행 로직: intervalHours가 설정되어 있을 때
       if (pendingItem.intervalHours && pendingItem.intervalHours > 0) {
         const newRunCount = (pendingItem.currentRuns ?? 0) + 1;
@@ -351,10 +399,14 @@ export async function GET(request: Request) {
       }
     } catch (e) {
       console.error('Autopilot Pipeline Error:', e);
-      await prisma.autopilotQueue.update({
-        where: { id: pendingItem.id },
-        data: { status: 'FAILED', errorMessage: e instanceof Error ? e.message : 'Unknown error' }
-      });
+      try {
+        await prisma.autopilotQueue.update({
+          where: { id: pendingItem.id },
+          data: { status: 'FAILED', errorMessage: e instanceof Error ? e.message : 'Unknown error' }
+        });
+      } catch (updateErr) {
+        console.warn(`⚠️ [Autopilot] FAILED 상태 업데이트 중 오류 (큐가 삭제되었을 수 있음)`, updateErr);
+      }
     }
 
     return NextResponse.json({ 

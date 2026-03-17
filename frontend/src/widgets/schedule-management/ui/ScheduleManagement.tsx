@@ -3,9 +3,11 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { GlassCard } from "@/shared/ui/GlassCard";
 import { Button } from "@/shared/ui/button";
-import { Calendar as CalendarIcon, Clock, PenTool, CheckCircle2, Loader2, AlertCircle, Trash2, Edit3, LayoutGrid, CalendarDays, Play, Square, Settings, LayoutList, Search, X } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, PenTool, CheckCircle2, Loader2, AlertCircle, Trash2, Edit3, LayoutGrid, CalendarDays, Play, Square, Settings, LayoutList, Search, X, ShoppingCart } from "lucide-react";
 import { DraftDetailModal } from "@/features/research-analysis/ui/DraftDetailModal";
 import { useResearchViewModel } from "@/features/research-analysis/model/useResearchViewModel";
+import { CartKeywordLoader } from '@/features/keyword-extraction/ui/CartKeywordLoader';
+import { QuickCartScheduleModal } from "@/features/schedule-management/ui/QuickCartScheduleModal";
 import { BigCalendarView, type ScheduleEvent } from "./BigCalendarView";
 import { ScheduleBoardView } from "./ScheduleBoardView";
 import { ScheduleListView } from "./ScheduleListView";
@@ -61,6 +63,11 @@ export const ScheduleManagement = () => {
     scheduledItems,
     completedItems
   } = useScheduleManagementViewModel();
+
+  // Keyword Cart Integration State
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isQuickScheduleOpen, setIsQuickScheduleOpen] = useState(false);
+  const [cartSelectedKeywords, setCartSelectedKeywords] = useState<any[]>([]);
 
   // react-big-calendar용 이벤트 변환 (시간대별 표시)
   const calendarEvents: ScheduleEvent[] = [
@@ -150,6 +157,10 @@ export const ScheduleManagement = () => {
                 )}
               </Button>
             )}
+            <Button onClick={() => setIsCartOpen(true)} className="gap-2 h-9 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg border-none shadow-md shadow-emerald-500/20">
+              <ShoppingCart className="w-4 h-4" />
+              장바구니 선택 등록
+            </Button>
             <Button onClick={() => fetchResearch()} variant="outline" className="gap-2 h-9" disabled={loading}>
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "새로고침"}
             </Button>
@@ -437,6 +448,29 @@ export const ScheduleManagement = () => {
           } else {
             toast.error("발행 시간 변경에 실패했습니다.");
           }
+        }}
+      />
+      
+      <CartKeywordLoader
+        isOpen={isCartOpen}
+        onOpenChange={setIsCartOpen}
+        maxSelection={30}
+        onLoad={(kws) => {
+          if (kws.length > 0) {
+            setCartSelectedKeywords(kws);
+            setIsQuickScheduleOpen(true);
+          }
+        }}
+      />
+      <QuickCartScheduleModal
+        isOpen={isQuickScheduleOpen}
+        onClose={() => {
+          setIsQuickScheduleOpen(false);
+          setCartSelectedKeywords([]);
+        }}
+        keywords={cartSelectedKeywords}
+        onSuccess={() => {
+          fetchAutopilotQueue();
         }}
       />
     </div>

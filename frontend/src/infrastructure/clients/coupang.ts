@@ -15,6 +15,10 @@ export const searchCoupangProducts = cache(async (keyword: string, limit = 10, a
   if (!accessKey || !secretKey) {
     throw new Error('쿠팡 API 키가 설정되지 않았습니다. (마이페이지 - API 연동)');
   }
+  
+  console.log(`[Coupang API] Requesting search... keyword: ${keyword}`);
+  console.log(`[Coupang API Debug] accessKey length: ${accessKey?.length}, secretKey length: ${secretKey?.length}`);
+  console.log(`[Coupang API Debug] accessKey starts with: ${accessKey?.substring(0, 4)}...`);
 
   const method = 'GET';
   const path = `/v2/providers/affiliate_open_api/apis/openapi/v1/products/search?keyword=${encodeURIComponent(keyword)}&limit=${limit}`;

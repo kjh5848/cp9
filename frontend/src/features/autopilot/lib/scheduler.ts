@@ -34,9 +34,13 @@ export function getNextRunAtKST(
     
     // 활성 시간대 필터링 (KST 기준)
     if (activeStart !== null && activeStart !== undefined && activeEnd !== null && activeEnd !== undefined) {
-      // 좀 더 정교한 누적은 차후 구현하되, 현재는 활성 시간대를 넘어가면 시작 시간으로 밀어줌
       targetTime = adjustToActiveWindow(targetTime, activeStart, activeEnd);
     }
+  }
+
+  // 첫 번째 항목(index === 0)이고 기준일이 현재 또는 과거라면 즉각 실행되도록 보장 (jitter 및 불필요한 연기 방지)
+  if (index === 0 && base.getTime() <= Date.now()) {
+    return new Date();
   }
 
   // 3. 어뷰징 방지 난수화 (Jitter) 적용
@@ -108,6 +112,10 @@ function applyJitter(targetTime: Date, jitterMinutes: number): Date {
  * 활성 시간대 안이면 그대로 반환합니다 (분/초 유지).
  */
 function adjustToActiveWindow(targetTime: Date, activeStart: number, activeEnd: number): Date {
+  if (activeStart === -1 || activeEnd === -1) {
+    return targetTime;
+  }
+
   const currentKSTHour = (targetTime.getUTCHours() + 9) % 24;
   
   let isWithinActiveTime = false;

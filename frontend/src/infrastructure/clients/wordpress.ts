@@ -137,8 +137,19 @@ export class WordPressClient {
   async uploadMediaFromUrl(imageUrl: string, filename: string, altText?: string): Promise<WPMediaResponse> {
     console.log(`🖼️ [WordPress] 미디어 업로드 중: ${filename}`)
 
+    // 상대 경로인 경우 절대 경로로 변환 (로컬 개발 환경 또는 Vercel 환경 대비)
+    let absoluteImageUrl = imageUrl;
+    if (imageUrl.startsWith('/')) {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : '');
+      if (baseUrl) {
+        absoluteImageUrl = `${baseUrl.replace(/\/+$/, '')}${imageUrl}`;
+      } else {
+        console.warn('⚠️ 상대 경로 이미지를 절대 경로로 변환할 BASE URL 환경변수가 없습니다.');
+      }
+    }
+
     // 이미지 다운로드
-    const imageResponse = await fetch(imageUrl)
+    const imageResponse = await fetch(absoluteImageUrl)
     if (!imageResponse.ok) {
       throw new Error(`이미지 다운로드 실패: ${imageResponse.status}`)
     }
@@ -147,10 +158,17 @@ export class WordPressClient {
     // Content-Type 추출
     const contentType = imageResponse.headers.get('content-type') || 'image/jpeg'
     const ext = contentType.includes('png') ? '.png' : contentType.includes('webp') ? '.webp' : '.jpg'
-    const safeFilename = filename.replace(/[^a-zA-Z0-9가-힣_-]/g, '_') + ext
+    
+    // WordPress REST API는 엄격한 ASCII filename 형식을 요구하므로 한글 등 특수문자를 제거
+    let asciiName = filename.replace(/[^a-zA-Z0-9_-]/g, '');
+    if (!asciiName) {
+      asciiName = `image_${Date.now()}`;
+    }
+    const safeFilename = `${asciiName}${ext}`;
 
     // WP 미디어 업로드
     const url = `${this.baseUrl}/wp-json/wp/v2/media`
+    
     const response = await fetch(url, {
       method: 'POST',
       headers: {

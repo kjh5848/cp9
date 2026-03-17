@@ -25,6 +25,7 @@ export const WP_CSS_FOR_COPY = `/* CP9 Styles — WPCode에 붙여넣기 */
 .entry-content .wp-block-heading{text-align:left}
 /* ── CTA 스타일 ── */
 .cp9-cta{max-width:680px;margin:2em auto;padding:28px 24px;border-radius:16px;text-align:center;font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif}
+.entry-content .cp9-cta p, .post-content .cp9-cta p, article .cp9-cta p, .article-html-content .cp9-cta p { text-align: center !important; }
 .cp9-cta--header{background:linear-gradient(135deg,#f8f9ff,#eef1ff);border:1px solid #d4d9f7;color:#1a1a2e}
 .cp9-cta--footer{background:linear-gradient(135deg,#1e3a5f,#2563eb);color:#fff}
 .cp9-cta--tech.cp9-cta--header{background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid #bae6fd;color:#0c4a6e}

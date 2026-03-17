@@ -5,6 +5,7 @@ import { CoupangProductResponse } from "@/shared/types/api";
 import { DEFAULT_TEXT_MODEL, DEFAULT_IMAGE_MODEL } from "@/shared/config/model-options";
 import { getCurationCharLimit } from "@/features/research-analysis/ui/steps/ArticleTypeSelectionStep";
 import { WriteActionExecuteParams } from "@/features/research-analysis/ui/WriteActionModal";
+import { PublishTarget } from "@/shared/ui/PublishTargetSection";
 
 type ArticleType = "single" | "compare" | "curation";
 
@@ -165,10 +166,16 @@ export function useWriteActionViewModel({ isOpen, selectedItems, defaultAction, 
     }
   };
 
-  // ── Step 5: 발행 방식 ──
   const [actionType, setActionType] = useState<"NOW" | "SCHEDULE">(defaultAction);
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
+  
+  const DEFAULT_TARGETS: PublishTarget[] = [
+    { platform: 'wordpress', enabled: false, meta: { categoryId: '' } },
+    { platform: 'google', enabled: false, meta: { blogId: '' } },
+    { platform: 'naver_cafe', enabled: false, meta: { clubId: '', menuId: '' } },
+  ];
+  const [publishTargets, setPublishTargets] = useState<PublishTarget[]>(DEFAULT_TARGETS);
 
   const articleTypeAvailability = useMemo(() => {
     return ARTICLE_TYPES.map((t) => ({
@@ -274,6 +281,7 @@ export function useWriteActionViewModel({ isOpen, selectedItems, defaultAction, 
       articleType,
       ...(themeId && { themeId }),
       customTitles,
+      publishTargets,
     };
 
     if (actionType === "SCHEDULE") {
@@ -334,6 +342,8 @@ export function useWriteActionViewModel({ isOpen, selectedItems, defaultAction, 
     setScheduleDate,
     scheduleTime,
     setScheduleTime,
+    publishTargets,
+    setPublishTargets,
     articleTypeAvailability,
     publishPreview,
     handleConfirm,

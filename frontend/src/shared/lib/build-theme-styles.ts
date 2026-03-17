@@ -40,6 +40,11 @@ export function buildThemeStyles(themeConfig: Record<string, any>): string {
   text-align: justify;
 }
 
+/* CTA 버튼 정렬 강제 (워드프레스 테마 충돌 방지) */
+.entry-content .cp9-cta p, .post-content .cp9-cta p, article .cp9-cta p, .article-html-content .cp9-cta p {
+  text-align: center !important;
+}
+
 /* 일반 본문 태그의 인라인 색상/배경색 무력화 (CTA 등 제외) */
 .entry-content p:not([class*="cp9-"]), .post-content p:not([class*="cp9-"]), article p:not([class*="cp9-"]), .article-html-content p:not([class*="cp9-"]),
 .entry-content span:not([class*="cp9-"]), .post-content span:not([class*="cp9-"]), article span:not([class*="cp9-"]), .article-html-content span:not([class*="cp9-"]),

@@ -1,5 +1,5 @@
 ---
-description: implement-fsd-feature
+description: 워크플로우 - FSD 아키텍처 기반 기능 구현 가이드
 ---
 
 # FSD 아키텍처 기능 구현 워크플로우 (FSD Feature Implementation Workflow)

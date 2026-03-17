@@ -165,33 +165,41 @@ export function useScheduleManagementViewModel() {
       setQueueProgress({ current: i + 1, total: overdueItems.length });
       try {
         const raw = item.rawItem;
-        const res = await fetch('/api/item-research', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            itemName: raw.pack.title || '상품',
-            projectId: raw.projectId,
-            itemId: raw.itemId,
-            productData: {
-              productName: raw.pack.title,
-              productPrice: raw.pack.priceKRW || 0,
-              productImage: raw.pack.productImage || '',
-              productUrl: raw.pack.productUrl || '',
-              categoryName: raw.pack.categoryName || '',
-              isRocket: raw.pack.isRocket || false,
-              isFreeShipping: raw.pack.isFreeShipping || false,
-            },
-            seoConfig: {
-              persona: raw.pack.persona || raw.pack.seoConfig?.persona || 'IT',
-              toneAndManner: '전문적이면서 친근한',
-              textModel: raw.pack.textModel || 'gpt-4o',
-              imageModel: 'dall-e-3',
-              actionType: 'NOW',
-              charLimit: 2000,
-              articleType: raw.pack.articleType || 'single',
-            },
-          }),
-        });
+        let res;
+        
+        if (item.isAutopilot) {
+          // 오토파일럿 아이템: cron API 호출로 개별 강제 실행
+          res = await fetch(`/api/cron/autopilot?id=${raw.id}`);
+        } else {
+          // 수동 스케줄 아이템
+          res = await fetch('/api/item-research', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              itemName: raw.pack.title || '상품',
+              projectId: raw.projectId,
+              itemId: raw.itemId,
+              productData: {
+                productName: raw.pack.title,
+                productPrice: raw.pack.priceKRW || 0,
+                productImage: raw.pack.productImage || '',
+                productUrl: raw.pack.productUrl || '',
+                categoryName: raw.pack.categoryName || '',
+                isRocket: raw.pack.isRocket || false,
+                isFreeShipping: raw.pack.isFreeShipping || false,
+              },
+              seoConfig: {
+                persona: raw.pack.persona || raw.pack.seoConfig?.persona || 'IT',
+                toneAndManner: '전문적이면서 친근한',
+                textModel: raw.pack.textModel || 'gpt-4o',
+                imageModel: 'dall-e-3',
+                actionType: 'NOW',
+                charLimit: 2000,
+                articleType: raw.pack.articleType || 'single',
+              },
+            }),
+          });
+        }
         if (res.ok) {
           toast.success(`${i + 1}/${overdueItems.length} 발행 시작: ${item.title.slice(0, 20)}...`);
         } else {
@@ -240,9 +248,12 @@ export function useScheduleManagementViewModel() {
     }
   };
 
-  const handleStartEdit = (id: string, currentDate: string) => {
+  const handleStartEdit = (id: string, currentDate: string | undefined | null) => {
     setEditingId(id);
-    const d = new Date(currentDate);
+    let d = new Date(); // fallback to current date
+    if (currentDate && !isNaN(new Date(currentDate).getTime())) {
+      d = new Date(currentDate);
+    }
     setEditDate(d.toISOString().split('T')[0]);
     setEditTime(d.toTimeString().slice(0, 5));
   };

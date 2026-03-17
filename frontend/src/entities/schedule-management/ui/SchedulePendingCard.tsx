@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import { Clock, Edit3, Settings, Trash2 } from "lucide-react";
+import { Clock, Edit3, Settings, Trash2, RefreshCw } from "lucide-react";
+import { formatInterval } from "@/shared/lib/interval";
 import { GlassCard } from "@/shared/ui/GlassCard";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -64,7 +65,8 @@ export const SchedulePendingCard = ({
       "IT": "💻 IT전문가",
       "LIVING": "🏠 살림고수",
       "BEAUTY": "✨ 뷰티쇼퍼",
-      "HUNTER": "🔥 가성비헌터"
+      "HUNTER": "🔥 가성비헌터",
+      "MASTER_CURATOR_H": "👑 큐레이터"
     };
     return (
       <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-md">
@@ -88,9 +90,17 @@ export const SchedulePendingCard = ({
             )}
             <h4 className="font-semibold text-foreground line-clamp-1 flex items-center gap-2">
               {item.isAutopilot && (
-                <span className="bg-blue-500/10 text-blue-400 text-[10px] px-1.5 py-0.5 rounded border border-blue-500/20 font-bold tracking-tight shrink-0">
-                  Auto
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="bg-blue-500/10 text-blue-400 text-[10px] px-1.5 py-0.5 rounded border border-blue-500/20 font-bold tracking-tight shrink-0">
+                    Auto
+                  </span>
+                  {item.rawItem?.intervalHours ? (
+                    <span className="text-[10px] text-blue-400/80 bg-blue-500/5 px-1.5 py-0.5 rounded border border-blue-400/10 shrink-0 flex items-center gap-0.5">
+                      <RefreshCw className="w-2.5 h-2.5" />
+                      {formatInterval(item.rawItem.intervalHours)}
+                    </span>
+                  ) : null}
+                </div>
               )}
               {item.title}
             </h4>

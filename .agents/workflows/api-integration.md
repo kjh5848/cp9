@@ -1,5 +1,5 @@
 ---
-description: api-integration
+description: 워크플로우 - 외부 API 연동 가이드 및 체크리스트
 ---
 
 # API 연동 워크플로우 (API Integration Workflow)

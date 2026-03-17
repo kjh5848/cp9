@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/shared/config/auth-options';
 import { prisma } from '@/infrastructure/clients/prisma';
 import { getNextRunAtKST } from '@/features/autopilot/lib/scheduler';
 
@@ -6,6 +8,12 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || !session.user.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userId = session.user.id;
     const body = await request.json();
     const { queueIds } = body; 
 
@@ -16,7 +24,8 @@ export async function POST(request: Request) {
     const queues = await prisma.autopilotQueue.findMany({
       where: {
         id: { in: queueIds },
-        status: 'WAITING_APPROVAL'
+        status: 'WAITING_APPROVAL',
+        userId: userId, // Ensure user owns the queues
       },
       include: {
         campaign: true
@@ -30,8 +39,8 @@ export async function POST(request: Request) {
     // 트랜잭션으로 상태를 PENDING으로 변경하고 각각 nextRunAt 배정 (간격 분리)
     const updates = queues.map((q, index) => {
       // campaign 정보가 있으면 우선시, 없으면 큐 내부 정보 사용
-      const intervalHours = q.campaign?.intervalHours || q.intervalHours || 24 * 60;
-      const intervalMinutes = intervalHours;
+      const intervalHours = q.campaign?.intervalHours || q.intervalHours || 24;
+      const intervalMinutes = intervalHours * 60; // 1. 간격(Interval) 계산 시간 -> 분 변환 버그 수정
       const activeStart = q.campaign?.activeTimeStart ?? q.activeTimeStart;
       const activeEnd = q.campaign?.activeTimeEnd ?? q.activeTimeEnd;
       
