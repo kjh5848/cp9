@@ -173,12 +173,13 @@ function buildSuggestPrompt(category: string, month: number, count: number, targ
 
 function parseKeywords(rawText: string): Array<{ keyword: string, articleType: string }> {
   try {
-    // LLM이 마크다운 ```json ... ``` 로 감싸서 주는 경우를 대비해 텍스트 정제
-    let cleanText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-    
-    const jsonMatch = cleanText.match(/\[[\s\S]*\]/);
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
+    const text = rawText.trim();
+    const startIdx = text.indexOf('[');
+    const endIdx = text.lastIndexOf(']');
+
+    if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+      const jsonStr = text.substring(startIdx, endIdx + 1);
+      const parsed = JSON.parse(jsonStr);
       return parsed.filter((i: any) => i && typeof i.keyword === 'string')
         .map((i: any) => ({
           keyword: i.keyword,
