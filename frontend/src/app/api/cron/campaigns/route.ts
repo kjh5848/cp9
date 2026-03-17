@@ -102,6 +102,7 @@ export async function GET(request: Request) {
 
             return {
               keyword: k.keyword,
+              userId: campaign.userId,
               status: campaign.isAutoApprove ? 'PENDING' : 'WAITING_APPROVAL',
               campaignId: campaign.id,
               personaId: campaign.personaId,
@@ -161,14 +162,13 @@ function buildSuggestPrompt(category: string, month: number, count: number, targ
 2. 고단가/고수익 상품 위주
 3. 겹치지 않는 다양한 키워드 구성
 
-반드시 아래 JSON 형식으로만 응답하세요. 다른 설명은 출력하지 마세요:
+[중요] 반드시 아래 JSON 배열 형식으로만 응답하세요. 백틱(\`\`\`)이나 마크다운 태그, 다른 어떠한 설명문도 절대 포함하지 말고 오직 순수 JSON 배열만 출력하세요:
 [
   {
     "keyword": "키워드",
     "articleType": "single | compare | curation"
   }
-]
-`;
+]`;
 }
 
 function parseKeywords(rawText: string): Array<{ keyword: string, articleType: string }> {
@@ -185,9 +185,11 @@ function parseKeywords(rawText: string): Array<{ keyword: string, articleType: s
           keyword: i.keyword,
           articleType: ['single', 'compare', 'curation'].includes(i.articleType) ? i.articleType : 'single'
         }));
+    } else {
+      console.warn('[cron/campaigns] JSON 배열 괄호([, ])를 찾을 수 없음:', rawText);
     }
   } catch (e) {
-    console.warn('[cron/campaigns] JSON 파싱 실패');
+    console.warn('[cron/campaigns] JSON 파싱 실패:', rawText);
   }
   return [];
 }
