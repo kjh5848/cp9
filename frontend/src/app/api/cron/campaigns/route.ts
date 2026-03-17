@@ -173,12 +173,18 @@ function buildSuggestPrompt(category: string, month: number, count: number, targ
 
 function parseKeywords(rawText: string): Array<{ keyword: string, articleType: string }> {
   try {
-    const text = rawText.trim();
+    let text = rawText.trim();
+    // 마크다운 코드 블록(```json 등) 제거
+    text = text.replace(/```(json)?/g, '').replace(/```/g, '').trim();
+
     const startIdx = text.indexOf('[');
     const endIdx = text.lastIndexOf(']');
 
     if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
-      const jsonStr = text.substring(startIdx, endIdx + 1);
+      let jsonStr = text.substring(startIdx, endIdx + 1);
+      // JSON 맨 끝에 잘못 포함된 후행 쉼표(trailing comma) 제거
+      jsonStr = jsonStr.replace(/,\s*([\]}])/g, '$1');
+      
       const parsed = JSON.parse(jsonStr);
       return parsed.filter((i: any) => i && typeof i.keyword === 'string')
         .map((i: any) => ({
