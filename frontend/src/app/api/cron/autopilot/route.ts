@@ -96,10 +96,18 @@ export async function GET(request: Request) {
     });
 
     // 4. 지능형 아이템 소싱 에이전트 파이프라인 (Phase 6)
-    // 4.0 페르소나 컨텍스트 확보
+    // 4.0 페르소나 컨텍스트 및 User 정보 확보 (병렬 처리)
     const personaId = pendingItem.personaId || 'IT';
     console.log(`🎭 [Autopilot] 선택된 페르소나 ID: ${personaId}`);
-    const personaRecord = await prisma.persona.findUnique({ where: { id: personaId } });
+    
+    const personaRecordPromise = prisma.persona.findUnique({ where: { id: personaId } });
+    const userPromise = pendingItem.userId ? prisma.user.findUnique({
+      where: { id: pendingItem.userId },
+      select: { coupangAccessKey: true, coupangSecretKey: true }
+    }) : Promise.resolve(null);
+
+    const [personaRecord, user] = await Promise.all([personaRecordPromise, userPromise]);
+
     const personaName = personaRecord?.name || '기본 페르소나';
     const personaPrompt = personaRecord?.systemPrompt || '전문 커머스 블로거입니다.';
 
@@ -144,20 +152,12 @@ export async function GET(request: Request) {
         isRocketOnly: pendingItem.isRocketOnly
       };
 
-      // User의 Coupang API Key 조회
       let coupangAccessKey;
       let coupangSecretKey;
       
-      if (pendingItem.userId) {
-        const user = await prisma.user.findUnique({
-          where: { id: pendingItem.userId },
-          select: { coupangAccessKey: true, coupangSecretKey: true }
-        });
-        
-        if (user) {
-          coupangAccessKey = user.coupangAccessKey || undefined;
-          coupangSecretKey = user.coupangSecretKey || undefined;
-        }
+      if (user) {
+        coupangAccessKey = user.coupangAccessKey || undefined;
+        coupangSecretKey = user.coupangSecretKey || undefined;
       }
 
       if (!coupangAccessKey || !coupangSecretKey) {

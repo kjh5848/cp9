@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
         content: null, thumbnailPrompt: null, thumbnailUrl: null,
         researchRaw: null, status: 'SCHEDULED', scheduledAt,
         persona, personaName: finalPersonaName, textModel, imageModel,
-        charLimit, articleType, publishTarget, themeId, toneAndManner: tone,
+        charLimit, articleType, publishTarget, publishTargets: body.seoConfig?.publishTargets, themeId, toneAndManner: tone,
         productUrl: body.productData?.productUrl || `https://www.coupang.com/vp/products/${body.itemId}`,
         productImage: body.productData?.productImage || null,
         priceKRW: body.productData?.productPrice || 0,
@@ -85,6 +85,7 @@ export async function POST(request: NextRequest) {
       productImage: body.productData?.productImage || null,
       researchRaw: null, status: 'PROCESSING',
       persona, personaName: finalPersonaName, textModel,
+      publishTargets: body.seoConfig?.publishTargets,
       startedAt: new Date().toISOString(),
     };
     try {
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 백그라운드 파이프라인 실행 (응답 후 비동기)
-    runSeoPipeline(body, { persona, personaName, tone, textModel, imageModel, charLimit, articleType, publishTarget, themeId });
+    runSeoPipeline(body, { persona, personaName, tone, textModel, imageModel, charLimit, articleType, publishTarget, publishTargets: body.seoConfig?.publishTargets, themeId });
 
     // 즉시 응답
     return NextResponse.json({

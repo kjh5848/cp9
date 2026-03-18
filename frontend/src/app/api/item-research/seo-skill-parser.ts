@@ -7,6 +7,10 @@ import path from "path";
  */
 export async function getSeoSkillTemplate(filename: string): Promise<string> {
   const tryPaths = [
+    // Next.js App Router API에서 process.cwd()는 frontend 디렉토리 최상단을 가리킵니다.
+    // 배포 환경(.agents 폴더 누락)에 대비하여 src 폴더 내부의 templates를 최우선으로 탐색
+    path.join(process.cwd(), "src", "app", "api", "item-research", "pipeline", "templates", filename),
+    // 하위 호환성 (로컬 개발 환경 등에서 .agents가 있는 경우)
     path.join(process.cwd(), "..", ".agents", "skills", "seo-pipeline", "references", filename),
     path.join(process.cwd(), "..", ".agents", "skills", "seo-article-writer", "references", filename)
   ];

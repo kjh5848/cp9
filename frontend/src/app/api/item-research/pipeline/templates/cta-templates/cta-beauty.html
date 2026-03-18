@@ -1,0 +1,27 @@
+<!-- CTA 뷰티/패션 쇼퍼 템플릿 (Level 2) -->
+<!-- 인라인 스타일 포함 — WP 테마 CSS 없이도 정상 렌더링 -->
+
+<!-- ── 상단: 상품 이미지 + 트렌드 뱃지 + 가격 + 구매 버튼 ── -->
+<div class="cp9-cta cp9-cta--header cp9-cta--beauty" style="max-width:680px;margin:2em auto;padding:28px 24px;border-radius:16px;text-align:center;background:linear-gradient(135deg,#fdf2f8 0%,#fce7f3 100%);border:1px solid #f9a8d4;color:#831843;font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;">
+  <img src="{{PRODUCT_IMAGE}}" alt="{{PRODUCT_NAME}}" class="cp9-cta__image" style="max-width:260px;height:auto;margin:0 auto 16px;border-radius:12px;display:block;background:#fff;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid #eee;" />
+  <div class="cp9-cta__trend-badge" style="display:inline-block;background:rgba(219,39,119,0.08);color:#db2777;padding:4px 16px;border-radius:20px;font-size:12px;font-weight:600;margin-bottom:12px;">
+    <span>TRENDING NOW</span>
+  </div>
+  {{PRICE_BLOCK}}
+  <p class="cp9-cta__sub-text" style="text-align:center;font-size:14px;margin:8px 0;line-height:1.6;">지금 가장 핫한 아이템을 놓치지 마세요.</p>
+  <a href="{{BUY_URL}}" target="_blank" rel="noopener sponsored" class="cp9-cta__button cp9-cta__button--beauty" style="display:inline-block;background:#db2777;color:#fff!important;padding:14px 36px;border-radius:12px;font-size:16px;font-weight:700;text-decoration:none!important;margin:10px 0;box-shadow:0 4px 12px rgba(219,39,119,0.25);">
+    쿠팡에서 최저가 쇼핑하기
+  </a>
+</div>
+
+<!-- ── 하단: 감성형 CTA ── -->
+<div class="cp9-cta cp9-cta--footer cp9-cta--beauty" style="max-width:680px;margin:2em auto;padding:28px 24px;border-radius:16px;text-align:center;background:linear-gradient(135deg,#831843 0%,#db2777 100%);color:#fff;font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;">
+  <img src="{{PRODUCT_IMAGE}}" alt="{{PRODUCT_NAME}}" class="cp9-cta__image cp9-cta__image--footer" style="max-width:180px;height:auto;margin:0 auto 16px;border-radius:12px;display:block;background:#fff;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1);" />
+  <p class="cp9-cta__headline" style="text-align:center;font-size:20px;font-weight:800;margin:0 0 8px;">나를 위한 특별한 선택</p>
+  {{URGENCY_BANNER}}
+  <p class="cp9-cta__social-proof" style="text-align:center;font-size:13px;opacity:0.85;margin:6px 0;">{{SOCIAL_PROOF}}</p>
+  <p class="cp9-cta__sub-text" style="text-align:center;font-size:14px;opacity:0.9;margin:8px 0;line-height:1.6;">실사용 후기와 전문가 리뷰를 모두 검증한 추천 아이템입니다.</p>
+  <a href="{{BUY_URL}}" target="_blank" rel="noopener sponsored" class="cp9-cta__button cp9-cta__button--beauty cp9-cta__button--large" style="display:inline-block;background:#ec4899;color:#fff!important;padding:18px 48px;border-radius:12px;font-size:18px;font-weight:700;text-decoration:none!important;margin:10px 0;box-shadow:0 4px 12px rgba(236,72,153,0.3);">
+    쿠팡 최저가 확인하기
+  </a>
+</div>

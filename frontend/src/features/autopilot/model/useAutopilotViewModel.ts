@@ -1,32 +1,28 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
+import useSWR from 'swr';
 import { AiResearchKeyword, AutopilotQueueItem, CreateAutopilotQueuePayload } from '../../../entities/autopilot/model/types';
 
-export function useAutopilotViewModel() {
-  const [queue, setQueue] = useState<AutopilotQueueItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+const fetcher = (url: string) => fetch(url).then(res => res.json()).then(data => {
+  if (data.success) return data.data;
+  throw new Error(data.error || 'Failed to fetch queue');
+});
 
-  const fetchQueue = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/autopilot/queue?_t=${Date.now()}`, { cache: 'no-store' });
-      const data = await res.json();
-      if (data.success) {
-        setQueue(data.data);
-      } else {
-        throw new Error(data.error || 'Failed to fetch queue');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+export function useAutopilotViewModel() {
+  const { data: queue = [], error: swrError, isLoading: swrIsLoading, mutate: mutateQueue } = useSWR<AutopilotQueueItem[]>('/api/autopilot/queue', fetcher);
+
+  const [isMutating, setIsMutating] = useState(false);
+  const [mutationError, setMutationError] = useState<string | null>(null);
+
+  const isLoading = swrIsLoading || isMutating;
+  const error = swrError?.message || mutationError;
+
+  const fetchQueue = async () => {
+    await mutateQueue();
+  };
 
   const addToQueue = async (payload: CreateAutopilotQueuePayload) => {
-    setIsLoading(true);
-    setError(null);
+    setIsMutating(true);
+    setMutationError(null);
     try {
       const res = await fetch('/api/autopilot/queue', {
         method: 'POST',
@@ -37,22 +33,22 @@ export function useAutopilotViewModel() {
       });
       const data = await res.json();
       if (data.success) {
-        await fetchQueue(); // 큐 목록 리로드
+        await mutateQueue(); // 큐 목록 리로드
         return true;
       } else {
         throw new Error(data.error || 'Failed to add item to queue');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setMutationError(err instanceof Error ? err.message : String(err));
       return false;
     } finally {
-      setIsLoading(false);
+      setIsMutating(false);
     }
   };
 
   const deleteFromQueue = async (id: string) => {
-    setIsLoading(true);
-    setError(null);
+    setIsMutating(true);
+    setMutationError(null);
     try {
       const res = await fetch('/api/autopilot/queue', {
         method: 'DELETE',
@@ -63,23 +59,23 @@ export function useAutopilotViewModel() {
       });
       const data = await res.json();
       if (data.success) {
-        await fetchQueue(); // 큐 목록 리로드
+        await mutateQueue(); // 큐 목록 리로드
         return true;
       } else {
         throw new Error(data.error || 'Failed to delete item from queue');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setMutationError(err instanceof Error ? err.message : String(err));
       return false;
     } finally {
-      setIsLoading(false);
+      setIsMutating(false);
     }
   };
 
   const bulkDeleteFromQueue = async (ids: string[]) => {
     if (!ids || ids.length === 0) return false;
-    setIsLoading(true);
-    setError(null);
+    setIsMutating(true);
+    setMutationError(null);
     try {
       const res = await fetch('/api/autopilot/queue', {
         method: 'DELETE',
@@ -90,22 +86,22 @@ export function useAutopilotViewModel() {
       });
       const data = await res.json();
       if (data.success) {
-        await fetchQueue(); // 큐 목록 리로드
+        await mutateQueue(); // 큐 목록 리로드
         return true;
       } else {
         throw new Error(data.error || 'Failed to bulk delete items from queue');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setMutationError(err instanceof Error ? err.message : String(err));
       return false;
     } finally {
-      setIsLoading(false);
+      setIsMutating(false);
     }
   };
 
   const rescheduleQueue = async (id: string, newDate: string) => {
-    setIsLoading(true);
-    setError(null);
+    setIsMutating(true);
+    setMutationError(null);
     try {
       const res = await fetch('/api/autopilot/queue', {
         method: 'PUT',
@@ -116,16 +112,16 @@ export function useAutopilotViewModel() {
       });
       const data = await res.json();
       if (data.success) {
-        await fetchQueue(); // 큐 목록 리로드
+        await mutateQueue(); // 큐 목록 리로드
         return true;
       } else {
         throw new Error(data.error || 'Failed to reschedule item in queue');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setMutationError(err instanceof Error ? err.message : String(err));
       return false;
     } finally {
-      setIsLoading(false);
+      setIsMutating(false);
     }
   };
 
@@ -136,7 +132,7 @@ export function useAutopilotViewModel() {
       const data = await res.json();
       if (res.ok) {
         alert('크론 작업 트리거 성공: ' + (data.message || data.error));
-        await fetchQueue();
+        await mutateQueue();
       } else {
         alert('크론 작업 트리거 오류: ' + data.error);
       }
@@ -146,26 +142,26 @@ export function useAutopilotViewModel() {
   };
 
   const triggerCampaignCronManually = async () => {
-    setIsLoading(true);
+    setIsMutating(true);
     try {
       const res = await fetch('/api/cron/campaigns');
       const data = await res.json();
       if (res.ok) {
         alert(`캠페인 큐 보충 완료!\n생성된 총 큐 개수: ${data.generatedCount}개\n처리된 캠페인: ${data.processedCampaigns}개`);
-        await fetchQueue();
+        await mutateQueue();
       } else {
         alert('캠페인 크론 트리거 오류: ' + (data.error || '알 수 없는 오류'));
       }
     } catch (err) {
       alert('캠페인 크론 요청 중 에러: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
-      setIsLoading(false);
+      setIsMutating(false);
     }
   };
 
   const researchKeywords = async (personaId: string, topic: string) => {
-    setIsLoading(true);
-    setError(null);
+    setIsMutating(true);
+    setMutationError(null);
     try {
       const res = await fetch('/api/autopilot/research', {
         method: 'POST',
@@ -181,16 +177,16 @@ export function useAutopilotViewModel() {
         throw new Error(data.error || 'Failed to research keywords');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setMutationError(err instanceof Error ? err.message : String(err));
       return null;
     } finally {
-      setIsLoading(false);
+      setIsMutating(false);
     }
   };
 
   const addBulkToQueue = async (payloads: CreateAutopilotQueuePayload[]) => {
-    setIsLoading(true);
-    setError(null);
+    setIsMutating(true);
+    setMutationError(null);
     try {
       const res = await fetch('/api/autopilot/queue/bulk', {
         method: 'POST',
@@ -203,13 +199,13 @@ export function useAutopilotViewModel() {
         throw new Error(data.error || 'Failed to add bulk items to queue');
       }
       
-      await fetchQueue();
+      await mutateQueue();
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setMutationError(err instanceof Error ? err.message : String(err));
       return false;
     } finally {
-      setIsLoading(false);
+      setIsMutating(false);
     }
   };
 

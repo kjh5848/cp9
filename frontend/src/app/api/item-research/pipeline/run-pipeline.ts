@@ -24,6 +24,7 @@ export interface PipelineConfig {
   charLimit: number
   articleType: string
   publishTarget: string
+  publishTargets?: any[]
   themeId?: string
   autopilotData?: any
 }
@@ -131,8 +132,8 @@ export async function runSeoPipeline(body: ItemResearchRequest, config: Pipeline
     console.log(`⚡ [Phase 2] 본문 생성 완료 (${markdownRaw.length}자)`);
 
     // ── 본문에서 이미지 제안 텍스트 추출 ──
-    // 정규식: [이미지 제안: xxx] 형태의 텍스트 모두 추출
-    const suggestionRegex = /\[이미지 제안:\s*(.*?)\]/g;
+    // 정규식: [이미지 제안: xxx] 형태의 텍스트 모두 추출 (띄어쓰기 및 콜론 형태 유연하게 매칭)
+    const suggestionRegex = /\[이미지\s*제안(?:[:\s]*)(.*?)\]/g;
     const imageSuggestions: string[] = [];
     let match;
     while ((match = suggestionRegex.exec(markdownRaw)) !== null) {
@@ -161,9 +162,10 @@ export async function runSeoPipeline(body: ItemResearchRequest, config: Pipeline
     // 3순위: LLM 본문 추출 제목 (extractedTitle)
     // 4순위: 원본 상품명 (fallback)
     const isCustomTitle = body.itemName && body.itemName !== body.productData?.productName;
-    const finalTitle = isCustomTitle 
+    const finalTitleRaw = isCustomTitle 
       ? body.itemName 
       : (body.keywordMode?.selectedTitle || extractedTitle || body.itemName || '제목 없음');
+    const finalTitle = finalTitleRaw.replace(/:/g, ' - ').replace(/\s+/g, ' ').trim();
 
     // ── Phase 4: HTML 변환 + CTA 주입 ──
     const phase4Start = Date.now();
@@ -175,7 +177,7 @@ export async function runSeoPipeline(body: ItemResearchRequest, config: Pipeline
     let phase5Ms = 0;
     
     // 다중 목적지 정보 파싱
-    const publishTargetsRaw = ctx.autopilotData?.publishTargets;
+    const publishTargetsRaw = ctx.autopilotData?.publishTargets || config.publishTargets;
     let publishTargets: any[] = [];
     if (typeof publishTargetsRaw === 'string') {
       try {

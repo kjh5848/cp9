@@ -115,6 +115,7 @@ export const useResearchViewModel = (): UseResearchViewModelReturn => {
               scheduledAt: request.scheduledAt,
               charLimit: request.charLimit,
               themeId: request.themeId,
+              publishTargets: request.publishTargets,
             },
             customTitles: request.customTitles,
           }),

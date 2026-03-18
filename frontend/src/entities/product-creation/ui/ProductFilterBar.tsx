@@ -74,7 +74,7 @@ export function ProductFilterBar({
             "bg-white/5 border-white/10 text-slate-400 hover:text-white hover:border-white/30"
           )}>
           🚀 로켓배송만
-          {rocketOnly && <X className="w-3 h-3" />}
+          {rocketOnly ? <X className="w-3 h-3" /> : null}
         </button>
 
         <button
@@ -86,7 +86,7 @@ export function ProductFilterBar({
             "bg-white/5 border-white/10 text-slate-400 hover:text-white hover:border-white/30"
           )}>
           📦 무료배송만
-          {freeShipOnly && <X className="w-3 h-3" />}
+          {freeShipOnly ? <X className="w-3 h-3" /> : null}
         </button>
 
         <div className="ml-auto flex items-center gap-1">

@@ -87,9 +87,9 @@ export const ProductSearchSection = ({
         <div className={isLarge ? "space-y-6" : "space-y-4"}>
           {isLarge && (
             <div className="flex items-center gap-3 mb-2">
-              {searchMode === "keyword" && <Search className="w-5 h-5 text-blue-400" />}
-              {searchMode === "link" && <LinkIcon className="w-5 h-5 text-emerald-400" />}
-              {(searchMode === "category" || searchMode === "pl_brand") && <Layers className="w-5 h-5 text-purple-400" />}
+              {searchMode === "keyword" ? <Search className="w-5 h-5 text-blue-400" /> : null}
+              {searchMode === "link" ? <LinkIcon className="w-5 h-5 text-emerald-400" /> : null}
+              {(searchMode === "category" || searchMode === "pl_brand") ? <Layers className="w-5 h-5 text-purple-400" /> : null}
               <h2 className="text-xl font-bold text-white uppercase tracking-tight">
                 {searchMode.replace('_', ' ')} Search
               </h2>
@@ -101,7 +101,7 @@ export const ProductSearchSection = ({
           <div className={cn(
             isLarge ? "" : (searchMode === "link" ? "space-y-2" : "flex gap-2")
           )}>
-            {searchMode === "keyword" && (
+            {searchMode === "keyword" ? (
               <input
                 type="text"
                 value={productSearchTerm}
@@ -113,9 +113,9 @@ export const ProductSearchSection = ({
                   isLarge ? "h-14 rounded-2xl px-6 text-white placeholder-slate-500 focus:ring-blue-500/50" : "rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-orange-500 flex-1"
                 )}
               />
-            )}
+            ) : null}
 
-            {searchMode === "link" && (
+            {searchMode === "link" ? (
               <textarea
                 value={linkValue}
                 onChange={(e) => onSetLinkValue(e.target.value)}
@@ -125,9 +125,9 @@ export const ProductSearchSection = ({
                   isLarge ? "h-32 rounded-2xl p-4 text-white placeholder-slate-500 focus:ring-blue-500/50" : "h-24 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-emerald-500"
                 )}
               />
-            )}
+            ) : null}
 
-            {searchMode === "category" && (
+            {searchMode === "category" ? (
               <div className="relative flex-1">
                 <select
                   value={categoryValue}
@@ -149,9 +149,9 @@ export const ProductSearchSection = ({
                   <ChevronDown className={isLarge ? "w-5 h-5" : "w-4 h-4"} />
                 </div>
               </div>
-            )}
+            ) : null}
 
-            {searchMode === "pl_brand" && (
+            {searchMode === "pl_brand" ? (
               <div className="relative flex-1">
                 <select
                   value={plBrandValue}
@@ -173,7 +173,7 @@ export const ProductSearchSection = ({
                   <ChevronDown className={isLarge ? "w-5 h-5" : "w-4 h-4"} />
                 </div>
               </div>
-            )}
+            ) : null}
 
             {!isLarge && (
               <Button

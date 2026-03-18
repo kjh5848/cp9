@@ -4,6 +4,7 @@ import React from 'react';
 import { Button } from '@/shared/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/shared/ui/dialog';
 import { RefreshCw, Loader2 } from 'lucide-react';
+import { cn } from '@/shared/lib/utils';
 import { TEXT_MODELS, IMAGE_MODELS } from '../model/constants';
 import type { ArticleDetailViewModel } from '../model/useArticleDetailViewModel';
 
@@ -60,13 +61,27 @@ export function RetryDialog({ vm }: RetryDialogProps) {
             </select>
           </div>
 
-          {/* 이전 실패 정보 */}
+          {/* 이전 생성 정보 (실패 또는 기존) */}
           {item?.pack && (
-            <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-3 space-y-1.5">
-              <p className="text-xs text-red-400 font-medium">이전 실패 정보</p>
+            <div className={cn(
+              "border rounded-lg p-3 space-y-1.5",
+              item.pack.status === 'FAILED' || item.pack.error ? "bg-red-500/5 border-red-500/20" : "bg-slate-800/30 border-slate-700/50"
+            )}>
+              <p className={cn(
+                "text-xs font-medium",
+                item.pack.status === 'FAILED' || item.pack.error ? "text-red-400" : "text-blue-400"
+              )}>
+                {item.pack.status === 'FAILED' || item.pack.error ? '이전 실패 정보' : '기존 설정 정보'}
+              </p>
               {item.pack.textModel && (
                 <p className="text-xs text-slate-400">
-                  모델: <code className="bg-white/10 px-1 py-0.5 rounded text-red-300">{item.pack.textModel}</code>
+                  <span className="mr-1">사용된 모델:</span>
+                  <code className={cn(
+                    "px-1 py-0.5 rounded",
+                    item.pack.status === 'FAILED' || item.pack.error ? "bg-red-500/10 text-red-300" : "bg-blue-500/10 text-blue-300"
+                  )}>
+                    {item.pack.textModel}
+                  </code>
                 </p>
               )}
               {item.pack.error && (

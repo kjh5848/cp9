@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast';
 import useSWR from 'swr';
 import { ResearchItem } from '@/entities/research/model/types';
 import { TEXT_MODELS } from './constants';
+import { useUserSettingsViewModel } from '@/features/user-settings/model/useUserSettingsViewModel';
 
 /* ══════════════════════════ 타입 ══════════════════════════ */
 
@@ -75,6 +76,9 @@ export function useArticleDetailViewModel() {
   const [wpSelectedCats, setWpSelectedCats] = useState<number[]>([]);
   const [wpCatLoading, setWpCatLoading] = useState(false);
 
+  // 현재 사용자 설정
+  const { autopilotSettings } = useUserSettingsViewModel();
+
   // ── 데이터 조회 (SWR) ──
   const { data: researchData, isLoading, mutate: fetchItem } = useSWR('/api/research', fetcher, {
     refreshInterval: (data) => {
@@ -96,9 +100,7 @@ export function useArticleDetailViewModel() {
 
   // 글을 찾을 수 없는 경우 알림 (최초 데이터 로드 완료 후 1회)
   useEffect(() => {
-    if (!isLoading && researchData?.data && !item) {
-      toast.error('해당 글을 찾을 수 없습니다.', { id: 'item-not-found' });
-    }
+    // 임시로 노출 에러 제거 (생성 직후 딜레이로 빈 화면이 뜰 때 발생하는 얼럿스트 방지)
   }, [isLoading, researchData, item]);
 
   // ── 테마 목록 조회 (SWR 대응) ──
@@ -211,7 +213,7 @@ export function useArticleDetailViewModel() {
   // ── 재시도 다이얼로그 ──
   const openRetryDialog = useCallback(() => {
     const prevModel = item?.pack?.textModel;
-    const defaultModel = TEXT_MODELS.find(m => m.value !== prevModel)?.value || 'gpt-4o';
+    const defaultModel = TEXT_MODELS.find((m: any) => m.value !== prevModel)?.value || 'gpt-4o';
     setRetryModel(defaultModel);
     setRetryDialogOpen(true);
   }, [item]);
@@ -250,7 +252,7 @@ export function useArticleDetailViewModel() {
         }),
       });
       if (!response.ok) throw new Error('재시도 요청에 실패했습니다.');
-      toast.success(`${TEXT_MODELS.find(m => m.value === retryModel)?.label || retryModel} 모델로 재생성을 시작합니다.`);
+      toast.success(`${TEXT_MODELS.find((m: any) => m.value === retryModel)?.label || retryModel} 모델로 재생성을 시작합니다.`);
       setRetryDialogOpen(false);
       await fetchItem();
     } catch (error) {
@@ -264,8 +266,17 @@ export function useArticleDetailViewModel() {
   // ── WordPress 발행 ──
   const openWpDialog = useCallback(async () => {
     setWpDialogOpen(true);
-    setWpSelectedCats([]);
     setWpCatLoading(true);
+
+    let defaultCategoryId: number | undefined;
+    if (autopilotSettings?.publishTargets) {
+      const wpTarget = autopilotSettings.publishTargets.find((t: any) => t.platform === 'wordpress');
+      if (wpTarget?.meta?.categoryId) {
+        defaultCategoryId = Number(wpTarget.meta.categoryId);
+      }
+    }
+    setWpSelectedCats(defaultCategoryId ? [defaultCategoryId] : []);
+
     try {
       const res = await fetch('/api/wordpress/categories');
       const data = await res.json();

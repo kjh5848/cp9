@@ -1,35 +1,27 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
+import useSWR from 'swr';
 import { Persona, CreatePersonaPayload, UpdatePersonaPayload, SYSTEM_PERSONAS } from '@/entities/persona/model/types';
 
-export function usePersonaViewModel() {
-  const [personas, setPersonas] = useState<Persona[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+const fetcher = (url: string) => fetch(url).then(async (res) => {
+  if (!res.ok) throw new Error('Failed to fetch personas');
+  const data = await res.json();
+  if (data.success) return data.data;
+  throw new Error(data.error);
+});
 
-  // 리스트 패치
-  const fetchPersonas = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/personas');
-      if (!res.ok) throw new Error('Failed to fetch personas');
-      const data = await res.json();
-      if (data.success) {
-        setPersonas(data.data);
-      } else {
-        throw new Error(data.error);
-      }
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+export function usePersonaViewModel() {
+  const { data: personas = [], error: swrError, isLoading: swrIsLoading, mutate: fetchPersonas } = useSWR<Persona[]>('/api/personas', fetcher);
+
+  const [isMutating, setIsMutating] = useState(false);
+  const [mutationError, setMutationError] = useState<string | null>(null);
+
+  const isLoading = swrIsLoading || isMutating;
+  const error = swrError?.message || mutationError;
 
   // 생성
   const createPersona = async (payload: CreatePersonaPayload) => {
-    setIsLoading(true);
-    setError(null);
+    setIsMutating(true);
+    setMutationError(null);
     try {
       const res = await fetch('/api/personas', {
         method: 'POST',
@@ -40,17 +32,17 @@ export function usePersonaViewModel() {
       await fetchPersonas();
       return true;
     } catch (err: any) {
-      setError(err.message);
+      setMutationError(err.message);
       return false;
     } finally {
-      setIsLoading(false);
+      setIsMutating(false);
     }
   };
 
   // 수정
   const updatePersona = async (id: string, payload: UpdatePersonaPayload) => {
-    setIsLoading(true);
-    setError(null);
+    setIsMutating(true);
+    setMutationError(null);
     try {
       const res = await fetch(`/api/personas/${id}`, {
         method: 'PUT',
@@ -61,10 +53,10 @@ export function usePersonaViewModel() {
       await fetchPersonas();
       return true;
     } catch (err: any) {
-      setError(err.message);
+      setMutationError(err.message);
       return false;
     } finally {
-      setIsLoading(false);
+      setIsMutating(false);
     }
   };
 
@@ -72,8 +64,8 @@ export function usePersonaViewModel() {
   const deletePersona = async (id: string) => {
     if (!confirm('정말 삭제하시겠습니까? 관련 큐 목록이 참조 중이라면 삭제되지 않을 수 있습니다.')) return false;
     
-    setIsLoading(true);
-    setError(null);
+    setIsMutating(true);
+    setMutationError(null);
     try {
       const res = await fetch(`/api/personas/${id}`, {
         method: 'DELETE',
@@ -85,11 +77,11 @@ export function usePersonaViewModel() {
       await fetchPersonas();
       return true;
     } catch (err: any) {
-      setError(err.message);
+      setMutationError(err.message);
       alert(err.message);
       return false;
     } finally {
-      setIsLoading(false);
+      setIsMutating(false);
     }
   };
 

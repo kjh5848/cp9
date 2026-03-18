@@ -28,7 +28,7 @@ export const DEFAULT_PRESETS = [
         borderColor: '#e2e8f0',
       },
       cta: {
-        buttonColor: '#475569',
+        buttonColor: '#2563eb',
         buttonTextColor: '#ffffff',
         buttonRadius: '12px',
       },

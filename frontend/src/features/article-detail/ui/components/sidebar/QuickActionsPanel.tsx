@@ -3,7 +3,7 @@ import { AccordionItem, AccordionTrigger, AccordionContent } from '@/shared/ui/a
 import { Button } from '@/shared/ui/button';
 import { Badge } from '@/shared/ui/badge';
 import { GlassCard } from '@/shared/ui/GlassCard';
-import { ArrowLeft, PenTool, X, AlertCircle, Loader2, Globe } from 'lucide-react';
+import { ArrowLeft, PenTool, X, AlertCircle, Loader2, Globe, RefreshCw } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/shared/lib/utils';
 import { useRouter } from 'next/navigation';
@@ -17,6 +17,7 @@ interface QuickActionsPanelProps {
     cancelEdit: () => void;
     startEdit: () => void;
     openWpDialog: () => void;
+    openRetryDialog: () => void;
   };
 }
 
@@ -36,6 +37,7 @@ export function QuickActionsPanel({ pack, isEditing, isWpPublished, wpPublishing
             <Button variant="outline" className="w-full justify-start gap-3 rounded-xl hover:bg-white/5 border-white/10" onClick={() => router.push('/research')}>
               <ArrowLeft className="w-4 h-4" />목록으로
             </Button>
+            
             <Button
               variant="outline"
               className={cn(
@@ -52,9 +54,19 @@ export function QuickActionsPanel({ pack, isEditing, isWpPublished, wpPublishing
                 <><PenTool className="w-4 h-4" />글 수정하기</>
               )}
             </Button>
+
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-3 rounded-xl hover:bg-white/5 border-white/10"
+              onClick={actions.openRetryDialog}
+              disabled={pack.status === 'PROCESSING'}>
+              <RefreshCw className="w-4 h-4" />다시 글 쓰기
+            </Button>
+
             <Button variant="outline" className="w-full justify-start gap-3 rounded-xl hover:bg-white/5 border-white/10 text-red-400 hover:text-red-300" onClick={() => toast('준비 중인 기능입니다.')}>
               <AlertCircle className="w-4 h-4" />데이터 초기화
             </Button>
+            
             <Button
               variant="outline"
               className={cn(

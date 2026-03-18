@@ -96,6 +96,7 @@ export interface WriteRequest {
   charLimit?: number; // 목표 글자수
   themeId?: string; // 아티클 디자인 테마 ID
   customTitles?: Record<string, string>; // 커스텀 제목
+  publishTargets?: any[]; // 다중 플랫폼 발행 설정
 }
 
 /**

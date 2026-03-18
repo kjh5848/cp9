@@ -92,10 +92,10 @@ export function PublishTargetSection({
 
   const getPlatformName = (platform: string) => {
     switch(platform) {
-      case 'wordpress': return '워드프레스 (WordPress)';
-      case 'google': return '구글 블로거 (Google)';
-      case 'naver_cafe': return '네이버 카페 (Naver Cafe)';
-      default: return platform;
+      case 'wordpress': return { ko: '워드프레스', en: 'WordPress' };
+      case 'google': return { ko: '구글 블로거', en: 'Google' };
+      case 'naver_cafe': return { ko: '네이버 카페', en: 'Naver Cafe' };
+      default: return { ko: platform, en: '' };
     }
   };
 
@@ -118,14 +118,21 @@ export function PublishTargetSection({
                 : 'border-slate-800/50 bg-slate-900/40 hover:bg-slate-800/60'
             }`}
           >
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-start mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
+                <div className="w-10 h-10 shrink-0 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700 shadow-sm">
                   {getPlatformIcon(target.platform)}
                 </div>
-                <span className={`text-sm font-medium ${target.enabled ? 'text-white' : 'text-slate-400'}`}>
-                  {getPlatformName(target.platform)}
-                </span>
+                <div className="flex flex-col">
+                  <span className={`text-[15px] font-bold ${target.enabled ? 'text-white' : 'text-slate-300'}`}>
+                    {getPlatformName(target.platform).ko}
+                  </span>
+                  {getPlatformName(target.platform).en && (
+                    <span className={`text-[11px] font-medium ${target.enabled ? 'text-indigo-300' : 'text-slate-500'}`}>
+                      {getPlatformName(target.platform).en}
+                    </span>
+                  )}
+                </div>
               </div>
               <Switch 
                 checked={target.enabled}

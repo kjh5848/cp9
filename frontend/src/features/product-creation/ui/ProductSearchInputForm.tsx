@@ -57,9 +57,9 @@ export function ProductSearchInputForm({
     <GlassCard className="p-8">
       <div className="space-y-6">
         <div className="flex items-center gap-3 mb-2">
-          {mode === "keyword" && <Search className="w-5 h-5 text-blue-400" />}
-          {mode === "link" && <LinkIcon className="w-5 h-5 text-emerald-400" />}
-          {(mode === "category" || mode === "pl_brand") && <Layers className="w-5 h-5 text-purple-400" />}
+          {mode === "keyword" ? <Search className="w-5 h-5 text-blue-400" /> : null}
+          {mode === "link" ? <LinkIcon className="w-5 h-5 text-emerald-400" /> : null}
+          {(mode === "category" || mode === "pl_brand") ? <Layers className="w-5 h-5 text-purple-400" /> : null}
           <h2 className="text-xl font-bold text-white uppercase tracking-tight">
             {mode.replace('_', ' ')} Search
           </h2>

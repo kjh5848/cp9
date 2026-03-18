@@ -11,6 +11,7 @@ import { useKeywordWritingState } from "./useKeywordWritingState";
 import { useKeywordWritingActions } from "./useKeywordWritingActions";
 import { useKeywordWritingDraft } from "./useKeywordWritingDraft";
 import { useKeywordLabStore } from "@/entities/keyword-extraction/model/useKeywordLabStore";
+import { useJobPolling } from "@/features/research-analysis/model/useJobPolling";
 
 export function useKeywordWritingViewModel() {
   const router = useRouter();
@@ -21,8 +22,10 @@ export function useKeywordWritingViewModel() {
   // 2. Draft(자동저장/복원) 동기화 훅
   useKeywordWritingDraft(state);
 
+  const { startPolling } = useJobPolling();
+
   // 3. 비즈니스 로직(액션) 훅
-  const actions = useKeywordWritingActions(state);
+  const actions = useKeywordWritingActions(state, startPolling);
 
   // 4. Export Payload 연동 (키워드 발굴소에서 넘어온 데이터)
   const { exportPayload, setExportPayload } = useKeywordLabStore();

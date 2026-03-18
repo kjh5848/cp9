@@ -227,7 +227,7 @@ export function ScheduleSettingsSection({
             }}
             className="bg-slate-950/50 border-slate-800/50 text-white h-10 [color-scheme:dark]"
           />
-          {startDateError && <p className="text-xs text-red-400 mt-1">{startDateError}</p>}
+          {startDateError ? <p className="text-xs text-red-400 mt-1">{startDateError}</p> : null}
         </div>
 
         {scheduleMode === 'interval' ? (
@@ -340,7 +340,7 @@ export function ScheduleSettingsSection({
                 <Button type="button" variant="secondary" onClick={handleAddTime} className="h-10">추가하기</Button>
               </div>
               
-              {currentTimesArray.length > 0 && (
+              {currentTimesArray.length > 0 ? (
                 <div className="flex flex-wrap gap-2 mt-3 p-3 bg-slate-900/50 rounded-lg border border-slate-800/50">
                   {currentTimesArray.map((t) => (
                     <div key={t} className="flex items-center gap-1 bg-amber-500/10 text-amber-300 px-3 py-1.5 rounded-full border border-amber-500/20 text-sm font-medium">
@@ -351,13 +351,13 @@ export function ScheduleSettingsSection({
                     </div>
                   ))}
                 </div>
-              )}
-              {currentTimesArray.length === 0 && (
+              ) : null}
+              {currentTimesArray.length === 0 ? (
                 <p className="text-xs text-amber-400 mt-1">※ 등록된 시간이 없습니다. 반드시 최소 1개 이상 시간을 추가해주세요!</p>
-              )}
+              ) : null}
             </div>
 
-            {setJitterMinutes && (
+            {setJitterMinutes ? (
               <div className="space-y-2 md:col-span-1">
                 <Label className="text-slate-300 text-sm">어뷰징 방지 난수화 (Jitter 봇 탐지 회피용)</Label>
                 <div className="flex gap-2 items-center">
@@ -374,9 +374,9 @@ export function ScheduleSettingsSection({
                 </div>
                 <p className="text-xs text-slate-500">예: 분산 설정이 15분이면 09:00 등록 시 08:45 ~ 09:15 사이에 랜덤 발행. (추천값: 15~30분)</p>
               </div>
-            )}
+            ) : null}
             
-            {setDailyCap && (
+            {setDailyCap ? (
               <div className="space-y-2 md:col-span-1">
                 <Label className="text-slate-300 text-sm">일일 발행 상한 (Safety Max)</Label>
                 <div className="flex gap-2 items-center">
@@ -392,7 +392,7 @@ export function ScheduleSettingsSection({
                 </div>
                 <p className="text-xs text-slate-500">비워두면 제한없이 모두 발행됩니다.</p>
               </div>
-            )}
+            ) : null}
           </>
         )}
 

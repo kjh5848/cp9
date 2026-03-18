@@ -13,6 +13,7 @@ import {
   Loader2,
   Rocket,
 } from "lucide-react";
+import { useWriteDraftStore } from "../model/useWriteDraftStore";
 import { cn } from "@/shared/lib/utils";
 import { GlassCard } from "@/shared/ui/GlassCard";
 import { Button } from "@/shared/ui/button";
@@ -57,6 +58,8 @@ export function FinalConfirmation({
   isGenerating, generationResult,
   onGenerate, onPrev, router,
 }: FinalConfirmationProps) {
+  const { resetDraft } = useWriteDraftStore();
+
   return (
     <>
       <GlassCard className="p-6">
@@ -88,10 +91,10 @@ export function FinalConfirmation({
             <Check className="w-6 h-6 text-emerald-400" />
             <div className="flex-1">
               <h4 className="text-sm font-bold text-emerald-400">생성 시작됨!</h4>
-              <p className="text-xs text-muted-foreground mt-1">글 목록에서 결과를 확인하세요.</p>
+              <p className="text-xs text-muted-foreground mt-1">알림 아이콘에서 진행상황을 확인하실 수 있습니다.</p>
             </div>
-            <Button size="sm" variant="outline" className="border-emerald-500/30 text-emerald-400" onClick={() => router.push(`/research/${generationResult.itemId}?projectId=${generationResult.projectId}`)}>
-              <ExternalLink className="w-3.5 h-3.5 mr-1" />확인
+            <Button size="sm" variant="outline" className="border-emerald-500/30 text-emerald-400" onClick={resetDraft}>
+              <ExternalLink className="w-3.5 h-3.5 mr-1" />새 글 작성하기
             </Button>
           </div>
         </GlassCard>

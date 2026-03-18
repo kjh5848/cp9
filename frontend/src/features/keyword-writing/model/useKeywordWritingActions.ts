@@ -7,7 +7,10 @@ import type { CoupangSearchMode } from "@/shared/constants/coupang-constants";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type StateReturn = any; // Will be properly typed when imported into ViewModel
 
-export function useKeywordWritingActions(state: StateReturn) {
+export function useKeywordWritingActions(
+  state: StateReturn,
+  startPolling?: (projectId: string, itemId: string) => void
+) {
   const resetDraft = useWriteDraftStore(state => state.resetDraft);
 
   const toggleProduct = useCallback((product: CoupangProductResponse) => {
@@ -226,12 +229,14 @@ export function useKeywordWritingActions(state: StateReturn) {
       const res = await fetch("/api/item-research", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(requestBody) });
       if (res.ok) {
         state.setGenerationResult({ projectId, itemId });
-        resetDraft();
         toast.success("글 생성이 시작되었습니다!", { duration: 4000 });
+        if (startPolling) {
+          startPolling(projectId, itemId);
+        }
       } else { toast.error("글 생성 요청에 실패했습니다."); }
     } catch { toast.error("글 생성 중 오류가 발생했습니다."); }
     finally { state.setIsGenerating(false); }
-  }, [state, resetDraft]);
+  }, [state, startPolling]);
 
   const switchMode = useCallback((newMode: string) => {
     state.setMode(newMode);

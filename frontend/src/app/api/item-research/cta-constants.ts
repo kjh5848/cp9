@@ -8,31 +8,31 @@ export const PERSONA_CTA_FILE: Record<string, string> = {
 
 export const CTA_VARIANTS: Record<string, { id: string; headerText: string; footerText: string; midText: string }[]> = {
   'IT': [
-    { id: 'tech_v1', headerText: '쿠팡에서 스펙 및 최저가 확인', footerText: '쿠팡 최저가 확인하기', midText: '쿠팡에서 가격 확인하기' },
+    { id: 'tech_v1', headerText: '스펙 및 최저가 확인', footerText: '최저가 확인하기', midText: '온라인 최저가 확인하기' },
     { id: 'tech_v2', headerText: '지금 바로 스펙 비교하기', footerText: '최저가로 구매하기', midText: '기술 스펙 비교 후 구매' },
   ],
   'BEAUTY': [
-    { id: 'beauty_v1', headerText: '쿠팡에서 최저가 쇼핑하기', footerText: '쿠팡 최저가 확인하기', midText: '쿠팡에서 가격 확인하기' },
+    { id: 'beauty_v1', headerText: '가장 저렴하게 쇼핑하기', footerText: '최저가 확인하기', midText: '최저가 바로 확인하기' },
     { id: 'beauty_v2', headerText: '나만의 뷰티템 장바구니 담기', footerText: '지금 바로 득템하기', midText: '핫딜 가격 확인하기' },
   ],
   'LIVING': [
-    { id: 'living_v1', headerText: '쿠팡에서 최저가 확인하기', footerText: '쿠팡 최저가 바로가기', midText: '쿠팡에서 가격 확인하기' },
+    { id: 'living_v1', headerText: '지금 바로 최저가 확인하기', footerText: '최저가 바로가기', midText: '최저가 및 상세 정보 확인' },
     { id: 'living_v2', headerText: '살림 필수템 확인하기', footerText: '가성비 최고가로 구매하기', midText: '실사용 후기 보고 구매하기' },
   ],
   'HUNTER': [
-    { id: 'hunter_v1', headerText: '지금 쿠팡 최저가 잡기', footerText: '쿠팡 최저가 바로 구매', midText: '쿠팡에서 가격 확인하기' },
+    { id: 'hunter_v1', headerText: '품절 임박! 최저가 잡기', footerText: '할인가격 바로 구매', midText: '가장 저렴한 가격 확인하기' },
     { id: 'hunter_v2', headerText: '이 가격에 살 수 있을 때 잡기', footerText: '할인가 바로 구매하기', midText: '최저가 비교 후 구매하기' },
   ],
   'MASTER_CURATOR_H': [
-    { id: 'luxury_v1', headerText: '쿠팡에서 프리미엄 가격 확인', footerText: '쿠팡에서 지금 확인하기', midText: '쿠팡에서 가격 확인하기' },
+    { id: 'luxury_v1', headerText: '프리미엄 최저가 확인하기', footerText: '상세 정보 지금 확인하기', midText: '할인가격 바로가기' },
     { id: 'luxury_v2', headerText: '큐레이터 추천가 확인하기', footerText: '프리미엄 딜 확인하기', midText: '엄선된 가격 확인하기' },
   ],
   'compare': [
-    { id: 'compare_v1', headerText: '쿠팡에서 비교 최저가 확인', footerText: '비교 결과 1위 상품 구매하기', midText: '비교 분석 후 최저가 확인' },
+    { id: 'compare_v1', headerText: '비교 후 최저가 확인하기', footerText: '비교 결과 1위 상품 구매하기', midText: '비교 분석 후 최저가 확인' },
     { id: 'compare_v2', headerText: '스펙 비교 결과 확인하기', footerText: '최종 추천 상품 바로 구매', midText: '전문가 비교 결과 보기' },
   ],
   'curation': [
-    { id: 'curation_v1', headerText: '쿠팡에서 추천 상품 확인하기', footerText: '전체 추천 리스트 보기', midText: '큐레이터 추천 가격 확인' },
+    { id: 'curation_v1', headerText: '큐레이터 추천 상품 확인하기', footerText: '전체 추천 리스트 최저가 보기', midText: '추천 리스트 가격 확인' },
     { id: 'curation_v2', headerText: '에디터 추천 상품 보기', footerText: '엄선된 추천 목록 확인', midText: '엄선 아이템 가격 보기' },
   ],
 };
@@ -41,8 +41,8 @@ export function selectVariant(persona: string, articleType?: string): { id: stri
   const variantKey = (articleType && articleType !== 'single' && CTA_VARIANTS[articleType])
     ? articleType
     : persona;
-  const variants = CTA_VARIANTS[variantKey] || [
-    { id: 'default_v1', headerText: '쿠팡에서 최저가 확인하기', footerText: '쿠팡 최저가 바로가기', midText: '쿠팡에서 가격 확인하기' },
+    const variants = CTA_VARIANTS[variantKey] || [
+    { id: 'default_v1', headerText: '지금 바로 최저가 확인하기', footerText: '최저가 바로가기', midText: '최저가 가격 확인하기' },
   ];
   return variants[Math.floor(Math.random() * variants.length)];
 }
@@ -72,7 +72,7 @@ export function getSocialProofText(persona: string): string {
 
 export function buildPriceBlock(price: number, isRocket: boolean): string {
   const rocketBadge = isRocket ? '<span class="cp9-cta__rocket-badge">로켓배송</span>' : '';
-  return `\n<div class="cp9-cta__price-block">\n  <span class="cp9-cta__current-price">${formatPrice(price)}</span>\n  ${rocketBadge}\n</div>`;
+  return `<div class="cp9-cta__price-block"><span class="cp9-cta__current-price">\${formatPrice(price)}</span>\${rocketBadge}</div>`;
 }
 
 export function addUtmParams(url: string, persona: string): string {

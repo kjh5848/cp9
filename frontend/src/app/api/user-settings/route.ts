@@ -25,7 +25,8 @@ export async function GET() {
         coupangSecretKey: '',
       },
       themeSettings: mockDb.themeSettings,
-      autopilotSettings: mockDb.autopilotSettings
+      autopilotSettings: mockDb.autopilotSettings,
+      publishSettings: mockDb.publishSettings || { targets: [] }
     };
 
     if (session?.user?.id) {
@@ -75,7 +76,8 @@ export async function GET() {
           wordpressAppPassword: user.wordpressAppPassword || '',
         },
         themeSettings: mockDb.themeSettings,
-        autopilotSettings: mockDb.autopilotSettings
+        autopilotSettings: mockDb.autopilotSettings,
+        publishSettings: mockDb.publishSettings || { targets: [] }
       };
     }
 

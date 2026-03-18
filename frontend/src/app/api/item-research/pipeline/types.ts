@@ -46,6 +46,8 @@ export interface ItemResearchRequest {
     publishTarget?: 'DB_ONLY' | 'WORDPRESS'
     /** 적용할 디자인 테마 ID */
     themeId?: string
+    /** 다중 플랫폼 발행 목적지들 */
+    publishTargets?: any[]
   }
   /** 키워드 기반 글 작성 모드 (상품 데이터 없이 키워드+제목으로 실행) */
   keywordMode?: {

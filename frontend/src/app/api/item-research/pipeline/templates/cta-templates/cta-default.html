@@ -1,0 +1,22 @@
+<!-- CTA 기본 템플릿 (Level 2) -->
+<!-- 인라인 스타일 포함 — WP 테마 CSS 없이도 정상 렌더링 -->
+
+<!-- ── 상단: 상품 이미지 + 가격 + 구매 버튼 ── -->
+<div class="cp9-cta cp9-cta--header cp9-cta--default" style="max-width:680px;margin:2em auto;padding:28px 24px;border-radius:16px;text-align:center;background:linear-gradient(135deg,#f8f9ff 0%,#eef1ff 100%);border:1px solid #d4d9f7;color:#1a1a2e;font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;">
+  <img src="{{PRODUCT_IMAGE}}" alt="{{PRODUCT_NAME}}" class="cp9-cta__image" style="max-width:260px;height:auto;margin:0 auto 16px;border-radius:12px;display:block;background:#fff;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid #eee;" />
+  {{PRICE_BLOCK}}
+  <a href="{{BUY_URL}}" target="_blank" rel="noopener sponsored" class="cp9-cta__button" style="display:inline-block;background:#2563eb;color:#fff!important;padding:14px 36px;border-radius:12px;font-size:16px;font-weight:700;text-decoration:none!important;margin:10px 0;box-shadow:0 4px 12px rgba(37,99,235,0.25);">
+    쿠팡에서 최저가 확인하기
+  </a>
+</div>
+
+<!-- ── 하단: 최종 CTA 블록 ── -->
+<div class="cp9-cta cp9-cta--footer cp9-cta--default" style="max-width:680px;margin:2em auto;padding:28px 24px;border-radius:16px;text-align:center;background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 100%);color:#fff;font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;">
+  <img src="{{PRODUCT_IMAGE}}" alt="{{PRODUCT_NAME}}" class="cp9-cta__image cp9-cta__image--footer" style="max-width:180px;height:auto;margin:0 auto 16px;border-radius:12px;display:block;background:#fff;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1);" />
+  <p class="cp9-cta__headline" style="text-align:center;font-size:20px;font-weight:800;margin:0 0 8px;">지금 바로 구매하세요!</p>
+  {{URGENCY_BANNER}}
+  <p class="cp9-cta__social-proof" style="text-align:center;font-size:13px;opacity:0.85;margin:6px 0;">{{SOCIAL_PROOF}}</p>
+  <a href="{{BUY_URL}}" target="_blank" rel="noopener sponsored" class="cp9-cta__button cp9-cta__button--large" style="display:inline-block;background:#2563eb;color:#fff!important;padding:18px 48px;border-radius:12px;font-size:18px;font-weight:700;text-decoration:none!important;margin:10px 0;box-shadow:0 4px 12px rgba(37,99,235,0.25);">
+    쿠팡 최저가 바로가기
+  </a>
+</div>

@@ -212,6 +212,7 @@ export const ResearchManagement = () => {
               charLimit: params.charLimit,
               themeId: params.themeId,
               customTitles: params.customTitles,
+              publishTargets: params.publishTargets,
             });
             setActionModalState(prev => ({ ...prev, isOpen: false }));
           }}

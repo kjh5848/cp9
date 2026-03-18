@@ -70,46 +70,46 @@ export const AutopilotConfigModal: React.FC<AutopilotConfigModalProps> = ({ isOp
               ) : (
                 <span className="bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded border border-emerald-500/20 font-medium">{config.status}</span>
               )}
-              {config.isAutopilot && <span className="bg-purple-500/10 text-purple-400 px-2 py-1 rounded border border-purple-500/20 font-medium">자동화 엔진</span>}
+              {config.isAutopilot ? <span className="bg-purple-500/10 text-purple-400 px-2 py-1 rounded border border-purple-500/20 font-medium">자동화 엔진</span> : null}
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             {/* AI 리서치 메타데이터 (있을 경우만 표시) */}
-            {(config.trafficKeyword || config.coupangSearchTerm || config.searchIntent) && (
+            {(config.trafficKeyword || config.coupangSearchTerm || config.searchIntent) ? (
               <div className="col-span-2 flex flex-col gap-3 p-4 rounded-xl bg-indigo-950/20 border border-indigo-500/20">
                 <div className="flex items-center gap-2 text-sm font-semibold text-indigo-300">
                   <Database className="w-4 h-4 text-indigo-400" />
                   <span>AI 리서치 메타데이터 (Metadata)</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                  {config.trafficKeyword && (
+                  {config.trafficKeyword ? (
                     <div className="flex flex-col gap-1">
                       <span className="text-muted-foreground">SEO 트래픽 타겟 키워드</span>
                       <span className="font-semibold text-indigo-100">{config.trafficKeyword}</span>
                     </div>
-                  )}
-                  {config.coupangSearchTerm && (
+                  ) : null}
+                  {config.coupangSearchTerm ? (
                     <div className="flex flex-col gap-1">
                       <span className="text-muted-foreground">쿠팡 소싱용 상품명</span>
                       <span className="font-semibold text-indigo-100">{config.coupangSearchTerm}</span>
                     </div>
-                  )}
-                  {config.searchIntent && (
+                  ) : null}
+                  {config.searchIntent ? (
                     <div className="flex flex-col gap-1 col-span-1 md:col-span-2">
                       <span className="text-muted-foreground">유저 검색 의도 (Intent)</span>
                       <span className="font-medium text-indigo-200/80 leading-relaxed">{config.searchIntent}</span>
                     </div>
-                  )}
-                  {config.recommendedItemCount && (
+                  ) : null}
+                  {config.recommendedItemCount ? (
                     <div className="flex flex-col gap-1">
                       <span className="text-muted-foreground">추천 상품 개수</span>
                       <span className="font-semibold text-indigo-100">{config.recommendedItemCount}개 세팅</span>
                     </div>
-                  )}
+                  ) : null}
                 </div>
               </div>
-            )}
+            ) : null}
             {/* 소싱 기준 */}
             <div className="flex flex-col gap-3 p-4 rounded-xl bg-slate-900/50 border border-border">
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-300">
@@ -133,11 +133,11 @@ export const AutopilotConfigModal: React.FC<AutopilotConfigModalProps> = ({ isOp
                   <span>최대 가격</span>
                   <span className="text-foreground">{config.maxPrice ? `${config.maxPrice.toLocaleString()}원 이하` : '제한 없음'}</span>
                 </li>
-                {config.isRocketOnly && (
+                {config.isRocketOnly ? (
                   <li className="flex items-center gap-1 mt-1 font-medium text-blue-400">
                     <Rocket className="w-3 h-3" /> 로켓 배송 상품만
                   </li>
-                )}
+                ) : null}
               </ul>
             </div>
 
@@ -201,14 +201,14 @@ export const AutopilotConfigModal: React.FC<AutopilotConfigModalProps> = ({ isOp
                      '쿠팡 랭킹순'}
                   </span>
                 </li>
-                {(config.minPrice || config.maxPrice) && (
+                {(config.minPrice || config.maxPrice) ? (
                   <li className="flex items-center justify-between">
                      <span>기본 가격대</span>
                      <span className="text-foreground">
                        {config.minPrice ? `${config.minPrice.toLocaleString()}원` : '0원'} ~ {config.maxPrice ? `${config.maxPrice.toLocaleString()}원` : '무제한'}
                      </span>
                   </li>
-                )}
+                ) : null}
                 <li className="flex items-center justify-between">
                   <span>로켓배송 전용</span>
                   <span className={config.isRocketOnly ? "text-blue-400 font-semibold" : "text-foreground"}>
@@ -225,16 +225,16 @@ export const AutopilotConfigModal: React.FC<AutopilotConfigModalProps> = ({ isOp
                   <Clock className="w-4 h-4 text-amber-500" />
                   <span className="text-slate-300 font-semibold">발행 스케줄</span>
                 </div>
-                {!isPending && (
+                {!isPending ? (
                   <div className="text-sm font-semibold text-foreground bg-muted px-3 py-1 rounded-lg border border-border">
                     {new Date(config.nextRunAt || config.createdAt).toLocaleString('ko-KR', {
                       month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
                     })}
                   </div>
-                )}
+                ) : null}
               </div>
               
-              {isPending && (
+              {isPending ? (
                 <div className="flex flex-col sm:flex-row items-center gap-3">
                   <input
                     type="date"
@@ -252,14 +252,14 @@ export const AutopilotConfigModal: React.FC<AutopilotConfigModalProps> = ({ isOp
                     <CalendarHeart className="w-4 h-4 mr-1.5" />시간 변경
                   </Button>
                 </div>
-              )}
+              ) : null}
 
-              {config.intervalHours && config.intervalHours > 0 && (
+              {(config.intervalHours && config.intervalHours > 0) ? (
                 <div className="flex items-center justify-between text-xs text-muted-foreground mt-2 pt-2 border-t border-border/50">
                   <span>반복 주기</span>
                   <span>{formatInterval(config.intervalHours)} 간격으로 처리</span>
                 </div>
-              )}
+              ) : null}
             </div>
             
           </div>
@@ -268,11 +268,11 @@ export const AutopilotConfigModal: React.FC<AutopilotConfigModalProps> = ({ isOp
         {/* Footer */}
         <div className="p-4 border-t border-border bg-card/50 flex justify-between items-center gap-2 rounded-b-xl">
           <div>
-            {isPending && (
+            {isPending ? (
               <Button variant="ghost" onClick={handleDelete} className="text-red-500 hover:text-red-400 hover:bg-red-500/10 h-9 px-3">
                 <Trash2 className="w-4 h-4 mr-2" /> 삭제하기
               </Button>
-            )}
+            ) : null}
           </div>
           <Button variant="outline" onClick={onClose} className="px-6 h-9">
             닫기

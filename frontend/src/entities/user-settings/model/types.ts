@@ -47,9 +47,14 @@ export interface DefaultAutopilotSettings {
   publishTargets?: any[];
 }
 
+export interface DefaultPublishSettings {
+  targets?: any[];
+}
+
 export interface UserSettingsDTO {
   profile: UserProfile;
   articleSettings: DefaultArticleSettings;
   themeSettings: DefaultThemeSettings;
   autopilotSettings: DefaultAutopilotSettings;
+  publishSettings: DefaultPublishSettings;
 }

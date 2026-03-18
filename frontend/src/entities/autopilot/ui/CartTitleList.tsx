@@ -106,7 +106,7 @@ export function CartTitleList({
                       <option value="compare">비교 분석 (2~5개)</option>
                       <option value="curation">다중 큐레이션 (TOP N)</option>
                     </select>
-                    {item.subtitle && <p className="text-[10px] text-slate-500 truncate">{item.subtitle}</p>}
+                    {item.subtitle ? <p className="text-[10px] text-slate-500 truncate">{item.subtitle}</p> : null}
                   </div>
                 </div>
               </li>

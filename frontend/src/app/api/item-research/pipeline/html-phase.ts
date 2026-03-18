@@ -26,12 +26,53 @@ export async function runHtmlPhase(
   let htmlBody = await marked.parse(markdownRaw);
 
   const defaultBuyUrl = ctx.body.productData?.productUrl || `https://www.coupang.com/vp/products/${ctx.body.itemId}`;
+  const buyUrl = defaultBuyUrl; // 하단 레거시 코드 호환용
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const themeConfig = ctx.themeConfig as any;
+  const legacyCtaConfig = themeConfig?.cta;
+  let ctaBlocks = themeConfig?.ctaBlocks;
+  const useNewCtaSystem = !!(themeConfig && 'ctaBlocks' in themeConfig && ctaBlocks && ctaBlocks.length > 0);
+
+  const ctaData = {
+    productName: ctx.body.itemName,
+    productImage: ctx.body.productData?.productImage || imageUrl || '',
+    buyUrl: defaultBuyUrl,
+    persona: ctx.persona,
+    productPrice: ctx.body.productData?.productPrice || undefined,
+    isRocket: ctx.body.productData?.isRocket || false,
+    itemId: ctx.body.itemId,
+    projectId: ctx.body.projectId || undefined,
+    articleType: articleType as 'single' | 'compare' | 'curation',
+  };
+
+  // ── 후처리 -1: H1 태그 일괄 제거 (워드프레스 제목 중복 방지용) ──
+  // 이미 포스팅 제목이 포스트 외부에 H1이나 타이틀로 렌더링되므로, 본문 내의 H1은 제거합니다.
+  htmlBody = htmlBody.replace(/<h1[^>]*>[\s\S]*?<\/h1>/gi, '');
 
   // ── 후처리 0: AI 매크로 동적 1:1 치환 ──
-  // [[[CTA_BUTTON:URL]]] 또는 [[[CTA_BUTTON]]] 포맷 모두 대응
-  htmlBody = htmlBody.replace(/\[\[\[CTA_BUTTON(?::([^\]]+))?\]\]\]/g, (match, urlGroup) => {
-    const url = (urlGroup && urlGroup.trim()) ? urlGroup.trim() : defaultBuyUrl;
-    return buildCtaHtmlSnippet({ productUrl: url });
+  // 매크로( [[[CTA_BUTTON:URL]]] 또는 [[CTA_BUTTON:URL]] )가 텍스트 상태일 때, 디자인 테마에 맞춘 HTML 컴포넌트로 바로 치환합니다.
+  // 주의: marked.parse()가 매크로 내부의 http 리터럴을 <a href="...">...</a> 로 렌더링했을 수 있으므로 태그를 벗겨냅니다.
+  // 단독 <p> 태그 래핑으로 인한 여백 이슈 방지를 위해 <p>를 함께 매칭하여 치환 시 제거합니다.
+  htmlBody = htmlBody.replace(/<p>\s*\[{2,3}CTA_BUTTON(?::([^\]]+))?\]{2,3}\s*<\/p>|\[{2,3}CTA_BUTTON(?::([^\]]+))?\]{2,3}/g, (match, pUrlGroup, urlGroup) => {
+    let rawUrl = (pUrlGroup || urlGroup || '').trim();
+    if (!rawUrl) rawUrl = defaultBuyUrl;
+    // <a href="...">...</a> 로 감싸진 경우 안의 진짜 텍스트(URL)만 추출
+    rawUrl = rawUrl.replace(/<[^>]+>/g, '').trim();
+    if (!rawUrl.startsWith('http')) {
+      rawUrl = defaultBuyUrl;
+    }
+    
+    // 테마 설정이 있다면 (기본 제공된 테마라도) 첫번째 CTA 블록(통상 상단/기본용) 디자인 활용
+    if (useNewCtaSystem) {
+      const primaryBlock = ctaBlocks[0]; // [상단 추천 상품, 중간 추천 상품, 하단 추천 상품] 중 0번째의 디자인 사용
+      // 링크만 해당 매크로에 박힌 URL(비교글의 경우 해당 상품 URL)로 바꿔서 동적으로 HTML 생성
+      const dynamicConfig = { ...ctaData, buyUrl: rawUrl };
+      return buildCtaBlockHtml(dynamicConfig, primaryBlock);
+    }
+    
+    // 테마가 없거나 구버전이라면 fallback 스니펫(기존 유지)
+    return buildCtaHtmlSnippet({ productUrl: rawUrl });
   });
 
   // ── 후처리 1: 취소선(<del>) 태그 제거 ──
@@ -77,41 +118,14 @@ export async function runHtmlPhase(
   }
 
   // ── CTA 빌드 및 주입 (레거시 / 다중 블록 시스템 분기) ──
-  const buyUrl = ctx.body.productData?.productUrl
-    || `https://www.coupang.com/vp/products/${ctx.body.itemId}`;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const themeConfig = ctx.themeConfig as any;
-  const legacyCtaConfig = themeConfig?.cta;
-  let ctaBlocks = themeConfig?.ctaBlocks;
-  const useNewCtaSystem = themeConfig && 'ctaBlocks' in themeConfig;
-
-  // AI 매크로 삽입을 존중하기 위해, 테마의 강제 본문 삽입(random-p, first-p, last-p)을 무력화
-  if (ctaBlocks && ctaBlocks.length > 0) {
-    ctaBlocks = ctaBlocks.filter((b: any) => !['random-p', 'first-p', 'last-p', 'h2-before', 'h3-before'].includes(b.placement.position));
-  }
-
+  // (어제 반영된 자동 주입(injectCtaBlocks 등) 코드는 AI 매크로 기반 단일 치환 방식으로 롤백/통합됨에 따라 무력화)
+  
   let coupangHeaderHtml = '';
   let coupangCtaHtml = '';
 
   if (useNewCtaSystem) {
-    // [다중 블록 CTA 시스템]
-    const ctaData = {
-      productName: ctx.body.itemName,
-      productImage: ctx.body.productData?.productImage || imageUrl || '',
-      buyUrl,
-      persona: ctx.persona,
-      productPrice: ctx.body.productData?.productPrice || undefined,
-      isRocket: ctx.body.productData?.isRocket || false,
-      itemId: ctx.body.itemId,
-      projectId: ctx.body.projectId || undefined,
-      articleType: articleType as 'single' | 'compare' | 'curation',
-    };
-
-    if (ctaBlocks && ctaBlocks.length > 0) {
-      const injectionResult = injectCtaBlocks(htmlBody, ctaBlocks, ctaData);
-      htmlBody = injectionResult.html;
-      coupangCtaHtml = injectionResult.footerAppended; // article-end 위치 컴포넌트들
-    }
+    // 자동 주입 하지 않음. 단, 후처리를 위해 footerAppended 변수 빈값 처리
+    coupangCtaHtml = '';
 
     // single 모드에서 productImageHtml 단독 주입은 그대로 유지
     if (articleType === 'single') {
@@ -212,7 +226,7 @@ export async function runHtmlPhase(
   // ── 후처리 4: AI 이미지 제안 문구 안내 박스 치환 ──
   // imageUrlMap에 있는 실제 이미지 URL을 사용하여 치환, 없으면 기본 fallback 박스 렌더링
   htmlBody = htmlBody.replace(
-    /\[이미지 제안:\s*(.*?)\]/g,
+    /\[이미지\s*제안(?:[:\s]*)(.*?)\]/g,
     (match, suggestionText) => {
       const suggestionKey = suggestionText.trim();
       const mappedUrl = imageUrlMap[suggestionKey];
@@ -303,6 +317,11 @@ export async function runHtmlPhase(
     });
   }
   
+  // ── 후처리 99: 강력한 이모지 제거 ──
+  // 생성형 AI가 지침을 어기고 이모지를 생성했을 경우 최종 클리닝
+  const emojiRegex = /[\u{1F600}-\u{1F6FF}\u{1F300}-\u{1F5FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1FA70}-\u{1FAFF}\u{2B50}\u{1F31F}\u{2728}\u{1F4A5}\u{1F525}]/gu;
+  seoContent = seoContent.replace(emojiRegex, '');
+
   console.log(`✅ [Phase 4] HTML 변환 완료 (${seoContent.length}자, 유형: ${articleType}, 페르소나: ${ctx.persona}, 테마: ${ctx.themeConfig ? '적용' : '없음'}, 스타일모드: ${styleMode})`);
   return seoContent;
 }

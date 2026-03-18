@@ -85,28 +85,28 @@ export function TitleSettingsStep({
                   />
                 </div>
 
-                <div className="flex items-start gap-2">
+                <div className="flex flex-col lg:flex-row items-start gap-3">
                   <Button
                     onClick={() => handleSuggestTitle(key, [item])}
                     disabled={isLoading}
                     variant="secondary"
                     size="sm"
-                    className="text-xs shrink-0 py-1.5 h-auto bg-slate-700/50 hover:bg-emerald-600/20 hover:text-emerald-400 border border-transparent hover:border-emerald-500/30"
+                    className="text-[13px] shrink-0 py-2 h-auto bg-slate-700/50 hover:bg-emerald-600/20 hover:text-emerald-400 border border-transparent hover:border-emerald-500/30"
                   >
                     {isLoading ? (
-                      <><Loader2 className="w-3 h-3 mr-1.5 animate-spin" /> 생성 중...</>
+                      <><Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> 생성 중...</>
                     ) : (
                       <>✨ AI 추천받기</>
                     )}
                   </Button>
 
                   {suggestions.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 flex-1">
+                    <div className="flex flex-col gap-2 flex-1 w-full">
                       {suggestions.map((title, idx) => (
                         <button
                           key={idx}
                           onClick={() => setCustomTitles(prev => ({ ...prev, [key]: title }))}
-                          className="text-[11px] text-left px-2.5 py-1.5 rounded bg-slate-900 border border-slate-700 hover:border-emerald-500/50 hover:text-emerald-300 transition-colors text-slate-400"
+                          className="text-[15px] leading-relaxed text-left px-4 py-3.5 rounded-md bg-slate-900 border border-slate-700 hover:border-emerald-500/50 hover:text-emerald-400 transition-colors text-slate-200"
                         >
                           {title}
                         </button>
@@ -158,7 +158,7 @@ export function TitleSettingsStep({
                   <button
                     key={idx}
                     onClick={() => setCustomTitles(prev => ({ ...prev, ['main']: title }))}
-                    className="text-xs text-left px-3 py-2.5 rounded-md bg-slate-900 border border-slate-700 hover:border-blue-500 hover:bg-blue-500/5 hover:text-blue-300 transition-all font-medium text-slate-300"
+                    className="text-[15px] leading-relaxed text-left px-4 py-3.5 rounded-md bg-slate-900 border border-slate-700 hover:border-blue-500 hover:bg-blue-500/5 hover:text-blue-300 transition-all font-medium text-slate-200"
                   >
                     {title}
                   </button>

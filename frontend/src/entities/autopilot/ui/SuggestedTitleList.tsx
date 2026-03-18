@@ -78,7 +78,7 @@ export function SuggestedTitleList({
                     }}
                     className="w-full bg-transparent border border-transparent outline-none text-sm font-medium text-slate-200 focus:bg-slate-800 focus:border-slate-700/50 rounded px-2 -mx-2 transition-colors"
                   />
-                  {item.subtitle && <p className="text-[11px] text-slate-500 mt-1 line-clamp-1">{item.subtitle}</p>}
+                  {item.subtitle ? <p className="text-[11px] text-slate-500 mt-1 line-clamp-1">{item.subtitle}</p> : null}
                   <div className="flex items-center gap-2 mt-2">
                     <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
                       item.searchIntent.includes('구매') ? 'bg-emerald-500/10 text-emerald-400'

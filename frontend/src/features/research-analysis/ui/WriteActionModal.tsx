@@ -62,6 +62,7 @@ import {
   TOTAL_STEPS 
 } from "../model/useWriteActionViewModel";
 import { PublishTarget } from "@/shared/ui/PublishTargetSection";
+import { Switch } from "@/shared/ui/switch";
 
 /* ──────────────────────────── Step 인디케이터 ──────────────────────────── */
 
@@ -105,7 +106,8 @@ export const WriteActionModal = ({
     customTitles, setCustomTitles, suggestedTitles, isGeneratingTitle, handleSuggestTitle,
     actionType, setActionType, scheduleDate, setScheduleDate, scheduleTime, setScheduleTime,
     publishTargets, setPublishTargets,
-    articleTypeAvailability, publishPreview, handleConfirm, canGoNext
+    articleTypeAvailability, publishPreview, handleConfirm, canGoNext,
+    isQuickPublish, setIsQuickPublish, handleNext, handlePrev
   } = useWriteActionViewModel({
     isOpen, selectedItems, defaultAction, onExecute
   });
@@ -121,19 +123,46 @@ export const WriteActionModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[900px] bg-gray-900 border-gray-800 text-slate-200 max-h-[85vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex flex-col">
-        <DialogHeader className="mb-2">
-          <DialogTitle className="text-3xl font-bold text-white mb-2">포스팅 생성 설정</DialogTitle>
-          <DialogDescription className="text-slate-400 text-sm">
-            <span className="text-blue-400 font-semibold">[{title}]</span> — {itemCount}개 상품 선택됨
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[1100px] xl:max-w-[1200px] bg-gray-900 border-gray-800 text-slate-200 max-h-[85vh] overflow-hidden p-0 flex flex-col">
+        <div className="px-6 pt-6 shrink-0 flex items-start justify-between">
+          <DialogHeader className="mb-2">
+            <DialogTitle className="text-3xl font-bold text-white mb-2">포스팅 생성 설정</DialogTitle>
+            <DialogDescription className="text-slate-400 text-sm">
+              <span className="text-blue-400 font-semibold">[{title}]</span> — {itemCount}개 상품 선택됨
+            </DialogDescription>
+          </DialogHeader>
 
-        <StepIndicator current={step} total={TOTAL_STEPS} />
+          {/* 마이페이지 설정으로 빠른 발행 토글/이동 영역 */}
+          {step === 0 && (
+            <div className="flex flex-col items-end gap-2">
+              <div className="flex items-center gap-3 bg-slate-800/60 border border-slate-700/50 px-4 py-2.5 rounded-xl">
+                
+                <div className="flex flex-col text-right">
+                  <span className="text-sm font-semibold text-slate-200">마이페이지 설정으로 빠른 발행</span>
+                  <span className="text-xs text-slate-400">페르소나, 테마 설정 과정을 모두 건너뜁니다.</span>
+                </div>
+                <Switch
+                  checked={isQuickPublish}
+                  onCheckedChange={setIsQuickPublish}
+                  className="data-[state=checked]:bg-emerald-500"
+                />
+              </div>
+              <Link href="/settings" target="_blank" className="text-xs text-blue-400 hover:text-blue-300 underline flex items-center gap-1 opacity-80 hover:opacity-100 transition-opacity">
+                기본 설정 변경하러 가기 <ChevronRight className="w-3 h-3" />
+              </Link>
+            </div>
+          )}
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 min-h-[420px] mt-3">
+        <div className="px-6 shrink-0 mt-2">
+          <StepIndicator current={step} total={TOTAL_STEPS} />
+        </div>
+
+        {/* 본문 스크롤 영역 */}
+        <div className="flex-1 overflow-y-auto px-6 pb-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-700/50 [&::-webkit-scrollbar-thumb]:rounded-full">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 min-h-[420px] mt-1">
           {/* 왼쪽 단: 상품 목록 */}
-          <div className="md:col-span-4 border-r border-slate-800 pr-4 flex flex-col max-h-[500px]">
+          <div className="md:col-span-4 lg:col-span-3 border-r border-slate-800 pr-4 flex flex-col max-h-[500px]">
             <h4 className="text-sm font-semibold text-slate-300 mb-4 flex items-center gap-2">
               <Package className="w-5 h-5 text-emerald-400" />
               선택된 상품
@@ -144,8 +173,8 @@ export const WriteActionModal = ({
           </div>
 
           {/* 오른쪽 단: 셋팅 영역 */}
-          <div className="md:col-span-8 py-1 space-y-6 flex flex-col">
-          {/* ════════ Step 1: 글 유형 선택 ════════ */}
+          <div className="md:col-span-8 lg:col-span-9 py-1 space-y-6 flex flex-col">
+          {/* ════════ Step 0: 글 유형 선택 ════════ */}
           {step === 0 && (
             <ArticleTypeSelectionStep
               articleType={articleType}
@@ -155,42 +184,8 @@ export const WriteActionModal = ({
             />
           )}
 
-          {/* ════════ Step 2: 발행 예시 미리보기 ════════ */}
+          {/* ════════ Step 1: 페르소나 & AI 모델 ════════ */}
           {step === 1 && (
-            <div className="space-y-4">
-              <h4 className="text-sm font-semibold text-slate-300">발행 예시 미리보기</h4>
-              <div className="space-y-2">
-                {publishPreview.articles.map((article, i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 bg-slate-800/60 rounded-lg border border-slate-700/50">
-                    <span className="text-sm font-mono text-blue-400 whitespace-nowrap">{article.label}</span>
-                    <span className="text-sm text-slate-300 truncate">{article.title}</span>
-                  </div>
-                ))}
-                {publishPreview.hasMore && (
-                  <p className="text-xs text-slate-500 text-center py-1">
-                    ... 외 {itemCount - 5}개
-                  </p>
-                )}
-              </div>
-              <div className="flex items-center justify-between px-3 py-3 rounded-lg bg-slate-800/40 border border-slate-700/30">
-                <div className="text-center">
-                  <p className="text-lg font-bold text-white">{publishPreview.totalArticles}편</p>
-                  <p className="text-[10px] text-slate-500">생성 예정</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-lg font-bold text-white">~{publishPreview.estimatedMinutes}분</p>
-                  <p className="text-[10px] text-slate-500">예상 소요</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-lg font-bold text-white">~${publishPreview.estimatedCost}</p>
-                  <p className="text-[10px] text-slate-500">예상 비용</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ════════ Step 3: 페르소나 & AI 모델 ════════ */}
-          {step === 2 && (
             <div className="space-y-5">
               
               <SharedArticleSettings
@@ -245,8 +240,8 @@ export const WriteActionModal = ({
             </div>
           )}
 
-          {/* ════════ Step 4: 제목 설정 ════════ */}
-          {step === 3 && (
+          {/* ════════ Step 2: 제목 설정 ════════ */}
+          {step === 2 && (
             <TitleSettingsStep
               articleType={articleType}
               selectedItems={selectedItems}
@@ -266,9 +261,10 @@ export const WriteActionModal = ({
             />
           )}
 
-          {/* ════════ Step 5: 발행 방식 & 주기 ════════ */}
-          {step === 4 && (
+          {/* ════════ Step 3: 발행 방식 & 주기 ════════ */}
+          {step === 3 && (
             <PublishActionStep
+              isQuickPublish={isQuickPublish}
               actionType={actionType}
               setActionType={setActionType}
               scheduleDate={scheduleDate}
@@ -282,14 +278,16 @@ export const WriteActionModal = ({
           )}
           </div>
         </div>
+        </div> {/* 본문 스크롤 영역 종료 */}
 
         {/* ════════ 하단 네비게이션 ════════ */}
-        <DialogFooter className="mt-4 border-t border-slate-800 pt-5 flex items-center justify-between">
-          <div>
+        <div className="shrink-0 px-6 pb-6 pt-4 border-t border-slate-800 bg-gray-900 mt-auto">
+          <DialogFooter className="flex w-full items-center justify-between sm:justify-between">
+            <div>
             {step > 0 && (
               <Button
                 variant="outline"
-                onClick={() => setStep((s) => s - 1)}
+                onClick={handlePrev}
                 className="border-slate-700 text-slate-300 hover:bg-slate-800"
               >
                 <ChevronLeft className="w-4 h-4 mr-1" />
@@ -303,7 +301,7 @@ export const WriteActionModal = ({
             </Button>
             {step < TOTAL_STEPS - 1 ? (
               <Button
-                onClick={() => setStep((s) => s + 1)}
+                onClick={handleNext}
                 disabled={!canGoNext()}
                 className="bg-blue-600 hover:bg-blue-500 text-white"
               >
@@ -321,6 +319,7 @@ export const WriteActionModal = ({
             )}
           </div>
         </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

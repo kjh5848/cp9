@@ -91,6 +91,7 @@ export const useUserSettingsViewModel = () => {
     articleSettings: data?.articleSettings,
     themeSettings: data?.themeSettings,
     autopilotSettings: data?.autopilotSettings,
+    publishSettings: data?.publishSettings,
 
     // Actions
     saveArticleSettings,

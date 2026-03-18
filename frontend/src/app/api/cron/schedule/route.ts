@@ -64,6 +64,7 @@ export async function GET(request: Request) {
           charLimit: pack.charLimit || 2000,
           articleType: pack.articleType || 'single',
           publishTarget: pack.publishTarget || 'DB_ONLY',
+          publishTargets: pack.publishTargets || pack.seoConfig?.publishTargets || [],
           themeId: pack.themeId,
         },
       };
@@ -75,6 +76,7 @@ export async function GET(request: Request) {
       const charLimit = body.seoConfig!.charLimit!;
       const articleType = body.seoConfig!.articleType!;
       const publishTarget = body.seoConfig!.publishTarget!;
+      const publishTargets = body.seoConfig!.publishTargets;
       const themeId = body.seoConfig!.themeId;
 
       // PROCESSING 상태로 업데이트
@@ -91,7 +93,7 @@ export async function GET(request: Request) {
       });
 
       // 비동기 실행 (await하지 않음)
-      runSeoPipeline(body, { persona, tone, textModel, imageModel, charLimit, articleType, publishTarget, themeId });
+      runSeoPipeline(body, { persona, tone, textModel, imageModel, charLimit, articleType, publishTarget, publishTargets, themeId });
     }));
 
     return NextResponse.json({ 

@@ -23,7 +23,7 @@ export const ARTICLE_TYPES: { id: ArticleType; label: string; desc: string; minI
   { id: "curation", label: "📋 큐레이션", desc: "간략 소개형 리스트로 소개", minItems: 3, maxItems: 50 },
 ];
 
-export const TOTAL_STEPS = 5;
+export const TOTAL_STEPS = 4;
 
 interface UseWriteActionViewModelProps {
   isOpen: boolean;
@@ -37,13 +37,16 @@ export function useWriteActionViewModel({ isOpen, selectedItems, defaultAction, 
 
   // ── Step 관리 ──
   const [step, setStep] = useState(0);
+  
+  // 빠른 자동 발행 모드 상태
+  const [isQuickPublish, setIsQuickPublish] = useState(false);
 
-  // ── Step 1: 글 유형 ──
+  // ── Step 0: 글 유형 ──
   const [articleType, setArticleType] = useState<ArticleType>("single");
 
   // ── Step 3: 설정(Settings) 로드 빛 페르소나 연동 ──
   const { personas, fetchPersonas } = usePersonaViewModel();
-  const { profile, articleSettings, themeSettings } = useUserSettingsViewModel();
+  const { profile, articleSettings, themeSettings, autopilotSettings } = useUserSettingsViewModel();
 
   useEffect(() => {
     if (isOpen) fetchPersonas();
@@ -79,8 +82,13 @@ export function useWriteActionViewModel({ isOpen, selectedItems, defaultAction, 
       if (articleSettings?.defaultTextModel) setSelectedTextModel(articleSettings.defaultTextModel);
       if (articleSettings?.defaultImageModel) setSelectedImageModel(articleSettings.defaultImageModel);
       if (articleSettings?.defaultTitleModel) setTitleModel(articleSettings.defaultTitleModel);
+
+      // 다중 플랫폼 발행 연동 셋팅도 초기 로드 (빠른 발행 스킵 대비)
+      if (autopilotSettings?.publishTargets && autopilotSettings.publishTargets.length > 0) {
+        setPublishTargets(autopilotSettings.publishTargets);
+      }
     }
-  }, [isOpen, profile?.name, themeSettings?.personaId, themeSettings?.personaName, articleSettings?.defaultTextModel, articleSettings?.defaultImageModel, articleSettings?.defaultTitleModel]);
+  }, [isOpen, profile?.name, themeSettings?.personaId, themeSettings?.personaName, articleSettings?.defaultTextModel, articleSettings?.defaultImageModel, articleSettings?.defaultTitleModel, autopilotSettings]);
 
   useEffect(() => {
     if (displayPersonas.length > 0 && !displayPersonas.find(p => p.id === selectedPersona)) {
@@ -191,25 +199,7 @@ export function useWriteActionViewModel({ isOpen, selectedItems, defaultAction, 
 
   const autoSuggestedKeys = useRef<Set<string>>(new Set());
 
-  useEffect(() => {
-    if (step === 3) {
-      if (articleType === 'single') {
-        selectedItems.forEach(item => {
-          const key = item.productId.toString();
-          if (!autoSuggestedKeys.current.has(key)) {
-            autoSuggestedKeys.current.add(key);
-            handleSuggestTitle(key, [item]);
-          }
-        });
-      } else {
-        const key = 'main';
-        if (!autoSuggestedKeys.current.has(key)) {
-          autoSuggestedKeys.current.add(key);
-          handleSuggestTitle(key, selectedItems);
-        }
-      }
-    }
-  }, [step, articleType, selectedItems]);
+  // 자동 제목 추천 기능을 제거 (사용자가 버튼을 클릭했을 때만 생성되도록)
 
   useEffect(() => {
     if (isOpen) {
@@ -270,6 +260,25 @@ export function useWriteActionViewModel({ isOpen, selectedItems, defaultAction, 
     }
   }, [articleType, itemCount, selectedItems]);
 
+  // ── 스텝 네비게이션 함수 ──
+  const handleNext = useCallback(() => {
+    if (step === 0 && isQuickPublish) {
+      // Step 0에서 빠른 발행을 체크한 경우 바로 마지막 스텝(발행방식 선택 - Step 3)으로 점프
+      setStep(TOTAL_STEPS - 1);
+    } else {
+      setStep(s => Math.min(s + 1, TOTAL_STEPS - 1));
+    }
+  }, [step, isQuickPublish]);
+
+  const handlePrev = useCallback(() => {
+    if (step === TOTAL_STEPS - 1 && isQuickPublish) {
+      // 마지막 스텝에서 이전으로 돌아올 때 빠른 발행 모드라면 Step 0으로 점프
+      setStep(0);
+    } else {
+      setStep(s => Math.max(s - 1, 0));
+    }
+  }, [step, isQuickPublish]);
+
   const handleConfirm = () => {
     const finalPersonaName = personaName.trim() || profile?.name || "마스터 큐레이터 H";
     const baseParams = {
@@ -298,7 +307,7 @@ export function useWriteActionViewModel({ isOpen, selectedItems, defaultAction, 
 
   const canGoNext = () => {
     if (step === 0) return articleTypeAvailability.some((t) => t.id === articleType && t.enabled);
-    if (step === 4 && actionType === "SCHEDULE") return scheduleDate && scheduleTime;
+    if (step === 3 && actionType === "SCHEDULE") return scheduleDate && scheduleTime;
     return true;
   };
 
@@ -306,6 +315,10 @@ export function useWriteActionViewModel({ isOpen, selectedItems, defaultAction, 
     itemCount,
     step,
     setStep,
+    isQuickPublish,
+    setIsQuickPublish,
+    handleNext,
+    handlePrev,
     articleType,
     setArticleType,
     personas,

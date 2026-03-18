@@ -1,4 +1,4 @@
-import { UserProfile, DefaultArticleSettings, DefaultThemeSettings, DefaultAutopilotSettings } from '@/entities/user-settings/model/types';
+import { UserProfile, DefaultArticleSettings, DefaultThemeSettings, DefaultAutopilotSettings, DefaultPublishSettings } from '@/entities/user-settings/model/types';
 
 // Global namespace to act as an in-memory DB during Next.js development
 // This avoids losing state across fast refreshes or different API handler modules.
@@ -8,6 +8,7 @@ const globalMemory = global as unknown as {
     articleSettings: DefaultArticleSettings;
     themeSettings: DefaultThemeSettings;
     autopilotSettings: DefaultAutopilotSettings;
+    publishSettings: DefaultPublishSettings;
   }
 };
 
@@ -47,6 +48,11 @@ if (!globalMemory._userSettingsMockDb) {
         { platform: 'google', enabled: false, meta: { blogId: '' } },
         { platform: 'naver_cafe', enabled: false, meta: { clubId: '', menuId: '' } },
       ],
+    },
+    publishSettings: {
+      targets: [
+        { platform: 'wordpress', enabled: true, meta: { categoryId: '' } }
+      ]
     }
   };
 }

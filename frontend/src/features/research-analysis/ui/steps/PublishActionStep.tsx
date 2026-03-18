@@ -5,6 +5,7 @@ import { cn } from "@/shared/lib/utils";
 import { PublishTargetSection, PublishTarget } from "@/shared/ui/PublishTargetSection";
 
 interface PublishActionStepProps {
+  isQuickPublish?: boolean;
   actionType: "NOW" | "SCHEDULE";
   setActionType: (type: "NOW" | "SCHEDULE") => void;
   scheduleDate: string;
@@ -21,6 +22,7 @@ interface PublishActionStepProps {
 }
 
 export function PublishActionStep({
+  isQuickPublish = false,
   actionType,
   setActionType,
   scheduleDate,
@@ -104,14 +106,20 @@ export function PublishActionStep({
         </div>
       )}
 
-      {/* 다중 플랫폼 발행 설정 */}
-      <div className="pt-2 border-t border-slate-800">
-        <PublishTargetSection 
-          targets={publishTargets}
-          onChange={setPublishTargets}
-          hideLoadMySettings={true}
-        />
-      </div>
+      {/* 다중 플랫폼 발행 설정 (빠른 발행 모드가 아닐 때만 렌더링) */}
+      {!isQuickPublish && (
+        <div className="pt-6 mt-4 border-t border-slate-800">
+          <div className="flex flex-col gap-1 mb-4">
+            <h4 className="text-base font-semibold text-slate-200">다중 플랫폼 연동 발행</h4>
+            <p className="text-xs text-slate-400">생성된 글을 어디로 발행할지 설정합니다.</p>
+          </div>
+          <PublishTargetSection 
+            targets={publishTargets}
+            onChange={setPublishTargets}
+            hideLoadMySettings={true}
+          />
+        </div>
+      )}
     </div>
   );
 }

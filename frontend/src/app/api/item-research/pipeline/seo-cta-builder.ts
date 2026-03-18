@@ -33,16 +33,7 @@ export function buildCtaHtmlSnippet(options: CtaOptions): string {
   <p style="font-size: 15px; font-weight: 700; color: #ef4444; margin-bottom: 12px; letter-spacing: -0.02em;">
     ${copyText}
   </p>
-  <a href="${productUrl}" target="_blank" rel="nofollow noopener noreferrer" class="group relative inline-flex items-center justify-center px-8 py-4 sm:px-10 sm:py-5 font-bold text-white transition-all duration-300 ease-out bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl shadow-[0_8px_30px_rgb(79,70,229,0.2)] hover:shadow-[0_8px_30px_rgb(79,70,229,0.4)] hover:-translate-y-1 hover:from-blue-500 hover:to-indigo-500 overflow-hidden w-full max-w-sm" style="display: inline-flex; align-items: center; justify-content: center; padding: 1rem 2rem; background: linear-gradient(to right, #2563eb, #4f46e5); color: white; font-weight: bold; border-radius: 1rem; text-decoration: none; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
-    <div style="display: flex; align-items: center; gap: 0.75rem;">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 animate-pulse" style="width: 24px; height: 24px;">
-        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
-        <path d="M3 6h18"></path>
-        <path d="M16 10a4 4 0 0 1-8 0"></path>
-      </svg>
-      <span class="tracking-wide" style="font-size: 1.125rem;">${buttonText}</span>
-    </div>
-  </a>
+  <a href="${productUrl}" target="_blank" rel="nofollow noopener noreferrer" class="group relative inline-flex items-center justify-center px-8 py-4 sm:px-10 sm:py-5 font-bold text-white transition-all duration-300 ease-out bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl shadow-[0_8px_30px_rgb(79,70,229,0.2)] hover:shadow-[0_8px_30px_rgb(79,70,229,0.4)] hover:-translate-y-1 hover:from-blue-500 hover:to-indigo-500 overflow-hidden w-full max-w-sm" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 1rem 2rem; background: linear-gradient(to right, #2563eb, #4f46e5); color: white; font-weight: bold; border-radius: 1rem; text-decoration: none; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 animate-pulse" style="width: 24px; height: 24px;"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg><span class="tracking-wide" style="font-size: 1.125rem;">${buttonText}</span></a>
 </div>
 `;
 }
