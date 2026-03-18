@@ -8,7 +8,6 @@ import { getSeoSkillTemplate } from '../seo-skill-parser'
 import type { PipelineContext } from './types'
 import fs from 'fs/promises'
 import path from 'path'
-import { searchImages, SafeSearchType } from 'duck-duck-scrape'
 
 /**
  * 추출된 여러 개의 이미지 제안에 대해 이미지를 확보하고 URL 매핑을 반환합니다.
@@ -33,23 +32,19 @@ export async function runImagePhase(ctx: PipelineContext, imageSuggestions: stri
       results['default'] = fallback;
     }
   } else {
+    // 중복 방지를 위한 Set 추가
+    const usedImages = new Set<string>();
+    
     // 다중 이미지 확보 실행 (병렬)
     const promises = imageSuggestions.map(async (suggestion) => {
       let url: string | null = null;
       try {
-        if (imageModel === 'web-search') {
-          console.log(`🔍 [Phase 3] 웹 검색 시도: ${suggestion}`);
-          const sr = await searchImages(suggestion, { safeSearch: SafeSearchType.STRICT });
-          if (sr.results && sr.results.length > 0) {
-            url = sr.results[0].image;
-            console.log(`✅ [Phase 3] 검색 성공: ${url}`);
-          }
+        if (imageModel === 'web-search' || imageModel === 'none' || imageModel === 'stock') {
+          url = await searchStockImage(ctx, span, fallback, suggestion, usedImages);
         } else if (imageModel === 'dall-e-3') {
           url = await generateDalleImage(ctx, span, fallback, suggestion);
         } else if (imageModel === 'nano-banana') {
           url = await generateNanoBanana(ctx, span, fallback, suggestion);
-        } else if (imageModel === 'stock') {
-          url = await searchStockImage(ctx, span, fallback, suggestion);
         }
       } catch (err) {
         console.warn(`⚠️ 이미지 확보 실패 (${suggestion})`, err);
@@ -148,7 +143,7 @@ async function generateNanoBanana(ctx: PipelineContext, span: any, fallback: str
 
 /** Pixabay 무료 스탁 이미지 검색 */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function searchStockImage(ctx: PipelineContext, span: any, fallback: string | null, customPrompt?: string): Promise<string | null> {
+async function searchStockImage(ctx: PipelineContext, span: any, fallback: string | null, customPrompt?: string, usedImages?: Set<string>): Promise<string | null> {
   console.log(`🖼️ [Phase 3] Pixabay 스탁 이미지 검색 중... (${customPrompt || ctx.body.itemName})`);
   
   const PIXABAY_API_KEY = process.env.PIXABAY_API_KEY;
@@ -181,15 +176,29 @@ async function searchStockImage(ctx: PipelineContext, span: any, fallback: strin
       orientation: 'horizontal',
       safesearch: 'true',
       order: 'popular',
-      per_page: 3
+      per_page: 20
     });
     
     const response = await axios.get(`https://pixabay.com/api/?${queryStr}`);
     const data = response.data;
 
     if (data.hits && data.hits.length > 0) {
-      // 가장 첫 번째 인기 이미지 또는 무작위 선택
-      const selectedImage = data.hits[0].largeImageURL;
+      // 중복 방지를 위한 필터링 (사용된 이미지가 아닌 것들만 추출)
+      const availableHits = usedImages 
+        ? data.hits.filter((hit: any) => !usedImages.has(hit.largeImageURL))
+        : data.hits;
+      
+      // 만약 모두 다 써버렸다면 그냥 전체에서 랜덤 (중복 허용)
+      const targetHits = availableHits.length > 0 ? availableHits : data.hits;
+      
+      // 랜덤 선택
+      const randomIndex = Math.floor(Math.random() * targetHits.length);
+      const selectedImage = targetHits[randomIndex].largeImageURL;
+      
+      if (usedImages) {
+        usedImages.add(selectedImage);
+      }
+
       console.log(`✅ [Phase 3] Pixabay 스탁 이미지 찾음: ${selectedImage}`);
       span?.end({
         output: { type: 'pixabay-stock', saved: false },

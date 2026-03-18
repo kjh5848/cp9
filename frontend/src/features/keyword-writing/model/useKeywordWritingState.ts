@@ -9,7 +9,7 @@ import { useUserSettingsViewModel } from "@/features/user-settings/model/useUser
 
 export function useKeywordWritingState() {
   const [mode, setMode] = useState<WritingMode>("keyword_first");
-  const { articleSettings } = useUserSettingsViewModel();
+  const { articleSettings, autopilotSettings, themeSettings } = useUserSettingsViewModel();
 
   const [keyword, setKeyword] = useState("");
   const [editedTitle, setEditedTitle] = useState("");
@@ -29,10 +29,26 @@ export function useKeywordWritingState() {
   const [publishTargets, setPublishTargets] = useState<any[]>([]);
 
   useEffect(() => {
-    if (articleSettings?.defaultTitleModel) {
-      setTitleModel(prev => prev === DEFAULT_TEXT_MODEL ? articleSettings.defaultTitleModel! : prev);
+    if (autopilotSettings?.publishTargets && autopilotSettings.publishTargets.length > 0) {
+      setPublishTargets(prev => prev.length === 0 ? autopilotSettings.publishTargets! : prev);
     }
-  }, [articleSettings?.defaultTitleModel]);
+  }, [autopilotSettings?.publishTargets]);
+
+  useEffect(() => {
+    if (articleSettings) {
+      if (articleSettings.defaultTitleModel) setTitleModel(prev => prev === DEFAULT_TEXT_MODEL ? articleSettings.defaultTitleModel! : prev);
+      if (articleSettings.defaultTextModel) setTextModel(prev => prev === DEFAULT_TEXT_MODEL ? articleSettings.defaultTextModel! : prev);
+      if (articleSettings.defaultImageModel) setImageModel(prev => prev === DEFAULT_IMAGE_MODEL ? articleSettings.defaultImageModel! : prev);
+      if (articleSettings.presetWordCount) setCharLimit(prev => prev === "5000" ? String(articleSettings.presetWordCount) : prev);
+    }
+  }, [articleSettings]);
+
+  useEffect(() => {
+    if (themeSettings) {
+      if (themeSettings.personaId) setPersona(prev => prev === "IT" ? themeSettings.personaId! : prev);
+      if (themeSettings.themeId) setThemeId(prev => (prev === null && themeSettings.themeId) ? themeSettings.themeId : prev);
+    }
+  }, [themeSettings]);
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationResult, setGenerationResult] = useState<GenerationResult | null>(null);

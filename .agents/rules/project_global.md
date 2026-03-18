@@ -22,3 +22,13 @@ description: 프로젝트 전역 에이전트 규칙 (Global Agent Rules)
 - `/implement-fsd-feature`: 새로운 기능 개발 시 사용하는 FSD(Feature-Sliced Design) 아키텍처 규칙
 - `/seo-pipeline`: SEO 블로그 포스팅 파이프라인 프로세스
 - `/keyword-debug`: 구체적인 기능 디버깅 프로세스
+
+## 4. 공식 슈퍼파워 스킬 (Claude Code Superpowers)
+에이전트는 확장 기능이나 추가 도구가 필요할 때 아래 경로의 공식 슈퍼파워 스킬을 직접 설치 및 호출하여 활용할 수 있습니다.
+- **스킬 경로**: `obra/superpowers`
+  - (예: `obra/superpowers@using-superpowers`, `obra/superpowers@systematic-debugging` 등)
+- 실행 방법: `npx skills find obra/superpowers`로 검색하거나 `npx skills add obra/superpowers@<스킬명>`으로 설치 후 해당 스킬을 호출하여 사용하세요.
+
+## 5. 방어적 프롬프트 및 정규식 규칙 (Defensive Programming for LLM)
+- **금칙어 및 기호 규제:** 시스템 및 유저 프롬프트 작성 시, LLM의 본능적 포맷(예: '결론:', '특징:') 생성을 차단하려면 단순히 가볍게 사용하지 말라고 하는 것보다 "어떠한 경우에도 '결론' 단어 및 쌍점(`:`) 기호의 사용을 절대 금지한다"와 같이 명확하고 독립적인 네거티브 프롬프트 룰을 명시적으로 갖춰야 합니다.
+- **관대한 파싱(Tolerant Parsing):** 매크로 치환 정규식(Regex)을 작성할 때는 LLM이 포맷을 미세하게 틀릴 확률을 방어해야 합니다. 예를 들어 `[[[CTA_BUTTON]]]` 3개의 대괄호를 기대하더라도, LLM이 2개만 생성하는 실수를 포용할 수 있도록 정규식을 `\[{2,3}...\]{2,3}` 형태로 유연하고 관대하게 작성해야 합니다.

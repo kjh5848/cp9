@@ -46,11 +46,9 @@ export const ProductCreation = () => {
   const { startPolling, isPolling } = useJobPolling({
     intervalMs: 5000,
     onComplete: () => {
-      setIsResearching(false);
       toast.success("✨ AI 글 작성이 완료되었습니다!", { duration: 5000 });
     },
     onFailed: () => {
-      setIsResearching(false);
       toast.error("❌ AI 글 작성 중 오류가 발생했습니다.", { duration: 5000 });
     }
   });
@@ -194,6 +192,7 @@ export const ProductCreation = () => {
           clearCart(); // <-- 여기에 장바구니 초기화 추가
           startPolling(newProjectId, String(leadProduct.productId));
           toast.success(`📝 ${resolvedArticleType === 'compare' ? '비교 분석' : '큐레이션'} 글 생성이 시작되었습니다!`, { duration: 4000 });
+          setIsResearching(false);
           if (params.actionType === 'SCHEDULE') router.push('/schedule');
         } else {
           toast.error('글 생성 요청에 실패했습니다.');
@@ -242,6 +241,7 @@ export const ProductCreation = () => {
           clearCart(); // <-- 여기에 장바구니 초기화 추가
           const firstProduct = uniqueSelectedProducts[0];
           startPolling(newProjectId, String(firstProduct.productId));
+          setIsResearching(false);
           toast.success(`📝 ${successCount}개 상품 글 생성이 시작되었습니다!\n완료 시 알림을 보내드리겠습니다.`, { duration: 4000 });
 
           if (params.actionType === 'SCHEDULE') router.push('/schedule');

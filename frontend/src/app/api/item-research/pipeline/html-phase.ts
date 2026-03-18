@@ -54,6 +54,7 @@ export async function runHtmlPhase(
   // 매크로( [[[CTA_BUTTON:URL]]] 또는 [[CTA_BUTTON:URL]] )가 텍스트 상태일 때, 디자인 테마에 맞춘 HTML 컴포넌트로 바로 치환합니다.
   // 주의: marked.parse()가 매크로 내부의 http 리터럴을 <a href="...">...</a> 로 렌더링했을 수 있으므로 태그를 벗겨냅니다.
   // 단독 <p> 태그 래핑으로 인한 여백 이슈 방지를 위해 <p>를 함께 매칭하여 치환 시 제거합니다.
+  let ctaMacroIndex = 0;
   htmlBody = htmlBody.replace(/<p>\s*\[{2,3}CTA_BUTTON(?::([^\]]+))?\]{2,3}\s*<\/p>|\[{2,3}CTA_BUTTON(?::([^\]]+))?\]{2,3}/g, (match, pUrlGroup, urlGroup) => {
     let rawUrl = (pUrlGroup || urlGroup || '').trim();
     if (!rawUrl) rawUrl = defaultBuyUrl;
@@ -63,12 +64,13 @@ export async function runHtmlPhase(
       rawUrl = defaultBuyUrl;
     }
     
-    // 테마 설정이 있다면 (기본 제공된 테마라도) 첫번째 CTA 블록(통상 상단/기본용) 디자인 활용
+    // 테마 설정이 있다면 (기본 제공된 테마라도) 등록된 리뷰용 여러 디자인 템플릿 블록(상/중/하)을 순환 적용
     if (useNewCtaSystem) {
-      const primaryBlock = ctaBlocks[0]; // [상단 추천 상품, 중간 추천 상품, 하단 추천 상품] 중 0번째의 디자인 사용
+      const currentBlock = ctaBlocks[ctaMacroIndex % ctaBlocks.length];
+      ctaMacroIndex++;
       // 링크만 해당 매크로에 박힌 URL(비교글의 경우 해당 상품 URL)로 바꿔서 동적으로 HTML 생성
       const dynamicConfig = { ...ctaData, buyUrl: rawUrl };
-      return buildCtaBlockHtml(dynamicConfig, primaryBlock);
+      return buildCtaBlockHtml(dynamicConfig, currentBlock);
     }
     
     // 테마가 없거나 구버전이라면 fallback 스니펫(기존 유지)
@@ -226,7 +228,7 @@ export async function runHtmlPhase(
   // ── 후처리 4: AI 이미지 제안 문구 안내 박스 치환 ──
   // imageUrlMap에 있는 실제 이미지 URL을 사용하여 치환, 없으면 기본 fallback 박스 렌더링
   htmlBody = htmlBody.replace(
-    /\[이미지\s*제안(?:[:\s]*)(.*?)\]/g,
+    /\[이미지\s*제안(?:[:\-\s]*)(.*?)\]/g,
     (match, suggestionText) => {
       const suggestionKey = suggestionText.trim();
       const mappedUrl = imageUrlMap[suggestionKey];
