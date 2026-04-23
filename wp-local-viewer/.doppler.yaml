@@ -1,0 +1,12 @@
+# Doppler 프로젝트 설정
+project: cp9-frontend
+environments:
+  development:
+    config: dev
+  staging:
+    config: stg
+  production:
+    config: prd
+
+# 기본 환경 설정
+default_environment: development

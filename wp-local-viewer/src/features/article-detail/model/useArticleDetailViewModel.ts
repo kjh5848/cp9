@@ -1,0 +1,355 @@
+"use client";
+
+import { useState, useCallback, useEffect } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { toast } from 'react-hot-toast';
+import useSWR from 'swr';
+import { ResearchItem } from '@/entities/research/model/types';
+import { TEXT_MODELS } from './constants';
+import { useUserSettingsViewModel } from '@/features/user-settings/model/useUserSettingsViewModel';
+
+/* ══════════════════════════ 타입 ══════════════════════════ */
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface MonitoringData {
+  hasMonitoring: boolean;
+  monitoring: {
+    totalLatencyMs?: number;
+    estimatedImageCost?: number;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    phases?: any[];
+    textModel?: string;
+    imageModel?: string;
+    persona?: string;
+  };
+}
+
+export interface WpCategory {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+/* ══════════════════════════ ViewModel ══════════════════════════ */
+
+/**
+ * [Features/ArticleDetail Layer]
+ * 글 상세 페이지의 상태 관리와 비즈니스 로직(API 통신)을 담당하는 ViewModel 훅입니다.
+ */
+export function useArticleDetailViewModel() {
+  const params = useParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const id = params.id as string;
+  const projectId = searchParams.get('projectId');
+
+  // ── SWR 페처 ──
+  const fetcher = (url: string) => fetch(url).then(res => res.json());
+
+  // ── 모니터링 데이터 ──
+  const [monitoring, setMonitoring] = useState<MonitoringData | null>(null);
+  const [monitoringLoading, setMonitoringLoading] = useState(false);
+
+  // ── 재시도 다이얼로그 ──
+  const [retryDialogOpen, setRetryDialogOpen] = useState(false);
+  const [retryModel, setRetryModel] = useState('gpt-4o');
+  const [retryImageModel, setRetryImageModel] = useState('dall-e-3');
+  const [retryLoading, setRetryLoading] = useState(false);
+
+  // ── 글 편집 ──
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  // ── 테마 재적용 ──
+  const { data: themesData, isLoading: themesLoading, mutate: mutateThemes } = useSWR('/api/design', fetcher);
+  const themes: any[] = themesData?.themes || [];
+  
+  const [applyingTheme, setApplyingTheme] = useState(false);
+  const [previewThemeId, setPreviewThemeId] = useState<string | null>(null);
+  const [appliedThemeBgColor, setAppliedThemeBgColor] = useState<string | null>(null);
+
+  // ── WordPress 발행 ──
+  const [wpPublishing, setWpPublishing] = useState(false);
+  const [wpDialogOpen, setWpDialogOpen] = useState(false);
+  const [wpCategories, setWpCategories] = useState<WpCategory[]>([]);
+  const [wpSelectedCats, setWpSelectedCats] = useState<number[]>([]);
+  const [wpCatLoading, setWpCatLoading] = useState(false);
+
+  // 현재 사용자 설정
+  const { autopilotSettings } = useUserSettingsViewModel();
+
+  // ── 데이터 조회 (SWR) ──
+  const { data: researchData, isLoading, mutate: fetchItem } = useSWR('/api/research', fetcher, {
+    refreshInterval: (data) => {
+      // data가 없는 경우(첫 로딩)나 캐시된 데이터에서 'PROCESSING' 상태인 항목이 있으면 폴링
+      const found = data?.data?.find((i: ResearchItem) => 
+        projectId ? i.itemId === id && i.projectId === projectId : i.itemId === id
+      );
+      return found?.pack?.status === 'PROCESSING' ? 4000 : 0;
+    }
+  });
+
+  const item = researchData?.data?.find((i: ResearchItem) =>
+    projectId ? i.itemId === id && i.projectId === projectId : i.itemId === id
+  ) || null;
+
+  // 파생 상태 선언 위치 보정
+  const isArticleFailed = item?.pack?.status === 'FAILED' || item?.pack?.content?.includes('작성 실패');
+  const isWpPublished = item?.pack?.status === 'WP_PUBLISHED' || !!item?.pack?.wordpress?.postUrl;
+
+  // 글을 찾을 수 없는 경우 알림 (최초 데이터 로드 완료 후 1회)
+  useEffect(() => {
+    // 임시로 노출 에러 제거 (생성 직후 딜레이로 빈 화면이 뜰 때 발생하는 얼럿스트 방지)
+  }, [isLoading, researchData, item]);
+
+  // ── 테마 목록 조회 (SWR 대응) ──
+  const fetchThemes = useCallback(async () => {
+    await mutateThemes();
+  }, [mutateThemes]);
+
+  // ── 모니터링 조회 ──
+  useEffect(() => {
+    if (!item || !projectId) return;
+    const fetchMonitoring = async () => {
+      setMonitoringLoading(true);
+      try {
+        const res = await fetch(`/api/monitoring/trace?projectId=${projectId}&itemId=${id}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) setMonitoring(data);
+        }
+      } catch (e) {
+        console.warn('모니터링 데이터 조회 실패:', e);
+      } finally {
+        setMonitoringLoading(false);
+      }
+    };
+    fetchMonitoring();
+  }, [item, projectId, id]);
+
+  // (SWR 대체됨) 글이 로드되면 테마 목록도 조회
+  // useEffect(() => {
+  //   if (item?.pack?.content) fetchThemes();
+  // }, [item, fetchThemes]);
+
+  // ── 테마 재적용 ──
+  const applyTheme = useCallback(async (themeId: string | null) => {
+    if (!item || !projectId) return;
+    setApplyingTheme(true);
+    try {
+      const res = await fetch('/api/item-research/sync-theme', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId, itemIds: [item.itemId], themeId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '테마 적용 실패');
+      toast.success('디자인이 변경되었습니다!');
+      setPreviewThemeId(themeId);
+
+      // 테마 배경색 추출
+      if (themeId) {
+        const selectedTheme = themes.find(t => t.id === themeId);
+        if (selectedTheme) {
+          try {
+            const cfg = JSON.parse(selectedTheme.config);
+            const bgColor = cfg.article?.bgColor;
+            setAppliedThemeBgColor(bgColor && bgColor !== 'transparent' ? bgColor : null);
+          } catch { setAppliedThemeBgColor(null); }
+        }
+      } else {
+        setAppliedThemeBgColor(null);
+      }
+
+      await fetchItem();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '테마 적용에 실패했습니다.');
+    } finally {
+      setApplyingTheme(false);
+    }
+  }, [item, projectId, fetchItem, themes]);
+
+  // ── 글 편집 액션 ──
+  const startEdit = useCallback(() => {
+    if (!item?.pack?.content) return;
+    setEditContent(item.pack.content);
+    setIsEditing(true);
+  }, [item]);
+
+  const cancelEdit = useCallback(() => {
+    setIsEditing(false);
+    setEditContent('');
+  }, []);
+
+  const saveEdit = useCallback(async () => {
+    if (!item || !projectId) return;
+    setSavingEdit(true);
+    try {
+      const response = await fetch('/api/research', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          itemId: item.itemId,
+          pack: { ...item.pack, content: editContent },
+        }),
+      });
+      const result = await response.json();
+      if (result.success) {
+        toast.success('글이 성공적으로 저장되었습니다.');
+        setIsEditing(false);
+        await fetchItem();
+      } else {
+        toast.error(`저장 실패: ${result.error}`);
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '저장 중 오류가 발생했습니다.');
+    } finally {
+      setSavingEdit(false);
+    }
+  }, [item, projectId, editContent, fetchItem]);
+
+  // ── 재시도 다이얼로그 ──
+  const openRetryDialog = useCallback(() => {
+    const prevModel = item?.pack?.textModel;
+    const defaultModel = TEXT_MODELS.find((m: any) => m.value !== prevModel)?.value || 'gpt-4o';
+    setRetryModel(defaultModel);
+    setRetryDialogOpen(true);
+  }, [item]);
+
+  const handleRetry = useCallback(async () => {
+    if (!item || !projectId) return;
+    setRetryLoading(true);
+    try {
+      const response = await fetch('/api/item-research', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          itemName: item.pack.title || item.itemId,
+          projectId,
+          itemId: item.itemId,
+          productData: {
+            productName: item.pack.title || '',
+            productPrice: item.pack.priceKRW || 0,
+            productImage: item.pack.productImage || '',
+            productUrl: item.pack.productUrl || '',
+            categoryName: item.pack.categoryName || '',
+            isRocket: item.pack.isRocket || false,
+            isFreeShipping: item.pack.isFreeShipping || false,
+          },
+          items: item.pack.relatedItems?.map((ri: any) => ({
+            ...ri, productId: '', categoryName: '', isFreeShipping: false,
+          })),
+          seoConfig: {
+            persona: item.pack.persona || 'IT',
+            textModel: retryModel,
+            imageModel: retryImageModel,
+            actionType: 'NOW',
+            charLimit: 2000,
+            articleType: item.pack.articleType || 'single',
+          },
+        }),
+      });
+      if (!response.ok) throw new Error('재시도 요청에 실패했습니다.');
+      toast.success(`${TEXT_MODELS.find((m: any) => m.value === retryModel)?.label || retryModel} 모델로 재생성을 시작합니다.`);
+      setRetryDialogOpen(false);
+      await fetchItem();
+    } catch (error) {
+      console.error('Retry error:', error);
+      toast.error(error instanceof Error ? error.message : '재시도에 실패했습니다.');
+    } finally {
+      setRetryLoading(false);
+    }
+  }, [item, projectId, retryModel, retryImageModel, fetchItem]);
+
+  // ── WordPress 발행 ──
+  const openWpDialog = useCallback(async () => {
+    setWpDialogOpen(true);
+    setWpCatLoading(true);
+
+    let defaultCategoryId: number | undefined;
+    if (autopilotSettings?.publishTargets) {
+      const wpTarget = autopilotSettings.publishTargets.find((t: any) => t.platform === 'wordpress');
+      if (wpTarget?.meta?.categoryId) {
+        defaultCategoryId = Number(wpTarget.meta.categoryId);
+      }
+    }
+    setWpSelectedCats(defaultCategoryId ? [defaultCategoryId] : []);
+
+    try {
+      const res = await fetch('/api/wordpress/categories');
+      const data = await res.json();
+      if (data.success && data.categories) {
+        const sorted = (data.categories as WpCategory[]).sort((a, b) => {
+          if (a.slug === 'uncategorized') return 1;
+          if (b.slug === 'uncategorized') return -1;
+          return a.name.localeCompare(b.name);
+        });
+        setWpCategories(sorted);
+      }
+    } catch (error) {
+      console.error('카테고리 조회 실패:', error);
+      toast.error('카테고리 목록을 가져오지 못했습니다.');
+    } finally {
+      setWpCatLoading(false);
+    }
+  }, []);
+
+  const toggleCategory = useCallback((catId: number) => {
+    setWpSelectedCats(prev =>
+      prev.includes(catId) ? prev.filter(id => id !== catId) : [...prev, catId]
+    );
+  }, []);
+
+  const handleWpPublish = useCallback(async () => {
+    if (!item || !projectId) return;
+    setWpPublishing(true);
+    try {
+      const res = await fetch('/api/wordpress/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          itemId: item.itemId,
+          categoryIds: wpSelectedCats,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'WP 발행 실패');
+      toast.success(`WordPress 발행 완료! 포스트 ID: ${data.postId}`);
+      setWpDialogOpen(false);
+      await fetchItem();
+    } catch (error) {
+      console.error('WP publish error:', error);
+      toast.error(error instanceof Error ? error.message : 'WordPress 발행에 실패했습니다.');
+    } finally {
+      setWpPublishing(false);
+    }
+  }, [item, projectId, wpSelectedCats, fetchItem]);
+
+  return {
+    // 상태
+    item, isLoading, monitoring, monitoringLoading,
+    isArticleFailed, isWpPublished,
+    router, projectId,
+    // 편집
+    isEditing, editContent, savingEdit,
+    // 재시도
+    retryDialogOpen, retryModel, retryImageModel, retryLoading,
+    // 테마
+    themes, themesLoading, applyingTheme, previewThemeId, appliedThemeBgColor,
+    // WP 발행
+    wpDialogOpen, wpPublishing, wpCategories, wpSelectedCats, wpCatLoading,
+    // 액션
+    actions: {
+      fetchItem, openRetryDialog, handleRetry,
+      setRetryDialogOpen, setRetryModel, setRetryImageModel,
+      openWpDialog, handleWpPublish, toggleCategory, setWpDialogOpen,
+      startEdit, cancelEdit, saveEdit, setEditContent,
+      applyTheme, setPreviewThemeId, fetchThemes,
+    },
+  };
+}
+
+export type ArticleDetailViewModel = ReturnType<typeof useArticleDetailViewModel>;

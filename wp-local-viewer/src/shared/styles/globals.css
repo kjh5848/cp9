@@ -1,0 +1,526 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* TailwindCSS v4 Custom Theme Mapping */
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  
+  /* Typography bindings */
+  --font-syne: var(--font-syne), "Syne", sans-serif;
+  --font-sans: var(--font-jakarta), "Plus Jakarta Sans", sans-serif;
+}
+
+:root {
+  /* LIGHT THEME (기본) */
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --border: #e2e8f0;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --action: #ededed;
+}
+
+.dark {
+  /* DARK THEME */
+  --background: #0f172a;
+  --foreground: #f8fafc;
+  --card: #1e293b;
+  --card-foreground: #f8fafc;
+  --border: #334155;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --action: #334155;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+html, body {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+html::-webkit-scrollbar, body::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+/* 코드 스타일 가이드에 맞는 기본 스타일 */
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+  background: var(--action);
+  color: var(--foreground);
+}
+
+.btn-secondary {
+  @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+  background: var(--action);
+  color: var(--foreground);
+}
+
+.card {
+  @apply flex flex-col p-6 rounded-lg border border-gray-200 shadow-sm transition-shadow transition-colors;
+  background: #fff;
+  color: var(--foreground);
+}
+
+.card-header {
+  @apply flex flex-col gap-2 pb-4 border-b border-gray-200;
+}
+
+.card-title {
+  @apply text-lg font-semibold;
+  color: var(--foreground);
+}
+
+.card-description {
+  @apply text-sm;
+  color: var(--foreground);
+}
+
+.card-content {
+  @apply flex flex-col gap-4 pt-4;
+}
+
+.card-footer {
+  @apply flex items-center justify-end gap-2 pt-4 border-t border-gray-200;
+}
+
+/* 다크 모드 대응 */
+@media (prefers-color-scheme: dark) {
+  .card {
+    @apply border-gray-800;
+    background: #23272f;
+    color: var(--foreground);
+  }
+
+  .card-header {
+    @apply border-gray-800;
+  }
+  .card-title {
+    color: var(--foreground);
+  }
+  .card-description {
+    color: var(--foreground);
+  }
+  .card-footer {
+    @apply border-gray-800;
+  }
+}
+
+/* Animation classes for gradient background */
+@keyframes blob {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+.animate-blob {
+  animation: blob 7s infinite;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+/* 티스토리 풍 커스텀 Typography 스타일 */
+/* 블로그 본문은 항상 라이트 모드로 렌더링 — 앱 다크 모드의 CSS 변수에 의존 X */
+.prose-tistory {
+  @apply leading-relaxed font-sans text-base sm:text-[17px];
+  color: #334155; /* 고정 라이트 텍스트 색상 (slate-700) */
+  text-align: left;
+  background-color: #ffffff; /* 테마 미적용 시 기본 배경 — 테마 CSS가 오버라이드 */
+}
+
+/* HTML 콘텐츠 본문: 명시적 왼쪽 정렬 + 다크 모드 인라인 스타일 오버라이드 */
+.article-html-content {
+  text-align: left;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* 다크 모드: 인라인 스타일의 배경색 무력화 (cp9- CTA 컴포넌트는 제외) */
+/* 테마 적용 시(.themed) 에는 이 규칙을 비활성화하여 테마 CSS가 우선 적용되게 함 */
+.article-html-content:not(.themed) p:not([class*="cp9-"]),
+.article-html-content:not(.themed) span:not([class*="cp9-"]),
+.article-html-content:not(.themed) div:not([class*="cp9-"]),
+.article-html-content:not(.themed) li:not([class*="cp9-"]),
+.article-html-content:not(.themed) td:not([class*="cp9-"]),
+.article-html-content:not(.themed) th:not([class*="cp9-"]),
+.article-html-content:not(.themed) blockquote:not([class*="cp9-"]),
+.article-html-content:not(.themed) section:not([class*="cp9-"]),
+.article-html-content:not(.themed) header:not([class*="cp9-"]),
+.article-html-content:not(.themed) footer:not([class*="cp9-"]),
+.article-html-content:not(.themed) figure:not([class*="cp9-"]),
+.article-html-content:not(.themed) figcaption:not([class*="cp9-"]),
+.article-html-content:not(.themed) h1, .article-html-content:not(.themed) h2,
+.article-html-content:not(.themed) h3, .article-html-content:not(.themed) h4,
+.article-html-content:not(.themed) h5, .article-html-content:not(.themed) h6,
+.article-html-content:not(.themed) ul, .article-html-content:not(.themed) ol,
+.article-html-content:not(.themed) table, .article-html-content:not(.themed) thead,
+.article-html-content:not(.themed) tbody, .article-html-content:not(.themed) tr {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+.article-html-content:not(.themed) h1,
+.article-html-content:not(.themed) h2,
+.article-html-content:not(.themed) h3,
+.article-html-content:not(.themed) h4 {
+  color: #0f172a !important; /* 고정 라이트 색상 (slate-900) */
+}
+.article-html-content:not(.themed) p:not([class*="cp9-"]),
+.article-html-content:not(.themed) span:not([class*="cp9-"]),
+.article-html-content:not(.themed) li:not([class*="cp9-"]),
+.article-html-content:not(.themed) td:not([class*="cp9-"]),
+.article-html-content:not(.themed) th:not([class*="cp9-"]),
+.article-html-content:not(.themed) div:not([class*="cp9-"]),
+.article-html-content:not(.themed) blockquote:not([class*="cp9-"]) {
+  color: #64748b !important; /* 고정 라이트 색상 (slate-500) */
+}
+
+.article-html-content:not(.themed) strong,
+.article-html-content:not(.themed) b {
+  color: #0f172a !important; /* 고정 라이트 색상 (slate-900) */
+}
+/* CTA 버튼 텍스트색 보장 */
+.article-html-content [class*="cp9-cta__button"] {
+  color: #fff !important;
+}
+.prose-tistory p {
+  @apply my-6;
+  color: var(--muted-foreground);
+}
+.prose-tistory h1, .prose-tistory h2, .prose-tistory h3, .prose-tistory h4, .prose-tistory h5, .prose-tistory h6 {
+  @apply font-bold mb-4 mt-10 tracking-tight;
+  color: var(--foreground);
+}
+.prose-tistory h1 { @apply text-3xl sm:text-4xl border-b pb-2 mb-6; border-color: var(--border); }
+.prose-tistory h2 { @apply text-2xl sm:text-3xl; }
+.prose-tistory h3 { @apply text-xl sm:text-2xl; }
+.prose-tistory h4 { @apply text-lg sm:text-xl; }
+
+.prose-tistory strong { @apply font-bold; color: var(--foreground); }
+.prose-tistory ul { @apply list-disc list-outside ml-6 my-6 space-y-2; }
+.prose-tistory ol { @apply list-decimal list-outside ml-6 my-6 space-y-2; }
+.prose-tistory li { @apply pl-1; }
+.prose-tistory blockquote {
+  @apply border-l-4 border-slate-300 dark:border-slate-600 pl-4 py-1 my-6 italic text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 rounded-r-lg;
+}
+.prose-tistory code.inline-code {
+  @apply px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-pink-600 dark:text-pink-400 font-mono text-[0.9em];
+}
+.prose-tistory img {
+  @apply rounded-xl w-full my-8 shadow-sm;
+}
+.prose-tistory hr {
+  @apply border-slate-200 dark:border-slate-800 my-10;
+}
+.prose-tistory a {
+  @apply text-blue-600 dark:text-blue-400 hover:underline hover:text-blue-800 dark:hover:text-blue-300 transition-colors;
+}
+.prose-tistory li {
+  color: var(--muted-foreground);
+}
+/* 마크다운 테이블 스타일 */
+.prose-tistory table {
+  @apply w-full my-8 text-sm border-collapse;
+}
+.prose-tistory thead {
+  @apply bg-blue-500/10;
+}
+.prose-tistory th {
+  @apply px-4 py-3 text-left font-bold border border-border;
+  color: var(--foreground) !important;
+}
+.prose-tistory td {
+  @apply px-4 py-3 border border-border align-top;
+  color: var(--muted-foreground);
+}
+.prose-tistory tr:nth-child(even) td {
+  @apply bg-white/5;
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* CP9 CTA 컴포넌트 스타일 (페르소나별 변형 포함)                    */
+/* ═══════════════════════════════════════════════════════════════ */
+
+/* 기본 CTA 컨테이너 */
+.cp9-cta {
+  text-align: center;
+  margin: 24px 0;
+}
+.cp9-cta--footer {
+  margin: 40px 0;
+  padding: 24px;
+  background: rgba(228, 0, 59, 0.04);
+  border-radius: 12px;
+  border: 1px solid rgba(228, 0, 59, 0.1);
+}
+
+/* CTA 이미지 */
+.cp9-cta__image {
+  max-width: 100%;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+/* CTA 버튼 */
+.cp9-cta__button {
+  display: inline-block;
+  background: #E4003B;
+  color: #fff !important;
+  font-weight: bold;
+  padding: 14px 32px;
+  border-radius: 8px;
+  text-decoration: none !important;
+  font-size: 1rem;
+  transition: background 0.2s, transform 0.15s;
+}
+.cp9-cta__button:hover {
+  background: #c70033;
+  transform: translateY(-1px);
+}
+.cp9-cta__button--large {
+  padding: 16px 40px;
+  font-size: 1.1rem;
+}
+
+/* CTA 텍스트 */
+.cp9-cta__headline {
+  font-weight: bold;
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+  color: var(--foreground);
+}
+.cp9-cta__sub-text {
+  font-size: 0.9rem;
+  color: var(--muted-foreground);
+  margin-bottom: 16px;
+}
+.cp9-cta__disclaimer {
+  font-size: 0.75rem;
+  color: #888;
+  margin-top: 8px;
+}
+
+/* CTA 뱃지 (공통) */
+.cp9-cta__spec-badge,
+.cp9-cta__trend-badge,
+.cp9-cta__living-badge,
+.cp9-cta__price-badge,
+.cp9-cta__curator-badge,
+.cp9-cta__compare-badge,
+.cp9-cta__editor-badge {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+/* ── 페르소나별 테마 ── */
+
+/* IT/테크: 블루 계열 */
+.cp9-cta--tech .cp9-cta__spec-badge { background: rgba(59,130,246,0.15); color: #3b82f6; }
+.cp9-cta--tech .cp9-cta__button--tech { background: #2563eb; }
+.cp9-cta--tech .cp9-cta__button--tech:hover { background: #1d4ed8; }
+.cp9-cta--tech.cp9-cta--footer { background: rgba(59,130,246,0.04); border-color: rgba(59,130,246,0.15); }
+
+/* 뷰티: 핑크 계열 */
+.cp9-cta--beauty .cp9-cta__trend-badge { background: rgba(236,72,153,0.15); color: #ec4899; }
+.cp9-cta--beauty .cp9-cta__button--beauty { background: #db2777; }
+.cp9-cta--beauty .cp9-cta__button--beauty:hover { background: #be185d; }
+.cp9-cta--beauty.cp9-cta--footer { background: rgba(236,72,153,0.04); border-color: rgba(236,72,153,0.15); }
+
+/* 살림/인테리어: 그린 계열 */
+.cp9-cta--living .cp9-cta__living-badge { background: rgba(34,197,94,0.15); color: #16a34a; }
+.cp9-cta--living .cp9-cta__button--living { background: #16a34a; }
+.cp9-cta--living .cp9-cta__button--living:hover { background: #15803d; }
+.cp9-cta--living.cp9-cta--footer { background: rgba(34,197,94,0.04); border-color: rgba(34,197,94,0.15); }
+
+/* 가성비 헌터: 오렌지 계열 */
+.cp9-cta--hunter .cp9-cta__price-badge { background: rgba(249,115,22,0.15); color: #ea580c; }
+.cp9-cta--hunter .cp9-cta__button--hunter { background: #ea580c; }
+.cp9-cta--hunter .cp9-cta__button--hunter:hover { background: #c2410c; }
+.cp9-cta--hunter.cp9-cta--footer { background: rgba(249,115,22,0.04); border-color: rgba(249,115,22,0.15); }
+
+/* 마스터 큐레이터: 골드/다크 계열 */
+.cp9-cta--luxury .cp9-cta__curator-badge { background: rgba(202,138,4,0.15); color: #ca8a04; }
+.cp9-cta--luxury .cp9-cta__button--luxury { background: linear-gradient(135deg, #1a1a2e, #16213e); }
+.cp9-cta--luxury .cp9-cta__button--luxury:hover { background: linear-gradient(135deg, #16213e, #0f3460); }
+.cp9-cta--luxury.cp9-cta--footer { background: rgba(202,138,4,0.03); border-color: rgba(202,138,4,0.15); }
+
+/* 비교 분석: 수라 계열 */
+.cp9-cta--compare .cp9-cta__compare-badge { background: rgba(6,182,212,0.15); color: #06b6d4; }
+.cp9-cta--compare .cp9-cta__button--compare { background: #0891b2; }
+.cp9-cta--compare .cp9-cta__button--compare:hover { background: #0e7490; }
+.cp9-cta--compare.cp9-cta--footer { background: rgba(6,182,212,0.04); border-color: rgba(6,182,212,0.15); }
+
+/* 큐레이션: 보라 계열 */
+.cp9-cta--curation .cp9-cta__editor-badge { background: rgba(139,92,246,0.15); color: #8b5cf6; }
+.cp9-cta--curation .cp9-cta__button--curation { background: #7c3aed; }
+.cp9-cta--curation .cp9-cta__button--curation:hover { background: #6d28d9; }
+.cp9-cta--curation.cp9-cta--footer { background: rgba(139,92,246,0.04); border-color: rgba(139,92,246,0.15); }
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* Level 2: 전환율 최적화 스타일                                    */
+/* ═══════════════════════════════════════════════════════════════ */
+
+/* 가격 블록 */
+.cp9-cta__price-block {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.cp9-cta__current-price {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #E4003B;
+}
+.cp9-cta__inline-price {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #E4003B;
+  margin-bottom: 8px;
+  display: block;
+}
+
+/* 로켓배송 뱃지 */
+.cp9-cta__rocket-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #5B2FFF;
+  color: #fff;
+}
+
+/* 긴급성 배너 */
+.cp9-cta__urgency {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #dc2626;
+  margin-bottom: 12px;
+  padding: 6px 16px;
+  background: rgba(220, 38, 38, 0.06);
+  border-radius: 6px;
+  display: inline-block;
+}
+
+/* 사회적 증거 */
+.cp9-cta__social-proof {
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+  margin-bottom: 12px;
+  font-style: italic;
+}
+
+/* 중간 CTA (본문 내 삽입) */
+.cp9-cta--mid {
+  margin: 32px 0;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(59,130,246,0.04), rgba(139,92,246,0.04));
+  border-radius: 12px;
+  border: 1px solid rgba(59,130,246,0.1);
+  text-align: center;
+}
+.cp9-cta__mid-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.cp9-cta__button--mid {
+  padding: 10px 24px;
+  font-size: 0.9rem;
+}
+
+/* 버튼 펄스 애니메이션 (CTA 주목도 향상) */
+@keyframes cp9-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(228, 0, 59, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(228, 0, 59, 0); }
+}
+.cp9-cta__button--large {
+  animation: cp9-pulse 2s ease-in-out infinite;
+}
+.cp9-cta__button--large:hover {
+  animation: none;
+}
+
+/* 본문 삽입 상품 이미지 */
+.cp9-product-image {
+  margin: 32px 0;
+  text-align: center;
+}
+.cp9-product-image img {
+  max-width: 100%;
+  max-height: 400px;
+  object-fit: contain;
+  border-radius: 12px;
+  margin: 0 auto;
+  display: block;
+}
+.cp9-product-image figcaption {
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+  margin-top: 8px;
+  text-align: center;
+}
+
+/* CTA footer 내 상품 이미지 */
+.cp9-cta__image--footer {
+  max-width: 200px;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: 12px;
+  margin: 0 auto 16px;
+  display: block;
+}
+
+/* 스크롤바 숨김 유틸리티 (스크롤 기능은 유지) */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}

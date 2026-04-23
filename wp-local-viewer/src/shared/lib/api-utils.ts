@@ -1,0 +1,95 @@
+import { 
+  CoupangProductResponse, 
+  DeepLinkResponse, 
+  CoupangRawProduct, 
+  CoupangRawDeepLink 
+} from '@/shared/types/api';
+
+/**
+ * 쿠팡 상품 데이터를 일관된 응답 형식으로 변환
+ */
+export function normalizeCoupangProduct(product: CoupangRawProduct): CoupangProductResponse {
+  return {
+    productName: product.productName || product.title || '',
+    productImage: product.productImage || product.image || '',
+    productPrice: product.productPrice || product.price || 0,
+    productUrl: product.productUrl || product.url || '',
+    productId: product.productId || 0,
+    isRocket: product.isRocket || product.rocketShipping || false,
+    isFreeShipping: product.isFreeShipping || false,
+    categoryName: product.categoryName || '',
+    brand: product.brand || undefined,
+  };
+}
+
+/**
+ * 이미지 URL 리다이렉트를 추적하여 실제 CDN 주소 반환 (애드블록 우회용)
+ */
+export async function resolveImageRedirectUrl(url: string): Promise<string> {
+  if (!url || !url.includes('ads-partners.coupang.com')) return url;
+  try {
+    const res = await fetch(url, { method: 'HEAD', redirect: 'follow' });
+    return res.url || url;
+  } catch (e) {
+    return url;
+  }
+}
+
+/**
+ * 딥링크 응답을 일관된 형식으로 변환
+ */
+export function normalizeDeepLinkResponse(item: CoupangRawDeepLink): DeepLinkResponse {
+  return {
+    originalUrl: item.originalUrl || '',
+    shortenUrl: item.shortenUrl || '',
+    landingUrl: item.landingUrl || '',
+  };
+}
+
+/**
+ * API 오류 응답 생성
+ */
+export function createErrorResponse(message: string, status: number = 500) {
+  return {
+    error: message,
+    status,
+  };
+}
+
+/**
+ * API 성공 응답 생성
+ */
+export function createSuccessResponse<T>(data: T) {
+  return {
+    data,
+    success: true,
+  };
+}
+
+/**
+ * DB에 저장된 유저 키를 기준으로
+ * 쿠팡 API 키를 반환합니다.
+ * 보안 및 정책 요구사항에 따라 항상 사용자 개별 DB 설정만 사용합니다.
+ */
+export function resolveCoupangKeys(dbUser: any | null | undefined): { accessKey: string | undefined; secretKey: string | undefined } {
+  return {
+    accessKey: dbUser?.coupangAccessKey,
+    secretKey: dbUser?.coupangSecretKey,
+  };
+}
+
+/**
+ * 사용자 입력 문자열(단순 URL 또는 HTML 배너 태그)에서
+ * 실제 href 내의 http(s) URL을 추출하여 반환합니다.
+ */
+export function extractActualUrl(input?: string | null): string {
+  if (!input) return '';
+  // 1. href="URL" 추출
+  const hrefMatch = input.match(/href=["'](https?:\/\/[^"']+)["']/i);
+  if (hrefMatch) return hrefMatch[1];
+  // 2. 텍스트 내의 http(s) URL 추출 (매크로 닫는 괄호 ] 포함 방지)
+  const httpMatch = input.match(/(https?:\/\/[^\s<"'\]]+)/i);
+  if (httpMatch) return httpMatch[1];
+  // 매크로의 경우 텍스트에 남은 ] 기호를 제거
+  return input.trim().replace(/\]+$/, '');
+}

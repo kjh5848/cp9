@@ -1,0 +1,45 @@
+export const dynamic = 'force-dynamic';
+import { NextRequest, NextResponse } from 'next/server';
+import { searchCoupangProducts } from '@/infrastructure/clients/coupang';
+import { CoupangProductResponse, ProductSearchRequest, CoupangRawProduct } from '@/shared/types/api';
+import { normalizeCoupangProduct, resolveImageRedirectUrl } from '@/shared/lib/api-utils';
+
+/**
+ * @param req - NextRequest (POST, { keyword: string, limit?: number })
+ * @returns 상품 리스트
+ * @example
+ * fetch('/api/products/search', { method: 'POST', body: JSON.stringify({ keyword: '노트북' }) })
+ */
+export async function POST(req: NextRequest) {
+  try {
+    const accessKey = process.env.COUPANG_ACCESS_KEY;
+    const secretKey = process.env.COUPANG_SECRET_KEY;
+    
+    if (!accessKey || !secretKey) {
+      return NextResponse.json({ error: '.env.local 파일에 COUPANG_ACCESS_KEY, COUPANG_SECRET_KEY를 설정하세요.' }, { status: 403 });
+    }
+
+    const { keyword, limit = 10 }: ProductSearchRequest = await req.json();
+    
+    if (!keyword) {
+      return NextResponse.json({ error: '키워드를 입력하세요.' }, { status: 400 });
+    }
+    
+    const products = await searchCoupangProducts(keyword, limit, accessKey, secretKey);
+    
+    // 일관된 응답 형식으로 변환 및 이미지 애드블록 우회 처리
+    const result: CoupangProductResponse[] = await Promise.all(
+      (products as CoupangRawProduct[]).map(async (raw) => {
+        const item = normalizeCoupangProduct(raw);
+        item.productImage = await resolveImageRedirectUrl(item.productImage);
+        return item;
+      })
+    );
+    
+    return NextResponse.json(result);
+  } catch (e: unknown) {
+    console.error('[products/search] 에러:', e);
+    const errorMessage = e instanceof Error ? e.message : '서버 오류';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
+  }
+}
