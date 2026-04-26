@@ -37,15 +37,15 @@ function renderLayerHtml({ imageUrl, label, title, subtitle }) {
 <meta charset="utf-8" />
 <style>
 *{box-sizing:border-box}
-body{margin:0;width:1200px;height:700px;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;background:#111827}
-.frame{position:relative;width:1200px;height:700px;overflow:hidden;background:#111827}
+body{margin:0;width:960px;height:560px;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;background:#111827}
+.frame{position:relative;width:960px;height:560px;overflow:hidden;background:#111827}
 .photo{position:absolute;inset:0;background-image:linear-gradient(90deg,rgba(3,7,18,.86) 0%,rgba(15,23,42,.68) 42%,rgba(15,23,42,.18) 100%),url("${escapeHtml(imageUrl)}");background-size:cover;background-position:center}
 .grain{position:absolute;inset:0;background:radial-gradient(circle at 24% 28%,rgba(255,255,255,.12),transparent 30%),linear-gradient(180deg,rgba(255,255,255,.08),transparent 40%);mix-blend-mode:screen}
-.content{position:absolute;left:70px;right:70px;bottom:64px;color:#fff}
+.content{position:absolute;left:56px;right:56px;bottom:52px;color:#fff}
 .label{display:inline-flex;align-items:center;gap:10px;min-height:34px;padding:0 13px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(10px);font-size:16px;font-weight:900;letter-spacing:-.03em}
-.title{display:flex;flex-direction:column;gap:4px;margin:18px 0 14px;font-size:48px;line-height:1.09;font-weight:930;letter-spacing:-.065em;text-shadow:0 6px 22px rgba(0,0,0,.34)}
+.title{display:flex;flex-direction:column;gap:4px;margin:18px 0 14px;font-size:42px;line-height:1.09;font-weight:930;letter-spacing:-.065em;text-shadow:0 6px 22px rgba(0,0,0,.34)}
 .title span{display:block}
-.subtitle{max-width:780px;margin:0;color:#e5e7eb;font-size:22px;line-height:1.5;font-weight:720;letter-spacing:-.04em;text-shadow:0 4px 16px rgba(0,0,0,.3)}
+.subtitle{max-width:700px;margin:0;color:#e5e7eb;font-size:20px;line-height:1.5;font-weight:720;letter-spacing:-.04em;text-shadow:0 4px 16px rgba(0,0,0,.3)}
 .bar{width:64px;height:6px;border-radius:999px;background:#ff5a00;margin-top:24px;box-shadow:0 0 0 7px rgba(255,90,0,.14)}
 </style>
 </head>
@@ -79,17 +79,17 @@ export async function renderLayeredPexelsImage(image, options = {}) {
   fs.writeFileSync(htmlPath, html)
 
   const browser = await chromium.launch({ channel: 'chrome', headless: true })
-  const page = await browser.newPage({ viewport: { width: 1200, height: 700 }, deviceScaleFactor: 1 })
+  const page = await browser.newPage({ viewport: { width: 960, height: 560 }, deviceScaleFactor: 1 })
   await page.goto(`file://${htmlPath}`, { waitUntil: 'networkidle' })
   const metrics = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
     scrollHeight: document.documentElement.scrollHeight,
   }))
-  if (metrics.scrollWidth > 1200 || metrics.scrollHeight > 700) {
+  if (metrics.scrollWidth > 960 || metrics.scrollHeight > 560) {
     await browser.close()
     throw new Error(`deepdive layered image overflow: ${metrics.scrollWidth}x${metrics.scrollHeight}`)
   }
-  await page.screenshot({ path: outputPath, type: 'jpeg', quality: 88 })
+  await page.screenshot({ path: outputPath, type: 'jpeg', quality: 74 })
   await browser.close()
   fs.unlinkSync(htmlPath)
   return outputPath

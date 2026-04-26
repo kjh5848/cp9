@@ -69,7 +69,7 @@ function buildMobileCards(rows, caption) {
       const safeAlt = escapeHtml(row.alt || row.name)
       const safeHref = escapeHtml(row.href)
 
-      return `<div class="cp9-compare-card"><div class="cp9-compare-image"><a class="cp9-compare-image-link" href="${safeHref}" target="_blank" rel="noopener sponsored"><img src="${safeImage}" alt="${safeAlt}" loading="lazy" /></a></div><div class="cp9-compare-body"><div class="cp9-compare-name">${safeName}</div><div class="cp9-compare-price">${safePrice}</div><a class="cp9-compare-button" href="${safeHref}" target="_blank" rel="noopener sponsored">바로가기</a></div></div>`
+      return `<div class="cp9-compare-card"><div class="cp9-compare-image"><a class="cp9-compare-image-link" href="${safeHref}" target="_blank" rel="noopener sponsored"><img src="${safeImage}" alt="${safeAlt}" loading="lazy" decoding="async" /></a></div><div class="cp9-compare-body"><div class="cp9-compare-name">${safeName}</div><div class="cp9-compare-price">${safePrice}</div><a class="cp9-compare-button" href="${safeHref}" target="_blank" rel="noopener sponsored">바로가기</a></div></div>`
     })
     .join('\n')
 

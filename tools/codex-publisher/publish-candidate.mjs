@@ -300,7 +300,7 @@ function buildComparisonTable(products) {
   const rows = products.slice(0, 5).map((product, index) => {
     const role = productRole(product, index, 'deepdive')
     return `<tr>
-<td style="width:92px;padding:10px;border:1px solid #d1d5db;text-align:center;vertical-align:middle;"><a href="${escapeHtml(product.url)}" target="_blank" rel="noopener sponsored"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" loading="lazy" style="display:block;width:72px;height:72px;object-fit:contain;border:1px solid #edf0f5;border-radius:12px;padding:6px;background:#fff;" /></a></td>
+<td style="width:92px;padding:10px;border:1px solid #d1d5db;text-align:center;vertical-align:middle;"><a href="${escapeHtml(product.url)}" target="_blank" rel="noopener sponsored"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" style="display:block;width:72px;height:72px;object-fit:contain;border:1px solid #edf0f5;border-radius:12px;padding:6px;background:#fff;" /></a></td>
 <th scope="row" style="padding:10px;border:1px solid #d1d5db;text-align:left;vertical-align:middle;background:#fff;"><strong style="display:block;font-size:15px;line-height:1.35;color:#111;">${escapeHtml(product.name)}</strong><span style="display:block;margin-top:4px;font-size:13px;color:#6b7280;">${escapeHtml(role)}</span></th>
 <td style="width:104px;padding:10px;border:1px solid #d1d5db;text-align:center;vertical-align:middle;font-weight:800;white-space:nowrap;">${formatPrice(product.price)}</td>
 <td style="width:104px;padding:10px;border:1px solid #d1d5db;text-align:center;vertical-align:middle;"><a href="${escapeHtml(product.url)}" target="_blank" rel="noopener sponsored" style="display:inline-block;background:#ff5a00;color:#fff;text-decoration:none;padding:10px 16px;border-radius:999px;font-size:14px;font-weight:800;white-space:nowrap;">바로가기</a></td>
@@ -377,7 +377,7 @@ function buildTopCompareArticle(candidate, products) {
     const checks = productChecks(product).map((item) => `<li>${escapeHtml(item)}</li>`).join('')
     return `<section class="cp9-top-product" style="border-top:1px solid #e5e7eb;padding:28px 0;">
 <h2 style="font-size:24px;line-height:1.35;margin:0 0 12px;color:#111;">${index + 1}. ${escapeHtml(product.name)}</h2>
-<a href="${escapeHtml(product.url)}" target="_blank" rel="noopener sponsored"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" loading="lazy" style="display:block;width:220px;max-width:100%;height:220px;object-fit:contain;border:1px solid #edf0f5;border-radius:16px;padding:10px;background:#fff;margin:0 0 14px;" /></a>
+<a href="${escapeHtml(product.url)}" target="_blank" rel="noopener sponsored"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" style="display:block;width:220px;max-width:100%;height:220px;object-fit:contain;border:1px solid #edf0f5;border-radius:16px;padding:10px;background:#fff;margin:0 0 14px;" /></a>
 <p style="margin:0 0 10px;"><strong>핵심 판단:</strong> ${escapeHtml(productDecision(product, index))} 작성 시점 확인 가격은 <strong>${formatPrice(product.price)}</strong>이고, 배송 신호는 ${product.isRocket ? '로켓배송 확인' : '로켓배송 미확인'}, ${product.isFreeShipping ? '무료배송 확인' : '무료배송 미확인'}입니다. 생활가전은 상품 가격만큼 사용 공간, 소음, 관리 방식이 만족도를 좌우하므로 결제 전 상세 페이지에서 용량과 구성품을 먼저 확인해야 합니다.</p>
 <p style="margin:0 0 14px;">이 후보는 ${escapeHtml(candidate.keyword)} 검색 의도에서 가격, 성능, 사용 환경을 함께 비교하려는 사람에게 맞춰 봤습니다. 작성 시점에 확인 가능한 상품명, 가격, 이미지, 링크, 배송 조건을 기준으로 선별했고, 리뷰 수와 평점은 공개 본문에서 확인되지 않은 수치로 과장하지 않았습니다.</p>
 ${renderProductFactPanel(product)}
@@ -418,7 +418,7 @@ function buildDeepdiveArticle(candidate, products) {
     const role = productRole(product, index, 'deepdive')
     return `<section style="border:1px solid #e5e7eb;border-radius:18px;padding:18px;margin:18px 0;background:#fff;">
 <h3 style="font-size:20px;line-height:1.35;margin:0 0 10px;color:#111;">${index + 1}. ${escapeHtml(product.name)}</h3>
-<a href="${escapeHtml(product.url)}" target="_blank" rel="noopener sponsored"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" loading="lazy" style="display:block;width:180px;max-width:100%;height:180px;object-fit:contain;border:1px solid #edf0f5;border-radius:16px;padding:10px;background:#fff;margin:0 0 12px;" /></a>
+<a href="${escapeHtml(product.url)}" target="_blank" rel="noopener sponsored"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" style="display:block;width:180px;max-width:100%;height:180px;object-fit:contain;border:1px solid #edf0f5;border-radius:16px;padding:10px;background:#fff;margin:0 0 12px;" /></a>
 <p style="margin:0 0 10px;"><strong>구매 연결 역할:</strong> ${escapeHtml(role)} 포지션입니다. 이 글의 본론은 브랜드와 방식의 해석이므로, 이 영역은 독자가 실제 가격과 구성품을 확인하는 보조 링크로만 둡니다. 현재 확인 가격은 <strong>${formatPrice(product.price)}</strong>입니다.</p>
 ${renderProductFactPanel(product)}
 <ul style="margin:0 0 12px;padding-left:20px;">
@@ -507,7 +507,7 @@ function buildDishwasherDeepdiveArticle(candidate, products) {
     const role = productRole(product, index, 'deepdive')
     return `<section style="border:1px solid #e5e7eb;border-radius:18px;padding:18px;margin:18px 0;background:#fff;">
 <h3 style="font-size:20px;line-height:1.35;margin:0 0 10px;color:#111;">${index + 1}. ${escapeHtml(product.name)}</h3>
-<a href="${escapeHtml(product.url)}" target="_blank" rel="noopener sponsored"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" loading="lazy" style="display:block;width:180px;max-width:100%;height:180px;object-fit:contain;border:1px solid #edf0f5;border-radius:16px;padding:10px;background:#fff;margin:0 0 12px;" /></a>
+<a href="${escapeHtml(product.url)}" target="_blank" rel="noopener sponsored"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" style="display:block;width:180px;max-width:100%;height:180px;object-fit:contain;border:1px solid #edf0f5;border-radius:16px;padding:10px;background:#fff;margin:0 0 12px;" /></a>
 <p style="margin:0 0 10px;"><strong>구매 확인 역할:</strong> ${escapeHtml(role)}입니다. 본문은 브랜드 철학과 설치 판단을 중심으로 읽고, 이 영역은 실제 가격, 설치 조건, 구성품, 배송 가능 여부를 확인하는 보조 링크로만 사용하세요. 현재 확인 가격은 <strong>${formatPrice(product.price)}</strong>입니다.</p>
 ${renderProductFactPanel(product)}
 <ul style="margin:0 0 12px;padding-left:20px;">
@@ -592,7 +592,7 @@ function buildCleanerDeepdiveArticle(candidate, products) {
     const role = productRole(product, index, 'deepdive')
     return `<section style="border:1px solid #e5e7eb;border-radius:18px;padding:18px;margin:18px 0;background:#fff;">
 <h3 style="font-size:20px;line-height:1.35;margin:0 0 10px;color:#111;">${index + 1}. ${escapeHtml(product.name)}</h3>
-<a href="${escapeHtml(product.url)}" target="_blank" rel="noopener sponsored"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" loading="lazy" style="display:block;width:180px;max-width:100%;height:180px;object-fit:contain;border:1px solid #edf0f5;border-radius:16px;padding:10px;background:#fff;margin:0 0 12px;" /></a>
+<a href="${escapeHtml(product.url)}" target="_blank" rel="noopener sponsored"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" style="display:block;width:180px;max-width:100%;height:180px;object-fit:contain;border:1px solid #edf0f5;border-radius:16px;padding:10px;background:#fff;margin:0 0 12px;" /></a>
 <p style="margin:0 0 10px;"><strong>구매 확인 역할:</strong> ${escapeHtml(role)}입니다. 본문은 건식 흡입, 습식 처리, 오염수 관리, 사용 공간을 이해하는 데 집중하고, 이 영역은 실제 가격과 구성품을 확인하는 보조 링크로만 사용하세요. 현재 확인 가격은 <strong>${formatPrice(product.price)}</strong>입니다.</p>
 ${renderProductFactPanel(product)}
 <ul style="margin:0 0 12px;padding-left:20px;">
@@ -674,7 +674,7 @@ function buildCurationCard(product, index) {
   const role = productRole(product, index, 'curation_20')
   const description = curationDescription(product, role, index)
   return `<section class="cp9-curation-card" style="box-sizing:border-box;width:100%;display:grid!important;grid-template-columns:112px minmax(0,1fr)!important;gap:18px!important;align-items:start!important;border:1px solid #d1d5db;border-radius:18px;padding:18px;background:#fff;margin:0 0 14px;box-shadow:0 8px 22px rgba(15,23,42,.04);">
-<a class="cp9-curation-image" href="${escapeHtml(product.url)}" target="_blank" rel="noopener sponsored" style="display:block;width:112px;min-width:112px;"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" loading="lazy" style="display:block;box-sizing:border-box;width:112px!important;height:112px!important;max-width:112px!important;object-fit:contain;border:1px solid #edf0f5;border-radius:14px;padding:8px;background:#fff;" /></a>
+<a class="cp9-curation-image" href="${escapeHtml(product.url)}" target="_blank" rel="noopener sponsored" style="display:block;width:112px;min-width:112px;"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" style="display:block;box-sizing:border-box;width:112px!important;height:112px!important;max-width:112px!important;object-fit:contain;border:1px solid #edf0f5;border-radius:14px;padding:8px;background:#fff;" /></a>
 <div class="cp9-curation-body" style="min-width:0;width:100%;display:block;"><span style="display:inline-block;font-size:13px;color:#6b7280;margin:0 0 5px;line-height:1.45;">${String(index + 1).padStart(2, '0')} · ${escapeHtml(role)}</span><strong style="display:block;font-size:18px;line-height:1.42;color:#111;margin:0 0 8px;letter-spacing:-.025em;word-break:keep-all;overflow-wrap:anywhere;">${escapeHtml(product.name)}</strong><p style="margin:0 0 10px;color:#475467;font-size:15px;line-height:1.72;word-break:keep-all;overflow-wrap:anywhere;">${escapeHtml(description)}</p>${renderProductFactPanel(product, { compact: true })}<a href="${escapeHtml(product.url)}" target="_blank" rel="noopener sponsored" style="display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 16px;border-radius:999px;background:#ff5a00;color:#fff!important;text-decoration:none!important;font-size:14px;font-weight:900;">가격 확인</a></div>
 </section>`
 }
@@ -1037,7 +1037,7 @@ function assertNoInternalDataSourceWording(article) {
 
 function validateArticle(article, candidate) {
   if (!article.content.includes(DISCLOSURE)) throw new Error('disclosure missing')
-  if (!article.content.includes('loading="lazy"')) throw new Error('lazy images missing')
+  if (!article.content.includes('loading="lazy" decoding="async"')) throw new Error('lazy images missing')
   assertNoInternalDataSourceWording(article)
   if (/[:：]/.test(article.title || '')) throw new Error('title contains forbidden colon')
   const headingColon = findHeadingTextWithColon(article.content)
@@ -1062,6 +1062,9 @@ function validateArticle(article, candidate) {
     const productFactCount = (article.content.match(/class="cp9-product-facts"/g) || []).length
     const pexelsVisualCount = (article.content.match(/class="cp9-deepdive-visual"/g) || []).length
     const preparedPexelsCount = Array.isArray(article.auxiliaryImages) ? article.auxiliaryImages.length : 0
+    if (/pexels\.com|images\.pexels\.com/i.test(article.content)) {
+      throw new Error('deepdive public content must not link to or load Pexels directly')
+    }
     if (imageCount < 3) {
       throw new Error(`deepdive product image count too low: ${imageCount}`)
     }

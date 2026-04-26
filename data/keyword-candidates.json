@@ -1262,7 +1262,7 @@
     "id": "2026-04-26-미니제습기",
     "createdAt": "2026-04-26T04:51:50.992Z",
     "updatedAt": "2026-04-26T04:51:50.992Z",
-    "status": "pending",
+    "status": "published",
     "keyword": "미니제습기",
     "coupangSearchTerm": "제습기",
     "blogTitle": "미니제습기: 가격, 성능, 사용 환경 기준으로 고르는 법",
@@ -1288,7 +1288,10 @@
       "datalabTrendDelta": 5.35,
       "shoppingRatio": 64.34
     },
-    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화"
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-26T11:36:20.623Z",
+    "wordpressPostId": 656,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777203371895/"
   },
   {
     "id": "2026-04-26-드럼세탁기",

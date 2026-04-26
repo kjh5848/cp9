@@ -166,7 +166,7 @@ function extractProductCards(html, limit = 4) {
 
 function buildDeepdiveGallery(cards) {
   const items = cards.map((card, index) => {
-    const image = `<img src="${escapeHtml(card.image)}" alt="${escapeHtml(card.name)}" loading="lazy" style="display:block;width:100%;height:150px;object-fit:contain;border:1px solid #edf0f5;border-radius:16px;padding:10px;background:#fff;margin:0 0 10px;" />`
+    const image = `<img src="${escapeHtml(card.image)}" alt="${escapeHtml(card.name)}" loading="lazy" decoding="async" style="display:block;width:100%;height:150px;object-fit:contain;border:1px solid #edf0f5;border-radius:16px;padding:10px;background:#fff;margin:0 0 10px;" />`
     const imageBlock = card.url
       ? `<a href="${escapeHtml(card.url)}" target="_blank" rel="noopener sponsored" style="display:block;text-decoration:none;">${image}</a>`
       : image

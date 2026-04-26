@@ -1376,12 +1376,12 @@
       "9483351943",
       "9004239817",
       "8031933556",
-      "6658808577"
+      "8565504224"
     ],
     "deepdiveAuxiliaryImages": [],
     "title": "식기세척기 고르는 법 밀레, LG, 삼성, SK매직 브랜드 이미지와 세척 철학",
-    "updatedAt": "2026-04-26T11:20:55.835Z",
-    "qualityUpdatedAt": "2026-04-26T11:20:55.835Z"
+    "updatedAt": "2026-04-26T11:32:56.141Z",
+    "qualityUpdatedAt": "2026-04-26T11:32:56.141Z"
   },
   {
     "id": "2026-04-26-제습기",
@@ -1565,6 +1565,32 @@
       "7939989640",
       "8340144235",
       "9057929475"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-미니제습기",
+    "date": "2026-04-26",
+    "keyword": "미니제습기",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 656,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777203371895/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "8277449493",
+      "9440762265",
+      "8887959594",
+      "6937002667",
+      "9444934108"
     ],
     "deepdiveAuxiliaryImages": []
   }
