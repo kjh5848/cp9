@@ -115,19 +115,12 @@ export async function fetchDeepdivePexelsImages(options = {}) {
 function renderPexelsFigure(image, index, caption) {
   return `<figure class="cp9-deepdive-visual" data-cp9-visual="${index + 1}" style="margin:26px 0 30px;border:1px solid #e5e7eb;border-radius:24px;overflow:hidden;background:#111827;box-shadow:0 18px 42px rgba(15,23,42,.14);">
 <img src="${escapeHtml(image.imageUrl)}" alt="${escapeHtml(image.alt)}" loading="lazy" decoding="async" width="960" height="560" style="display:block;width:100%;height:auto;aspect-ratio:12/7;max-height:420px;object-fit:cover;" />
-<figcaption style="margin:0;padding:16px 18px;background:#111827;color:#f9fafb;font-size:14px;line-height:1.65;">
-<strong style="display:block;margin:0 0 4px;font-size:15px;color:#fff;">${escapeHtml(caption)}</strong>
-</figcaption>
 </figure>`
 }
 
 export function renderDeepdiveLayeredFigure(image, index) {
-  const visibleCaption = image.caption || image.layerSubtitle || ''
   return `<figure class="cp9-deepdive-visual" data-cp9-visual="${index + 1}" style="margin:26px 0 30px;border:1px solid #e5e7eb;border-radius:24px;overflow:hidden;background:#111827;box-shadow:0 18px 42px rgba(15,23,42,.14);">
 <img src="${escapeHtml(image.renderedUrl || image.imageUrl)}" alt="${escapeHtml(image.layerTitle || image.alt)}" loading="lazy" decoding="async" width="960" height="560" style="display:block;width:100%;height:auto;aspect-ratio:12/7;object-fit:cover;" />
-<figcaption style="margin:0;padding:14px 18px;background:#111827;color:#f9fafb;font-size:14px;line-height:1.65;">
-<strong style="display:block;margin:0 0 4px;font-size:15px;color:#fff;">${escapeHtml(visibleCaption)}</strong>
-</figcaption>
 </figure>`
 }
 
