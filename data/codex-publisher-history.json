@@ -1,0 +1,1571 @@
+[
+  {
+    "id": "2026-04-24-air-fryer-top5-capacity-cleaning",
+    "createdAt": "2026-04-24T00:00:00+09:00",
+    "keyword": "에어프라이어 추천",
+    "seed": "에어프라이어",
+    "category": "주방가전",
+    "intent": "구매 비교",
+    "articleType": "top_compare",
+    "persona": "마스터 큐레이터 H",
+    "status": "published",
+    "wordpress": {
+      "postId": 477,
+      "status": "publish",
+      "url": "https://jupocket.com/%ec%97%90%ec%96%b4%ed%94%84%eb%9d%bc%ec%9d%b4%ec%96%b4-%ec%b6%94%ec%b2%9c-top-5-%ec%9a%a9%eb%9f%89-%ec%84%b8%ec%b2%99-%ec%86%8c%ec%9e%ac-%ea%b8%b0%ec%a4%80%ec%9c%bc%eb%a1%9c-%ea%b3%a0%eb%a5%b4/",
+      "mediaId": 486,
+      "featuredImageUrl": "https://jupocket.com/wp-content/uploads/2026/04/air-fryer-top5-thumbnail-web-standard-1777032375323.jpg"
+    },
+    "localFiles": {
+      "markdown": "content/codex-publisher/drafts/2026-04-24/air-fryer-top5-capacity-cleaning.md",
+      "html": "content/codex-publisher/drafts/2026-04-24/air-fryer-top5-capacity-cleaning.html",
+      "thumbnailHtml": "content/codex-publisher/drafts/2026-04-24/air-fryer-top5-thumbnail.html",
+      "thumbnailJpeg": "content/codex-publisher/drafts/2026-04-24/air-fryer-top5-thumbnail.jpg",
+      "report": "docs/codex-publisher-reports/2026-04-24.md"
+    },
+    "selectedProducts": [
+      {
+        "productId": 6382734592,
+        "name": "최신형 리빙웰 30L 특대용량 올스텐 에어프라이어 AF300",
+        "price": 260000,
+        "slot": "대용량 상위"
+      },
+      {
+        "productId": 1730725229,
+        "name": "리빙웰 스텐 에어프라이어 대용량 16L AF16",
+        "price": 149000,
+        "slot": "대용량 실속"
+      },
+      {
+        "productId": 9369412228,
+        "name": "브리브 만능 4in1 에어프라이어 4L 글라스",
+        "price": 109000,
+        "slot": "중가 균형"
+      },
+      {
+        "productId": 9398237525,
+        "name": "프리옴 저소음 에어프라이어 9L",
+        "price": 89000,
+        "slot": "가성비 대용량"
+      },
+      {
+        "productId": 8188003115,
+        "name": "대웅모닝컴 에어프라이어 3.5L",
+        "price": 44900,
+        "slot": "입문형"
+      }
+    ],
+    "reviewScore": 84,
+    "notes": [
+      "WordPress에 공개 발행했다.",
+      "본문 상품 이미지는 쿠팡 파트너스 API productImage를 사용했다.",
+      "대표 이미지는 HTML/CSS 썸네일을 Playwright로 JPEG 캡처해 WordPress featured image로 설정했다.",
+      "비교표를 사진, 상품명, 가격, 바로가기 링크와 선이 있는 기본 테이블로 변경하고 caption, thead, th scope를 적용했다.",
+      "CTA 버튼을 주황 계열 고대비 스타일로 개선하고 상품 섹션 중앙에 정렬했다.",
+      "대표 썸네일을 1200x630 비율, 큰 제목, 실제 상품 이미지, 적은 텍스트 기준의 평범한 정보형 카드로 변경했다.",
+      "WordPress 테마 제목과 중복되지 않도록 본문 HTML의 h1 제목을 제거했다.",
+      "현재 품질 기준에서는 WP_AUTOPUBLISH_STATUS=publish로 공개 발행하도록 전환했다.",
+      "쿠팡 상품 검색 응답에 리뷰 수와 평점이 없어 리뷰 기준 검증은 보류했다.",
+      "본문 하단에 쿠팡 파트너스 고지 문구를 포함했다."
+    ]
+  },
+  {
+    "id": "2026-04-24-dehumidifier-top5-capacity-noise-drainage",
+    "createdAt": "2026-04-24T00:00:00+09:00",
+    "keyword": "제습기 추천",
+    "seed": "제습기",
+    "category": "생활가전",
+    "intent": "구매 비교",
+    "articleType": "top_compare",
+    "persona": "마스터 큐레이터 H",
+    "status": "published",
+    "wordpress": {
+      "postId": 490,
+      "status": "publish",
+      "url": "https://jupocket.com/dehumidifier-top5-capacity-noise-drainage/",
+      "mediaId": 489,
+      "featuredImageUrl": "https://jupocket.com/wp-content/uploads/2026/04/dehumidifier-top5-thumbnail-1777036464315.jpg"
+    },
+    "localFiles": {
+      "markdown": "content/codex-publisher/drafts/2026-04-24/dehumidifier-top5-capacity-noise-drainage.md",
+      "html": "content/codex-publisher/drafts/2026-04-24/dehumidifier-top5-capacity-noise-drainage.html",
+      "thumbnailHtml": "content/codex-publisher/drafts/2026-04-24/dehumidifier-top5-thumbnail.html",
+      "thumbnailJpeg": "content/codex-publisher/drafts/2026-04-24/dehumidifier-top5-thumbnail.jpg",
+      "report": "docs/codex-publisher-reports/2026-04-24-dehumidifier.md"
+    },
+    "selectedProducts": [
+      {
+        "productId": 8750718469,
+        "name": "LG전자 휘센 오브제컬렉션 제습기 23L 방문설치",
+        "price": 572300,
+        "slot": "대용량 프리미엄"
+      },
+      {
+        "productId": 8411430700,
+        "name": "롯데알미늄 제습기 12L",
+        "price": 190800,
+        "slot": "12L 실속형"
+      },
+      {
+        "productId": 8104066792,
+        "name": "듀플렉스 제습기 11L, D11",
+        "price": 159000,
+        "slot": "11L 균형형"
+      },
+      {
+        "productId": 7360336252,
+        "name": "인증 위니아 제습기 EDH10HNW(A) 10L, EDH10HNW",
+        "price": 164000,
+        "slot": "10L 방 단위"
+      },
+      {
+        "productId": 9437640932,
+        "name": "FANOBO제습기 저소음 제습기 미니제습기 4계절겸용",
+        "price": 39300,
+        "slot": "저가 미니형"
+      }
+    ],
+    "reviewScore": 84,
+    "notes": [
+      "WordPress에 공개 발행했다.",
+      "본문 상품 이미지는 쿠팡 파트너스 API productImage를 사용했다.",
+      "대표 이미지는 HTML/CSS 썸네일을 Playwright로 JPEG 캡처해 WordPress featured image로 설정했다.",
+      "비교표를 사진, 상품명, 가격, 바로가기 링크와 선이 있는 기본 테이블로 구성하고 caption, thead, th scope를 적용했다.",
+      "본문 h1은 WordPress 테마 제목과 중복되지 않도록 제거했다.",
+      "쿠팡 상품 검색 응답에 리뷰 수와 평점이 없어 리뷰 기준 검증은 보류했다.",
+      "본문 하단에 쿠팡 파트너스 고지 문구를 포함했다."
+    ]
+  },
+  {
+    "id": "2026-04-24-air-purifier-top5-area-filter-noise",
+    "createdAt": "2026-04-24T00:00:00+09:00",
+    "keyword": "공기청정기 추천",
+    "seed": "공기청정기",
+    "category": "생활가전",
+    "intent": "구매 비교",
+    "articleType": "top_compare",
+    "persona": "마스터 큐레이터 H",
+    "status": "published",
+    "wordpress": {
+      "postId": 492,
+      "status": "publish",
+      "url": "https://jupocket.com/air-purifier-top5-area-filter-noise/",
+      "mediaId": 491,
+      "featuredImageUrl": "https://jupocket.com/wp-content/uploads/2026/04/air-purifier-top5-thumbnail-1777037605005.jpg"
+    },
+    "localFiles": {
+      "markdown": "content/codex-publisher/drafts/2026-04-24/air-purifier-top5-area-filter-noise.md",
+      "html": "content/codex-publisher/drafts/2026-04-24/air-purifier-top5-area-filter-noise.html",
+      "thumbnailHtml": "content/codex-publisher/drafts/2026-04-24/air-purifier-top5-thumbnail.html",
+      "thumbnailJpeg": "content/codex-publisher/drafts/2026-04-24/air-purifier-top5-thumbnail.jpg",
+      "report": "docs/codex-publisher-reports/2026-04-24-air-purifier.md"
+    },
+    "selectedProducts": [
+      {
+        "productId": 8603929492,
+        "name": "LG전자 퓨리케어 360도 오브제컬렉션 플러스 공기청정기 100㎡ 방문설치",
+        "price": 703830,
+        "slot": "100㎡ 프리미엄"
+      },
+      {
+        "productId": 1282314375,
+        "name": "신일 인공지능 대형 공기청정기 93.2㎡, SAR-DO850",
+        "price": 388500,
+        "slot": "93㎡ 대형 실속"
+      },
+      {
+        "productId": 9360857152,
+        "name": "LG전자 퓨리케어 360도 Hit 공기청정기 62㎡",
+        "price": 362840,
+        "slot": "62㎡ 거실 균형"
+      },
+      {
+        "productId": 7802134472,
+        "name": "위닉스 타워 엣지 공기청정기 43㎡",
+        "price": 175770,
+        "slot": "43㎡ 방 단위"
+      },
+      {
+        "productId": 8707431315,
+        "name": "삼성전자 블루스카이 3100 공기청정기 33.1㎡",
+        "price": 201500,
+        "slot": "33㎡ 소형 브랜드"
+      }
+    ],
+    "reviewScore": 84,
+    "notes": [
+      "WordPress에 공개 발행했다.",
+      "본문 상품 이미지는 쿠팡 파트너스 API productImage를 사용했다.",
+      "대표 이미지는 HTML/CSS 썸네일을 Playwright로 JPEG 캡처해 WordPress featured image로 설정했다.",
+      "비교표를 사진, 상품명, 가격, 바로가기 링크와 선이 있는 기본 테이블로 구성하고 caption, thead, th scope를 적용했다.",
+      "본문 h1은 WordPress 테마 제목과 중복되지 않도록 제거했다.",
+      "쿠팡 상품 검색 응답에 리뷰 수와 평점이 없어 리뷰 기준 검증은 보류했다.",
+      "본문 하단에 쿠팡 파트너스 고지 문구를 포함했다."
+    ]
+  },
+  {
+    "id": "2026-04-24-robot-vacuum-top5-station-mop-navigation",
+    "date": "2026-04-24",
+    "keyword": "로봇청소기 추천",
+    "title": "로봇청소기 추천 TOP 5: 자동세척, 물걸레, 매핑 기준으로 고르는 법",
+    "slug": "robot-vacuum-top5-station-mop-navigation",
+    "categoryId": 85,
+    "categorySlug": "cp",
+    "status": "published",
+    "wordpress": {
+      "postId": 494,
+      "mediaId": 493,
+      "url": "https://jupocket.com/robot-vacuum-top5-station-mop-navigation/",
+      "status": "publish"
+    },
+    "files": {
+      "html": "content/codex-publisher/drafts/2026-04-24/robot-vacuum-top5-station-mop-navigation.html",
+      "markdown": "content/codex-publisher/drafts/2026-04-24/robot-vacuum-top5-station-mop-navigation.md",
+      "thumbnailHtml": "content/codex-publisher/drafts/2026-04-24/robot-vacuum-top5-thumbnail.html",
+      "thumbnailJpg": "content/codex-publisher/drafts/2026-04-24/robot-vacuum-top5-thumbnail.jpg"
+    },
+    "products": [
+      {
+        "id": "9360875400",
+        "name": "로보락 S10 MaxV Ultra 로봇청소기",
+        "price": 1610250,
+        "role": "올인원 프리미엄"
+      },
+      {
+        "id": "7989878606",
+        "name": "삼성전자 BESPOKE AI 스팀 9700 로봇청소기 방문설치",
+        "price": 1455000,
+        "role": "대기업 프리미엄"
+      },
+      {
+        "id": "9472514212",
+        "name": "제이오엔알 올인원 로봇청소기 JONR X1 Max",
+        "price": 799000,
+        "role": "중상급 올인원"
+      },
+      {
+        "id": "7708730430",
+        "name": "LG전자 코드제로 R5 로봇청소기 흡입+걸레",
+        "price": 520000,
+        "role": "브랜드 중급형"
+      },
+      {
+        "id": "8787744340",
+        "name": "로이드미 EVA 플래티넘 12세대 자동 청소 세척 로봇청소기",
+        "price": 379000,
+        "role": "실속 자동세척"
+      }
+    ]
+  },
+  {
+    "id": "2026-04-25-humidifier-top5-capacity-cleaning",
+    "date": "2026-04-25",
+    "keyword": "가습기 추천",
+    "title": "가습기 추천 TOP 5: 용량, 세척, 가열식 기준으로 고르는 법",
+    "slug": "humidifier-top5-capacity-cleaning",
+    "articleType": "top_3_5_compare",
+    "category": "생활가전",
+    "status": "published",
+    "wordpress": {
+      "postId": 496,
+      "mediaId": 495,
+      "url": "https://jupocket.com/humidifier-top5-capacity-cleaning/",
+      "status": "publish"
+    },
+    "products": [
+      {
+        "id": "9150900558",
+        "name": "위도어 아이노크 PRO 저온가열 살균 대용량 아기 신생아 복합식 가습기",
+        "price": 197000,
+        "role": "중가형 로켓"
+      },
+      {
+        "id": "7646157459",
+        "name": "한경희생활과학 초음파식 가습기 7L",
+        "price": 35430,
+        "role": "실속형 로켓"
+      },
+      {
+        "id": "324788226",
+        "name": "홈플래닛 초음파 가습기 4L",
+        "price": 29890,
+        "role": "입문형 로켓"
+      },
+      {
+        "id": "8412923623",
+        "name": "한경희생활과학 초저소음 물멍 무드등 초음파 가습기",
+        "price": 29900,
+        "role": "입문형 로켓"
+      },
+      {
+        "id": "9039184892",
+        "name": "Rotima  대용량 초음파 가습기 4L 무소음 무드등 간편 통세척 사무실 탁상용 가정용 가습기",
+        "price": 26900,
+        "role": "입문형 로켓"
+      }
+    ],
+    "cafe": {
+      "status": "skipped",
+      "reason": "missing_cafe_env"
+    }
+  },
+  {
+    "id": "2026-04-25-food-waste-processor-top5",
+    "date": "2026-04-25",
+    "keyword": "음식물처리기 추천",
+    "title": "음식물처리기 추천 TOP 5: 건조·분쇄·자동세척 기준으로 고르는 법",
+    "slug": "food-waste-processor-top5-dry-grind-cleaning",
+    "articleType": "top_3_5_compare",
+    "category": "주방가전",
+    "status": "published",
+    "wordpress": {
+      "postId": 518,
+      "mediaId": 520,
+      "url": "https://jupocket.com/food-waste-processor-top5-dry-grind-cleaning/",
+      "status": "publish",
+      "featuredImageUrl": "https://jupocket.com/wp-content/uploads/2026/04/cp9-thumbnail-518.jpg"
+    },
+    "products": [
+      {
+        "id": "9426050061",
+        "name": "스마트카라 스톤S 건조분쇄형 음식물처리기 가정용 2L",
+        "price": 419000,
+        "role": "프리미엄 대표"
+      },
+      {
+        "id": "8560742441",
+        "name": "한경희생활과학 더스티머 건조분쇄 음식물 처리기 4L 가정용, HMS-FD-5000HW, 화이트",
+        "price": 293330,
+        "role": "중가 균형"
+      },
+      {
+        "id": "9145541034",
+        "name": "오쿠 원터치 음식물처리기 가정용 4L, 화이트 + 그레이, OCS-FS2500",
+        "price": 283710,
+        "role": "4L 실속형"
+      },
+      {
+        "id": "8672578135",
+        "name": "쿠첸 제로빈 음식물 처리기 가정용",
+        "price": 264160,
+        "role": "브랜드 실속"
+      },
+      {
+        "id": "9418898530",
+        "name": "OKKID 음식물 처리기 가정용 건조 분쇄형 분리세척 활성탄 팩 1개 기본 제공 + 1개 추가 증정",
+        "price": 197880,
+        "role": "저가 입문형"
+      }
+    ],
+    "cafe": {
+      "status": "skipped",
+      "reason": "missing_cafe_env"
+    }
+  },
+  {
+    "id": "2026-04-25-coffee-machine-deepdive",
+    "date": "2026-04-25",
+    "keyword": "커피머신 고르는 법",
+    "title": "커피머신 고르는 법: 캡슐·반자동·전자동 차이와 관리 기준",
+    "slug": "coffee-machine-deepdive-capsule-semi-auto-care",
+    "articleType": "deepdive",
+    "category": "주방가전",
+    "status": "published",
+    "wordpress": {
+      "postId": 522,
+      "mediaId": 521,
+      "url": "https://jupocket.com/coffee-machine-deepdive-capsule-semi-auto-care/",
+      "status": "publish",
+      "featuredImageUrl": "https://jupocket.com/wp-content/uploads/2026/04/cp9-coffee-machine-deepdive-capsule-semi-auto-care.jpg"
+    },
+    "products": [
+      {
+        "id": "7211177877",
+        "name": "네스프레소 버츄오 팝 캡슐커피머신",
+        "price": 83680,
+        "role": "캡슐형 간편 추출"
+      },
+      {
+        "id": "5237519960",
+        "name": "네스프레소 시티즈 캡슐커피머신",
+        "price": 197100,
+        "role": "캡슐형 간편 추출"
+      },
+      {
+        "id": "8514071245",
+        "name": "카푸치노잔+원두 증정 드롱기 전자동 커피머신 롱 화이트 KRECAM220.20.W, KRECAM220.20.W",
+        "price": 648000,
+        "role": "전자동 관리 편의"
+      },
+      {
+        "id": "9187861440",
+        "name": "PHILOGEO 무선 네스프레소 호환 캡슐 커피 머신 무선 휴대용 여행용 2in1 커피 머신 분쇄 커피 적용, 블랙",
+        "price": 89600,
+        "role": "캡슐형 간편 추출"
+      },
+      {
+        "id": "5170625575",
+        "name": "네스프레소 버츄오 플러스 캡슐커피머신",
+        "price": 122000,
+        "role": "캡슐형 간편 추출"
+      },
+      {
+        "id": "7496138686",
+        "name": "돌체구스토 지니오S 캡슐 커피머신 스타벅스 앳홈 팩, 1161, 쉐어모카",
+        "price": 119000,
+        "role": "캡슐형 간편 추출"
+      },
+      {
+        "id": "9359793465",
+        "name": "[원두 증정] 드롱기 클래식 반자동 커피머신 EM450.M",
+        "price": 214740,
+        "role": "전자동 관리 편의"
+      },
+      {
+        "id": "6714055840",
+        "name": "드롱기 전자동 에스프레소 커피메이커 ECAM22.110.B, ECAM22.110.B",
+        "price": 539000,
+        "role": "전자동 관리 편의"
+      }
+    ],
+    "cafe": {
+      "status": "skipped",
+      "reason": "missing_cafe_env"
+    },
+    "updatedAt": "2026-04-25T13:58:20.220Z",
+    "qualityUpdatedAt": "2026-04-25T13:58:20.220Z"
+  },
+  {
+    "id": "2026-04-25-summer-living-curation-20",
+    "date": "2026-04-25",
+    "keyword": "여름 생활 필수템",
+    "title": "여름 생활 필수템 20가지: 더위·습기·냄새 줄이는 실용템 큐레이션",
+    "slug": "summer-living-essentials-20-heat-humidity-odor",
+    "articleType": "curation_20",
+    "category": "생활",
+    "status": "published",
+    "wordpress": {
+      "postId": 524,
+      "mediaId": 523,
+      "url": "https://jupocket.com/summer-living-essentials-20-heat-humidity-odor/",
+      "status": "publish",
+      "featuredImageUrl": "https://jupocket.com/wp-content/uploads/2026/04/cp9-summer-living-essentials-20-heat-humidity-odor.jpg"
+    },
+    "products": [
+      {
+        "id": "9414321185",
+        "name": "SUNGOD 휴대용 선풍기 무선 미니 손 냉각 199단 아이스 터보 MAX 급속, 화이트, F9",
+        "price": 45800,
+        "role": "더위 체감 낮추기"
+      },
+      {
+        "id": "7999681537",
+        "name": "알리사 급속 냉각 에어컨 무선 휴대용선풍기, GXZ-F31, 베이지",
+        "price": 23190,
+        "role": "더위 체감 낮추기"
+      },
+      {
+        "id": "9478657096",
+        "name": "MAREZZURO 급속 냉각 미니 핸디 휴대용 선풍기",
+        "price": 29800,
+        "role": "더위 체감 낮추기"
+      },
+      {
+        "id": "8065897362",
+        "name": "블루필 미니헤드 제트팬 휴대용 손선풍기",
+        "price": 30800,
+        "role": "더위 체감 낮추기"
+      },
+      {
+        "id": "9457219527",
+        "name": "UOOFON 목 선풍기 100단 파워풍량 4000mAh 냉감패드 내장 슬롯 트위스트 무선 휴대용 선풍기",
+        "price": 21900,
+        "role": "더위 체감 낮추기"
+      },
+      {
+        "id": "7166713995",
+        "name": "물먹는뽀송 서랍용 제습제 본품, 45g, 48개",
+        "price": 29800,
+        "role": "습기·냄새 관리"
+      },
+      {
+        "id": "2788452",
+        "name": "물먹는하마 습기제거제 옷장용",
+        "price": 11820,
+        "role": "습기·냄새 관리"
+      },
+      {
+        "id": "230142363",
+        "name": "홈플래닛 습기제거제",
+        "price": 18490,
+        "role": "습기·냄새 관리"
+      },
+      {
+        "id": "7297197021",
+        "name": "생활공작소 제습제 본품",
+        "price": 16910,
+        "role": "습기·냄새 관리"
+      },
+      {
+        "id": "8880848102",
+        "name": "TV라이브홈쇼핑 일월 에어컨매트 냉수마찰 싱글 더블 인견매트 아이스매트 냉감패드 침대매트 여름매트 쿨매트",
+        "price": 49800,
+        "role": "수면 온도 관리"
+      },
+      {
+        "id": "8805393184",
+        "name": "루앤 아이스 쿨방석 28도 자동냉각, 쿨매트, 블루",
+        "price": 25900,
+        "role": "수면 온도 관리"
+      },
+      {
+        "id": "8765393746",
+        "name": "FASEN 냉감 쿨매트 여름 냉감패드+쿨베개 커버 세트",
+        "price": 21600,
+        "role": "수면 온도 관리"
+      },
+      {
+        "id": "9432533186",
+        "name": "MIFAN 아이스 쿨링 냉감패드 여름 침대패드 고정밴드 쿨매트",
+        "price": 24900,
+        "role": "수면 온도 관리"
+      },
+      {
+        "id": "9494781378",
+        "name": "Roomxyd 냉감패드 쿨잠 쿨매트 여름 쿨링 냉패드 아이스 침대패드",
+        "price": 19800,
+        "role": "수면 온도 관리"
+      },
+      {
+        "id": "8816352542",
+        "name": "1+1 음소거 자동퇴치모드 접이식 충전식 걸이식 스탠드 전기모기채 C타입",
+        "price": 23980,
+        "role": "벌레 스트레스 줄이기"
+      },
+      {
+        "id": "9436722615",
+        "name": "Ambition 전기 모기퇴치기 가정용 캠핑 랜턴 겸용",
+        "price": 19800,
+        "role": "벌레 스트레스 줄이기"
+      },
+      {
+        "id": "9409129959",
+        "name": "MIFAN 여름 아이스 냉감 이불 쿨링 차렵이불 세트",
+        "price": 29800,
+        "role": "수면 온도 관리"
+      },
+      {
+        "id": "9456329450",
+        "name": "듀라텍스 냉감 쿨 이불",
+        "price": 35900,
+        "role": "수면 온도 관리"
+      },
+      {
+        "id": "9428178880",
+        "name": "바자르 쿨맥스 온도조절 냉감 여름이불",
+        "price": 44900,
+        "role": "수면 온도 관리"
+      },
+      {
+        "id": "9420849634",
+        "name": "MIFAN 파워 쿨링 여름 냉감 이불 아이스 차렵 침구 세트",
+        "price": 48600,
+        "role": "수면 온도 관리"
+      }
+    ],
+    "cafe": {
+      "status": "skipped",
+      "reason": "missing_cafe_env"
+    },
+    "updatedAt": "2026-04-25T14:03:05.975Z",
+    "qualityUpdatedAt": "2026-04-25T14:03:05.975Z"
+  },
+  {
+    "id": "2026-04-25-dishwasher-deepdive-brand-philosophy",
+    "date": "2026-04-25",
+    "keyword": "식기세척기 고르는 법",
+    "title": "식기세척기 고르는 법: 밀레, LG, 삼성, SK매직 브랜드 이미지와 세척 철학",
+    "slug": "dishwasher-brand-philosophy-washing-drying-installation",
+    "articleType": "deepdive",
+    "category": "주방가전",
+    "status": "published",
+    "wordpress": {
+      "postId": 531,
+      "mediaId": 530,
+      "url": "https://jupocket.com/dishwasher-brand-philosophy-washing-drying-installation/",
+      "status": "publish",
+      "featuredImageUrl": "https://jupocket.com/wp-content/uploads/2026/04/cp9-dishwasher-brand-philosophy-washing-drying-installation.jpg"
+    },
+    "products": [
+      {
+        "id": "6880458240",
+        "name": "까르페 무설치 식기세척기 PRO 스텐 누비아 6인용 8인용 강력세척 자동문열림 그릇세척기(무설치전용 물통세트+전용수저통+컵걸이세트 포함), 블랙, MDW-H601B, 고객직접설치",
+        "price": 459000,
+        "role": "전자동 관리 편의"
+      },
+      {
+        "id": "9483759165",
+        "name": "[백화점 정품] 밀레 MILLET 식기세척기 G7314C SC(BW) (16인용, 빌트인겸용, 5단계 세척 프로그램)",
+        "price": 2852000,
+        "role": "프리미엄 내구성 후보"
+      },
+      {
+        "id": "9483351943",
+        "name": "[백화점 정품] 밀레 MILLET 식기세척기 G 5214 C SC BRWS (16인용, 대용량 퀵파워워시)",
+        "price": 1706000,
+        "role": "프리미엄 내구성 후보"
+      },
+      {
+        "id": "9483629251",
+        "name": "[백화점 정품] 밀레 MILLET 식기세척기 G 5214 C SC CLST (16인용)",
+        "price": 1935000,
+        "role": "프리미엄 내구성 후보"
+      },
+      {
+        "id": "8031933556",
+        "name": "LG전자 디오스 오브제컬렉션 빌트인 식기세척기 12인용",
+        "price": 744390,
+        "role": "국내 주방 통합 후보"
+      },
+      {
+        "id": "8539576239",
+        "name": "LG전자 디오스 오브제컬렉션 빌트인 식기세척기 14인용",
+        "price": 1067140,
+        "role": "국내 주방 통합 후보"
+      },
+      {
+        "id": "7520896561",
+        "name": "칼리온 식기세척기용 소금, 1.5kg, 3개",
+        "price": 21260,
+        "role": "실속 후보"
+      },
+      {
+        "id": "8623280024",
+        "name": "세수 올인원 식기세척기 세제 타블렛형, 20g, 90개",
+        "price": 26800,
+        "role": "실속 후보"
+      }
+    ],
+    "cafe": {
+      "status": "skipped",
+      "reason": "missing_cafe_env"
+    },
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-창문형-에어컨-추천",
+    "date": "2026-04-26",
+    "keyword": "창문형 에어컨 추천",
+    "title": "창문형 에어컨 추천 TOP 5: 설치, 소음, 전기요금 기준으로 고르는 법",
+    "slug": "window-air-conditioner-top5-install-noise-electricity",
+    "articleType": "top_3_5_compare",
+    "category": "생활가전",
+    "status": "published",
+    "wordpress": {
+      "postId": 534,
+      "mediaId": 533,
+      "url": "https://jupocket.com/window-air-conditioner-top5-install-noise-electricity/",
+      "status": "publish",
+      "featuredImageUrl": "https://jupocket.com/wp-content/uploads/2026/04/cp9-window-air-conditioner-top5-install-noise-electricity.jpg"
+    },
+    "cafe": {
+      "status": "skipped",
+      "reason": "missing_cafe_env"
+    },
+    "deepdiveAuxiliaryImages": [],
+    "productIds": [
+      "8303338768",
+      "9432898917",
+      "9397574274",
+      "9465833857",
+      "9393096985"
+    ]
+  },
+  {
+    "id": "2026-04-26-가정용-음식물처리기-추천",
+    "date": "2026-04-26",
+    "keyword": "가정용 음식물처리기 추천",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "wordpress": {
+      "postId": 536,
+      "url": "https://jupocket.com/home-food-waste-disposer-top5-dry-grind-install/",
+      "status": "publish"
+    },
+    "platforms": {
+      "wordpress": {
+        "status": "published",
+        "postId": 536,
+        "url": "https://jupocket.com/home-food-waste-disposer-top5-dry-grind-install/"
+      },
+      "naverCafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "7292941040",
+      "9327958772",
+      "5333561513",
+      "7650030116",
+      "8302310567"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-저소음-제습기-추천",
+    "date": "2026-04-26",
+    "keyword": "저소음 제습기 추천",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 538,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777136031031/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "8314886137",
+      "6475573674",
+      "9444934108",
+      "8767674105",
+      "9468739889"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-1인용-에어프라이어-추천",
+    "date": "2026-04-26",
+    "keyword": "1인용 에어프라이어 추천",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 540,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777138026203/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "9281480313",
+      "8463077690",
+      "6417737868",
+      "8653399396",
+      "6285279269"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-차량용-무선-청소기-흡입력-비교",
+    "date": "2026-04-26",
+    "keyword": "차량용 무선 청소기 흡입력 비교",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 542,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777140002205/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "8118705832",
+      "8457627161",
+      "9461771026",
+      "8653377385",
+      "5033702070"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-물걸레-로봇청소기-추천-순위",
+    "date": "2026-04-26",
+    "keyword": "물걸레 로봇청소기 추천 순위",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 544,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777141982001/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "9447706534",
+      "9437669011",
+      "9471893608",
+      "8379953644",
+      "8852801822"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-차량용-무선청소기-비교",
+    "date": "2026-04-26",
+    "keyword": "차량용 무선청소기 비교",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 546,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777144021046/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "5033702070",
+      "8461242890",
+      "7883829629",
+      "7694619371",
+      "8697265802"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-저소음-제습기-원룸",
+    "date": "2026-04-26",
+    "keyword": "저소음 제습기 원룸",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 548,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777145991986/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "8314886137",
+      "9444934108",
+      "6475573674",
+      "9437640932",
+      "9466689735"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-대용량-에어프라이어-추천",
+    "date": "2026-04-26",
+    "keyword": "대용량 에어프라이어 추천",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 550,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777147922531/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "6382734592",
+      "9398237525",
+      "1730725229",
+      "9072871442",
+      "9409413554"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-가성비-믹서기",
+    "date": "2026-04-26",
+    "keyword": "가성비 믹서기",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 552,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777149843491/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "9136640131",
+      "8709596750",
+      "187412931",
+      "9170154944",
+      "9461498816"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-건습식-청소기-추천",
+    "date": "2026-04-26",
+    "keyword": "건습식 청소기 추천",
+    "articleType": "deepdive",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 554,
+        "url": "https://jupocket.com/wet-dry-cleaner-guide-2026-04-26-1777151954514/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "7180862620",
+      "8389553801",
+      "8847622853",
+      "8717553277",
+      "7481066970",
+      "8583181423",
+      "8769129764",
+      "8194731962"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-음식물처리기-추천-비교",
+    "date": "2026-04-26",
+    "keyword": "음식물처리기 추천 비교",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 556,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777153851628/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "8131595140",
+      "5333561513",
+      "9418898530",
+      "8538451222",
+      "7292941040"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-고급-커피머신-비교",
+    "date": "2026-04-26",
+    "keyword": "고급 커피머신 비교",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 558,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777155764070/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "7211177877",
+      "5237519960",
+      "9398213111",
+      "5170625575",
+      "9187861440",
+      "6939756514",
+      "6714055840",
+      "8514071245"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-차량용-청소기-추천",
+    "date": "2026-04-26",
+    "keyword": "차량용 청소기 추천",
+    "articleType": "deepdive",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 560,
+        "url": "https://jupocket.com/wet-dry-cleaner-guide-2026-04-26-1777157717786/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "7835722603",
+      "9184012244",
+      "9438298945",
+      "9123023670",
+      "8258119261",
+      "9207208243",
+      "7180862620",
+      "8717553277"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-대용량-에어프라이어-비교",
+    "date": "2026-04-26",
+    "keyword": "대용량 에어프라이어 비교",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 562,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777159724951/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "9409413554",
+      "6382734592",
+      "9374227560",
+      "8439009865",
+      "9398237525"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-프리미엄-공기청정기-비교",
+    "date": "2026-04-26",
+    "keyword": "프리미엄 공기청정기 비교",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 564,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777169280144/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "9425750085",
+      "224865338",
+      "9427757326",
+      "9422538717",
+      "9473016494"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-저소음-제습기-내돈내산",
+    "date": "2026-04-26",
+    "keyword": "저소음 제습기 내돈내산",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 566,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777171251985/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "9442303907",
+      "9437640932",
+      "9444934108",
+      "8767674105",
+      "7360336252"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-저소음-제습기-대용량",
+    "date": "2026-04-26",
+    "keyword": "저소음 제습기 대용량",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 568,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777173181923/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "8767674105",
+      "8769470546",
+      "221457583",
+      "9444934108",
+      "9485140136"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-저소음-제습기-비교",
+    "date": "2026-04-26",
+    "keyword": "저소음 제습기 비교",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 570,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777175168140/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "9185522210",
+      "9442303907",
+      "9444934108",
+      "9437640932",
+      "8785755028"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-프리미엄-로봇청소기-비교",
+    "date": "2026-04-26",
+    "keyword": "프리미엄 로봇청소기 비교",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 572,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777177087733/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "9447706534",
+      "9437669011",
+      "9417143162",
+      "9454877523",
+      "9450257890",
+      "9481237420",
+      "8847622853",
+      "8717553277"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-음식물처리기",
+    "date": "2026-04-26",
+    "keyword": "음식물처리기",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 574,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777179500716/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "8560742441",
+      "5333561513",
+      "8999598798",
+      "8437362571",
+      "9186056234"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-냉풍기",
+    "date": "2026-04-26",
+    "keyword": "냉풍기",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 576,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777181559997/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "8732386226",
+      "8715318698",
+      "8761569636",
+      "9483424187",
+      "8628519022"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-인덕션",
+    "date": "2026-04-26",
+    "keyword": "인덕션",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 578,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777183565494/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "7939989640",
+      "9317344579",
+      "7000775184",
+      "9057929475",
+      "4315953948"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-식기세척기",
+    "date": "2026-04-26",
+    "keyword": "식기세척기",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 580,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777185654699/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "8574548153",
+      "6880458240",
+      "9483759165",
+      "9483629251",
+      "9483351943",
+      "8031933556",
+      "8565504224",
+      "8539576239"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-통돌이세탁기",
+    "date": "2026-04-26",
+    "keyword": "통돌이세탁기",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 582,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777187738158/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "6538307136",
+      "7487768410",
+      "9281366760",
+      "7487768421",
+      "8665858974"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-건조기",
+    "date": "2026-04-26",
+    "keyword": "건조기",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 584,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777189717330/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "8332811371",
+      "9470641586",
+      "8643556970",
+      "7764738786",
+      "7841971165"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-premium-dishwasher-deepdive",
+    "date": "2026-04-26",
+    "keyword": "프리미엄 식기세척기 고르는 법",
+    "articleType": "deepdive",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 617,
+        "url": "https://jupocket.com/dishwasher-brand-philosophy-washing-drying-installation-2/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "6880458240",
+      "9483759165",
+      "9483629251",
+      "7494775376",
+      "9483351943",
+      "9004239817",
+      "8031933556",
+      "6658808577"
+    ],
+    "deepdiveAuxiliaryImages": [],
+    "title": "식기세척기 고르는 법 밀레, LG, 삼성, SK매직 브랜드 이미지와 세척 철학",
+    "updatedAt": "2026-04-26T11:20:55.835Z",
+    "qualityUpdatedAt": "2026-04-26T11:20:55.835Z"
+  },
+  {
+    "id": "2026-04-26-제습기",
+    "date": "2026-04-26",
+    "keyword": "제습기",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 620,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777192795165/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "7360336252",
+      "9440762265",
+      "9404610449",
+      "9442303907",
+      "9468739889"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-커피머신",
+    "date": "2026-04-26",
+    "keyword": "커피머신",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 627,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777193605386/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "7211177877",
+      "5237519960",
+      "8514071245",
+      "8758434956",
+      "5170625575",
+      "6695175267",
+      "9359793465",
+      "6714055840"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-써큘레이터",
+    "date": "2026-04-26",
+    "keyword": "써큘레이터",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 630,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777194658168/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "9461484487",
+      "5848728993",
+      "8719192860",
+      "8653446250",
+      "9454339378"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-환풍기",
+    "date": "2026-04-26",
+    "keyword": "환풍기",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 633,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777196704540/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "8738140126",
+      "9425517797",
+      "6322134555",
+      "7863412850",
+      "9309836690"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-음식물분쇄기",
+    "date": "2026-04-26",
+    "keyword": "음식물분쇄기",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 635,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777198726633/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "7650030116",
+      "5333561513",
+      "8949835576",
+      "9317778898",
+      "8999598798"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-식세기",
+    "date": "2026-04-26",
+    "keyword": "식세기",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 642,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777201693779/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "8982193574",
+      "6880458240",
+      "7494775376",
+      "8089841977",
+      "8031933556"
+    ],
+    "deepdiveAuxiliaryImages": []
+  },
+  {
+    "id": "2026-04-26-삼성인덕션3구",
+    "date": "2026-04-26",
+    "keyword": "삼성인덕션3구",
+    "articleType": "top_3_5_compare",
+    "status": "published",
+    "platforms": {
+      "wordpress": {
+        "postId": 649,
+        "url": "https://jupocket.com/cp9-2026-04-26-1777202632093/",
+        "status": "publish"
+      },
+      "cafe": {
+        "status": "skipped",
+        "reason": "missing_cafe_env"
+      }
+    },
+    "productIds": [
+      "8984961486",
+      "8010707097",
+      "7939989640",
+      "8340144235",
+      "9057929475"
+    ],
+    "deepdiveAuxiliaryImages": []
+  }
+]

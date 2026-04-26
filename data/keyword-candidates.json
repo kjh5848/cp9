@@ -1,0 +1,1390 @@
+[
+  {
+    "id": "2026-04-25-humidifier-top5-capacity-cleaning",
+    "createdAt": "2026-04-25T09:30:00+09:00",
+    "updatedAt": "2026-04-25T08:04:32.276Z",
+    "status": "published",
+    "keyword": "가습기 추천",
+    "coupangSearchTerm": "가습기 추천",
+    "blogTitle": "가습기 추천 TOP 5: 용량, 세척, 가열식 기준으로 고르는 법",
+    "searchIntent": "구매 직전 비교",
+    "articleType": "top_3_5_compare",
+    "category": "생활가전",
+    "priorityScore": 92,
+    "suggestedSearchQueries": [
+      "가습기 추천",
+      "가열식 가습기",
+      "초음파 가습기"
+    ],
+    "notes": "계절성과 구매 전환 의도가 높아 TOP 비교형 우선 후보",
+    "publishedAt": "2026-04-25T08:04:32.276Z",
+    "wordpressPostId": 496,
+    "wordpressUrl": "https://jupocket.com/humidifier-top5-capacity-cleaning/"
+  },
+  {
+    "id": "2026-04-25-food-waste-processor-top5",
+    "createdAt": "2026-04-25T09:30:00+09:00",
+    "updatedAt": "2026-04-25T12:58:51.751Z",
+    "status": "published",
+    "keyword": "음식물처리기 추천",
+    "coupangSearchTerm": "음식물처리기 추천",
+    "blogTitle": "음식물처리기 추천 TOP 5: 건조, 분쇄, 미생물 방식 비교",
+    "searchIntent": "고가 생활가전 구매 비교",
+    "articleType": "top_3_5_compare",
+    "category": "주방가전",
+    "priorityScore": 90,
+    "suggestedSearchQueries": [
+      "음식물처리기 추천",
+      "미생물 음식물처리기",
+      "건조 음식물처리기"
+    ],
+    "notes": "객단가가 높고 방식별 비교 니즈가 강함",
+    "wordpressPostId": 518,
+    "wordpressUrl": "https://jupocket.com/food-waste-processor-top5-dry-grind-cleaning/",
+    "publishedAt": "2026-04-25T12:58:51.751Z"
+  },
+  {
+    "id": "2026-04-25-coffee-machine-deepdive",
+    "createdAt": "2026-04-25T09:30:00+09:00",
+    "updatedAt": "2026-04-25T09:30:00+09:00",
+    "status": "published",
+    "keyword": "커피머신 고르는 법",
+    "coupangSearchTerm": "커피머신",
+    "blogTitle": "커피머신 고르는 법: 캡슐, 반자동, 전자동 차이를 먼저 보세요",
+    "searchIntent": "정보 탐색 후 구매 전환",
+    "articleType": "deepdive",
+    "category": "주방가전",
+    "priorityScore": 84,
+    "suggestedSearchQueries": [
+      "커피머신",
+      "캡슐커피머신",
+      "반자동 커피머신"
+    ],
+    "notes": "딥다이브 유형 검증용 후보",
+    "publishedAt": "2026-04-25T13:29:32.731Z",
+    "wordpressPostId": 522,
+    "wordpressUrl": "https://jupocket.com/coffee-machine-deepdive-capsule-semi-auto-care/"
+  },
+  {
+    "id": "2026-04-25-summer-living-curation-20",
+    "createdAt": "2026-04-25T09:30:00+09:00",
+    "updatedAt": "2026-04-25T09:30:00+09:00",
+    "status": "published",
+    "keyword": "여름 생활 필수템",
+    "coupangSearchTerm": "여름 생활용품",
+    "blogTitle": "여름 생활 필수템 20가지: 더위, 습기, 냄새를 줄이는 실사용 큐레이션",
+    "searchIntent": "탐색형 큐레이션",
+    "articleType": "curation_20",
+    "category": "생활",
+    "priorityScore": 78,
+    "suggestedSearchQueries": [
+      "여름 생활용품",
+      "장마철 필수템",
+      "습기 제거 용품"
+    ],
+    "notes": "20가지 큐레이션 유형 검증용 후보",
+    "publishedAt": "2026-04-25T13:30:00.318Z",
+    "wordpressPostId": 524,
+    "wordpressUrl": "https://jupocket.com/summer-living-essentials-20-heat-humidity-odor/"
+  },
+  {
+    "id": "2026-04-25-dishwasher-deepdive-brand-philosophy",
+    "createdAt": "2026-04-25T23:20:00+09:00",
+    "updatedAt": "2026-04-25T23:20:00+09:00",
+    "status": "published",
+    "keyword": "식기세척기 고르는 법",
+    "coupangSearchTerm": "식기세척기",
+    "blogTitle": "식기세척기 고르는 법: 밀레, LG, 삼성, SK매직 브랜드 이미지와 세척 철학",
+    "searchIntent": "브랜드 비교 후 구매 검토",
+    "articleType": "deepdive",
+    "category": "주방가전",
+    "priorityScore": 88,
+    "suggestedSearchQueries": [
+      "식기세척기 고르는 법",
+      "식기세척기 추천",
+      "빌트인 식기세척기",
+      "12인용 식기세척기"
+    ],
+    "notes": "딥다이브 이미지 정책 검증용 후보. 브랜드 철학, 주방 라이프스타일, 세척/건조/설치 경험을 중심으로 작성한다.",
+    "publishedAt": "2026-04-25T14:48:14.369Z",
+    "wordpressPostId": 531,
+    "wordpressUrl": "https://jupocket.com/dishwasher-brand-philosophy-washing-drying-installation/"
+  },
+  {
+    "id": "2026-04-26-1인용-에어프라이어-추천",
+    "createdAt": "2026-04-25T15:22:45.528Z",
+    "updatedAt": "2026-04-25T15:24:08.978Z",
+    "status": "published",
+    "keyword": "1인용 에어프라이어 추천",
+    "coupangSearchTerm": "1인용 에어프라이어",
+    "blogTitle": "1인용 에어프라이어 추천: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "가격 대비 성능 검토",
+    "articleType": "top_3_5_compare",
+    "category": "주방가전",
+    "priorityScore": 79,
+    "suggestedSearchQueries": [
+      "1인용 에어프라이어 추천",
+      "1인용 에어프라이어"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_autocomplete",
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "1인용 에어프라이어",
+      "monthlySearchVolume": 15,
+      "competition": "높음",
+      "datalabTrendDelta": 30.56,
+      "shoppingRatio": 100
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-25T17:27:15.295Z",
+    "wordpressPostId": 540,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777138026203/"
+  },
+  {
+    "id": "2026-04-26-물걸레-로봇청소기-추천-순위",
+    "createdAt": "2026-04-25T15:22:45.528Z",
+    "updatedAt": "2026-04-25T15:24:08.978Z",
+    "status": "published",
+    "keyword": "물걸레 로봇청소기 추천 순위",
+    "coupangSearchTerm": "물걸레 로봇청소기 추천",
+    "blogTitle": "물걸레 로봇청소기 추천 순위: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "구매 직전 비교",
+    "articleType": "top_3_5_compare",
+    "category": "청소/생활",
+    "priorityScore": 83,
+    "suggestedSearchQueries": [
+      "물걸레 로봇청소기 추천 순위",
+      "물걸레 로봇청소기",
+      "물걸레 로봇청소기 추천"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_autocomplete",
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "물걸레 로봇청소기",
+      "monthlySearchVolume": 50,
+      "competition": "중간",
+      "datalabTrendDelta": 27.78,
+      "shoppingRatio": 0
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-25T18:33:11.585Z",
+    "wordpressPostId": 544,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777141982001/"
+  },
+  {
+    "id": "2026-04-26-저소음-제습기-원룸",
+    "createdAt": "2026-04-25T15:22:45.528Z",
+    "updatedAt": "2026-04-25T15:24:08.978Z",
+    "status": "published",
+    "keyword": "저소음 제습기 원룸",
+    "coupangSearchTerm": "저소음 제습기 원룸",
+    "blogTitle": "저소음 제습기 원룸: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "상황별 제품 탐색",
+    "articleType": "top_3_5_compare",
+    "category": "생활가전",
+    "priorityScore": 80,
+    "suggestedSearchQueries": [
+      "저소음 제습기 원룸",
+      "저소음 제습기",
+      "저소음 제습기 추천"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_autocomplete",
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "저소음 제습기",
+      "monthlySearchVolume": 25,
+      "competition": "높음",
+      "datalabTrendDelta": 38.46,
+      "shoppingRatio": 53.33
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-25T19:40:00.041Z",
+    "wordpressPostId": 548,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777145991986/"
+  },
+  {
+    "id": "2026-04-26-저소음-제습기-추천",
+    "createdAt": "2026-04-25T15:22:45.528Z",
+    "updatedAt": "2026-04-25T15:24:08.978Z",
+    "status": "published",
+    "keyword": "저소음 제습기 추천",
+    "coupangSearchTerm": "저소음 제습기",
+    "blogTitle": "저소음 제습기 추천: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "가격 대비 성능 검토",
+    "articleType": "top_3_5_compare",
+    "category": "생활가전",
+    "priorityScore": 86,
+    "suggestedSearchQueries": [
+      "저소음 제습기 추천",
+      "저소음 제습기"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_autocomplete",
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "저소음 제습기",
+      "monthlySearchVolume": 110,
+      "competition": "높음",
+      "datalabTrendDelta": 60.84,
+      "shoppingRatio": 40
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-25T16:54:00.512Z",
+    "wordpressPostId": 538,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777136031031/"
+  },
+  {
+    "id": "2026-04-26-차량용-무선-청소기-흡입력-비교",
+    "createdAt": "2026-04-25T15:22:45.528Z",
+    "updatedAt": "2026-04-25T15:24:08.978Z",
+    "status": "published",
+    "keyword": "차량용 무선 청소기 흡입력 비교",
+    "coupangSearchTerm": "차량용 무선 청소기 흡입력",
+    "blogTitle": "차량용 무선 청소기 흡입력 비교: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "구매 직전 비교",
+    "articleType": "top_3_5_compare",
+    "category": "청소/생활",
+    "priorityScore": 85,
+    "suggestedSearchQueries": [
+      "차량용 무선 청소기 흡입력 비교",
+      "차량용 무선청소기",
+      "차량용 무선청소기 추천"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_autocomplete",
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "차량용 무선청소기",
+      "monthlySearchVolume": 80,
+      "competition": "높음",
+      "datalabTrendDelta": 48.72,
+      "shoppingRatio": 0
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-25T18:00:10.882Z",
+    "wordpressPostId": 542,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777140002205/"
+  },
+  {
+    "id": "2026-04-26-차량용-무선청소기-비교",
+    "createdAt": "2026-04-25T15:22:45.528Z",
+    "updatedAt": "2026-04-25T15:24:08.978Z",
+    "status": "published",
+    "keyword": "차량용 무선청소기 비교",
+    "coupangSearchTerm": "차량용 무선청소기",
+    "blogTitle": "차량용 무선청소기 비교: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "구매 직전 비교",
+    "articleType": "top_3_5_compare",
+    "category": "청소/생활",
+    "priorityScore": 83,
+    "suggestedSearchQueries": [
+      "차량용 무선청소기 비교",
+      "차량용 무선청소기",
+      "차량용 무선청소기 추천"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_autocomplete",
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "차량용 무선청소기",
+      "monthlySearchVolume": 50,
+      "competition": "높음",
+      "datalabTrendDelta": 38.46,
+      "shoppingRatio": 0
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-25T19:07:10.522Z",
+    "wordpressPostId": 546,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777144021046/"
+  },
+  {
+    "id": "2026-04-26-창문형-에어컨-추천",
+    "createdAt": "2026-04-25T15:22:45.528Z",
+    "updatedAt": "2026-04-25T15:24:08.978Z",
+    "status": "published",
+    "keyword": "창문형 에어컨 추천",
+    "coupangSearchTerm": "창문형 에어컨",
+    "blogTitle": "창문형 에어컨 추천: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "가격 대비 성능 검토",
+    "articleType": "top_3_5_compare",
+    "category": "생활가전",
+    "priorityScore": 97,
+    "suggestedSearchQueries": [
+      "창문형 에어컨 추천",
+      "창문형 에어컨"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_autocomplete",
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "창문형 에어컨",
+      "monthlySearchVolume": 1540,
+      "competition": "중간",
+      "datalabTrendDelta": 41.3,
+      "shoppingRatio": 25.93
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-25T15:31:25.785Z",
+    "wordpressPostId": 534,
+    "wordpressUrl": "https://jupocket.com/window-air-conditioner-top5-install-noise-electricity/"
+  },
+  {
+    "id": "2026-04-26-가정용-음식물처리기-추천",
+    "createdAt": "2026-04-25T15:22:45.528Z",
+    "updatedAt": "2026-04-25T15:24:08.978Z",
+    "status": "published",
+    "keyword": "가정용 음식물처리기 추천",
+    "coupangSearchTerm": "가정용 음식물처리기",
+    "blogTitle": "가정용 음식물처리기 추천: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "가격 대비 성능 검토",
+    "articleType": "top_3_5_compare",
+    "category": "주방가전",
+    "priorityScore": 97,
+    "suggestedSearchQueries": [
+      "가정용 음식물처리기 추천",
+      "음식물처리기 추천",
+      "음식물처리기 추천 추천"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_autocomplete",
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "음식물처리기 추천",
+      "monthlySearchVolume": 1550,
+      "competition": "중간",
+      "datalabTrendDelta": 40.45,
+      "shoppingRatio": 34.8
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-25T16:14:19.653Z",
+    "wordpressPostId": 536,
+    "wordpressUrl": "https://jupocket.com/home-food-waste-disposer-top5-dry-grind-install/"
+  },
+  {
+    "id": "2026-04-26-대용량-에어프라이어-추천",
+    "createdAt": "2026-04-25T15:22:45.528Z",
+    "updatedAt": "2026-04-25T15:24:08.978Z",
+    "status": "published",
+    "keyword": "대용량 에어프라이어 추천",
+    "coupangSearchTerm": "대용량 에어프라이어",
+    "blogTitle": "대용량 에어프라이어 추천: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "가격 대비 성능 검토",
+    "articleType": "top_3_5_compare",
+    "category": "주방가전",
+    "priorityScore": 79,
+    "suggestedSearchQueries": [
+      "대용량 에어프라이어 추천",
+      "대용량 에어프라이어"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_autocomplete",
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "대용량 에어프라이어",
+      "monthlySearchVolume": 110,
+      "competition": "중간",
+      "datalabTrendDelta": 6.35,
+      "shoppingRatio": 55
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-25T20:12:10.838Z",
+    "wordpressPostId": 550,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777147922531/"
+  },
+  {
+    "id": "2026-04-26-가성비-믹서기",
+    "createdAt": "2026-04-25T15:22:45.528Z",
+    "updatedAt": "2026-04-25T15:24:08.978Z",
+    "status": "published",
+    "keyword": "가성비 믹서기",
+    "coupangSearchTerm": "가성비 믹서기",
+    "blogTitle": "가성비 믹서기: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "가격 대비 성능 검토",
+    "articleType": "top_3_5_compare",
+    "category": "주방가전",
+    "priorityScore": 80,
+    "suggestedSearchQueries": [
+      "가성비 믹서기",
+      "가성비 믹서기 추천"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_autocomplete",
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "가성비 믹서기",
+      "monthlySearchVolume": 110,
+      "competition": "높음",
+      "datalabTrendDelta": 7.61,
+      "shoppingRatio": 36
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-25T20:44:11.264Z",
+    "wordpressPostId": 552,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777149843491/"
+  },
+  {
+    "id": "2026-04-26-건습식-청소기-추천",
+    "createdAt": "2026-04-25T15:22:45.528Z",
+    "updatedAt": "2026-04-25T15:24:08.978Z",
+    "status": "published",
+    "keyword": "건습식 청소기 추천",
+    "coupangSearchTerm": "건습식 청소기",
+    "blogTitle": "건습식 청소기 추천: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "가격 대비 성능 검토",
+    "articleType": "deepdive",
+    "category": "청소/생활",
+    "priorityScore": 76,
+    "suggestedSearchQueries": [
+      "건습식 청소기 추천",
+      "건습식 청소기"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_autocomplete",
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "건습식 청소기",
+      "monthlySearchVolume": 45,
+      "competition": "높음",
+      "datalabTrendDelta": 7.79,
+      "shoppingRatio": 48.57
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-25T21:19:22.853Z",
+    "wordpressPostId": 554,
+    "wordpressUrl": "https://jupocket.com/wet-dry-cleaner-guide-2026-04-26-1777151954514/"
+  },
+  {
+    "id": "2026-04-26-음식물처리기-추천-비교",
+    "createdAt": "2026-04-25T15:22:45.528Z",
+    "updatedAt": "2026-04-25T15:24:08.978Z",
+    "status": "published",
+    "keyword": "음식물처리기 추천 비교",
+    "coupangSearchTerm": "음식물처리기 추천",
+    "blogTitle": "음식물처리기 추천 비교: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "구매 직전 비교",
+    "articleType": "top_3_5_compare",
+    "category": "주방가전",
+    "priorityScore": 75,
+    "suggestedSearchQueries": [
+      "음식물처리기 추천 비교",
+      "음식물처리기 추천",
+      "음식물처리기 추천 추천"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_autocomplete",
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "음식물처리기 추천",
+      "monthlySearchVolume": 45,
+      "competition": "중간",
+      "datalabTrendDelta": 4.27,
+      "shoppingRatio": 100
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-25T21:50:59.958Z",
+    "wordpressPostId": 556,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777153851628/"
+  },
+  {
+    "id": "2026-04-26-고급-커피머신-비교",
+    "createdAt": "2026-04-25T15:22:45.528Z",
+    "updatedAt": "2026-04-25T15:24:08.978Z",
+    "status": "published",
+    "keyword": "고급 커피머신 비교",
+    "coupangSearchTerm": "고급 커피머신",
+    "blogTitle": "고급 커피머신 비교: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "구매 직전 비교",
+    "articleType": "top_3_5_compare",
+    "category": "주방가전",
+    "priorityScore": 68,
+    "suggestedSearchQueries": [
+      "고급 커피머신 비교",
+      "고급 커피머신",
+      "고급 커피머신 추천"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_autocomplete",
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "고급 커피머신",
+      "monthlySearchVolume": 10,
+      "competition": "낮음",
+      "datalabTrendDelta": 0,
+      "shoppingRatio": 0
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-25T22:22:52.630Z",
+    "wordpressPostId": 558,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777155764070/"
+  },
+  {
+    "id": "2026-04-26-대용량-에어프라이어-비교",
+    "createdAt": "2026-04-25T15:22:45.528Z",
+    "updatedAt": "2026-04-25T15:24:08.979Z",
+    "status": "published",
+    "keyword": "대용량 에어프라이어 비교",
+    "coupangSearchTerm": "대용량 에어프라이어",
+    "blogTitle": "대용량 에어프라이어 비교: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "구매 직전 비교",
+    "articleType": "top_3_5_compare",
+    "category": "주방가전",
+    "priorityScore": 68,
+    "suggestedSearchQueries": [
+      "대용량 에어프라이어 비교",
+      "대용량 에어프라이어",
+      "대용량 에어프라이어 추천"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_autocomplete",
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "대용량 에어프라이어",
+      "monthlySearchVolume": 10,
+      "competition": "낮음",
+      "datalabTrendDelta": 0,
+      "shoppingRatio": 66.67
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-25T23:28:54.398Z",
+    "wordpressPostId": 562,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777159724951/"
+  },
+  {
+    "id": "2026-04-26-저소음-제습기-내돈내산",
+    "createdAt": "2026-04-25T15:22:45.528Z",
+    "updatedAt": "2026-04-25T15:24:08.979Z",
+    "status": "published",
+    "keyword": "저소음 제습기 내돈내산",
+    "coupangSearchTerm": "저소음 제습기",
+    "blogTitle": "저소음 제습기 내돈내산: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "가격 대비 성능 검토",
+    "articleType": "top_3_5_compare",
+    "category": "생활가전",
+    "priorityScore": 68,
+    "suggestedSearchQueries": [
+      "저소음 제습기 내돈내산",
+      "저소음 제습기",
+      "저소음 제습기 추천"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_autocomplete",
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "저소음 제습기",
+      "monthlySearchVolume": 10,
+      "competition": "낮음",
+      "datalabTrendDelta": 0,
+      "shoppingRatio": 0
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-26T02:41:00.580Z",
+    "wordpressPostId": 566,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777171251985/"
+  },
+  {
+    "id": "2026-04-26-저소음-제습기-대용량",
+    "createdAt": "2026-04-25T15:22:45.528Z",
+    "updatedAt": "2026-04-25T15:24:08.979Z",
+    "status": "published",
+    "keyword": "저소음 제습기 대용량",
+    "coupangSearchTerm": "저소음 제습기 대용량",
+    "blogTitle": "저소음 제습기 대용량: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "상황별 제품 탐색",
+    "articleType": "top_3_5_compare",
+    "category": "생활가전",
+    "priorityScore": 68,
+    "suggestedSearchQueries": [
+      "저소음 제습기 대용량",
+      "저소음 제습기",
+      "저소음 제습기 추천"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_autocomplete",
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "저소음 제습기",
+      "monthlySearchVolume": 10,
+      "competition": "높음",
+      "datalabTrendDelta": 0,
+      "shoppingRatio": 56
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-26T03:13:10.730Z",
+    "wordpressPostId": 568,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777173181923/"
+  },
+  {
+    "id": "2026-04-26-저소음-제습기-비교",
+    "createdAt": "2026-04-25T15:22:45.528Z",
+    "updatedAt": "2026-04-25T15:24:08.979Z",
+    "status": "published",
+    "keyword": "저소음 제습기 비교",
+    "coupangSearchTerm": "저소음 제습기",
+    "blogTitle": "저소음 제습기 비교: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "구매 직전 비교",
+    "articleType": "top_3_5_compare",
+    "category": "생활가전",
+    "priorityScore": 68,
+    "suggestedSearchQueries": [
+      "저소음 제습기 비교",
+      "저소음 제습기",
+      "저소음 제습기 추천"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_autocomplete",
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "저소음 제습기",
+      "monthlySearchVolume": 10,
+      "competition": "낮음",
+      "datalabTrendDelta": 0,
+      "shoppingRatio": 0
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-26T03:46:17.330Z",
+    "wordpressPostId": 570,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777175168140/"
+  },
+  {
+    "id": "2026-04-26-차량용-청소기-추천",
+    "createdAt": "2026-04-25T15:22:45.528Z",
+    "updatedAt": "2026-04-25T15:24:08.979Z",
+    "status": "published",
+    "keyword": "차량용 청소기 추천",
+    "coupangSearchTerm": "차량용 청소기",
+    "blogTitle": "차량용 청소기 추천: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "가격 대비 성능 검토",
+    "articleType": "deepdive",
+    "category": "청소/생활",
+    "priorityScore": 87,
+    "suggestedSearchQueries": [
+      "차량용 청소기 추천",
+      "차량용 청소기"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_autocomplete",
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "차량용 청소기",
+      "monthlySearchVolume": 1880,
+      "competition": "높음",
+      "datalabTrendDelta": -0.78,
+      "shoppingRatio": 0
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-25T22:55:27.456Z",
+    "wordpressPostId": 560,
+    "wordpressUrl": "https://jupocket.com/wet-dry-cleaner-guide-2026-04-26-1777157717786/"
+  },
+  {
+    "id": "2026-04-26-프리미엄-공기청정기-비교",
+    "createdAt": "2026-04-25T15:22:45.528Z",
+    "updatedAt": "2026-04-25T15:24:08.979Z",
+    "status": "published",
+    "keyword": "프리미엄 공기청정기 비교",
+    "coupangSearchTerm": "프리미엄 공기청정기",
+    "blogTitle": "프리미엄 공기청정기 비교: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "구매 직전 비교",
+    "articleType": "top_3_5_compare",
+    "category": "생활가전",
+    "priorityScore": 69,
+    "suggestedSearchQueries": [
+      "프리미엄 공기청정기 비교",
+      "프리미엄 공기청정기",
+      "프리미엄 공기청정기 추천"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_autocomplete",
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "프리미엄 공기청정기",
+      "monthlySearchVolume": 15,
+      "competition": "높음",
+      "datalabTrendDelta": 0,
+      "shoppingRatio": 45.83
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-26T02:08:08.855Z",
+    "wordpressPostId": 564,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777169280144/"
+  },
+  {
+    "id": "2026-04-26-프리미엄-로봇청소기-비교",
+    "createdAt": "2026-04-25T15:22:45.528Z",
+    "updatedAt": "2026-04-25T15:24:08.979Z",
+    "status": "published",
+    "keyword": "프리미엄 로봇청소기 비교",
+    "coupangSearchTerm": "프리미엄 로봇청소기",
+    "blogTitle": "프리미엄 로봇청소기 비교: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "구매 직전 비교",
+    "articleType": "top_3_5_compare",
+    "category": "청소/생활",
+    "priorityScore": 68,
+    "suggestedSearchQueries": [
+      "프리미엄 로봇청소기 비교",
+      "프리미엄 로봇청소기",
+      "프리미엄 로봇청소기 추천"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_autocomplete",
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "프리미엄 로봇청소기",
+      "monthlySearchVolume": 10,
+      "competition": "높음",
+      "datalabTrendDelta": 0,
+      "shoppingRatio": 0
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-26T04:18:16.802Z",
+    "wordpressPostId": 572,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777177087733/"
+  },
+  {
+    "id": "2026-04-26-음식물처리기",
+    "createdAt": "2026-04-26T04:51:50.992Z",
+    "updatedAt": "2026-04-26T04:51:50.992Z",
+    "status": "published",
+    "keyword": "음식물처리기",
+    "coupangSearchTerm": "음식물처리기",
+    "blogTitle": "음식물처리기: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "구매 전 조건 탐색",
+    "articleType": "top_3_5_compare",
+    "category": "주방가전",
+    "priorityScore": 83,
+    "suggestedSearchQueries": [
+      "음식물처리기",
+      "음식물처리기 추천",
+      "음식물처리기 가격"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_autocomplete",
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "음식물처리기",
+      "monthlySearchVolume": 156700,
+      "competition": "중간",
+      "datalabTrendDelta": 1.74,
+      "shoppingRatio": 84.2
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-26T04:58:29.617Z",
+    "wordpressPostId": 574,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777179500716/"
+  },
+  {
+    "id": "2026-04-26-냉풍기",
+    "createdAt": "2026-04-26T04:51:50.992Z",
+    "updatedAt": "2026-04-26T04:51:50.992Z",
+    "status": "published",
+    "keyword": "냉풍기",
+    "coupangSearchTerm": "냉풍기",
+    "blogTitle": "냉풍기: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "구매 전 조건 탐색",
+    "articleType": "top_3_5_compare",
+    "category": "생활가전",
+    "priorityScore": 83,
+    "suggestedSearchQueries": [
+      "냉풍기",
+      "냉풍기 추천",
+      "냉풍기 가격"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_autocomplete",
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "냉풍기",
+      "monthlySearchVolume": 25200,
+      "competition": "중간",
+      "datalabTrendDelta": 45.71,
+      "shoppingRatio": 49.28
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-26T05:32:48.438Z",
+    "wordpressPostId": 576,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777181559997/"
+  },
+  {
+    "id": "2026-04-26-인덕션",
+    "createdAt": "2026-04-26T04:51:50.992Z",
+    "updatedAt": "2026-04-26T04:51:50.992Z",
+    "status": "published",
+    "keyword": "인덕션",
+    "coupangSearchTerm": "인덕션",
+    "blogTitle": "인덕션: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "구매 전 조건 탐색",
+    "articleType": "top_3_5_compare",
+    "category": "주방가전",
+    "priorityScore": 82,
+    "suggestedSearchQueries": [
+      "인덕션",
+      "인덕션 추천",
+      "인덕션 가격"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_autocomplete",
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "인덕션",
+      "monthlySearchVolume": 88500,
+      "competition": "중간",
+      "datalabTrendDelta": -0.03,
+      "shoppingRatio": 85.22
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-26T06:06:14.761Z",
+    "wordpressPostId": 578,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777183565494/"
+  },
+  {
+    "id": "2026-04-26-식기세척기",
+    "createdAt": "2026-04-26T04:51:50.992Z",
+    "updatedAt": "2026-04-26T04:51:50.992Z",
+    "status": "published",
+    "keyword": "식기세척기",
+    "coupangSearchTerm": "식기세척기",
+    "blogTitle": "식기세척기: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "구매 전 조건 탐색",
+    "articleType": "top_3_5_compare",
+    "category": "주방가전",
+    "priorityScore": 82,
+    "suggestedSearchQueries": [
+      "식기세척기",
+      "식기세척기 추천",
+      "식기세척기 가격"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_autocomplete",
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "식기세척기",
+      "monthlySearchVolume": 81000,
+      "competition": "중간",
+      "datalabTrendDelta": 0.69,
+      "shoppingRatio": 81.76
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-26T06:41:04.342Z",
+    "wordpressPostId": 580,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777185654699/"
+  },
+  {
+    "id": "2026-04-26-통돌이세탁기",
+    "createdAt": "2026-04-26T04:51:50.992Z",
+    "updatedAt": "2026-04-26T04:51:50.992Z",
+    "status": "published",
+    "keyword": "통돌이세탁기",
+    "coupangSearchTerm": "미니건조기",
+    "blogTitle": "통돌이세탁기: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "구매 전 조건 탐색",
+    "articleType": "top_3_5_compare",
+    "category": "생활가전",
+    "priorityScore": 82,
+    "suggestedSearchQueries": [
+      "통돌이세탁기",
+      "미니건조기",
+      "미니건조기 추천",
+      "통돌이세탁기 가격"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "미니건조기",
+      "monthlySearchVolume": 43050,
+      "competition": "중간",
+      "datalabTrendDelta": 4.47,
+      "shoppingRatio": 78.15
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-26T07:15:47.752Z",
+    "wordpressPostId": 582,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777187738158/"
+  },
+  {
+    "id": "2026-04-26-건조기",
+    "createdAt": "2026-04-26T04:51:50.992Z",
+    "updatedAt": "2026-04-26T04:51:50.992Z",
+    "status": "published",
+    "keyword": "건조기",
+    "coupangSearchTerm": "건조기",
+    "blogTitle": "건조기: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "구매 전 조건 탐색",
+    "articleType": "top_3_5_compare",
+    "category": "생활가전",
+    "priorityScore": 81,
+    "suggestedSearchQueries": [
+      "건조기",
+      "건조기 추천",
+      "건조기 가격"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_autocomplete",
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "건조기",
+      "monthlySearchVolume": 64400,
+      "competition": "높음",
+      "datalabTrendDelta": -0.28,
+      "shoppingRatio": 78.88
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-26T07:48:45.823Z",
+    "wordpressPostId": 584,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777189717330/"
+  },
+  {
+    "id": "2026-04-26-제습기",
+    "createdAt": "2026-04-26T04:51:50.992Z",
+    "updatedAt": "2026-04-26T04:51:50.992Z",
+    "status": "published",
+    "keyword": "제습기",
+    "coupangSearchTerm": "제습기",
+    "blogTitle": "제습기: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "구매 전 조건 탐색",
+    "articleType": "top_3_5_compare",
+    "category": "생활가전",
+    "priorityScore": 80,
+    "suggestedSearchQueries": [
+      "제습기",
+      "제습기 추천",
+      "제습기 가격"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_autocomplete",
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "제습기",
+      "monthlySearchVolume": 119800,
+      "competition": "중간",
+      "datalabTrendDelta": 15.86,
+      "shoppingRatio": 61.36
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-26T08:40:14.859Z",
+    "wordpressPostId": 620,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777192795165/"
+  },
+  {
+    "id": "2026-04-26-커피머신",
+    "createdAt": "2026-04-26T04:51:50.992Z",
+    "updatedAt": "2026-04-26T04:51:50.992Z",
+    "status": "published",
+    "keyword": "커피머신",
+    "coupangSearchTerm": "커피머신",
+    "blogTitle": "커피머신: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "구매 전 조건 탐색",
+    "articleType": "top_3_5_compare",
+    "category": "주방가전",
+    "priorityScore": 80,
+    "suggestedSearchQueries": [
+      "커피머신",
+      "커피머신 추천",
+      "커피머신 가격"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_autocomplete",
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "커피머신",
+      "monthlySearchVolume": 77300,
+      "competition": "중간",
+      "datalabTrendDelta": -2.83,
+      "shoppingRatio": 77.18
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-26T08:53:34.971Z",
+    "wordpressPostId": 627,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777193605386/"
+  },
+  {
+    "id": "2026-04-26-써큘레이터",
+    "createdAt": "2026-04-26T04:51:50.992Z",
+    "updatedAt": "2026-04-26T04:51:50.992Z",
+    "status": "published",
+    "keyword": "써큘레이터",
+    "coupangSearchTerm": "선풍기",
+    "blogTitle": "써큘레이터: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "구매 전 조건 탐색",
+    "articleType": "top_3_5_compare",
+    "category": "생활가전",
+    "priorityScore": 80,
+    "suggestedSearchQueries": [
+      "써큘레이터",
+      "선풍기",
+      "선풍기 추천",
+      "써큘레이터 가격"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "선풍기",
+      "monthlySearchVolume": 29370,
+      "competition": "중간",
+      "datalabTrendDelta": 35.94,
+      "shoppingRatio": 47.89
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-26T09:11:06.126Z",
+    "wordpressPostId": 630,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777194658168/"
+  },
+  {
+    "id": "2026-04-26-환풍기",
+    "createdAt": "2026-04-26T04:51:50.992Z",
+    "updatedAt": "2026-04-26T04:51:50.992Z",
+    "status": "published",
+    "keyword": "환풍기",
+    "coupangSearchTerm": "공기청정기",
+    "blogTitle": "환풍기: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "구매 전 조건 탐색",
+    "articleType": "top_3_5_compare",
+    "category": "생활가전",
+    "priorityScore": 80,
+    "suggestedSearchQueries": [
+      "환풍기",
+      "공기청정기",
+      "공기청정기 추천",
+      "환풍기 가격"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "공기청정기",
+      "monthlySearchVolume": 23420,
+      "competition": "중간",
+      "datalabTrendDelta": 0.58,
+      "shoppingRatio": 73.49
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-26T09:45:14.160Z",
+    "wordpressPostId": 633,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777196704540/"
+  },
+  {
+    "id": "2026-04-26-음식물분쇄기",
+    "createdAt": "2026-04-26T04:51:50.992Z",
+    "updatedAt": "2026-04-26T04:51:50.992Z",
+    "status": "published",
+    "keyword": "음식물분쇄기",
+    "coupangSearchTerm": "음식물처리기",
+    "blogTitle": "음식물분쇄기: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "구매 전 조건 탐색",
+    "articleType": "top_3_5_compare",
+    "category": "주방가전",
+    "priorityScore": 80,
+    "suggestedSearchQueries": [
+      "음식물분쇄기",
+      "음식물처리기",
+      "음식물처리기 추천",
+      "음식물분쇄기 가격"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "음식물처리기",
+      "monthlySearchVolume": 19280,
+      "competition": "중간",
+      "datalabTrendDelta": -6.97,
+      "shoppingRatio": 78.97
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-26T10:18:55.217Z",
+    "wordpressPostId": 635,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777198726633/"
+  },
+  {
+    "id": "2026-04-26-식세기",
+    "createdAt": "2026-04-26T04:51:50.992Z",
+    "updatedAt": "2026-04-26T04:51:50.992Z",
+    "status": "published",
+    "keyword": "식세기",
+    "coupangSearchTerm": "식기세척기",
+    "blogTitle": "식세기: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "구매 전 조건 탐색",
+    "articleType": "top_3_5_compare",
+    "category": "주방가전",
+    "priorityScore": 80,
+    "suggestedSearchQueries": [
+      "식세기",
+      "식기세척기",
+      "식기세척기 추천",
+      "식세기 가격"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "식기세척기",
+      "monthlySearchVolume": 12950,
+      "competition": "중간",
+      "datalabTrendDelta": 2.24,
+      "shoppingRatio": 72.92
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-26T11:08:27.221Z",
+    "wordpressPostId": 642,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777201693779/"
+  },
+  {
+    "id": "2026-04-26-삼성인덕션3구",
+    "createdAt": "2026-04-26T04:51:50.992Z",
+    "updatedAt": "2026-04-26T04:51:50.992Z",
+    "status": "published",
+    "keyword": "삼성인덕션3구",
+    "coupangSearchTerm": "인덕션",
+    "blogTitle": "삼성인덕션3구: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "구매 전 조건 탐색",
+    "articleType": "top_3_5_compare",
+    "category": "주방가전",
+    "priorityScore": 80,
+    "suggestedSearchQueries": [
+      "삼성인덕션3구",
+      "인덕션",
+      "인덕션 추천",
+      "삼성인덕션3구 가격"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "인덕션",
+      "monthlySearchVolume": 11180,
+      "competition": "중간",
+      "datalabTrendDelta": 9.17,
+      "shoppingRatio": 67.71
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화",
+    "publishedAt": "2026-04-26T11:24:05.079Z",
+    "wordpressPostId": 649,
+    "wordpressUrl": "https://jupocket.com/cp9-2026-04-26-1777202632093/"
+  },
+  {
+    "id": "2026-04-26-미니제습기",
+    "createdAt": "2026-04-26T04:51:50.992Z",
+    "updatedAt": "2026-04-26T04:51:50.992Z",
+    "status": "pending",
+    "keyword": "미니제습기",
+    "coupangSearchTerm": "제습기",
+    "blogTitle": "미니제습기: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "상황별 제품 탐색",
+    "articleType": "top_3_5_compare",
+    "category": "생활가전",
+    "priorityScore": 80,
+    "suggestedSearchQueries": [
+      "미니제습기",
+      "제습기",
+      "제습기 추천",
+      "미니제습기 가격"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "제습기",
+      "monthlySearchVolume": 9860,
+      "competition": "중간",
+      "datalabTrendDelta": 5.35,
+      "shoppingRatio": 64.34
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화"
+  },
+  {
+    "id": "2026-04-26-드럼세탁기",
+    "createdAt": "2026-04-26T04:51:50.992Z",
+    "updatedAt": "2026-04-26T04:51:50.992Z",
+    "status": "pending",
+    "keyword": "드럼세탁기",
+    "coupangSearchTerm": "미니건조기",
+    "blogTitle": "드럼세탁기: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "구매 전 조건 탐색",
+    "articleType": "top_3_5_compare",
+    "category": "생활가전",
+    "priorityScore": 79,
+    "suggestedSearchQueries": [
+      "드럼세탁기",
+      "미니건조기",
+      "미니건조기 추천",
+      "드럼세탁기 가격"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "미니건조기",
+      "monthlySearchVolume": 44350,
+      "competition": "중간",
+      "datalabTrendDelta": -1.89,
+      "shoppingRatio": 73.48
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화"
+  },
+  {
+    "id": "2026-04-26-삼성인덕션",
+    "createdAt": "2026-04-26T04:51:50.992Z",
+    "updatedAt": "2026-04-26T04:51:50.992Z",
+    "status": "pending",
+    "keyword": "삼성인덕션",
+    "coupangSearchTerm": "인덕션",
+    "blogTitle": "삼성인덕션: 가격, 성능, 사용 환경 기준으로 고르는 법",
+    "searchIntent": "구매 전 조건 탐색",
+    "articleType": "top_3_5_compare",
+    "category": "주방가전",
+    "priorityScore": 79,
+    "suggestedSearchQueries": [
+      "삼성인덕션",
+      "인덕션",
+      "인덕션 추천",
+      "삼성인덕션 가격"
+    ],
+    "evidence": {
+      "sources": [
+        "naver_datalab_search",
+        "naver_searchad_keywordtool",
+        "naver_shopping_insight"
+      ],
+      "seedKeyword": "인덕션",
+      "monthlySearchVolume": 18870,
+      "competition": "중간",
+      "datalabTrendDelta": 8.38,
+      "shoppingRatio": 65.97
+    },
+    "notes": "C 자동화: 시드 키워드에서 네이버 연관검색어 확장 후 검색광고/데이터랩/쇼핑인사이트 신호로 점수화"
+  },
+  {
+    "id": "2026-04-26-premium-dishwasher-deepdive",
+    "createdAt": "2026-04-26T17:00:00+09:00",
+    "updatedAt": "2026-04-26T17:00:00+09:00",
+    "status": "published",
+    "keyword": "프리미엄 식기세척기 고르는 법",
+    "coupangSearchTerm": "식기세척기",
+    "blogTitle": "프리미엄 식기세척기 고르는 법: 밀레, LG, 삼성, SK매직 브랜드 철학과 설치 기준",
+    "searchIntent": "정보 탐색 후 고가 주방가전 구매 전환",
+    "articleType": "deepdive",
+    "category": "주방가전",
+    "priorityScore": 89,
+    "suggestedSearchQueries": [
+      "프리미엄 식기세척기",
+      "식기세척기 고르는 법",
+      "식기세척기 브랜드 비교",
+      "12인용 식기세척기"
+    ],
+    "evidence": {
+      "sources": [
+        "manual_codex_request"
+      ],
+      "seedKeyword": "식기세척기",
+      "monthlySearchVolume": null,
+      "competition": "중간",
+      "datalabTrendDelta": null,
+      "shoppingRatio": null
+    },
+    "notes": "사용자 요청으로 딥다이브 품질 검증용 후보를 수동 추가. 공개 본문에는 API/응답/내부 필드명 언급 금지.",
+    "publishedAt": "2026-04-26T08:36:01.483Z",
+    "wordpressPostId": 617,
+    "wordpressUrl": "https://jupocket.com/dishwasher-brand-philosophy-washing-drying-installation-2/"
+  }
+]

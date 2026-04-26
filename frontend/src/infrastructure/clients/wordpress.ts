@@ -4,6 +4,8 @@
  */
 
 import { config } from '@/shared/lib/config'
+import fs from 'fs/promises'
+import path from 'path'
 
 // ── 타입 정의 ──
 
@@ -131,32 +133,38 @@ export class WordPressClient {
   }
 
   /**
-   * URL로부터 이미지를 WP 미디어 라이브러리에 업로드합니다.
+   * URL 또는 로컬 경로로부터 이미지를 WP 미디어 라이브러리에 업로드합니다.
    * 썸네일 설정에 사용됩니다.
    */
   async uploadMediaFromUrl(imageUrl: string, filename: string, altText?: string): Promise<WPMediaResponse> {
     console.log(`🖼️ [WordPress] 미디어 업로드 중: ${filename}`)
 
-    // 상대 경로인 경우 절대 경로로 변환 (로컬 개발 환경 또는 Vercel 환경 대비)
-    let absoluteImageUrl = imageUrl;
+    let imageBuffer: ArrayBuffer | Buffer
+    let contentType = 'image/jpeg'
+
+    // 로컬 경로인지 확인
     if (imageUrl.startsWith('/')) {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : '');
-      if (baseUrl) {
-        absoluteImageUrl = `${baseUrl.replace(/\/+$/, '')}${imageUrl}`;
-      } else {
-        console.warn('⚠️ 상대 경로 이미지를 절대 경로로 변환할 BASE URL 환경변수가 없습니다.');
+      // 로컬 파일 시스템에서 직접 읽기 (Vercel 404 에러 방지용)
+      const localFilePath = path.join(process.cwd(), 'public', imageUrl)
+      console.log(`📂 로컬 파일 로깅: ${localFilePath}`)
+      try {
+        imageBuffer = await fs.readFile(localFilePath)
+        contentType = imageUrl.toLowerCase().endsWith('.png') ? 'image/png'
+                    : imageUrl.toLowerCase().endsWith('.webp') ? 'image/webp'
+                    : 'image/jpeg'
+      } catch (err) {
+        throw new Error(`로컬 이미지 읽기 실패: ${localFilePath} - ${err instanceof Error ? err.message : String(err)}`)
       }
+    } else {
+      // 외부 URL (Pixabay 등)
+      const imageResponse = await fetch(imageUrl)
+      if (!imageResponse.ok) {
+        throw new Error(`이미지 다운로드 실패: ${imageResponse.status}`)
+      }
+      imageBuffer = await imageResponse.arrayBuffer()
+      contentType = imageResponse.headers.get('content-type') || 'image/jpeg'
     }
 
-    // 이미지 다운로드
-    const imageResponse = await fetch(absoluteImageUrl)
-    if (!imageResponse.ok) {
-      throw new Error(`이미지 다운로드 실패: ${imageResponse.status}`)
-    }
-    const imageBuffer = await imageResponse.arrayBuffer()
-
-    // Content-Type 추출
-    const contentType = imageResponse.headers.get('content-type') || 'image/jpeg'
     const ext = contentType.includes('png') ? '.png' : contentType.includes('webp') ? '.webp' : '.jpg'
     
     // WordPress REST API는 엄격한 ASCII filename 형식을 요구하므로 한글 등 특수문자를 제거
@@ -176,7 +184,7 @@ export class WordPressClient {
         'Content-Type': contentType,
         'Content-Disposition': `attachment; filename="${safeFilename}"`,
       },
-      body: imageBuffer,
+      body: imageBuffer as any,
     })
 
     if (!response.ok) {

@@ -17,8 +17,6 @@ export const searchCoupangProducts = cache(async (keyword: string, limit = 10, a
   }
   
   console.log(`[Coupang API] Requesting search... keyword: ${keyword}`);
-  console.log(`[Coupang API Debug] accessKey length: ${accessKey?.length}, secretKey length: ${secretKey?.length}`);
-  console.log(`[Coupang API Debug] accessKey starts with: ${accessKey?.substring(0, 4)}...`);
 
   const method = 'GET';
   const path = `/v2/providers/affiliate_open_api/apis/openapi/v1/products/search?keyword=${encodeURIComponent(keyword)}&limit=${limit}`;
@@ -35,4 +33,4 @@ export const searchCoupangProducts = cache(async (keyword: string, limit = 10, a
   }
   const data = await res.json();
   return data.data?.productData || [];
-}); 
+});
