@@ -30,6 +30,8 @@ const SUMMER_CURATION_QUERIES = [
 ]
 
 const COFFEE_DEEPDIVE_QUERIES = [
+  '일리 커피머신',
+  '일리 캡슐 커피머신',
   '네스프레소 커피머신',
   '드롱기 커피머신',
   '브레빌 커피머신',
@@ -38,6 +40,7 @@ const COFFEE_DEEPDIVE_QUERIES = [
 ]
 
 const COFFEE_BRAND_SOURCES = [
+  { label: 'illy 공식 커피머신 자료', url: 'https://www.illy.com/en-ww/coffee-machines' },
   { label: 'Nespresso 공식 지속가능성 자료', url: 'https://www.nespresso.com/kr/ko/sustainability' },
   { label: 'DeLonghi 공식 커피머신 자료', url: 'https://www.delonghi.com/ko-kr/products/coffee' },
   { label: 'Breville Barista Touch Impress 공식 자료', url: 'https://www.breville.com/us/en/products/espresso/bes881.html' },
@@ -745,8 +748,11 @@ ${itemListJsonLd}
 }
 
 function buildDeepdiveArticle(candidate, products) {
-  const title = '커피머신 고르는 법 캡슐·반자동·전자동 차이와 관리 기준'
-  const slug = 'coffee-machine-deepdive-capsule-semi-auto-care'
+  const isIllyKeyword = /일리|illy/i.test(candidate.keyword || '')
+  const title = isIllyKeyword
+    ? '일리커피머신 고르는 법 캡슐 감성, 관리 기준, 브랜드 차이'
+    : '커피머신 고르는 법 캡슐·반자동·전자동 차이와 관리 기준'
+  const slug = isIllyKeyword ? 'illy-coffee-machine-deepdive-capsule-care' : 'coffee-machine-deepdive-capsule-semi-auto-care'
   const table = enhanceFirstComparisonTable(buildComparisonTable(products), { force: true }).html
   const itemListJsonLd = renderItemListJsonLd(products, title)
   const sourceLinks = COFFEE_BRAND_SOURCES.map((source) => `<li><a href="${escapeHtml(source.url)}" target="_blank" rel="noopener">${escapeHtml(source.label)}</a></li>`).join('')
@@ -768,9 +774,13 @@ ${renderProductFactPanel(product)}
 
   const content = `<article class="cp9-article" style="max-width:760px;margin:0 auto;color:#222;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.78;font-size:16px;">
 <p style="font-size:17px;color:#444;margin:0 0 18px;">커피머신 고르는 법을 단순히 가격, 압력, 물통 용량으로만 보면 중요한 장면을 놓칩니다. 커피머신은 주방에 놓이는 작은 가전이지만, 실제로는 사용자의 아침 루틴, 손님을 맞이하는 방식, 집 안에서 어떤 취향을 드러내고 싶은지까지 건드립니다. 같은 커피를 마셔도 어떤 사람은 버튼 한 번의 안정감을 원하고, 어떤 사람은 원두를 갈고 추출을 조절하는 시간을 일종의 의식처럼 여깁니다.</p>
-<p style="margin:0 0 24px;">그래서 딥다이브 글에서는 상품 스펙 설명만 반복하지 않습니다. 유명 브랜드가 어떤 철학으로 커피 경험을 설계했는지, 대표 아이템이 어떤 이미지를 만들었는지, 그 이미지가 실제 구매 결정에 어떤 의미를 갖는지까지 봅니다. 구매 링크는 글 하단의 확인용으로 배치하고, 본문은 브랜드와 방식의 차이를 이해하는 데 집중합니다.</p>
+<p style="margin:0 0 24px;">그래서 딥다이브 글에서는 상품 스펙 설명만 반복하지 않습니다. 일리커피머신을 중심에 두고, 유명 브랜드가 어떤 철학으로 커피 경험을 설계했는지, 대표 아이템이 어떤 이미지를 만들었는지, 그 이미지가 실제 구매 결정에 어떤 의미를 갖는지까지 봅니다. 구매 링크는 글 하단의 확인용으로 배치하고, 본문은 브랜드와 방식의 차이를 이해하는 데 집중합니다.</p>
 <div style="border:1px solid #e5e7eb;background:#f8fafc;border-radius:14px;padding:18px 20px;margin:24px 0;"><strong style="display:block;margin-bottom:8px;color:#111;">결론부터 말하면</strong><ul style="margin:0;padding-left:20px;"><li>편의성이 최우선이면 캡슐형이 안전합니다.</li><li>맛 조절과 스팀 밀크까지 원하면 반자동을 봐야 합니다.</li><li>가족이 여러 잔을 마시고 관리 시간을 줄이고 싶다면 전자동이 맞습니다.</li><li>어떤 방식이든 물통, 세척, 캡슐/원두 비용, AS를 가격보다 먼저 확인해야 합니다.</li></ul></div>
-<h2 style="font-size:24px;margin:34px 0 14px;color:#111;">1. 네스프레소: 커피를 취향보다 시스템으로 만든 브랜드</h2>
+<h2 style="font-size:24px;margin:34px 0 14px;color:#111;">1. 일리커피머신은 감성과 단순함을 함께 사는 선택입니다</h2>
+<p>일리는 커피머신을 단순한 추출 도구보다 브랜드 경험의 입구로 다룹니다. 빨간 로고, 둥근 캡슐, 주방 위에 두었을 때의 작은 오브제 같은 인상이 먼저 들어옵니다. 이 이미지는 구매 결정에 꽤 큰 영향을 줍니다. 일리커피머신을 찾는 사람은 대개 복잡한 반자동 세팅보다 정돈된 캡슐 루틴, 작은 주방에 어울리는 디자인, 매일 반복하기 쉬운 커피 시간을 기대합니다.</p>
+<p>확인 가능한 구매 정보 기준으로 보면 일리 계열은 캡슐 호환성, 물통 관리, 캡슐 수급, 본체 크기를 먼저 봐야 합니다. 해석하자면 일리는 맛의 세밀한 조절보다 브랜드가 정한 커피 경험을 안정적으로 반복하는 쪽에 가깝습니다. 구매 전 질문은 단순합니다. 나는 원두를 직접 고르고 분쇄하는 재미를 원하는가, 아니면 캡슐을 넣고 일정한 결과를 얻는 편안함을 원하는가. 후자라면 일리커피머신은 충분히 설득력 있는 후보가 됩니다.</p>
+<p>다만 캡슐형의 장점은 동시에 한계입니다. 캡슐 가격이 누적되고, 호환 캡슐 선택지가 방식별로 달라질 수 있으며, 라떼나 카푸치노를 자주 마신다면 우유 거품을 어떻게 만들지 별도로 봐야 합니다. 작은 머신이 주는 예쁨만 보고 사면 물 보충과 캡슐 처리 동선에서 아쉬움이 생길 수 있습니다. 예쁩니다. 하지만 예쁜 물건도 매일 치우기 귀찮으면 금방 장식품이 됩니다.</p>
+<h2 style="font-size:24px;margin:34px 0 14px;color:#111;">2. 네스프레소: 커피를 취향보다 시스템으로 만든 브랜드</h2>
 <p>네스프레소가 만든 이미지는 명확합니다. 커피를 잘 모르는 사람도 일정한 품질의 에스프레소 경험에 접근하게 만드는 것. 이 브랜드의 핵심은 머신 하나가 아니라 캡슐, 추출 압력, 물량, 클럽형 구매 경험, 재활용 캠페인까지 이어지는 폐쇄형 생태계입니다. 이것을 단점으로 보는 사람도 있고, 장점으로 보는 사람도 있습니다. 중요한 것은 네스프레소를 산다는 행위가 “나는 커피를 직접 공부하겠다”가 아니라 “검증된 결과를 빠르게 반복하겠다”는 선택에 가깝다는 점입니다.</p>
 <p>대표 아이템을 보면 그 철학이 더 분명해집니다. 오리지널 라인은 작고 직관적입니다. 에스프레소와 룽고 중심의 단순한 사용성을 제공하고, 좁은 주방이나 사무실 책상 옆에도 자연스럽게 들어갑니다. 반면 버츄오 라인은 캡슐 바코드와 회전 추출을 통해 잔의 크기와 질감을 확장합니다. 사용자는 원두의 산지나 로스팅보다 캡슐 이름과 컵 사이즈로 취향을 기억합니다. 이 방식은 커피 애호가에게는 다소 제한적으로 보일 수 있지만, 매일 같은 품질을 원하는 사람에게는 강력한 안정감입니다.</p>
 <p>브랜드 이미지도 구매 이유에 크게 작동합니다. 네스프레소는 주방에 두었을 때 “전문 장비”보다 “잘 정리된 라이프스타일 오브제”에 가깝습니다. 머신 디자인은 과시적이지 않고, 캡슐 보관함과 함께 놓으면 호텔 라운지나 오피스 팬트리 같은 인상을 만듭니다. 손님에게 커피를 낼 때도 복잡한 설명이 필요 없습니다. 캡슐을 고르게 하고 버튼을 누르면 됩니다. 이 간단함이 네스프레소의 진짜 프리미엄입니다.</p>
