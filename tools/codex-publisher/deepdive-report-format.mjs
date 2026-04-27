@@ -51,8 +51,11 @@ function topicBrief({ title = '', keyword = '', html = '' }) {
 
 function reportStyle() {
   return `<style>
-.cp9-deepdive-report{max-width:820px!important;color:#1f2937!important;font-size:17px!important;line-height:1.86!important}
+.cp9-deepdive-report{max-width:820px!important;margin:0 auto!important;color:#1f2937!important;font-size:17px!important;line-height:1.86!important}
 .cp9-deepdive-report p{word-break:keep-all;overflow-wrap:anywhere}
+.cp9-deepdive-report figure{margin-left:auto!important;margin-right:auto!important}
+.cp9-deepdive-report img{max-width:100%!important;height:auto!important}
+.cp9-deepdive-report .cp9-deepdive-visual{display:block!important;width:100%!important;max-width:960px!important;text-align:center!important}
 .cp9-deepdive-report h2{margin:44px 0 18px!important;padding:18px 20px!important;border-left:6px solid #111827!important;border-radius:18px!important;background:#f8fafc!important;color:#111!important;font-size:25px!important;line-height:1.38!important;letter-spacing:-.04em!important}
 .cp9-deepdive-report h3{margin-top:28px!important;color:#111!important}
 .cp9-report-brief{border:1px solid #d1d5db;border-radius:22px;background:#f8fafc;color:#111827;padding:20px;margin:24px 0 32px;box-shadow:0 10px 28px rgba(15,23,42,.06)}

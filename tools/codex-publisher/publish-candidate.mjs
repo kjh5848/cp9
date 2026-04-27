@@ -67,6 +67,60 @@ const CLEANER_DEEPDIVE_QUERIES = [
   '업소용 건습식 청소기',
 ]
 
+const ROBOT_VACUUM_QUERIES = [
+  '로보락 Qrevo 로봇청소기',
+  '로보락 Saros 로봇청소기',
+  '로보락 S8 MaxV Ultra 로봇청소기',
+  '드리미 X50 Ultra 로봇청소기',
+  '드리미 L40 로봇청소기',
+  '에코백스 X8 Pro Omni 로봇청소기',
+  '에코백스 T50 로봇청소기',
+  '삼성 비스포크 제트봇 AI 로봇청소기',
+  'LG 로보킹 AI 올인원 로봇청소기',
+  '샤오미 X20 로봇청소기',
+  '로봇청소기 스테이션 물걸레',
+]
+
+function buildCurationQueries(candidate) {
+  const baseQuery = candidate.coupangSearchTerm || candidate.keyword
+  if (/로보락|로봇\s*청소기|로봇청소기|물걸레/.test(baseQuery)) {
+    return [
+      baseQuery,
+      '로보락 로봇청소기',
+      '로보락 물걸레 로봇청소기',
+      '로보락 청소기',
+      'Roborock 로봇청소기',
+      '로보락 Qrevo',
+      '로보락 S8',
+      '로보락 S9',
+      '로보락 Q10',
+      '로봇청소기',
+      '물걸레 로봇청소기',
+      '자동 먼지비움 로봇청소기',
+      '로봇청소기 스테이션',
+    ]
+  }
+  if (/선풍기|서큘레이터|손선풍기|휴대용선풍기|탁상용선풍기/.test(baseQuery)) {
+    return [baseQuery, ...SUMMER_CURATION_QUERIES]
+  }
+  if (/믹서기|블렌더/.test(baseQuery)) {
+    return [
+      baseQuery,
+      '초고속 블렌더',
+      '진공 블렌더',
+      '핸드 블렌더',
+      '미니 믹서기',
+      '대용량 믹서기',
+      '스무디 믹서기',
+      '텀블러 믹서기',
+    ]
+  }
+  if (/공기청정기/.test(baseQuery)) return [baseQuery, '원룸 공기청정기', '거실 공기청정기', '펫 공기청정기', '헤파 공기청정기']
+  if (/가습기/.test(baseQuery)) return [baseQuery, '초음파 가습기', '가열식 가습기', '자연기화식 가습기', '대용량 가습기']
+  if (/커피머신/.test(baseQuery)) return [baseQuery, ...COFFEE_DEEPDIVE_QUERIES]
+  return [baseQuery, `${baseQuery} 추천`, `${baseQuery} 가정용`, `${baseQuery} 소형`, `${baseQuery} 대용량`]
+}
+
 function usage() {
   console.log(`Usage:
   node tools/codex-publisher/publish-candidate.mjs --type deepdive
@@ -178,11 +232,94 @@ function selectUniqueProducts(products, limit) {
   return selected
 }
 
+function isRobotVacuumKeyword(value) {
+  return /로봇\s*청소기|로봇청소기|물걸레\s*로봇|로보락|Roborock|드리미|Dreame|에코백스|ECOVACS|DEEBOT|디봇|제트봇|Jet\s*Bot|로보킹|Roboking|샤오미\s*X20/i.test(String(value || ''))
+}
+
+function isRobotVacuumProduct(product) {
+  const text = `${product.sourceKeyword || ''} ${product.name || ''} ${product.categoryName || ''}`
+  const hasRobotSignal = isRobotVacuumKeyword(text) || /Qrevo|Saros|S8\s*MaxV|X50|X40|L40|X8\s*Pro|T50|X20\+?/i.test(text)
+  if (!hasRobotSignal) return false
+  const isExplicitRobot = /로봇\s*청소기|로봇청소기|Robot\s*Vacuum|Qrevo|Saros|제트봇|Jet\s*Bot|로보킹|Roboking|DEEBOT|디봇/i.test(text)
+  const nonRobotCleaner = /업소용|건습식|습식청소기|무선청소기|스틱|핸디|침구|차량용|창문|공업용|유선청소기|진공청소기|물걸레청소기|F25|H12|H14/i.test(text)
+  const accessoryOnly = /호환|소모품|브러쉬|브러시|더스트백|필터|액세서리|악세사리|교체용|먼지봉투/i.test(text)
+    || (/물걸레|걸레|세제|클리너/i.test(text) && /\d+\s*개|단일상품|세트|호환/i.test(text))
+  if (nonRobotCleaner || accessoryOnly) return false
+  return isExplicitRobot || !nonRobotCleaner
+}
+
+function robotVacuumBrand(product) {
+  const text = `${product.name || ''}`
+  if (/로보락|Roborock|Qrevo|Saros|S8/i.test(text)) return '로보락'
+  if (/드리미|Dreame|X50|X40|L40/i.test(text)) return '드리미'
+  if (/에코백스|ECOVACS|DEEBOT|디봇|X8|T50/i.test(text)) return '에코백스'
+  if (/삼성|비스포크|BESPOKE|제트봇|Jet\s*Bot/i.test(text)) return '삼성'
+  if (/LG|엘지|로보킹|Roboking|코드제로/i.test(text)) return 'LG'
+  if (/샤오미|Xiaomi|X20/i.test(text)) return '샤오미'
+  return '기타'
+}
+
+function selectRobotVacuumProducts(products, limit) {
+  const candidates = selectUniqueProducts(products.filter(isRobotVacuumProduct), Math.max(120, limit * 12))
+    .sort((left, right) => robotVacuumScore(right) - robotVacuumScore(left))
+  const selected = []
+  const brandCount = new Map()
+  for (const product of candidates) {
+    const brand = robotVacuumBrand(product)
+    if ((brandCount.get(brand) || 0) >= 2) continue
+    selected.push(product)
+    brandCount.set(brand, (brandCount.get(brand) || 0) + 1)
+    if (selected.length >= limit) break
+  }
+  if (selected.length < limit) {
+    const remaining = candidates
+      .filter((product) => !selected.some((item) => item.id === product.id))
+      .sort((left, right) => {
+        const leftCount = brandCount.get(robotVacuumBrand(left)) || 0
+        const rightCount = brandCount.get(robotVacuumBrand(right)) || 0
+        if (leftCount !== rightCount) return leftCount - rightCount
+        return robotVacuumScore(right) - robotVacuumScore(left)
+      })
+    for (const product of remaining) {
+      if (selected.some((item) => item.id === product.id)) continue
+      selected.push(product)
+      const brand = robotVacuumBrand(product)
+      brandCount.set(brand, (brandCount.get(brand) || 0) + 1)
+      if (selected.length >= limit) break
+    }
+  }
+  return selected
+}
+
+function robotVacuumScore(product) {
+  const text = `${product.name || ''}`
+  let score = 0
+  if (robotVacuumBrand(product) !== '기타') score += 30
+  if (/로보락|Roborock|드리미|Dreame|에코백스|ECOVACS|DEEBOT|디봇|삼성|비스포크|BESPOKE|제트봇|LG|로보킹|샤오미|Xiaomi/i.test(text)) score += 20
+  if (/Qrevo|Saros|S8\s*MaxV|X50|X40|L40|X8\s*Pro|T50|X20/i.test(text)) score += 18
+  if (/스테이션|올인원|자동\s*먼지|먼지비움|물걸레|온수|세척|건조/i.test(text)) score += 12
+  if (product.isRocket) score += 6
+  if (product.price >= 250000) score += 4
+  if (robotVacuumBrand(product) === '기타') score -= 12
+  return score
+}
+
 async function collectProducts(env, candidate) {
+  if (candidate.articleType === 'top_3_5_compare' && isRobotVacuumKeyword(`${candidate.keyword || ''} ${candidate.coupangSearchTerm || ''}`)) {
+    const batches = []
+    for (const query of [...new Set([...ROBOT_VACUUM_QUERIES, candidate.coupangSearchTerm, candidate.keyword].filter(Boolean))]) {
+      const products = await searchCoupangProducts(env, query, 10)
+      batches.push(...products.map((product) => normalizeProduct(product, query)))
+    }
+    const selected = selectRobotVacuumProducts(batches, 5)
+    if (selected.length < 3) throw new Error(`robot vacuum top compare requires at least 3 matched products, got ${selected.length}`)
+    return selected
+  }
+
   if (candidate.articleType === 'curation_20') {
     const batches = []
-    for (const query of SUMMER_CURATION_QUERIES) {
-      const products = await searchCoupangProducts(env, query, 5)
+    for (const query of [...new Set(buildCurationQueries(candidate).filter(Boolean))]) {
+      const products = await searchCoupangProducts(env, query, 10)
       batches.push(...products.map((product) => normalizeProduct(product, query)))
     }
     const selected = selectUniqueProducts(batches, 20)
@@ -274,7 +411,12 @@ function truncate(value, maxLength = 58) {
 function productRole(product, index, articleType) {
   if (articleType === 'curation_20') {
     const source = product.sourceKeyword || '여름 생활'
+    const name = product.name || ''
+    if (/로보락|Roborock/i.test(name) || /로보락|Roborock/i.test(source)) return index < 5 ? '로보락 대표 모델 확인' : '로보락 옵션 비교'
+    if (/로봇\s*청소기|로봇청소기|물걸레/i.test(name) || /로봇\s*청소기|로봇청소기|물걸레/i.test(source)) return '로봇청소 루틴 점검'
+    if (/청소기/.test(name) || /청소기/.test(source)) return '청소 방식 비교'
     if (/선풍기|서큘레이터/.test(source)) return '더위 체감 낮추기'
+    if (/믹서기|블렌더/.test(name) || /믹서기|블렌더/.test(source)) return '주방 준비 시간 줄이기'
     if (/제습|필터|청소/.test(source)) return '습기·냄새 관리'
     if (/쿨|냉감|이불/.test(source)) return '수면 온도 관리'
     if (/모기/.test(source)) return '벌레 스트레스 줄이기'
@@ -283,6 +425,15 @@ function productRole(product, index, articleType) {
   }
 
   const name = product.name
+  if (isRobotVacuumProduct(product)) {
+    const brand = robotVacuumBrand(product)
+    if (/Qrevo|Saros|S8|MaxV|Ultra/i.test(name)) return `${brand} 상위 스테이션 후보`
+    if (/X50|X40|L40/i.test(name)) return '문턱·장애물 대응 후보'
+    if (/X8|T50|DEEBOT|디봇/i.test(name)) return '물걸레 관리 특화 후보'
+    if (/제트봇|Jet\s*Bot|비스포크/i.test(name)) return '삼성 생태계 후보'
+    if (/로보킹|Roboking|LG|코드제로/i.test(name)) return '국내 AS·주방 동선 후보'
+    return '로봇청소기 비교 후보'
+  }
   if (/캡슐|네스프레소|돌체/.test(name)) return '캡슐형 간편 추출'
   if (/전자동|자동/.test(name)) return '전자동 관리 편의'
   if (/반자동|에스프레소|스팀/.test(name)) return '반자동 입문'
@@ -308,7 +459,7 @@ function buildComparisonTable(products) {
   }).join('\n')
 
   return `<table style="width:100%;border-collapse:collapse;border:1px solid #d1d5db;background:#fff;margin:0 0 30px;table-layout:fixed;">
-<caption style="caption-side:top;text-align:left;font-size:13px;color:#6b7280;margin:0 0 8px;">가격은 작성 시점 기준이며, 구매 전 쿠팡 상세 페이지에서 최신 가격과 배송 조건을 확인하세요.</caption>
+<caption style="caption-side:top;text-align:left;font-size:13px;color:#6b7280;margin:0 0 8px;">가격은 작성 시점 기준이며, 구매 전 상세 페이지에서 최신 가격과 구성품을 확인하세요.</caption>
 <thead><tr><th scope="col" style="width:92px;padding:10px;border:1px solid #d1d5db;background:#f9fafb;text-align:center;font-size:13px;color:#374151;">사진</th><th scope="col" style="padding:10px;border:1px solid #d1d5db;background:#f9fafb;text-align:left;font-size:13px;color:#374151;">상품과 역할</th><th scope="col" style="width:104px;padding:10px;border:1px solid #d1d5db;background:#f9fafb;text-align:center;font-size:13px;color:#374151;">가격</th><th scope="col" style="width:104px;padding:10px;border:1px solid #d1d5db;background:#f9fafb;text-align:center;font-size:13px;color:#374151;">링크</th></tr></thead>
 <tbody>${rows}</tbody>
 </table>`
@@ -316,6 +467,16 @@ function buildComparisonTable(products) {
 
 function productDecision(product, index) {
   const name = product.name
+  const sourceText = `${product.sourceKeyword || ''} ${name}`
+  if (/로봇\s*청소기|로봇청소기|물걸레/i.test(sourceText)) {
+    const insight = robotVacuumInsight(product)
+    if (insight) return insight.decision
+    if (/스테이션|먼지비움|자동/i.test(name)) return '퇴근 후 바닥 청소를 다시 시작하고 싶지 않은 집에서 먼저 볼 만한 자동 관리 후보입니다.'
+    if (/물걸레|걸레|Mop/i.test(name)) return '주방 앞 물자국과 아이 간식 부스러기까지 같이 줄이고 싶은 집에 맞는 물걸레 중심 후보입니다.'
+    return '머리카락, 먼지, 생활 부스러기를 매일 조금씩 줄이고 싶은 집에서 기본기를 확인할 후보입니다.'
+  }
+  if (/침구/.test(sourceText)) return '침대와 소파 먼지가 신경 쓰이는 집에서 위생 루틴을 만들기 좋은 후보입니다.'
+  if (/무선청소기/.test(sourceText)) return '아이 등교 후나 퇴근 뒤 빠르게 한 바퀴 돌릴 청소 루틴에 맞는 후보입니다.'
   if (/LG|삼성|위닉스|캐리어/i.test(name)) return '브랜드 AS와 생활가전 기본기를 우선하는 안정형 후보입니다.'
   if (/샤오미|미디어|쿠쿠|신일|위니아|테팔|필립스|일렉트로룩스/i.test(name)) return '가격과 기능 균형을 함께 보는 실속 후보입니다.'
   if (/프리미엄|프로|대용량|스마트|인버터/i.test(name)) return '상위 기능과 편의성을 기대할 수 있지만 실제 필요 기능을 따져볼 후보입니다.'
@@ -324,10 +485,83 @@ function productDecision(product, index) {
   return index === 0 ? '이번 비교에서 가장 먼저 검토할 대표 후보입니다.' : '가격과 사용 환경을 함께 맞춰볼 비교 후보입니다.'
 }
 
+function robotVacuumInsight(product) {
+  const text = `${product.name || ''}`
+  if (!isRobotVacuumProduct(product)) return null
+  if (/Qrevo|Curv/i.test(text)) {
+    return {
+      decision: '머리카락 엉킴, 모서리 물걸레, 스테이션 관리 부담을 한 번에 줄이고 싶은 집에서 먼저 볼 만한 상위 후보입니다.',
+      scene: '긴 머리카락이 많은 집은 브러시 엉킴이 반복되면 결국 사람이 다시 풀어야 합니다. 로보락 Qrevo 계열은 모서리 청소와 물걸레 관리까지 같이 보는 구매자가 많으므로, 실제로는 흡입력보다 “내가 손대는 횟수가 줄어드는가”가 클릭 포인트입니다.',
+      review: '상세 페이지와 후기를 볼 때는 브러시 엉킴, 모서리 물걸레 닿는 범위, 스테이션 세척·건조 소음, 소모품 가격을 먼저 보세요.',
+      target: '머리카락, 반려동물 털, 주방 앞 얼룩 때문에 매일 바닥을 다시 보는 집에 맞습니다.',
+      cta: '브러시·스테이션 조건 확인',
+    }
+  }
+  if (/Saros|S8\s*MaxV/i.test(text)) {
+    return {
+      decision: '상위 내비게이션과 장애물 회피, 자동 관리 기능을 함께 보고 싶은 프리미엄 후보입니다.',
+      scene: '아이 장난감, 슬리퍼, 충전선이 바닥에 자주 놓이는 집은 지도 성능보다 장애물 회피가 더 중요하게 느껴집니다. 상위 로보락 계열은 “청소를 시켰는데 중간에 멈추지 않는가”를 중심으로 봐야 합니다.',
+      review: '후기에서는 장애물 회피, 낮은 가구 밑 진입, 문턱 넘김, 앱 지도 안정성, 야간 작동 소음을 확인하세요.',
+      target: '가구와 물건이 많은 거실에서 로봇청소기를 매일 예약해두려는 집에 맞습니다.',
+      cta: '문턱·장애물 조건 확인',
+    }
+  }
+  if (/드리미|Dreame|X50|X40|L40/i.test(text)) {
+    return {
+      decision: '문턱, 낮은 가구, 물걸레 관리처럼 한국 아파트에서 자주 막히는 지점을 확인할 후보입니다.',
+      scene: '로봇청소기가 한 방만 잘 치우고 문턱에서 멈추면 가족 입장에서는 “비싼 장난감”이 됩니다. 드리미 상위 계열은 문턱과 낮은 공간 대응을 강하게 내세우는 만큼, 우리 집 방문턱과 소파 밑 높이를 먼저 재보는 게 클릭 전 핵심입니다.',
+      review: '후기에서는 문턱 넘김, 물걸레 세척 후 냄새, 본체 높이, 스테이션 물통 관리, 앱 예약 안정성을 확인하세요.',
+      target: '문턱이 있거나 방마다 청소를 나눠 돌려야 하는 집에 맞습니다.',
+      cta: '문턱·가구 밑 조건 확인',
+    }
+  }
+  if (/에코백스|ECOVACS|DEEBOT|디봇|X8|T50/i.test(text)) {
+    return {
+      decision: '물걸레가 바닥을 지나가기만 하는 수준이 아니라 실제 닦임과 세척 루틴을 따져볼 후보입니다.',
+      scene: '주방 앞 기름 자국, 아이 간식 부스러기, 현관 먼지가 섞이는 집은 흡입만으로 만족하기 어렵습니다. 에코백스 X8·디봇 계열은 물걸레 방식과 모서리 접근을 함께 봐야 하므로 “얼마나 깨끗하게 닦는가”와 “걸레를 얼마나 덜 만지는가”가 클릭 포인트입니다.',
+      review: '후기에서는 롤러/회전 물걸레 방식, 오수통 냄새, 모서리 닦임, 스테이션 세척 소음, 소모품 구매 편의를 확인하세요.',
+      target: '주방과 거실 물걸레 청소를 로봇에게 더 많이 넘기고 싶은 집에 맞습니다.',
+      cta: '물걸레·스테이션 조건 확인',
+    }
+  }
+  if (/삼성|비스포크|BESPOKE|제트봇|Jet\s*Bot/i.test(text)) {
+    return {
+      decision: '삼성 가전 생태계, 국내 AS, 스팀 물걸레 관리까지 함께 보는 안정형 후보입니다.',
+      scene: '부모님 집이나 가족 공용 거실에서는 낯선 해외 앱보다 익숙한 브랜드와 AS 접근성이 더 중요할 수 있습니다. 삼성 제트봇 계열은 디자인과 관리 스테이션을 함께 보는 제품이므로, 가격보다 가족이 실제로 조작하기 쉬운지를 봐야 합니다.',
+      review: '후기에서는 앱 연결, 물걸레 위생 관리, 스테이션 크기, 문턱 넘김, 국내 AS 접수 편의를 확인하세요.',
+      target: '국내 브랜드와 가족 공용 사용성을 중요하게 보는 집에 맞습니다.',
+      cta: '삼성 AS·스테이션 조건 확인',
+    }
+  }
+  if (/LG|엘지|로보킹|Roboking|코드제로/i.test(text)) {
+    return {
+      decision: '국내 주방·거실 동선과 AS 접근성을 중시하는 집에서 검토할 현실형 후보입니다.',
+      scene: '로봇청소기는 스펙보다 고장 났을 때와 소모품을 살 때의 스트레스가 오래 남습니다. LG 로보킹 계열은 국내 브랜드 신뢰와 관리 편의를 함께 기대하는 구매자가 보기 좋고, 특히 부모님 집이나 넓은 거실에서 “설명 없이 쓸 수 있는가”를 봐야 합니다.',
+      review: '후기에서는 문턱 넘김, 급배수·스테이션 설치 조건, 소음, 앱 조작 난이도, 소모품 수급을 확인하세요.',
+      target: '국내 AS와 가족이 이해하기 쉬운 사용성을 우선하는 집에 맞습니다.',
+      cta: 'LG 설치·AS 조건 확인',
+    }
+  }
+  return {
+    decision: '흡입력 숫자보다 문턱, 러그, 스테이션 크기, 물걸레 관리 방식이 우리 집과 맞는지 확인할 후보입니다.',
+    scene: '로봇청소기는 좋은 제품이어도 집 구조와 맞지 않으면 사용 빈도가 떨어집니다. 문턱, 러그, 낮은 가구, 충전 스테이션 위치를 먼저 확인해야 클릭 후 후회가 줄어듭니다.',
+    review: '후기에서는 문턱, 러그, 머리카락 엉킴, 물걸레 냄새, 앱 지도 오류, 소모품 가격을 확인하세요.',
+    target: '바닥 청소 시간을 줄이고 싶은 집에서 기본 조건을 맞춰볼 후보입니다.',
+    cta: '우리 집 바닥 조건 확인',
+  }
+}
+
 function productPros(product) {
+  const insight = robotVacuumInsight(product)
+  if (insight) {
+    const pros = [
+      insight.target,
+      '실제 구매 판단은 흡입력 숫자보다 문턱, 물걸레 관리, 스테이션 설치 공간에서 갈립니다.',
+      '쿠팡 가격만 보지 말고 공식몰, 대형가전몰, 오픈마켓의 구성품과 AS 조건을 같이 비교할 만한 모델입니다.',
+    ]
+    return pros.slice(0, 3)
+  }
   const pros = []
-  if (product.isRocket) pros.push('로켓배송 신호가 있어 빠른 수령 기대치가 높습니다.')
-  if (product.isFreeShipping) pros.push('무료배송 신호가 있어 추가 배송비 부담을 줄일 수 있습니다.')
   if (/LG|삼성|위닉스|캐리어|위니아|신일|쿠쿠|샤오미|일렉트로룩스|필립스|테팔|쿠첸|쿠잉|미디어/i.test(product.name)) pros.push('브랜드 인지도가 있어 AS와 상세 스펙을 확인하기 쉽습니다.')
   if (product.price <= 100000) pros.push('입문 가격대라 첫 구매나 보조 용도로 접근하기 좋습니다.')
   if (product.price >= 300000) pros.push('상위 가격대 후보라 용량, 편의 기능, 관리 옵션을 기대해 볼 수 있습니다.')
@@ -336,23 +570,41 @@ function productPros(product) {
 }
 
 function productCons(product) {
+  const insight = robotVacuumInsight(product)
+  if (insight) {
+    const cons = [
+      '문턱, 러그, 낮은 가구 밑 높이와 맞지 않으면 상위 기능도 체감이 떨어질 수 있습니다.',
+      '스테이션이 큰 모델은 설치 공간과 물통·오수통 관리 루틴을 먼저 정해야 합니다.',
+      '후기에서 앱 지도 오류나 걸레 냄새 이야기가 반복되면 가격이 좋아도 신중하게 봐야 합니다.',
+    ]
+    return cons.slice(0, 3)
+  }
   const cons = []
   cons.push('온라인 상품 정보만으로는 실제 소음, 전기요금, 장기 내구성, 세부 구성품을 확정할 수 없습니다.')
   if (product.price >= 300000) cons.push('가격대가 높으므로 필요한 기능과 보증 조건이 충분한지 비교해야 합니다.')
   if (product.price <= 100000) cons.push('저가형은 용량, 소음, 부품 마감, 소모품 조건을 별도로 확인해야 합니다.')
-  if (!product.isFreeShipping) cons.push('무료배송 신호가 없으므로 배송비 또는 설치비 조건을 상세 페이지에서 다시 봐야 합니다.')
-  if (!product.isRocket) cons.push('로켓배송 신호가 없으므로 필요한 날짜 전 배송 일정을 확인해야 합니다.')
   return cons.slice(0, 3)
 }
 
 function productTarget(product) {
+  const insight = robotVacuumInsight(product)
+  if (insight) return insight.target
   if (product.price <= 100000) return '예산을 낮추면서 핵심 기능을 먼저 확인하려는 입문 사용자에게 맞습니다.'
   if (product.price >= 300000) return '한 번 사서 오래 쓰는 생활가전으로 보고 기능과 사후 관리를 함께 따지는 사용자에게 맞습니다.'
   if (/LG|삼성|위닉스|캐리어/i.test(product.name)) return '브랜드 신뢰도와 AS 접근성을 중요하게 보는 사용자에게 맞습니다.'
-  return '가격, 배송, 용량, 관리 편의성을 균형 있게 비교하려는 사용자에게 맞습니다.'
+  return '가격, 용량, 관리 편의성, AS 조건을 균형 있게 비교하려는 사용자에게 맞습니다.'
 }
 
 function productChecks(product) {
+  const insight = robotVacuumInsight(product)
+  if (insight) {
+    return [
+      '문턱 높이, 러그 사용 여부, 침대·소파 밑 진입 높이',
+      '스테이션 크기, 물통·오수통 비우는 동선, 소음',
+      '물걸레 세척·건조 방식과 냄새 관리 루틴',
+      '소모품 가격, 앱 지도 안정성, AS 접수 방식',
+    ]
+  }
   const checks = [
     '사용 공간에 맞는 용량, 크기, 무게, 보관 방식',
     '소음 수치, 소비전력, 필터·부품 분리 세척 방식',
@@ -361,6 +613,85 @@ function productChecks(product) {
   if (product.price >= 300000) checks.push('동급 상위 모델과 기능 차이, 장기 사용 비용 비교')
   if (product.price <= 100000) checks.push('저가형에서 자주 빠지는 부가 기능과 소모품 가격')
   return checks.slice(0, 4)
+}
+
+function robotVacuumMarketSignal(product) {
+  const text = `${product.name || ''}`
+  if (/드리미|Dreame|X50|X60|L40|L10/i.test(text)) {
+    return '드리미는 올인원 스테이션, 물걸레 세척·건조, 문턱 대응 같은 “사람이 덜 만지는 청소” 이미지가 강합니다. 사용후기에서는 청소 성능보다 스테이션 관리, 물걸레 냄새, 앱 지도 안정성, 문턱 통과가 반복 확인 포인트입니다. 같은 모델명이라도 공식몰, 대형가전몰, 오픈마켓, 쿠팡에서 구성품과 사은품이 달라질 수 있어 가격표만 단독으로 보면 손해를 볼 수 있습니다.'
+  }
+  if (/로보락|Roborock|Qrevo|Saros|S8/i.test(text)) {
+    return '로보락은 프리미엄 로봇청소기 비교에서 자주 언급되는 브랜드입니다. 특히 모서리 청소, 브러시 엉킴, 장애물 회피, 스테이션 자동 관리가 구매 이유로 연결됩니다. 다만 인기 모델일수록 소모품, 직배수 키트, 스테이션 크기, 공식 AS 조건을 판매처별로 확인해야 실제 체감 비용이 보입니다.'
+  }
+  if (/에코백스|ECOVACS|DEEBOT|디봇|X8|T50/i.test(text)) {
+    return '에코백스는 물걸레 방식과 스테이션 관리 기능을 중심으로 비교되는 브랜드입니다. 주방 앞 물자국이나 아이 간식 부스러기처럼 “흡입만으로 부족한 집”에서 관심을 받을 만합니다. 구매 전에는 롤러·회전 물걸레 방식, 오수통 관리, 세제·걸레 소모품 가격, 공식몰과 오픈마켓 구성 차이를 함께 보는 편이 안전합니다.'
+  }
+  if (/삼성|비스포크|BESPOKE|제트봇|Jet\s*Bot/i.test(text)) {
+    return '삼성 제트봇 계열은 국내 브랜드 AS, SmartThings 연동, 스팀·청정스테이션 같은 가전 생태계 관점에서 비교할 만합니다. 해외 프리미엄 브랜드보다 기능 숫자가 덜 화려해 보여도 부모님 집이나 가족 공용 거실에서는 AS 접근성과 사용 설명의 쉬움이 실제 장점이 됩니다.'
+  }
+  if (/LG|엘지|로보킹|Roboking|코드제로/i.test(text)) {
+    return 'LG 로보킹·코드제로 계열은 국내 AS와 설치 상담, 기존 LG 가전과의 신뢰감이 구매 이유가 됩니다. 가격만 보면 비싸게 느껴질 수 있지만, 설치 조건과 관리 서비스까지 포함해 볼 때 부모님 집이나 넓은 거실용 후보로 비교할 만합니다.'
+  }
+  return '이 후보는 브랜드보다 집 구조와 관리 루틴을 먼저 맞춰야 합니다. 사용후기에서는 흡입력 칭찬보다 문턱, 러그, 앱 지도 오류, 물걸레 냄새, 소모품 가격처럼 반복 불편이 있는지 확인하는 편이 실제 구매 판단에 더 가깝습니다.'
+}
+
+function personaIntro(keyword) {
+  if (/로봇\s*청소기|로봇청소기|물걸레/.test(keyword)) {
+    return '로봇청소기는 “청소를 안 해도 되는 기계”라기보다 집안일이 가장 바쁜 시간대를 덜 빼앗기게 해주는 도구입니다. 아침에 아이 챙기고 출근 준비하느라 바닥 볼 틈이 없는 집, 퇴근 후 저녁 준비만으로도 이미 지친 집, 주말마다 머리카락과 먼지를 한 번에 몰아서 치우는 집이라면 기준이 달라집니다.'
+  }
+  if (/청소기/.test(keyword)) {
+    return '청소기는 스펙보다 “언제 꺼내 쓰게 되는가”가 더 중요합니다. 아이가 과자를 흘린 뒤, 출근 전 현관 먼지가 보일 때, 엄마가 오기 전 거실을 급히 정리해야 할 때 손이 가는 제품이어야 오래 씁니다.'
+  }
+  if (/선풍기|서큘레이터/.test(keyword)) {
+    return '선풍기는 여름에 가족이 가장 자주 만지는 생활가전입니다. 거실에서 엄마가 리모컨을 찾고, 아이는 바람이 세다고 끄고, 밤에는 소음 때문에 다시 끄는 일이 생기지 않으려면 가격보다 생활 장면을 먼저 봐야 합니다.'
+  }
+  return `${keyword}를 고를 때는 가격표보다 실제 생활 장면이 먼저입니다. 집안일, 출근 준비, 아이 돌봄, 부모님 선물처럼 매일 반복되는 상황에서 덜 귀찮아지는 제품이어야 만족도가 오래 갑니다.`
+}
+
+function personaSelectionNote(keyword) {
+  if (/로봇\s*청소기|로봇청소기|물걸레/.test(keyword)) {
+    return '이번 비교는 30대부터 60대까지 집안일과 일을 함께 챙기는 여성, 주부, 엄마 입장에서 “내가 직접 밀대를 잡는 시간이 줄어드는가”를 중심으로 봤습니다. 가격은 바뀔 수 있으니 결제 전에는 최신 가격, 판매처별 구성품, 스테이션 크기, 물걸레 관리 방식을 다시 확인하세요.'
+  }
+  return '이번 비교는 제품을 잘 아는 사람보다 매일 써야 하는 사람의 시선으로 정리했습니다. 가격은 바뀔 수 있으니 결제 전에는 최신 가격, 구성품, 설치 조건을 다시 확인하세요.'
+}
+
+function productLifeScene(product, candidate) {
+  const text = `${candidate.keyword || ''} ${product.sourceKeyword || ''} ${product.name || ''}`
+  if (/로봇\s*청소기|로봇청소기|물걸레/i.test(text)) {
+    const insight = robotVacuumInsight(product)
+    if (insight) return insight.scene
+    return '아침에 한 번 돌려두고 나갔을 때 머리카락과 먼지가 덜 보이는지, 저녁 준비 전 주방 앞 얼룩까지 부담 없이 맡길 수 있는지가 핵심입니다. 스테이션이 있는 모델은 편하지만 자리도 차지하므로 현관 옆, 거실 구석, 다용도실 앞에 실제로 둘 수 있는지 먼저 상상해야 합니다.'
+  }
+  if (/침구/.test(text)) return '침구청소기는 매일 쓰기보다 주말 루틴에 들어가야 값어치를 합니다. 침대, 패브릭 소파, 아이 방 매트처럼 먼지가 쌓이는 자리를 정해두면 구매 후 방치될 확률이 줄어듭니다.'
+  if (/무선청소기/.test(text)) return '무선청소기는 충전 거치대에서 바로 꺼내 한 바퀴 돌릴 수 있어야 합니다. 먼지가 보일 때마다 꺼내 쓰려면 무게, 손목 부담, 먼지통 비우는 방식이 성능표만큼 중요합니다.'
+  return '이 제품은 한 번 사두고 가끔 보는 물건이 아니라 생활 동선 안에서 반복해서 만지는 물건입니다. 둘 자리, 꺼내는 빈도, 청소나 세척 방식까지 맞아야 가격 대비 만족도가 올라갑니다.'
+}
+
+function productReviewGuide(product, candidate) {
+  const text = `${candidate.keyword || ''} ${product.sourceKeyword || ''} ${product.name || ''}`
+  if (/로봇\s*청소기|로봇청소기|물걸레/i.test(text)) {
+    const insight = robotVacuumInsight(product)
+    if (insight) return insight.review
+    return '후기를 볼 때는 “잘 빨아들인다”보다 문턱을 넘는지, 러그에 걸리는지, 물걸레 냄새가 남는지, 앱 지도가 자주 틀어지는지, 스테이션 청소가 귀찮지 않은지를 먼저 보세요. 이 부분이 실제 집에서는 가격 확인 버튼을 누를 이유가 됩니다.'
+  }
+  return '후기를 볼 때는 만족도 숫자보다 반복되는 불편을 보세요. 소음, 무게, 세척, 보관, AS처럼 매일 쓰는 사람이 자주 언급하는 지점이 실제 구매 판단에 더 가깝습니다.'
+}
+
+function productDeliverySentence(product) {
+  return '결제 전에는 옵션, 구성품, 도착 예정일을 상세 페이지에서 한 번 더 확인하세요.'
+}
+
+function productCtaButtonText(product) {
+  return robotVacuumInsight(product)?.cta || '우리 집 조건으로 가격 확인'
+}
+
+function renderProductClickReason(product) {
+  const insight = robotVacuumInsight(product)
+  if (!insight) return ''
+  return `<div style="border:1px solid #fed7aa;background:#fff7ed;border-radius:16px;padding:16px 18px;margin:14px 0;">
+<strong style="display:block;margin:0 0 8px;color:#111;">구매 버튼 누르기 전 핵심 확인</strong>
+<p style="margin:0;color:#374151;">이 제품은 단순히 “청소가 잘 되는지”가 아니라 <strong>내가 다시 밀대와 걸레를 잡는 횟수를 줄이는지</strong>를 확인해야 합니다. 가격보다 먼저 스테이션 크기, 문턱 대응, 물걸레 세척·건조, 소모품 구성을 보세요. 이 조건이 맞으면 가격 확인 버튼을 누를 이유가 생기고, 맞지 않으면 비싼 모델도 체감이 약합니다.</p>
+</div>`
 }
 
 function buildTopCompareArticle(candidate, products) {
@@ -377,30 +708,35 @@ function buildTopCompareArticle(candidate, products) {
     const checks = productChecks(product).map((item) => `<li>${escapeHtml(item)}</li>`).join('')
     return `<section class="cp9-top-product" style="border-top:1px solid #e5e7eb;padding:28px 0;">
 <h2 style="font-size:24px;line-height:1.35;margin:0 0 12px;color:#111;">${index + 1}. ${escapeHtml(product.name)}</h2>
-<a href="${escapeHtml(product.url)}" target="_blank" rel="noopener sponsored"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" style="display:block;width:220px;max-width:100%;height:220px;object-fit:contain;border:1px solid #edf0f5;border-radius:16px;padding:10px;background:#fff;margin:0 0 14px;" /></a>
-<p style="margin:0 0 10px;"><strong>핵심 판단:</strong> ${escapeHtml(productDecision(product, index))} 작성 시점 확인 가격은 <strong>${formatPrice(product.price)}</strong>이고, 배송 신호는 ${product.isRocket ? '로켓배송 확인' : '로켓배송 미확인'}, ${product.isFreeShipping ? '무료배송 확인' : '무료배송 미확인'}입니다. 생활가전은 상품 가격만큼 사용 공간, 소음, 관리 방식이 만족도를 좌우하므로 결제 전 상세 페이지에서 용량과 구성품을 먼저 확인해야 합니다.</p>
-<p style="margin:0 0 14px;">이 후보는 ${escapeHtml(candidate.keyword)} 검색 의도에서 가격, 성능, 사용 환경을 함께 비교하려는 사람에게 맞춰 봤습니다. 작성 시점에 확인 가능한 상품명, 가격, 이미지, 링크, 배송 조건을 기준으로 선별했고, 리뷰 수와 평점은 공개 본문에서 확인되지 않은 수치로 과장하지 않았습니다.</p>
+<a href="${escapeHtml(product.url)}" target="_blank" rel="noopener sponsored" style="display:block;text-align:center;margin:0 auto 18px;"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" style="display:block;box-sizing:border-box;width:min(100%,340px);height:340px;object-fit:contain;border:1px solid #edf0f5;border-radius:18px;padding:14px;background:#fff;margin:0 auto;box-shadow:0 10px 26px rgba(15,23,42,.06);" /></a>
+<p style="margin:0 0 10px;"><strong>핵심 판단:</strong> ${escapeHtml(productDecision(product, index))} 오늘 확인한 가격은 <strong>${formatPrice(product.price)}</strong>입니다. ${escapeHtml(productDeliverySentence(product))}</p>
+<p style="margin:0 0 10px;">${escapeHtml(productLifeScene(product, candidate))}</p>
+<p style="margin:0 0 14px;">${escapeHtml(productReviewGuide(product, candidate))}</p>
+${robotVacuumInsight(product) ? `<div style="border:1px solid #dbe3ef;border-radius:14px;background:#f8fafc;padding:14px;margin:0 0 14px;"><strong style="display:block;margin:0 0 8px;color:#111;">브랜드·후기·판매처 체크</strong><p style="margin:0;color:#374151;">${escapeHtml(robotVacuumMarketSignal(product))}</p></div>` : ''}
 ${renderProductFactPanel(product)}
-<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:14px 0;">
-<div style="border:1px solid #e5e7eb;border-radius:14px;padding:14px;background:#f8fafc;"><strong style="display:block;margin-bottom:8px;color:#111;">장점</strong><ul style="margin:0;padding-left:20px;">${pros}</ul></div>
-<div style="border:1px solid #e5e7eb;border-radius:14px;padding:14px;background:#fff7ed;"><strong style="display:block;margin-bottom:8px;color:#111;">단점</strong><ul style="margin:0;padding-left:20px;">${cons}</ul></div>
+<div style="display:block;margin:14px 0;">
+<div style="border:1px solid #e5e7eb;border-radius:14px;padding:14px;background:#f8fafc;margin:0 0 10px;"><strong style="display:block;margin-bottom:8px;color:#111;">좋은 점</strong><ul style="margin:0;padding-left:20px;">${pros}</ul></div>
+<div style="border:1px solid #e5e7eb;border-radius:14px;padding:14px;background:#fff7ed;"><strong style="display:block;margin-bottom:8px;color:#111;">조심할 점</strong><ul style="margin:0;padding-left:20px;">${cons}</ul></div>
 </div>
 <p style="margin:0 0 10px;"><strong>추천 대상:</strong> ${escapeHtml(productTarget(product))}</p>
 <div style="border:1px solid #e5e7eb;border-radius:14px;padding:14px;background:#fff;margin:0 0 14px;"><strong style="display:block;margin-bottom:8px;color:#111;">구매 전 체크</strong><ul style="margin:0;padding-left:20px;">${checks}</ul></div>
-<a href="${escapeHtml(product.url)}" target="_blank" rel="noopener sponsored" style="display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 18px;border-radius:999px;background:#ff5a00;color:#fff;text-decoration:none;font-size:15px;font-weight:900;">가격·상세 조건 확인</a>
+${renderProductClickReason(product)}
+<div style="display:flex;justify-content:center;align-items:center;margin:18px 0 4px;">
+<a href="${escapeHtml(product.url)}" target="_blank" rel="noopener sponsored" style="display:inline-flex;align-items:center;justify-content:center;min-height:54px;min-width:220px;padding:0 30px;border-radius:999px;background:linear-gradient(135deg,#ff5a00 0%,#ff7a1a 100%);color:#fff!important;text-decoration:none!important;font-size:17px;font-weight:900;letter-spacing:-.02em;box-shadow:0 12px 24px rgba(255,90,0,.28),0 3px 8px rgba(15,23,42,.12);border:1px solid rgba(255,255,255,.28);">✓ ${escapeHtml(productCtaButtonText(product))}</a>
+</div>
 </section>`
   }).join('\n')
 
   const content = `<article class="cp9-article" style="max-width:760px;margin:0 auto;color:#222;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.78;font-size:16px;">
-<p style="font-size:17px;color:#444;margin:0 0 18px;">${escapeHtml(candidate.keyword)} 글을 볼 때 가장 먼저 확인해야 할 것은 가격표가 아니라 실제 사용 환경입니다. 같은 제품이라도 방 크기, 보관 공간, 소음 허용 범위, 세척 방식, 소모품 조건이 맞지 않으면 만족도가 크게 떨어집니다. 그래서 이번 비교는 저렴한 순서가 아니라 구매 후 후회를 줄이는 기준으로 정리했습니다.</p>
-<p style="margin:0 0 24px;">이번 비교는 작성 시점에 확인 가능한 상품명, 가격, 상품 이미지, 파트너스 링크, 로켓배송과 무료배송 조건을 기준으로 선별했습니다. 리뷰 수와 평점은 공개 본문에서 확인되지 않은 수치로 단정하지 않았고, 실제 소음과 장기 사용 만족도는 구매 전 상세 페이지에서 다시 확인해야 할 항목으로 분리했습니다.</p>
-<div style="border:1px solid #e5e7eb;background:#f8fafc;border-radius:14px;padding:18px 20px;margin:24px 0;"><strong style="display:block;margin-bottom:8px;color:#111;">선택 기준 요약</strong><ul style="margin:0;padding-left:20px;"><li>사용 공간에 맞는 용량과 크기가 1순위입니다.</li><li>소음, 소비전력, 세척 방식은 매일 사용할 때 체감 차이가 큽니다.</li><li>장기 사용 목적이면 AS와 필터·소모품 관리 조건을 함께 봐야 합니다.</li><li>가격은 작성 시점 기준이며 구매 전 최신 가격과 배송 조건을 확인해야 합니다.</li></ul></div>
+<p style="font-size:17px;color:#444;margin:0 0 18px;">${escapeHtml(personaIntro(candidate.keyword))}</p>
+<p style="margin:0 0 24px;">${escapeHtml(personaSelectionNote(candidate.keyword))}</p>
+<div style="border:1px solid #e5e7eb;background:#f8fafc;border-radius:14px;padding:18px 20px;margin:24px 0;"><strong style="display:block;margin-bottom:8px;color:#111;">선택 기준 요약</strong><ul style="margin:0;padding-left:20px;"><li>사용 공간에 맞는 용량과 크기가 1순위입니다.</li><li>소음, 소비전력, 세척 방식은 매일 사용할 때 체감 차이가 큽니다.</li><li>장기 사용 목적이면 AS와 필터·소모품 관리 조건을 함께 봐야 합니다.</li><li>가격은 작성 시점 기준이며 구매 전 최신 가격, 판매처별 구성품, 도착 예정일을 확인해야 합니다.</li></ul></div>
 <h2 style="font-size:24px;margin:34px 0 14px;color:#111;">${escapeHtml(candidate.keyword)} TOP ${selected.length} 빠른 비교</h2>
 ${table}
 ${sections}
 <h2 style="font-size:24px;margin:34px 0 14px;color:#111;">마지막으로 보는 구매 순서</h2>
-<p>첫째, 실제로 둘 공간의 크기와 사용 빈도를 먼저 정하세요. 둘째, 가격이 비슷한 후보끼리는 소음, 소비전력, 세척 편의성, 기본 구성품을 비교해야 합니다. 셋째, 매일 쓰는 생활가전이라면 로켓배송보다 AS와 소모품 조건이 더 중요할 수 있습니다. 넷째, 상세 페이지에서 최신 가격과 옵션 구성을 다시 확인한 뒤 결제하는 것이 안전합니다.</p>
-<p>가장 좋은 제품은 무조건 비싼 모델이 아니라 내 공간과 생활 패턴에 맞는 모델입니다. 이번 TOP 비교는 작성 시점에 확인 가능한 상품명, 가격, 이미지, 링크, 배송 조건을 기준으로 삼았습니다. 실제 사용감은 상세 페이지의 스펙과 별도 후기 확인으로 보완하세요.</p>
+<p>첫째, 실제로 둘 공간의 크기와 사용 빈도를 먼저 정하세요. 둘째, 가격이 비슷한 후보끼리는 소음, 소비전력, 세척 편의성, 기본 구성품을 비교해야 합니다. 셋째, 매일 쓰는 생활가전이라면 AS와 소모품 조건이 더 중요할 수 있습니다. 넷째, 쿠팡뿐 아니라 공식몰, 대형가전몰, 오픈마켓의 구성품과 사은품을 함께 본 뒤 결제하는 것이 안전합니다.</p>
+<p>가장 좋은 제품은 무조건 비싼 모델이 아니라 내 공간과 생활 패턴에 맞는 모델입니다. 이번 TOP 비교는 작성 시점에 확인 가능한 상품명, 가격, 이미지, 링크, 구성품 확인 가능성을 기준으로 삼았습니다. 실제 사용감은 상세 페이지의 스펙과 별도 후기 확인으로 보완하세요.</p>
 <p style="font-size:13px;color:#666;margin-top:28px;">${DISCLOSURE}</p>
 ${itemListJsonLd}
 </article>`
@@ -418,7 +754,7 @@ function buildDeepdiveArticle(candidate, products) {
     const role = productRole(product, index, 'deepdive')
     return `<section style="border:1px solid #e5e7eb;border-radius:18px;padding:18px;margin:18px 0;background:#fff;">
 <h3 style="font-size:20px;line-height:1.35;margin:0 0 10px;color:#111;">${index + 1}. ${escapeHtml(product.name)}</h3>
-<a href="${escapeHtml(product.url)}" target="_blank" rel="noopener sponsored"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" style="display:block;width:180px;max-width:100%;height:180px;object-fit:contain;border:1px solid #edf0f5;border-radius:16px;padding:10px;background:#fff;margin:0 0 12px;" /></a>
+<a href="${escapeHtml(product.url)}" target="_blank" rel="noopener sponsored"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" style="display:block;width:180px;max-width:100%;height:180px;object-fit:contain;border:1px solid #edf0f5;border-radius:16px;padding:10px;background:#fff;margin:0 auto 12px;" /></a>
 <p style="margin:0 0 10px;"><strong>구매 연결 역할:</strong> ${escapeHtml(role)} 포지션입니다. 이 글의 본론은 브랜드와 방식의 해석이므로, 이 영역은 독자가 실제 가격과 구성품을 확인하는 보조 링크로만 둡니다. 현재 확인 가격은 <strong>${formatPrice(product.price)}</strong>입니다.</p>
 ${renderProductFactPanel(product)}
 <ul style="margin:0 0 12px;padding-left:20px;">
@@ -507,7 +843,7 @@ function buildDishwasherDeepdiveArticle(candidate, products) {
     const role = productRole(product, index, 'deepdive')
     return `<section style="border:1px solid #e5e7eb;border-radius:18px;padding:18px;margin:18px 0;background:#fff;">
 <h3 style="font-size:20px;line-height:1.35;margin:0 0 10px;color:#111;">${index + 1}. ${escapeHtml(product.name)}</h3>
-<a href="${escapeHtml(product.url)}" target="_blank" rel="noopener sponsored"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" style="display:block;width:180px;max-width:100%;height:180px;object-fit:contain;border:1px solid #edf0f5;border-radius:16px;padding:10px;background:#fff;margin:0 0 12px;" /></a>
+<a href="${escapeHtml(product.url)}" target="_blank" rel="noopener sponsored"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" style="display:block;width:180px;max-width:100%;height:180px;object-fit:contain;border:1px solid #edf0f5;border-radius:16px;padding:10px;background:#fff;margin:0 auto 12px;" /></a>
 <p style="margin:0 0 10px;"><strong>구매 확인 역할:</strong> ${escapeHtml(role)}입니다. 본문은 브랜드 철학과 설치 판단을 중심으로 읽고, 이 영역은 실제 가격, 설치 조건, 구성품, 배송 가능 여부를 확인하는 보조 링크로만 사용하세요. 현재 확인 가격은 <strong>${formatPrice(product.price)}</strong>입니다.</p>
 ${renderProductFactPanel(product)}
 <ul style="margin:0 0 12px;padding-left:20px;">
@@ -592,7 +928,7 @@ function buildCleanerDeepdiveArticle(candidate, products) {
     const role = productRole(product, index, 'deepdive')
     return `<section style="border:1px solid #e5e7eb;border-radius:18px;padding:18px;margin:18px 0;background:#fff;">
 <h3 style="font-size:20px;line-height:1.35;margin:0 0 10px;color:#111;">${index + 1}. ${escapeHtml(product.name)}</h3>
-<a href="${escapeHtml(product.url)}" target="_blank" rel="noopener sponsored"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" style="display:block;width:180px;max-width:100%;height:180px;object-fit:contain;border:1px solid #edf0f5;border-radius:16px;padding:10px;background:#fff;margin:0 0 12px;" /></a>
+<a href="${escapeHtml(product.url)}" target="_blank" rel="noopener sponsored"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" style="display:block;width:180px;max-width:100%;height:180px;object-fit:contain;border:1px solid #edf0f5;border-radius:16px;padding:10px;background:#fff;margin:0 auto 12px;" /></a>
 <p style="margin:0 0 10px;"><strong>구매 확인 역할:</strong> ${escapeHtml(role)}입니다. 본문은 건식 흡입, 습식 처리, 오염수 관리, 사용 공간을 이해하는 데 집중하고, 이 영역은 실제 가격과 구성품을 확인하는 보조 링크로만 사용하세요. 현재 확인 가격은 <strong>${formatPrice(product.price)}</strong>입니다.</p>
 ${renderProductFactPanel(product)}
 <ul style="margin:0 0 12px;padding-left:20px;">
@@ -670,6 +1006,104 @@ ${itemListJsonLd}
   return { title, slug, content, auxiliaryImages: [] }
 }
 
+function buildFanDeepdiveArticle(candidate, products) {
+  const title = sanitizeTitleText(candidate.blogTitle || '선풍기 고르는 법 바람, 소음, 공간, 전기요금 기준으로 보는 여름 가전 보고서')
+  const slug = `fan-buying-guide-airflow-noise-space-${formatKstDate()}-${Date.now()}`
+  const table = enhanceFirstComparisonTable(buildComparisonTable(products), { force: true }).html
+  const itemListJsonLd = renderItemListJsonLd(products, title)
+  const featuredProducts = products.slice(0, 5).map((product, index) => {
+    const role = productRole(product, index, 'deepdive')
+    return `<section style="border:1px solid #e5e7eb;border-radius:18px;padding:18px;margin:18px 0;background:#fff;">
+<h3 style="font-size:20px;line-height:1.35;margin:0 0 10px;color:#111;">${index + 1}. ${escapeHtml(product.name)}</h3>
+<a href="${escapeHtml(product.url)}" target="_blank" rel="noopener sponsored"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" style="display:block;width:180px;max-width:100%;height:180px;object-fit:contain;border:1px solid #edf0f5;border-radius:16px;padding:10px;background:#fff;margin:0 auto 12px;" /></a>
+<p style="margin:0 0 10px;"><strong>구매 확인 역할:</strong> ${escapeHtml(role)}입니다. 본문은 바람의 성격, 소음, 보관, 사용 장면을 이해하는 데 집중하고, 이 영역은 실제 가격과 배송 조건을 확인하는 보조 링크로만 사용하세요. 현재 확인 가격은 <strong>${formatPrice(product.price)}</strong>입니다.</p>
+${renderProductFactPanel(product)}
+<ul style="margin:0 0 12px;padding-left:20px;">
+<li>핵심 판단: 바람 세기보다 바람 거리, 회전 범위, 소음, 전원 방식, 보관 위치를 함께 봐야 합니다.</li>
+<li>주의할 점: 온라인 상품 정보만으로는 실제 취침 소음, 바람의 부드러움, 장기 모터 내구성을 확정할 수 없습니다.</li>
+<li>추천 대상: ${escapeHtml(role)}을 우선순위로 보는 사용자</li>
+</ul>
+<a href="${escapeHtml(product.url)}" target="_blank" rel="noopener sponsored" style="display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 18px;border-radius:999px;background:#ff5a00;color:#fff;text-decoration:none;font-size:15px;font-weight:900;">가격·배송 조건 확인</a>
+</section>`
+  }).join('\n')
+
+  const content = `<article class="cp9-article" style="max-width:760px;margin:0 auto;color:#222;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.78;font-size:16px;">
+<p style="font-size:17px;color:#444;margin:0 0 18px;">선풍기 고르는 법은 생각보다 단순하지 않습니다. 여름 가전 중 가장 익숙한 물건이라 가격과 날개 크기만 보고 고르기 쉽지만, 실제 만족도는 바람의 질, 소음, 회전 범위, 보관 위치, 에어컨과 함께 쓰는 방식에서 갈립니다. 선풍기는 더위를 완전히 없애는 기계가 아니라 공기의 움직임을 설계하는 도구입니다.</p>
+<p style="margin:0 0 24px;">이 딥다이브는 특정 상품을 길게 광고하는 글이 아닙니다. 신일, 한일, 보국, 샤오미, 다이슨 같은 이름이 사용자에게 어떤 이미지를 주는지, 스탠드형과 서큘레이터와 무선형이 생활 장면을 어떻게 바꾸는지, 구매자가 실제로 얻는 의미가 무엇인지 중심으로 정리합니다. 구매 링크는 하단의 가격과 조건 확인용 보조 영역으로만 배치했습니다.</p>
+<div class="cp9-report-brief" style="border:1px solid #dbe3ef;background:#f8fafc;border-radius:16px;padding:18px 20px;margin:24px 0;">
+<strong style="display:block;margin-bottom:8px;color:#111;">핵심 판단</strong>
+<ul style="margin:0;padding-left:20px;">
+<li>거실은 넓은 회전 범위와 안정적인 스탠드 구조가 중요합니다.</li>
+<li>침실은 바람 세기보다 저단 소음과 미세 풍량 조절이 더 중요합니다.</li>
+<li>에어컨 보조용은 멀리 보내는 직진 바람과 상하 각도 조절을 봐야 합니다.</li>
+<li>무선형은 편하지만 배터리 지속 시간과 충전 동선이 만족도를 좌우합니다.</li>
+</ul>
+<strong style="display:block;margin:14px 0 8px;color:#111;">읽어야 할 사람</strong>
+<p style="margin:0;">선풍기를 하나 더 살지, 서큘레이터로 바꿀지, 침실용 저소음 모델을 따로 둘지 고민하는 사람에게 맞습니다.</p>
+<strong style="display:block;margin:14px 0 8px;color:#111;">가장 큰 리스크</strong>
+<p style="margin:0;">바람이 강한 제품을 사도 실제 공간과 소음 기준에 맞지 않으면 매일 쓰기 어렵습니다. 선풍기는 성능보다 생활 동선과 맞아야 오래 갑니다.</p>
+</div>
+<h2 style="font-size:24px;margin:34px 0 14px;color:#111;">1. 선풍기는 더위보다 공기 흐름을 다루는 가전입니다</h2>
+<p>선풍기를 켜면 시원해지는 이유는 공기 온도가 크게 내려가기 때문이 아닙니다. 피부 주변의 더운 공기를 밀어내고 땀이 증발하는 속도를 높이기 때문입니다. 그래서 같은 제품도 어디에 두는지, 어느 방향으로 틀어두는지, 에어컨과 함께 쓰는지에 따라 체감이 크게 달라집니다. 거실 중앙에 두는 선풍기와 침대 옆 협탁에 두는 선풍기는 같은 기준으로 고르면 안 됩니다.</p>
+<p>가장 먼저 정할 것은 바람의 목적입니다. 몸에 직접 닿는 바람이 필요한지, 방 안 공기를 천천히 섞고 싶은지, 에어컨 냉기를 멀리 보내고 싶은지 구분해야 합니다. 직접 바람은 더위를 빠르게 낮추지만 오래 맞으면 피곤할 수 있습니다. 순환 바람은 체감이 부드럽지만 제품 위치와 각도 설정이 중요합니다. 에어컨 보조 바람은 직진성과 회전 범위가 중요합니다.</p>
+<p>이 관점으로 보면 선풍기는 단순한 날개 달린 기계가 아니라 여름 생활의 배치 도구입니다. 책상 아래, 침대 옆, 주방 조리대, 거실 소파, 현관 앞 제습 공간처럼 쓰임새가 다릅니다. 좋은 제품은 광고 문구가 화려한 제품이 아니라 내가 자주 머무는 자리의 공기를 자연스럽게 바꿔 주는 제품입니다.</p>
+<h2 style="font-size:24px;margin:34px 0 14px;color:#111;">2. 신일과 한일이 주는 익숙한 신뢰감</h2>
+<p>국내 선풍기 시장에서 신일과 한일 같은 브랜드는 오래된 생활가전의 이미지를 갖고 있습니다. 이 브랜드들이 주는 의미는 최신 기능보다 실패 확률을 낮추는 안정감에 가깝습니다. 부모님 집, 사무실, 매장, 오래된 거실에서 본 적 있는 브랜드라는 기억은 생각보다 강한 구매 이유가 됩니다. 선풍기는 매일 켜고 끄는 제품이라 낯선 혁신보다 익숙한 조작감이 더 편할 때가 많습니다.</p>
+<p>이런 브랜드를 볼 때는 기본기를 중심으로 판단해야 합니다. 받침대가 안정적인지, 높이 조절이 쉬운지, 날개망 분리가 편한지, 리모컨과 버튼이 직관적인지, AS 접근성이 어떤지 확인해야 합니다. 복잡한 앱 기능보다 가족 모두가 쉽게 쓰는 조작감이 중요합니다. 특히 거실용 선풍기는 한 사람이 아니라 가족 전체가 쓰기 때문에 버튼 설명이 쉬운 제품이 오래 갑니다.</p>
+<p>단점도 있습니다. 익숙한 브랜드의 제품이라고 해서 모든 모델이 조용하거나 세련된 것은 아닙니다. 저가형은 바람 단계가 거칠 수 있고, 디자인이 투박할 수 있으며, 보관할 때 부피가 클 수 있습니다. 그래서 브랜드 신뢰는 출발점일 뿐이고, 실제 구매 전에는 소음, 높이, 회전 방식, 날개망 분리 구조를 다시 봐야 합니다.</p>
+<blockquote style="border-left:4px solid #cbd5e1;margin:24px 0;padding:10px 16px;color:#475467;background:#f8fafc;">선풍기는 스펙보다 가족의 손이 얼마나 자연스럽게 가는지가 오래 쓰는 기준이 됩니다.</blockquote>
+<h2 style="font-size:24px;margin:34px 0 14px;color:#111;">3. 서큘레이터는 선풍기의 대체품이 아니라 다른 역할입니다</h2>
+<p>서큘레이터는 이름부터 공기 순환에 초점을 둡니다. 선풍기가 사람에게 바람을 보내는 물건이라면, 서큘레이터는 방 안의 공기를 움직이는 물건에 가깝습니다. 직진성이 강한 바람으로 냉기를 멀리 보내고, 방 구석에 고인 공기를 섞고, 제습기나 에어컨의 효율을 보조합니다. 그래서 서큘레이터를 사면서 선풍기처럼 바로 몸 앞에 두면 바람이 부담스럽게 느껴질 수 있습니다.</p>
+<p>에어컨과 함께 쓸 목적이라면 서큘레이터가 유리할 수 있습니다. 냉기가 한쪽에만 머물지 않도록 멀리 밀어 주고, 방과 거실 사이의 온도 차이를 줄이는 데 도움이 됩니다. 다만 방향 설정이 중요합니다. 몸을 향해 강하게 트는 것이 아니라 벽, 천장, 복도 방향으로 공기 길을 만드는 식으로 써야 장점이 살아납니다.</p>
+<p>구매 전에는 상하 각도, 좌우 회전, 소음, 청소 편의, 보관 크기를 확인해야 합니다. 작은 제품이라도 바람이 강하면 밤에는 시끄럽게 느껴질 수 있습니다. 반대로 너무 약하면 에어컨 보조 역할이 애매합니다. 서큘레이터는 작아 보이지만 위치를 잘못 잡으면 방 안에서 계속 신경 쓰이는 제품이 됩니다. 작은 몸집에 속지 말고 실제 둘 자리를 먼저 정하세요.</p>
+<h2 style="font-size:24px;margin:34px 0 14px;color:#111;">4. 침실용은 바람 세기보다 저단 소음이 우선입니다</h2>
+<p>침실에서 선풍기를 쓸 때 가장 중요한 것은 강풍이 아닙니다. 밤새 켜두어도 거슬리지 않는 저단 소음, 부드러운 풍량, 꺼짐 예약, 조명 밝기, 버튼음 같은 작은 요소입니다. 낮에는 신경 쓰이지 않던 작동음도 밤에는 크게 들립니다. 특히 머리맡 가까이에 두는 제품이라면 모터음과 회전음이 수면의 질을 좌우할 수 있습니다.</p>
+<p>초미풍이나 자연풍 같은 표현은 매력적이지만, 실제 느낌은 제품마다 다릅니다. 중요한 것은 가장 약한 단계가 내 수면 환경에 맞는지입니다. 바람이 너무 약하면 답답하고, 너무 강하면 목이 마르거나 몸이 피곤해질 수 있습니다. 침실에서는 풍량 단계가 촘촘한 제품이 유리합니다. 리모컨 반응과 예약 기능도 실제 사용 빈도를 높입니다.</p>
+<p>침실용은 안전도 함께 봐야 합니다. 아이가 있는 집은 날개망 간격과 넘어짐 가능성을 확인해야 하고, 반려동물이 있는 집은 선을 물거나 받침대를 건드릴 수 있는지 생각해야 합니다. 무선형은 선이 줄어드는 장점이 있지만 충전을 깜빡하면 가장 더운 밤에 쓰지 못할 수 있습니다. 침실 선풍기는 낮의 성능표보다 밤의 루틴으로 고르는 편이 맞습니다.</p>
+<div style="border:1px solid #e5e7eb;border-radius:16px;padding:16px;background:#fff7ed;margin:24px 0;"><strong style="display:block;margin-bottom:8px;color:#111;">짧은 체크 카드</strong><p style="margin:0;">취침용이라면 강풍보다 약풍을 보세요. 여름밤에는 가장 약한 단계가 실력입니다.</p></div>
+<h2 style="font-size:24px;margin:34px 0 14px;color:#111;">5. 거실용은 안정성과 회전 범위가 만족도를 만듭니다</h2>
+<p>거실 선풍기는 한 사람만을 위한 제품이 아닙니다. 소파, 식탁, TV 앞, 아이 놀이 공간처럼 여러 방향으로 바람을 보내야 합니다. 그래서 거실용은 받침대 안정성, 높이 조절, 좌우 회전 각도, 리모컨 편의가 중요합니다. 바람이 강해도 한 방향만 시원하면 가족 중 누군가는 계속 불편합니다.</p>
+<p>거실에서는 제품이 계속 보입니다. 디자인과 색상도 무시하기 어렵습니다. 여름 내내 거실 한쪽에 서 있는 물건이기 때문에 너무 투박하거나 먼지가 잘 보이면 신경 쓰입니다. 다만 디자인만 보고 고르면 실패할 수 있습니다. 예쁜 제품이 청소하기 어렵거나 높이 조절이 제한적이면 여름 중반부터 불편이 쌓입니다.</p>
+<p>거실용 구매 전에는 실제 보관까지 생각해야 합니다. 여름이 끝난 뒤 분해해서 박스에 넣을지, 다용도실에 세워둘지, 커버를 씌워 보관할지에 따라 제품 크기의 의미가 달라집니다. 선풍기는 여름에만 쓰는 것처럼 보이지만, 보관 기간이 더 긴 물건입니다. 보관이 어려우면 다음 해 꺼낼 때부터 귀찮아집니다.</p>
+<h2 style="font-size:24px;margin:34px 0 14px;color:#111;">6. 무선 선풍기와 휴대용 선풍기의 진짜 장점</h2>
+<p>무선 선풍기의 장점은 선이 없다는 사실보다 자리를 쉽게 바꿀 수 있다는 데 있습니다. 주방에서 요리할 때, 베란다에서 빨래를 널 때, 아이가 공부하는 책상 옆, 캠핑 테이블 위처럼 이동이 잦은 장면에서 가치가 큽니다. 콘센트 위치 때문에 선풍기 자리가 고정되는 집이라면 무선형이 생활 동선을 크게 바꿀 수 있습니다.</p>
+<p>하지만 무선형은 배터리라는 조건이 따라옵니다. 최대 사용 시간은 보통 낮은 풍량 기준일 수 있고, 강풍에서는 짧아질 수 있습니다. 충전 시간이 길면 매일 쓰기 번거롭고, 충전 단자가 특수하면 케이블 분실이 스트레스가 됩니다. 휴대용 제품은 더 그렇습니다. 작고 귀여운 제품이라도 충전이 불편하면 여름 가방 속 장식품이 됩니다.</p>
+<p>무선형을 고를 때는 배터리 시간보다 충전 루틴을 먼저 상상하세요. 어디에 꽂아둘지, 사용 후 바로 충전할지, 가족이 함께 쓰면 누가 충전할지 정해야 합니다. 선이 없어서 자유로운 제품은 관리 루틴이 없으면 금방 불편한 제품이 됩니다. 자유에는 충전이라는 작은 책임이 붙습니다.</p>
+<h2 style="font-size:24px;margin:34px 0 14px;color:#111;">7. 날개형과 날개 없는 디자인의 선택 기준</h2>
+<p>날개형 선풍기는 구조가 익숙하고 가격 선택지가 넓습니다. 날개망을 분리해 청소할 수 있고, 바람의 방향과 세기가 직관적으로 느껴집니다. 반면 날개망에 먼지가 쌓이고, 아이 손이 닿는 환경에서는 안전을 신경 써야 합니다. 일반 가정에서 가장 현실적인 선택지는 여전히 날개형인 경우가 많습니다.</p>
+<p>날개 없는 디자인은 안전감과 인테리어 이미지를 줍니다. 거실에 두었을 때 깔끔하고, 날개망 청소 스트레스가 적어 보입니다. 다만 가격대가 높고, 바람의 질과 소음은 모델별 차이가 큽니다. 디자인이 부드럽다고 해서 모든 제품이 조용한 것은 아닙니다. 필터나 공기청정 기능이 붙은 제품이라면 소모품 비용도 함께 봐야 합니다.</p>
+<p>이 선택은 기술 우열보다 생활 이미지의 차이에 가깝습니다. 아이와 반려동물이 있어 안전감을 중시하거나 거실 인테리어를 해치고 싶지 않다면 날개 없는 디자인이 의미가 있습니다. 예산과 실용성을 우선하고, 청소와 보관을 감당할 수 있다면 날개형이 더 합리적일 수 있습니다. 중요한 것은 내 집에서 매일 보이고 만지는 방식입니다.</p>
+<h2 style="font-size:24px;margin:34px 0 14px;color:#111;">8. 전기요금보다 사용 시간과 에어컨 조합을 봐야 합니다</h2>
+<p>선풍기 전기요금은 보통 에어컨보다 부담이 작지만, 그렇다고 아무렇게나 써도 된다는 뜻은 아닙니다. 여름 내내 하루 종일 켜두는 집이라면 소비전력과 사용 시간이 누적됩니다. 특히 여러 대를 동시에 쓰면 작은 차이도 의미가 생깁니다. 다만 선풍기의 진짜 절약 효과는 단독 사용보다 에어컨과 함께 쓸 때 나오는 경우가 많습니다.</p>
+<p>에어컨 설정 온도를 너무 낮추기보다 선풍기로 체감 온도를 보완하면 전력 부담을 줄이는 데 도움이 될 수 있습니다. 하지만 이때도 바람 방향이 중요합니다. 차가운 공기를 사람에게 바로 때리는 방식보다 방 전체에 천천히 돌리는 방식이 더 편할 수 있습니다. 선풍기는 에어컨의 경쟁자가 아니라 조율자에 가깝습니다.</p>
+<p>구매 전에는 소비전력 숫자만 보지 말고 내가 실제로 몇 시간 켤지 생각해야 합니다. 침실에서 밤새 쓸 제품, 거실에서 오후에만 쓸 제품, 주방에서 요리할 때만 쓸 제품은 기준이 다릅니다. 사용 시간이 길수록 소음과 전력, 모터 발열, 청소 편의가 중요해집니다. 짧게 쓰는 제품은 이동성과 즉시성이 더 중요합니다.</p>
+<h2 style="font-size:24px;margin:34px 0 14px;color:#111;">9. 청소와 보관은 구매 후 만족도의 절반입니다</h2>
+<p>선풍기는 먼지를 모으는 가전입니다. 날개, 망, 기둥, 받침대에 먼지가 붙고, 여름이 길어질수록 바람 냄새도 달라질 수 있습니다. 그래서 분해 청소가 쉬운지, 나사를 많이 풀어야 하는지, 날개망을 물로 씻기 쉬운지 확인해야 합니다. 청소가 어려우면 처음 한 달은 잘 쓰다가도 점점 손이 가지 않습니다.</p>
+<p>보관도 중요합니다. 스탠드형은 높이가 있어 다용도실에 세워둘 수 있는지 봐야 하고, 박스 보관을 원하면 분해가 쉬운지 확인해야 합니다. 서큘레이터나 탁상형은 작지만 여러 개가 생기면 충전기와 함께 흩어지기 쉽습니다. 여름이 끝난 뒤 어디에 둘지 정하지 않으면 다음 여름에 다시 새 제품을 사고 싶어집니다.</p>
+<p>가족이 함께 쓰는 집에서는 청소 담당과 보관 방식을 정하는 것도 좋습니다. 선풍기는 가격이 낮아 보일수록 관리가 대충 넘어가기 쉽지만, 먼지와 안전은 매년 반복되는 문제입니다. 오래 쓰는 제품은 모터보다 관리 루틴에서 결정됩니다. 좋은 선풍기는 시원한 제품이면서 동시에 청소하기 쉬운 제품입니다.</p>
+<h2 style="font-size:24px;margin:34px 0 14px;color:#111;">10. 가격대는 기능보다 실패 비용으로 봐야 합니다</h2>
+<p>저가형 선풍기는 보조용이나 짧은 사용에 좋습니다. 원룸, 사무실 책상, 세탁실, 주방 보조처럼 특정 자리에 두고 쓰기에는 충분할 수 있습니다. 다만 소음, 내구성, 회전 부드러움, 리모컨 품질에서 아쉬움이 생길 수 있습니다. 가격이 낮을수록 기대치를 정확히 잡아야 만족합니다.</p>
+<p>중가형은 대부분의 가정에서 가장 현실적인 구간입니다. 거실과 침실에서 매일 쓰면서도 과한 기능을 줄이고, 리모컨, 예약, 높이 조절, 회전 같은 기본 편의를 확보할 수 있습니다. 프리미엄 가격대는 디자인, 저소음, 공기청정 연계, 무선 편의, 브랜드 이미지에 값을 지불하는 영역입니다. 매일 보이는 장소에 둘수록 이런 요소의 체감이 커집니다.</p>
+<p>가격을 볼 때는 한여름 한 달이 아니라 몇 년을 생각하세요. 매년 꺼내 쓰는 제품이라면 조금 더 좋은 조작감과 청소 편의가 값을 할 수 있습니다. 반대로 특정 공간 보조용이라면 비싼 모델보다 목적이 분명한 실속형이 낫습니다. 가장 비싼 선풍기가 아니라 가장 자주 켜게 될 선풍기를 고르는 것이 핵심입니다.</p>
+<h2 style="font-size:24px;margin:34px 0 14px;color:#111;">11. 선풍기가 맞지 않는 상황도 있습니다</h2>
+<p>모든 더위 문제를 선풍기로 해결할 수는 없습니다. 실내 온도와 습도가 너무 높으면 선풍기는 더운 공기를 계속 움직일 뿐입니다. 이때는 에어컨, 제습기, 환기, 차광이 함께 필요합니다. 특히 장마철에는 바람이 있어도 끈적함이 남을 수 있습니다. 선풍기는 습기를 제거하지 않기 때문입니다.</p>
+<p>먼지가 많거나 알레르기에 민감한 집도 주의해야 합니다. 선풍기가 바닥 먼지를 다시 띄울 수 있고, 날개망에 먼지가 쌓인 상태로 켜면 공기 질이 나빠질 수 있습니다. 아이나 반려동물이 있는 집은 안전망과 선 정리도 중요합니다. 시원함보다 안전과 위생이 먼저인 상황이 분명히 있습니다.</p>
+<p>또한 조용한 공간에서 일하거나 녹음을 하거나 공부하는 환경이라면 선풍기 소음이 집중을 방해할 수 있습니다. 이런 경우에는 제품 위치를 멀리 두거나, 서큘레이터로 간접 순환을 만들거나, 에어컨 설정을 조정하는 편이 나을 수 있습니다. 선풍기를 사기 전에 정말 바람이 필요한 문제인지, 온도와 습도와 환기 중 무엇이 문제인지 구분해야 합니다.</p>
+<h2 style="font-size:24px;margin:34px 0 14px;color:#111;">브랜드별 구매 후보 확인</h2>
+${table}
+<h2 style="font-size:24px;margin:34px 0 14px;color:#111;">구매 링크는 가격과 배송 조건 확인용입니다</h2>
+${featuredProducts}
+<h2 style="font-size:24px;margin:34px 0 14px;color:#111;">마지막 정리</h2>
+<p>선풍기는 오래된 가전이지만 여전히 여름 생활을 바꾸는 힘이 있습니다. 다만 이제는 단순히 강한 바람을 찾는 시대가 아닙니다. 침실에서는 조용한 약풍, 거실에서는 넓은 회전과 안정성, 에어컨 보조용으로는 공기 순환, 이동이 많은 집에서는 무선 편의가 중요합니다. 브랜드는 이 기준을 이해한 뒤 고르면 됩니다.</p>
+<p>구매 전에는 세 가지를 먼저 정하세요. 어디에 둘 것인가, 누구에게 바람을 보낼 것인가, 여름이 끝나면 어디에 보관할 것인가. 이 세 질문에 답하면 가격표가 훨씬 선명해집니다. 작성 시점에 확인 가능한 상품명, 가격, 이미지, 링크, 배송 조건을 기준으로 후보를 확인하고, 실제 소음과 세부 구성은 구매 전 상세 페이지에서 다시 보세요.</p>
+<p>좋은 선풍기는 존재감이 큰 제품이 아니라 더운 날 자연스럽게 손이 가는 제품입니다. 매일 켜고, 쉽게 끄고, 부담 없이 청소하고, 다음 여름에도 다시 꺼내 쓰게 된다면 그 제품은 이미 제 역할을 하고 있습니다.</p>
+<p style="font-size:13px;color:#666;margin-top:28px;">${DISCLOSURE}</p>
+${itemListJsonLd}
+</article>`
+
+  return { title, slug, content, auxiliaryImages: [] }
+}
+
 function buildCurationCard(product, index) {
   const role = productRole(product, index, 'curation_20')
   const description = curationDescription(product, role, index)
@@ -684,6 +1118,9 @@ function curationDescription(product, role, index) {
   const price = formatPrice(product.price)
   const common = `현재 확인 가격은 ${price}입니다. 가격은 작성 시점 기준이므로 구매 전 쿠팡 상세 페이지에서 옵션, 색상, 구성품, 배송 조건을 다시 확인해야 합니다. 비슷한 상품이 많을수록 사진만 보고 고르기보다 실제 설치 위치, 보관 공간, 사용 빈도를 함께 따져보는 편이 안전합니다.`
 
+  if (/로보락|로봇\s*청소기|로봇청소기|물걸레/i.test(`${source} ${product.name}`)) {
+    return `로봇청소기는 흡입력 숫자만으로 고르기보다 집 구조와 관리 루틴에 맞는지가 더 중요합니다. 이 상품은 ${role} 관점에서 자동 먼지 비움, 물걸레 세척, 장애물 회피, 앱 제어처럼 매일 쓰는 편의 기능을 확인할 후보입니다. 구매 전에는 문턱 높이, 러그 사용 여부, 스테이션 크기, 물걸레 관리 방식, 소모품 가격을 함께 확인하세요. ${common}`
+  }
   if (/선풍기|서큘레이터/.test(source)) {
     return `여름에는 에어컨을 계속 켜는 것보다 몸 가까이에서 바람을 보태는 소형 냉방 아이템이 체감 효율을 높입니다. 이 상품은 ${role} 목적에 맞춰 책상, 침대 옆, 외출 가방 안에서 보조 냉방 역할을 기대할 수 있습니다. 구매 전에는 배터리 지속 시간, 충전 단자, 소음, 목 각도 조절 여부를 확인하세요. ${common}`
   }
@@ -699,14 +1136,57 @@ function curationDescription(product, role, index) {
   if (/텀블러|슬리퍼/.test(source)) {
     return `외출이 잦은 여름에는 작은 휴대 아이템의 만족도가 큽니다. 이 상품은 ${role} 관점에서 매일 들고 다니거나 자주 신는 물건에 해당합니다. 디자인만 보지 말고 무게, 세척 난이도, 미끄럼 방지, 손잡이 구조, 가방 수납성을 확인하면 실제 사용 빈도를 예측하기 쉽습니다. ${common}`
   }
+  if (/믹서기|블렌더/.test(`${source} ${product.name}`)) {
+    return `믹서기는 단순히 잘 갈리는지만 보면 실패하기 쉽습니다. 이 상품은 ${role} 관점에서 주스, 스무디, 이유식, 양념, 얼음 분쇄처럼 자주 쓰는 조리 장면에 맞춰 확인할 후보입니다. 구매 전에는 칼날 구조, 용기 용량, 분리 세척, 작동 소음, 얼음 사용 가능 여부, 보관 높이를 함께 확인하세요. ${common}`
+  }
   return `좁은 공간에서는 정리 아이템 하나가 생활 동선을 바꿉니다. 이 상품은 ${role} 목적에 맞춰 바닥에 흩어지는 물건을 줄이고, 습한 계절에 청소와 환기를 쉽게 만드는 데 도움을 줄 수 있습니다. 구매 전에는 실제 설치 위치의 폭과 높이, 하중, 재질, 물청소 가능 여부를 확인하는 편이 안전합니다. ${common}`
 }
 
 function buildCurationArticle(candidate, products) {
-  const title = '여름 생활 필수템 20가지 더위·습기·냄새 줄이는 실용템 큐레이션'
-  const slug = 'summer-living-essentials-20-heat-humidity-odor'
+  const isRobotVacuum = /로보락|로봇\s*청소기|로봇청소기|물걸레/i.test(candidate.keyword || '')
+  const isSummer = /선풍기|서큘레이터|손선풍기|휴대용선풍기|탁상용선풍기/i.test(candidate.keyword || '')
+  const isMixer = /믹서기|블렌더/i.test(candidate.keyword || '')
+  const title = isRobotVacuum
+    ? '로보락 로봇청소기 20가지 사용 환경별 구매 체크'
+    : isSummer
+    ? '여름 생활 필수템 20가지 더위·습기·냄새 줄이는 실용템 큐레이션'
+    : candidate.blogTitle || `${candidate.keyword} 추천 20가지 구매 전 체크`
+  const slug = isRobotVacuum
+    ? `roborock-robot-vacuum-20-${formatKstDate()}-${Date.now()}`
+    : isSummer
+    ? `summer-living-essentials-20-${formatKstDate()}-${Date.now()}`
+    : `cp9-${slugifyAscii(candidate.keyword)}-20-${formatKstDate()}-${Date.now()}`
   const cards = products.map(buildCurationCard).join('\n')
   const itemListJsonLd = renderItemListJsonLd(products, title)
+  const intro = isRobotVacuum
+    ? '로보락 로봇청소기는 모델명이 비슷해 보여도 자동 먼지 비움, 물걸레 세척, 건조, 장애물 회피, 흡입력, 스테이션 크기에서 체감 차이가 큽니다. 집 구조와 청소 루틴에 맞는 후보를 먼저 좁히는 편이 안전합니다.'
+    : isSummer
+    ? '여름 생활 필수템은 예쁜 소품보다 더위, 습기, 냄새, 벌레, 수납 문제를 얼마나 줄여주는지가 중요합니다. 좁은 방이나 원룸일수록 하나의 물건이 매일 쓰이는지부터 봐야 합니다.'
+    : isMixer
+    ? '믹서기는 모터 힘만 보고 고르면 주방에서 오래 쓰기 어렵습니다. 자주 만드는 메뉴, 용기 용량, 세척 방식, 보관 높이, 소음까지 맞아야 매일 꺼내 쓰는 도구가 됩니다.'
+    : `${candidate.keyword} 상품은 가격만 나열하면 실제 선택에 도움이 되지 않습니다. 이번 큐레이션은 사용 장면, 보관 조건, 관리 부담, 가격 확인 가능성을 함께 보며 후보를 좁혔습니다.`
+  const criteria = isRobotVacuum
+    ? ['집 구조와 문턱, 러그 환경에 맞는 주행 방식인가', '물걸레 세척과 건조, 먼지 비움 같은 관리 부담을 줄이는가', '스테이션 크기와 설치 위치가 생활 동선을 방해하지 않는가', '상품 이미지와 링크가 정상이고 가격 확인이 가능한가']
+    : isSummer
+    ? ['더위 체감, 습기, 냄새, 벌레, 수납 문제를 직접 줄이는가', '가격이 낮아도 구매 목적이 즉시 이해되는가', '원룸, 자취방, 작은 거실에서도 부담 없이 둘 수 있는가', '상품 이미지와 링크가 정상이고 가격 확인이 가능한가']
+    : isMixer
+    ? ['스무디, 주스, 이유식, 양념처럼 실제 조리 목적이 분명한가', '용량과 세척 방식이 매일 쓰기 부담스럽지 않은가', '소음, 보관 높이, 칼날 분리 여부를 구매 전 확인할 수 있는가', '상품 이미지와 링크가 정상이고 가격 확인이 가능한가']
+    : ['더위 체감, 습기, 냄새, 벌레, 수납 문제를 직접 줄이는가', '가격이 낮아도 구매 목적이 즉시 이해되는가', '원룸, 자취방, 작은 거실에서도 부담 없이 둘 수 있는가', '상품 이미지와 링크가 정상이고 가격 확인이 가능한가']
+  const listHeading = isRobotVacuum ? '로보락 로봇청소기 20가지 빠른 리스트' : isSummer ? '여름 생활 필수템 20가지 빠른 리스트' : `${candidate.keyword} 20가지 빠른 리스트`
+  const closingGuide = isRobotVacuum
+    ? '20개를 모두 같은 기준으로 볼 필요는 없습니다. 먼저 집에 러그가 많은지, 문턱이 높은지, 물걸레 청소를 자주 하는지, 스테이션을 둘 공간이 충분한지부터 확인하세요. 그다음 자동 세척과 건조 같은 편의 기능이 실제로 필요한지 따지면 과한 지출을 줄일 수 있습니다.'
+    : isSummer
+    ? '20개를 모두 살 필요는 없습니다. 먼저 내가 겪는 문제가 더위인지, 습기인지, 냄새인지, 벌레인지 구분하세요. 그다음 매일 쓰는 물건부터 고르면 불필요한 충동구매를 줄일 수 있습니다.'
+    : isMixer
+    ? '20개를 모두 같은 목적으로 볼 필요는 없습니다. 아침 스무디가 목적이면 텀블러형과 세척 편의가 중요하고, 양념이나 이유식까지 생각하면 용량과 칼날 구조를 더 봐야 합니다. 자주 만들 메뉴 하나를 정한 뒤 가격을 비교하면 선택이 쉬워집니다.'
+    : `20개를 모두 살 필요는 없습니다. 먼저 ${candidate.keyword}을 어디에서 얼마나 자주 쓸지 정하세요. 그다음 크기, 보관, 세척, 소모품, 배송 조건을 확인하면 불필요한 지출을 줄일 수 있습니다.`
+  const purchaseCheck = isRobotVacuum
+    ? '로봇청소기는 본체보다 집과의 궁합이 중요합니다. 구매 전 문턱 높이, 침대와 소파 하부 높이, 러그 인식, 물걸레 패드 관리, 소모품 가격, 앱 지원, AS 조건을 확인하세요. 가격은 작성 시점 기준이므로 구매 전 쿠팡 상세 페이지에서 최신 가격과 배송 조건을 확인해야 합니다.'
+    : isSummer
+    ? '여름 상품은 사이즈와 소모품 조건이 중요합니다. 선풍기류는 충전 방식과 소음, 제습·청소용품은 리필 가능 여부, 침구류는 세탁 가능 여부를 확인하세요. 가격은 작성 시점 기준이므로 구매 전 쿠팡 상세 페이지에서 최신 가격과 배송 조건을 확인해야 합니다.'
+    : isMixer
+    ? '믹서기는 용량, 칼날 구조, 얼음 사용 가능 여부, 분리 세척, 소음, 보관 높이를 확인해야 합니다. 유리 용기는 냄새 배임이 적지만 무겁고, 텀블러형은 간편하지만 대량 조리에 약할 수 있습니다. 가격은 작성 시점 기준이므로 구매 전 쿠팡 상세 페이지에서 최신 가격과 배송 조건을 확인해야 합니다.'
+    : `${candidate.keyword} 구매 전에는 실제 설치 위치, 보관 공간, 구성품, 배송 조건, AS 가능 여부를 확인해야 합니다. 가격은 작성 시점 기준이므로 구매 전 쿠팡 상세 페이지에서 최신 가격과 배송 조건을 다시 보세요.`
   const content = `<style>
 .cp9-curation-list{display:block!important;width:100%!important;margin:0 0 32px!important;padding:0!important}
 .cp9-curation-card>p:empty{display:none!important}
@@ -719,15 +1199,15 @@ function buildCurationArticle(candidate, products) {
 }
 </style>
 <article class="cp9-article" style="max-width:760px;margin:0 auto;color:#222;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.78;font-size:16px;">
-<p style="font-size:17px;color:#444;margin:0 0 18px;">여름 생활 필수템은 예쁜 소품보다 더위, 습기, 냄새, 벌레, 수납 문제를 얼마나 줄여주는지가 중요합니다. 좁은 방이나 원룸일수록 하나의 물건이 매일 쓰이는지부터 봐야 합니다.</p>
+<p style="font-size:17px;color:#444;margin:0 0 18px;">${intro}</p>
 <p style="margin:0 0 24px;">이번 큐레이션은 작성 시점에 확인 가능한 상품명, 가격, 이미지, 링크, 배송 조건을 바탕으로 20개를 선별했습니다. 리뷰와 평점은 공개 본문에서 확인되지 않은 수치로 단정하지 않고, 과장된 만족도 표현은 배제했습니다.</p>
-<div style="border:1px solid #e5e7eb;background:#f8fafc;border-radius:14px;padding:18px 20px;margin:24px 0;"><strong style="display:block;margin-bottom:8px;color:#111;">선별 기준</strong><ul style="margin:0;padding-left:20px;"><li>더위 체감, 습기, 냄새, 벌레, 수납 문제를 직접 줄이는가</li><li>가격이 낮아도 구매 목적이 즉시 이해되는가</li><li>원룸, 자취방, 작은 거실에서도 부담 없이 둘 수 있는가</li><li>상품 이미지와 링크가 정상이고 가격 확인이 가능한가</li></ul></div>
-<h2 style="font-size:24px;margin:34px 0 14px;color:#111;">여름 생활 필수템 20가지 빠른 리스트</h2>
+<div style="border:1px solid #e5e7eb;background:#f8fafc;border-radius:14px;padding:18px 20px;margin:24px 0;"><strong style="display:block;margin-bottom:8px;color:#111;">선별 기준</strong><ul style="margin:0;padding-left:20px;">${criteria.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul></div>
+<h2 style="font-size:24px;margin:34px 0 14px;color:#111;">${listHeading}</h2>
 <div class="cp9-curation-list">${cards}</div>
 <h2 style="font-size:24px;margin:34px 0 14px;color:#111;">이 큐레이션을 보는 기준</h2>
-<p>20개를 모두 살 필요는 없습니다. 먼저 내가 겪는 문제가 더위인지, 습기인지, 냄새인지, 벌레인지 구분하세요. 그다음 매일 쓰는 물건부터 고르면 불필요한 충동구매를 줄일 수 있습니다.</p>
+<p>${closingGuide}</p>
 <h2 style="font-size:24px;margin:34px 0 14px;color:#111;">구매 전 체크</h2>
-<p>여름 상품은 사이즈와 소모품 조건이 중요합니다. 선풍기류는 충전 방식과 소음, 제습·청소용품은 리필 가능 여부, 침구류는 세탁 가능 여부를 확인하세요. 가격은 작성 시점 기준이므로 구매 전 쿠팡 상세 페이지에서 최신 가격과 배송 조건을 확인해야 합니다.</p>
+<p>${purchaseCheck}</p>
 <p style="font-size:13px;color:#666;margin-top:28px;">${DISCLOSURE}</p>
 ${itemListJsonLd}
 </article>`
@@ -1042,6 +1522,10 @@ function validateArticle(article, candidate) {
   if (/[:：]/.test(article.title || '')) throw new Error('title contains forbidden colon')
   const headingColon = findHeadingTextWithColon(article.content)
   if (headingColon) throw new Error('heading contains forbidden colon')
+  const keyword = String(candidate.keyword || '').trim()
+  if (keyword && !article.title.includes(keyword)) {
+    throw new Error(`article title keyword mismatch: ${keyword}`)
+  }
   if (candidate.articleType === 'top_3_5_compare') {
     const productSectionCount = (article.content.match(/class="cp9-top-product"/g) || []).length
     const productFactCount = (article.content.match(/class="cp9-product-facts"/g) || []).length
@@ -1049,7 +1533,7 @@ function validateArticle(article, candidate) {
       throw new Error(`top compare product section count invalid: ${productSectionCount}`)
     }
     if (productFactCount < productSectionCount) throw new Error(`top compare product facts too low: ${productFactCount}`)
-    for (const required of ['핵심 판단', '장점', '단점', '추천 대상', '구매 전 체크', 'cp9-mobile-compare:start']) {
+    for (const required of ['핵심 판단', '좋은 점', '조심할 점', '추천 대상', '구매 전 체크', 'cp9-mobile-compare:start']) {
       if (!article.content.includes(required)) throw new Error(`top compare requirement missing: ${required}`)
     }
   }
@@ -1114,6 +1598,8 @@ async function main() {
     ? buildCurationArticle(candidate, products)
     : /식기세척기/.test(candidate.keyword || '')
       ? buildDishwasherDeepdiveArticle(candidate, products)
+    : /선풍기|서큘레이터|손선풍기|휴대용선풍기|탁상용선풍기/.test(candidate.keyword || '')
+      ? buildFanDeepdiveArticle(candidate, products)
     : /청소기/.test(candidate.keyword || '')
       ? buildCleanerDeepdiveArticle(candidate, products)
     : buildDeepdiveArticle(candidate, products)

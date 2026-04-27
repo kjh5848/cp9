@@ -82,7 +82,7 @@ function buildResearchSummary(product) {
   if (product.categoryName) facts.push({ label: '카테고리', value: product.categoryName, source: '상품 정보' })
   if (specs.length) facts.push({ label: '확인 스펙', value: specs.slice(0, 4).join(', '), source: '상품명·상세 정보' })
   if (product.price) facts.push({ label: '작성 시점 가격', value: formatPrice(product.price), source: '가격 정보' })
-  facts.push({ label: '배송 조건', value: `${product.isRocket ? '로켓배송 확인' : '로켓배송 미확인'}, ${product.isFreeShipping ? '무료배송 확인' : '무료배송 미확인'}`, source: '배송 표시' })
+  facts.push({ label: '구매 확인', value: '옵션, 구성품, 도착 예정일 확인', source: '상품 정보' })
 
   const questions = [
     specs.some((item) => /인용|L|리터|kg|평|㎡/.test(item)) ? '내 공간과 사용량에 용량이 맞는가' : '내 사용 공간과 크기가 맞는가',
@@ -100,15 +100,13 @@ function buildResearchSummary(product) {
 
 function buildInterpretation({ product, brand, specs }) {
   const priceLabel = product.price ? formatPrice(product.price) : '가격 확인 필요'
-  const deliveryLabel = product.isRocket
-    ? '배송 속도를 중시하는 구매자에게 유리한 후보입니다'
-    : '배송 일정과 설치 조건을 먼저 확인해야 하는 후보입니다'
-  const brandLabel = brand ? `${brand} 계열 상품으로` : '브랜드보다 스펙 확인이 중요한 상품으로'
+  const purchaseLabel = '결제 전에는 옵션, 구성품, 도착 예정일을 함께 확인하는 편이 안전합니다'
+  const brandLabel = brand ? `${brand} 계열이라` : '브랜드보다 실제 스펙 확인이 더 중요한 상품이라'
   const specLabel = specs.length
-    ? `상품명과 상세 정보에서 ${specs.slice(0, 3).join(', ')} 같은 단서가 확인됩니다`
-    : '상품명만으로는 핵심 스펙을 확정하기 어려우므로 상세 페이지 확인이 필요합니다'
+    ? `${specs.slice(0, 3).join(', ')} 같은 조건을 중심으로 비교하면 좋습니다`
+    : '상세 페이지에서 용량, 크기, 구성품을 한 번 더 확인하는 편이 안전합니다'
 
-  return `${brandLabel} 작성 시점 가격은 ${priceLabel}입니다. ${specLabel}. ${deliveryLabel}.`
+  return `${brandLabel} 오늘 확인한 가격은 ${priceLabel}입니다. ${specLabel}. ${purchaseLabel}.`
 }
 
 export async function enrichProductsWithResearch(products, options = {}) {
@@ -164,10 +162,10 @@ export function renderProductFactPanel(product, options = {}) {
   const questionItems = questions.slice(0, compact ? 2 : 3).map((question) => `<li>${escapeHtml(question)}</li>`).join('')
 
   return `<div class="cp9-product-facts" style="border:1px solid #dbe3ef;border-radius:16px;background:#f8fafc;padding:${compact ? '12px' : '14px'};margin:${compact ? '10px 0' : '14px 0'};">
-<strong style="display:block;margin:0 0 8px;color:#111;font-size:${compact ? '14px' : '15px'};">상품 이해를 위한 확인 팩트</strong>
+<strong style="display:block;margin:0 0 8px;color:#111;font-size:${compact ? '14px' : '15px'};">우리 집 조건으로 보는 확인 포인트</strong>
 <p style="margin:0 0 10px;color:#374151;font-size:${compact ? '13px' : '14px'};line-height:1.65;">${escapeHtml(summary.interpretation)}</p>
 <ul style="margin:0 0 10px;padding-left:20px;color:#374151;font-size:${compact ? '13px' : '14px'};line-height:1.65;">${factItems}</ul>
-<strong style="display:block;margin:0 0 6px;color:#111;font-size:${compact ? '13px' : '14px'};">구매 전 질문</strong>
+<strong style="display:block;margin:0 0 6px;color:#111;font-size:${compact ? '13px' : '14px'};">결제 전 가족 기준 질문</strong>
 <ul style="margin:0;padding-left:20px;color:#475467;font-size:${compact ? '13px' : '14px'};line-height:1.65;">${questionItems}</ul>
 </div>`
 }
