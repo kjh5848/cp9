@@ -27,7 +27,9 @@ Codex Automation을 사용해 쿠팡 파트너스 기반 콘텐츠를 주기적�
 
 역할:
 
-- `docs/coupang-seed-keywords.md`에서 시드 키워드를 읽는다.
+- `docs/coupang-seed-keywords.md` 인덱스와 `docs/coupang-seed-keywords/*.md` 카테고리별 시드 파일을 읽는다.
+- 쿠팡 주요 쇼핑 카테고리를 CP 하위 카테고리로 운영하고, 후보의 실제 쇼핑 의도에 맞춰 `category`를 지정한다.
+- 기념일/선물 추천 시드는 독립 발행 카테고리로 관리하고, 나이대·상대·기념일·가격대·상품군 조합을 만든다.
 - 네이버 연관검색어로 키워드를 확장한다.
 - 네이버 데이터랩, 쇼핑인사이트, 검색광고 키워드 도구로 수요를 검증한다.
 - 중복 키워드와 최근 발행 의도를 제외한다.
@@ -52,6 +54,55 @@ Codex Automation을 사용해 쿠팡 파트너스 기반 콘텐츠를 주기적�
 최근 많이 사용한 시드는 후순위
 실패가 반복된 시드는 빈도 축소
 ```
+
+운영 카테고리:
+
+```text
+생활가전
+주방가전
+청소/생활
+기념일/선물
+가전·디지털
+식품·신선식품
+생활용품
+홈·인테리어
+뷰티
+주방용품
+패션
+반려동물
+출산·유아동
+스포츠·레저
+문구·오피스
+자동차용품
+완구·취미
+도서
+건강·의료
+```
+
+기념일/선물 키워드 조합:
+
+```text
+나이대: 10대, 20대, 30대, 40대, 50대, 60대
+상대: 엄마, 아빠, 부모님, 아내, 남편, 여자친구, 남자친구, 직장동료, 선생님
+상황: 생일, 생신, 결혼기념일, 집들이, 어버이날, 스승의날, 크리스마스, 명절, 퇴사, 취업, 입학, 졸업
+가격대: 1만원대, 2만원대, 3만원대, 5만원대, 10만원대, 20만원대
+의도 접두어: 추천, 센스있는, 실용적인, 부담없는, 고급, 가성비
+상품군: 건강가전, 마사지기, 커피머신, 공기청정기, 가습기, 로봇청소기, 무선청소기, 주방용품, 생활용품
+```
+
+예:
+
+```text
+10대 여자 생일선물 추천
+30대 남자 생일선물 가전
+50대 엄마 생일선물 추천
+60대 부모님 생신선물 건강가전
+결혼기념일 아내 선물 추천
+5만원대 센스있는 집들이 선물
+어버이날 부모님 마사지기 추천
+```
+
+기념일 후보는 `category=기념일/선물`로 저장한다. `keyword`에는 검색 의도 문구를 넣고, `coupangSearchTerm`에는 실제 상품 조회에 적합한 상품군을 넣는다. 예를 들어 `keyword=어버이날 부모님 마사지기 추천`, `coupangSearchTerm=마사지기`처럼 분리한다.
 
 ### A 자동화: WordPress 공개 발행
 
@@ -401,6 +452,7 @@ Playwright 상품 페이지 스크래핑: API 이미지 실패 시 fallback 후�
 
 ```text
 docs/coupang-seed-keywords.md
+docs/coupang-seed-keywords/*.md
 data/keyword-candidates.json
 data/codex-publisher-history.json
 frontend/.env.local
@@ -408,7 +460,8 @@ frontend/.env.local
 
 역할:
 
-- `docs/coupang-seed-keywords.md`: 사람이 관리하는 시드 키워드
+- `docs/coupang-seed-keywords.md`: 시드 키워드 인덱스
+- `docs/coupang-seed-keywords/*.md`: 사람이 관리하는 카테고리별 시드 키워드
 - `data/keyword-candidates.json`: C 자동화가 만든 키워드 후보
 - `data/codex-publisher-history.json`: 최소 발굴/작성/발행 이력
 - `content/codex-publisher/drafts/`: 수동 검수 또는 장애 분석 때만 임시 사용하고, 공개 발행 성공 후 삭제
@@ -493,7 +546,53 @@ NAVER_DATALAB_CLIENT_SECRET=
 NAVER_CAFE_ID=
 NAVER_CAFE_MENU_ID=
 NAVER_CAFE_ACCESS_TOKEN=
+NAVER_CAFE_MENU_LIVING_APPLIANCE_ID=
+NAVER_CAFE_MENU_KITCHEN_APPLIANCE_ID=
+NAVER_CAFE_MENU_CLEANING_LIVING_ID=
+NAVER_CAFE_MENU_GIFT_ID=
+NAVER_CAFE_MENU_ELECTRONICS_DIGITAL_ID=
+NAVER_CAFE_MENU_FOOD_FRESH_ID=
+NAVER_CAFE_MENU_LIVING_GOODS_ID=
+NAVER_CAFE_MENU_HOME_INTERIOR_ID=
+NAVER_CAFE_MENU_BEAUTY_ID=
+NAVER_CAFE_MENU_KITCHEN_GOODS_ID=
+NAVER_CAFE_MENU_FASHION_ID=
+NAVER_CAFE_MENU_PET_ID=
+NAVER_CAFE_MENU_BABY_KIDS_ID=
+NAVER_CAFE_MENU_SPORTS_LEISURE_ID=
+NAVER_CAFE_MENU_OFFICE_STATIONERY_ID=
+NAVER_CAFE_MENU_CAR_GOODS_ID=
+NAVER_CAFE_MENU_TOYS_HOBBIES_ID=
+NAVER_CAFE_MENU_BOOKS_ID=
+NAVER_CAFE_MENU_HEALTH_MEDICAL_ID=
 ```
+
+WordPress 카테고리 라우팅을 사용하려면 CP 루트와 하위 카테고리 ID를 등록한다. 하위 카테고리 ID가 비어 있으면 CP 루트 카테고리만 사용한다.
+
+```env
+WORDPRESS_CATEGORY_CP_ID=85
+WORDPRESS_CATEGORY_LIVING_APPLIANCE_ID=
+WORDPRESS_CATEGORY_KITCHEN_APPLIANCE_ID=
+WORDPRESS_CATEGORY_CLEANING_LIVING_ID=
+WORDPRESS_CATEGORY_GIFT_ID=
+WORDPRESS_CATEGORY_ELECTRONICS_DIGITAL_ID=
+WORDPRESS_CATEGORY_FOOD_FRESH_ID=
+WORDPRESS_CATEGORY_LIVING_GOODS_ID=
+WORDPRESS_CATEGORY_HOME_INTERIOR_ID=
+WORDPRESS_CATEGORY_BEAUTY_ID=
+WORDPRESS_CATEGORY_KITCHEN_GOODS_ID=
+WORDPRESS_CATEGORY_FASHION_ID=
+WORDPRESS_CATEGORY_PET_ID=
+WORDPRESS_CATEGORY_BABY_KIDS_ID=
+WORDPRESS_CATEGORY_SPORTS_LEISURE_ID=
+WORDPRESS_CATEGORY_OFFICE_STATIONERY_ID=
+WORDPRESS_CATEGORY_CAR_GOODS_ID=
+WORDPRESS_CATEGORY_TOYS_HOBBIES_ID=
+WORDPRESS_CATEGORY_BOOKS_ID=
+WORDPRESS_CATEGORY_HEALTH_MEDICAL_ID=
+```
+
+카페 메뉴도 같은 방식으로 라우팅한다. 카테고리별 메뉴 ID가 비어 있으면 `NAVER_CAFE_MENU_ID`를 fallback으로 사용하고, 기본 메뉴 ID도 없으면 카페 업로드만 건너뛴다.
 
 발행 상태는 아래 값으로 제어한다.
 

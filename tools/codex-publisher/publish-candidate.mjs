@@ -15,6 +15,49 @@ import { renderLayeredPexelsImage } from './deepdive-layered-image-renderer.mjs'
 const COUPANG_HOST = 'https://api-gateway.coupang.com'
 const DISCLOSURE = '이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.'
 const DEFAULT_CP_CATEGORY_ID = 85
+const CATEGORY_ENV_KEYS = {
+  livingAppliance: ['WORDPRESS_CATEGORY_LIVING_APPLIANCE_ID', 'WORDPRESS_CP_LIVING_APPLIANCE_CATEGORY_ID'],
+  kitchenAppliance: ['WORDPRESS_CATEGORY_KITCHEN_APPLIANCE_ID', 'WORDPRESS_CP_KITCHEN_APPLIANCE_CATEGORY_ID'],
+  cleaningLiving: ['WORDPRESS_CATEGORY_CLEANING_LIVING_ID', 'WORDPRESS_CP_CLEANING_LIVING_CATEGORY_ID'],
+  gift: ['WORDPRESS_CATEGORY_GIFT_ID', 'WORDPRESS_CP_GIFT_CATEGORY_ID'],
+  electronicsDigital: ['WORDPRESS_CATEGORY_ELECTRONICS_DIGITAL_ID'],
+  foodFresh: ['WORDPRESS_CATEGORY_FOOD_FRESH_ID'],
+  livingGoods: ['WORDPRESS_CATEGORY_LIVING_GOODS_ID'],
+  homeInterior: ['WORDPRESS_CATEGORY_HOME_INTERIOR_ID'],
+  beauty: ['WORDPRESS_CATEGORY_BEAUTY_ID'],
+  kitchenGoods: ['WORDPRESS_CATEGORY_KITCHEN_GOODS_ID'],
+  fashion: ['WORDPRESS_CATEGORY_FASHION_ID'],
+  pet: ['WORDPRESS_CATEGORY_PET_ID'],
+  babyKids: ['WORDPRESS_CATEGORY_BABY_KIDS_ID'],
+  sportsLeisure: ['WORDPRESS_CATEGORY_SPORTS_LEISURE_ID'],
+  officeStationery: ['WORDPRESS_CATEGORY_OFFICE_STATIONERY_ID'],
+  carGoods: ['WORDPRESS_CATEGORY_CAR_GOODS_ID'],
+  toysHobbies: ['WORDPRESS_CATEGORY_TOYS_HOBBIES_ID'],
+  books: ['WORDPRESS_CATEGORY_BOOKS_ID'],
+  healthMedical: ['WORDPRESS_CATEGORY_HEALTH_MEDICAL_ID'],
+}
+const CAFE_MENU_ENV_KEYS = {
+  livingAppliance: ['NAVER_CAFE_MENU_LIVING_APPLIANCE_ID'],
+  kitchenAppliance: ['NAVER_CAFE_MENU_KITCHEN_APPLIANCE_ID'],
+  cleaningLiving: ['NAVER_CAFE_MENU_CLEANING_LIVING_ID'],
+  gift: ['NAVER_CAFE_MENU_GIFT_ID'],
+  electronicsDigital: ['NAVER_CAFE_MENU_ELECTRONICS_DIGITAL_ID'],
+  foodFresh: ['NAVER_CAFE_MENU_FOOD_FRESH_ID'],
+  livingGoods: ['NAVER_CAFE_MENU_LIVING_GOODS_ID'],
+  homeInterior: ['NAVER_CAFE_MENU_HOME_INTERIOR_ID'],
+  beauty: ['NAVER_CAFE_MENU_BEAUTY_ID'],
+  kitchenGoods: ['NAVER_CAFE_MENU_KITCHEN_GOODS_ID'],
+  fashion: ['NAVER_CAFE_MENU_FASHION_ID'],
+  pet: ['NAVER_CAFE_MENU_PET_ID'],
+  babyKids: ['NAVER_CAFE_MENU_BABY_KIDS_ID'],
+  sportsLeisure: ['NAVER_CAFE_MENU_SPORTS_LEISURE_ID'],
+  officeStationery: ['NAVER_CAFE_MENU_OFFICE_STATIONERY_ID'],
+  carGoods: ['NAVER_CAFE_MENU_CAR_GOODS_ID'],
+  toysHobbies: ['NAVER_CAFE_MENU_TOYS_HOBBIES_ID'],
+  books: ['NAVER_CAFE_MENU_BOOKS_ID'],
+  healthMedical: ['NAVER_CAFE_MENU_HEALTH_MEDICAL_ID'],
+}
+const GIFT_INTENT_PATTERN = /기념일|선물|생일|생신|어버이날|스승의날|크리스마스|명절|퇴사|취업|입학|졸업|집들이/
 
 const SUMMER_CURATION_QUERIES = [
   '휴대용 선풍기',
@@ -409,6 +452,59 @@ function escapeHtml(value) {
 function truncate(value, maxLength = 58) {
   const text = String(value || '').replace(/\s+/g, ' ').trim()
   return text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text
+}
+
+function firstNumericEnv(env, keys) {
+  for (const key of keys) {
+    const value = Number(env[key])
+    if (Number.isInteger(value) && value > 0) return value
+  }
+  return null
+}
+
+function firstStringEnv(env, keys) {
+  for (const key of keys) {
+    const value = String(env[key] || '').trim()
+    if (value) return value
+  }
+  return ''
+}
+
+function classifyPublishCategory(candidate = {}) {
+  const text = `${candidate.category || ''} ${candidate.keyword || ''} ${candidate.searchIntent || ''} ${candidate.blogTitle || ''}`
+  if (GIFT_INTENT_PATTERN.test(text)) return 'gift'
+  if (/디지털|노트북|태블릿|스마트폰|휴대폰|모니터|키보드|마우스|이어폰|헤드셋|카메라|게임기|프린터|공유기/.test(text)) return 'electronicsDigital'
+  if (/식품|신선|과일|정육|고기|쌀|잡곡|생수|음료|커피원두|간편식|밀키트|과자|라면|건강식품/.test(text)) return 'foodFresh'
+  if (/뷰티|화장품|스킨케어|선크림|샴푸|트리트먼트|향수|네일|메이크업|클렌징/.test(text)) return 'beauty'
+  if (/패션|의류|옷|신발|운동화|가방|지갑|시계|주얼리|속옷/.test(text)) return 'fashion'
+  if (/반려|강아지|고양이|펫|사료|배변패드|캣타워/.test(text)) return 'pet'
+  if (/출산|유아|아기|아동|키즈|기저귀|분유|유모차|카시트|젖병/.test(text)) return 'babyKids'
+  if (/스포츠|레저|캠핑|등산|자전거|골프|낚시|헬스|요가|수영|러닝/.test(text)) return 'sportsLeisure'
+  if (/문구|사무|오피스|노트|필기|펜|복사용지|파일|책상정리/.test(text)) return 'officeStationery'
+  if (/자동차|차량용|카매트|블랙박스|타이어|세차|차량/.test(text)) return 'carGoods'
+  if (/완구|장난감|취미|피규어|프라모델|보드게임|악기|퍼즐/.test(text)) return 'toysHobbies'
+  if (/도서|책|문제집|참고서|전자책/.test(text)) return 'books'
+  if (/건강|의료|혈압계|체온계|안마|마사지|찜질|영양제|보호대|마스크/.test(text)) return 'healthMedical'
+  if (/가구|침구|조명|커튼|러그|매트|인테리어|홈데코|수납장|의자|테이블/.test(text) && !/청소|침구청소/.test(text)) return 'homeInterior'
+  if (/주방가전|커피머신|식기세척기|식세기|에어프라이어|밥솥|인덕션|믹서|블렌더|토스터|전기포트|음식물처리기|전자레인지|오븐/.test(text)) return 'kitchenAppliance'
+  if (/주방용품|냄비|프라이팬|식기|그릇|컵|텀블러|칼|도마|보관용기|수저|조리도구/.test(text)) return 'kitchenGoods'
+  if (/청소|수납|리빙|분리수거|빨래|건조대|매트리스|욕실|생활용품/.test(text)) return 'cleaningLiving'
+  if (/생활가전|제습기|공기청정기|가습기|선풍기|서큘레이터|히터|온풍기|전기요|탄소매트|건조기|에어컨|냉풍기|의류관리기/.test(text)) return 'livingAppliance'
+  if (/세제|화장지|물티슈|휴지|섬유유연제|탈취제|방향제|생필품/.test(text)) return 'livingGoods'
+  return 'livingAppliance'
+}
+
+function resolveWordPressCategoryIds(env, candidate) {
+  const rootId = firstNumericEnv(env, ['WORDPRESS_CATEGORY_CP_ID', 'WORDPRESS_CP_CATEGORY_ID']) || DEFAULT_CP_CATEGORY_ID
+  const mappedId = firstNumericEnv(env, CATEGORY_ENV_KEYS[classifyPublishCategory(candidate)] || [])
+  return [...new Set([rootId, mappedId].filter(Boolean))]
+}
+
+function resolveCafeMenuId(env, candidate) {
+  return firstStringEnv(env, [
+    ...(CAFE_MENU_ENV_KEYS[classifyPublishCategory(candidate)] || []),
+    'NAVER_CAFE_MENU_ID',
+  ])
 }
 
 function productRole(product, index, articleType) {
@@ -1365,13 +1461,70 @@ async function publishPost(env, article, products, candidate) {
         content: article.content,
         status: env.WP_AUTOPUBLISH_STATUS || 'publish',
         excerpt: `${candidate.keyword} 기준과 상품 후보를 정리한 쿠팡 파트너스 글입니다.`,
-        categories: [Number(env.WORDPRESS_CP_CATEGORY_ID || DEFAULT_CP_CATEGORY_ID)],
+        categories: resolveWordPressCategoryIds(env, candidate),
         featured_media: media.id,
       }),
     },
   })
 
   return { post, media }
+}
+
+function buildCafeSummaryContent(article, products, post) {
+  const productLines = products.slice(0, 5).map((product, index) => {
+    const numericPrice = Number(product.price)
+    const price = Number.isFinite(numericPrice) && numericPrice > 0 ? `${numericPrice.toLocaleString('ko-KR')}원` : '가격 확인 필요'
+    return `${index + 1}. ${product.name} - ${price}<br><a href="${product.url}" target="_blank" rel="noopener">가격 확인</a>`
+  }).join('<br><br>')
+  const excerpt = truncate(stripHtmlText(article.content), 360)
+  return [
+    `<p>${escapeHtml(excerpt)}</p>`,
+    `<p><strong>추천 상품</strong></p>`,
+    `<p>${productLines}</p>`,
+    `<p>원문 보기: <a href="${post.link}" target="_blank" rel="noopener">${post.link}</a></p>`,
+    `<p>${DISCLOSURE}</p>`,
+  ].join('\n')
+}
+
+async function publishCafeSummary(env, article, products, candidate, post) {
+  const clubId = String(env.NAVER_CAFE_ID || '').trim()
+  const menuId = resolveCafeMenuId(env, candidate)
+  const accessToken = String(env.NAVER_CAFE_ACCESS_TOKEN || '').trim()
+  if (!clubId || !menuId || !accessToken) {
+    return {
+      status: 'skipped',
+      reason: 'missing_cafe_env',
+      menuKey: classifyPublishCategory(candidate),
+    }
+  }
+
+  const body = new URLSearchParams({
+    subject: article.title,
+    content: buildCafeSummaryContent(article, products, post),
+  })
+  const response = await fetch(`https://openapi.naver.com/v1/cafe/${encodeURIComponent(clubId)}/menu/${encodeURIComponent(menuId)}/articles`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+    },
+    body,
+  })
+  const text = await response.text()
+  if (!response.ok) {
+    return {
+      status: 'failed',
+      reason: `naver_cafe_${response.status}`,
+      menuId,
+      error: text.slice(0, 300),
+    }
+  }
+  const result = text ? JSON.parse(text) : {}
+  return {
+    status: 'published',
+    menuId,
+    url: result.message?.result?.articleUrl || result.result?.articleUrl || null,
+  }
 }
 
 async function updatePost(env, article, postId) {
@@ -1412,7 +1565,7 @@ function formatKstDate(date = new Date()) {
   return `${values.year}-${values.month}-${values.day}`
 }
 
-function updateRecords({ candidate, article, products, post, media }) {
+function updateRecords({ candidate, article, products, post, media, cafeResult }) {
   const candidatesPath = 'data/keyword-candidates.json'
   const historyPath = 'data/codex-publisher-history.json'
   const candidates = loadJsonArray(candidatesPath)
@@ -1438,10 +1591,7 @@ function updateRecords({ candidate, article, products, post, media }) {
         url: post.link,
         status: post.status,
       },
-      cafe: {
-        status: 'skipped',
-        reason: 'missing_cafe_env',
-      },
+      cafe: cafeResult,
     },
     productIds: products.map((product) => product.id),
     deepdiveAuxiliaryImages: article.auxiliaryImages || [],
@@ -1652,7 +1802,8 @@ async function main() {
   }
 
   const { post, media } = await publishPost(env, article, products, candidate)
-  updateRecords({ candidate, article, products, post, media })
+  const cafeResult = await publishCafeSummary(env, article, products, candidate, post)
+  updateRecords({ candidate, article, products, post, media, cafeResult })
   const notification = notify('쿠팡 자동 발행', `WordPress 공개 발행 완료: ${article.title}`)
   console.log(JSON.stringify({
     candidateId: candidate.id,
@@ -1660,6 +1811,7 @@ async function main() {
     postId: post.id,
     url: post.link,
     mediaId: media.id,
+    cafe: cafeResult,
     productCount: products.length,
     contentChars: validation.contentChars,
     notification,
