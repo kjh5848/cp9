@@ -544,12 +544,15 @@ NAVER_DATALAB_CLIENT_SECRET=
 
 ```env
 NAVER_CAFE_ID=
+NAVER_CAFE_CLIENT_ID=
+NAVER_CAFE_CLIENT_SECRET=
 NAVER_CAFE_MENU_ID=
 NAVER_CAFE_ACCESS_TOKEN=
 NAVER_CAFE_MENU_LIVING_APPLIANCE_ID=
 NAVER_CAFE_MENU_KITCHEN_APPLIANCE_ID=
 NAVER_CAFE_MENU_CLEANING_LIVING_ID=
 NAVER_CAFE_MENU_GIFT_ID=
+NAVER_CAFE_MENU_GIFT_ANNIVERSARY_ID=
 NAVER_CAFE_MENU_ELECTRONICS_DIGITAL_ID=
 NAVER_CAFE_MENU_FOOD_FRESH_ID=
 NAVER_CAFE_MENU_LIVING_GOODS_ID=
@@ -565,6 +568,7 @@ NAVER_CAFE_MENU_CAR_GOODS_ID=
 NAVER_CAFE_MENU_TOYS_HOBBIES_ID=
 NAVER_CAFE_MENU_BOOKS_ID=
 NAVER_CAFE_MENU_HEALTH_MEDICAL_ID=
+NAVER_CAFE_INCLUDE_EXTERNAL_LINKS=false
 ```
 
 WordPress 카테고리 라우팅을 사용하려면 CP 루트와 하위 카테고리 ID를 등록한다. 하위 카테고리 ID가 비어 있으면 CP 루트 카테고리만 사용한다.
@@ -593,6 +597,10 @@ WORDPRESS_CATEGORY_HEALTH_MEDICAL_ID=
 ```
 
 카페 메뉴도 같은 방식으로 라우팅한다. 카테고리별 메뉴 ID가 비어 있으면 `NAVER_CAFE_MENU_ID`를 fallback으로 사용하고, 기본 메뉴 ID도 없으면 카페 업로드만 건너뛴다.
+
+네이버 카페 글쓰기는 네이버 로그인 OAuth 토큰이 필요하다. `NAVER_CAFE_CLIENT_ID`와 `NAVER_CAFE_CLIENT_SECRET`은 네이버 개발자센터에서 `카페` API가 `사용 API`에 포함된 애플리케이션의 값을 사용한다. 데이터랩 전용 애플리케이션 값으로 토큰을 발급하면 카페 글쓰기에서 `Scope Status Invalid`가 발생할 수 있다.
+
+카페 API는 외부 링크와 외부 이미지 태그가 스팸 필터에서 `999`로 차단될 수 있다. 초기 운영에서는 `NAVER_CAFE_INCLUDE_EXTERNAL_LINKS=false`를 기본값으로 두고, 카페 글에는 요약과 원문 안내 문구를 넣는다. 이미지가 필요하면 URL 태그가 아니라 카페 API의 multipart `image` 첨부 방식을 사용한다.
 
 발행 상태는 아래 값으로 제어한다.
 

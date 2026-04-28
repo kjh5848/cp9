@@ -40,7 +40,7 @@ const CAFE_MENU_ENV_KEYS = {
   livingAppliance: ['NAVER_CAFE_MENU_LIVING_APPLIANCE_ID'],
   kitchenAppliance: ['NAVER_CAFE_MENU_KITCHEN_APPLIANCE_ID'],
   cleaningLiving: ['NAVER_CAFE_MENU_CLEANING_LIVING_ID'],
-  gift: ['NAVER_CAFE_MENU_GIFT_ID'],
+  gift: ['NAVER_CAFE_MENU_GIFT_ID', 'NAVER_CAFE_MENU_GIFT_ANNIVERSARY_ID'],
   electronicsDigital: ['NAVER_CAFE_MENU_ELECTRONICS_DIGITAL_ID'],
   foodFresh: ['NAVER_CAFE_MENU_FOOD_FRESH_ID'],
   livingGoods: ['NAVER_CAFE_MENU_LIVING_GOODS_ID'],
@@ -1470,26 +1470,58 @@ async function publishPost(env, article, products, candidate) {
   return { post, media }
 }
 
-function buildCafeSummaryContent(article, products, post) {
+function buildCafeSummaryContent(article, products, post, options = {}) {
+  const includeExternalLinks = Boolean(options.includeExternalLinks)
   const productLines = products.slice(0, 5).map((product, index) => {
     const numericPrice = Number(product.price)
     const price = Number.isFinite(numericPrice) && numericPrice > 0 ? `${numericPrice.toLocaleString('ko-KR')}원` : '가격 확인 필요'
-    return `${index + 1}. ${product.name} - ${price}<br><a href="${product.url}" target="_blank" rel="noopener">가격 확인</a>`
+    const action = includeExternalLinks
+      ? `<p><a href="${escapeHtml(product.url)}" target="_blank" rel="noopener"><strong>가격과 구성 확인하기</strong></a></p>`
+      : `<p><strong>가격과 구성은 원문에서 확인하세요.</strong></p>`
+    return [
+      `<p><strong>${index + 1}. ${escapeHtml(product.name)}</strong></p>`,
+      `<p><font color="#ff5a00"><strong>${price}</strong></font></p>`,
+      `<p>구매 전에는 구성품, 설치·보관 공간, 사용 목적이 내 생활패턴과 맞는지 먼저 확인하세요.</p>`,
+      action,
+    ].join('\n')
   }).join('<br><br>')
   const excerpt = truncate(stripHtmlText(article.content), 360)
   return [
+    `<p><font color="#03c75a"><strong>현명한 소비 요약</strong></font></p>`,
+    `<p><strong>${escapeHtml(article.title)}</strong></p>`,
     `<p>${escapeHtml(excerpt)}</p>`,
-    `<p><strong>추천 상품</strong></p>`,
+    `<hr>`,
+    `<p><strong>카페에서 빠르게 보는 추천 상품</strong></p>`,
     `<p>${productLines}</p>`,
-    `<p>원문 보기: <a href="${post.link}" target="_blank" rel="noopener">${post.link}</a></p>`,
+    `<hr>`,
+    `<p><strong>전체 기준과 상세 설명은 원문에서 확인하세요.</strong></p>`,
+    includeExternalLinks
+      ? `<p><a href="${escapeHtml(post.link)}" target="_blank" rel="noopener">${escapeHtml(post.link)}</a></p>`
+      : `<p>블로그 원문에서 상세 비교표와 구매 기준을 확인할 수 있습니다.</p>`,
     `<p>${DISCLOSURE}</p>`,
   ].join('\n')
+}
+
+function formEncodeUtf8(value) {
+  return new URLSearchParams({ value: String(value) }).toString().slice('value='.length)
+}
+
+function naverCafeEncode(value) {
+  return formEncodeUtf8(formEncodeUtf8(value))
+}
+
+function buildNaverCafeForm(fields) {
+  return Object.entries(fields)
+    .map(([key, value]) => `${encodeURIComponent(key)}=${naverCafeEncode(value)}`)
+    .join('&')
 }
 
 async function publishCafeSummary(env, article, products, candidate, post) {
   const clubId = String(env.NAVER_CAFE_ID || '').trim()
   const menuId = resolveCafeMenuId(env, candidate)
   const accessToken = String(env.NAVER_CAFE_ACCESS_TOKEN || '').trim()
+  const naverClientId = String(env.NAVER_CAFE_CLIENT_ID || env.NAVER_DATALAB_CLIENT_ID || env.NAVER_CLIENT_ID || '').trim()
+  const naverClientSecret = String(env.NAVER_CAFE_CLIENT_SECRET || env.NAVER_DATALAB_CLIENT_SECRET || env.NAVER_CLIENT_SECRET || '').trim()
   if (!clubId || !menuId || !accessToken) {
     return {
       status: 'skipped',
@@ -1498,15 +1530,19 @@ async function publishCafeSummary(env, article, products, candidate, post) {
     }
   }
 
-  const body = new URLSearchParams({
+  const body = buildNaverCafeForm({
     subject: article.title,
-    content: buildCafeSummaryContent(article, products, post),
+    content: buildCafeSummaryContent(article, products, post, {
+      includeExternalLinks: env.NAVER_CAFE_INCLUDE_EXTERNAL_LINKS === 'true',
+    }),
   })
   const response = await fetch(`https://openapi.naver.com/v1/cafe/${encodeURIComponent(clubId)}/menu/${encodeURIComponent(menuId)}/articles`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+      ...(naverClientId ? { 'X-Naver-Client-Id': naverClientId } : {}),
+      ...(naverClientSecret ? { 'X-Naver-Client-Secret': naverClientSecret } : {}),
+      'Content-Type': 'application/x-www-form-urlencoded; charset=ms949',
     },
     body,
   })
